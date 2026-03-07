@@ -137,8 +137,8 @@ const rows = [cards.slice(0, 8), cards.slice(4, 12), cards.slice(8, 16)];
       const normalizeLoop = () => {
         const loopWidth = setWidth();
         if (loopWidth <= 0) return;
-        const min = loopWidth * 0.5;
-        const max = loopWidth * 1.5;
+        const min = 2;
+        const max = loopWidth * 2 - 2;
         if (track.scrollLeft >= max) {
           track.scrollLeft -= loopWidth;
         } else if (track.scrollLeft < min) {
