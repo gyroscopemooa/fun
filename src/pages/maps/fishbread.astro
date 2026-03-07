@@ -6,28 +6,66 @@ import AdSense from '../../components/AdSense.astro';
 import Recommend from '../../components/Recommend.astro';
 ---
 
-<Layout title="붕어빵 위치 지도 | FunHub" description="붕어빵 제보/추천/비추천/댓글 기반 커뮤니티 지도 페이지">
+<Layout title="붕어빵 위치 지도 | FunHub" description="지도에서 지역을 선택해 붕어빵 제보/추천/비추천/댓글을 관리하는 페이지">
   <Header />
-  <main class="mx-auto max-w-4xl px-4 py-8">
-    <h1 class="text-2xl font-bold">전국 붕어빵 위치 제보</h1>
-    <p class="mt-2 text-slate-700">겨울 시즌에 사용자 제보를 모아 추천/비추천으로 정보 정확도를 관리합니다.</p>
+  <main class="mx-auto max-w-5xl px-4 py-8">
+    <h1 class="text-2xl font-bold">전국 붕어빵 위치 제보 지도</h1>
+    <p class="mt-2 text-slate-700">지도에서 지역을 선택하고 제보를 등록하세요. 추천/비추천/댓글로 정확도를 관리합니다.</p>
 
     <AdSense slotName="본문 상단" />
 
-    <section class="mt-6 rounded-xl border border-slate-200 bg-white p-5">
-      <h2 class="text-lg font-bold">새 제보 등록</h2>
-      <div class="mt-3 grid gap-3 md:grid-cols-2">
-        <input id="spot-name" class="rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="가게명 (예: OO붕어빵)" type="text" />
-        <input id="spot-region" class="rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="지역 (예: 서울 강남구)" type="text" />
-      </div>
-      <textarea id="spot-note" class="mt-3 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="메뉴/가격/영업시간 메모" rows="3"></textarea>
-      <button id="spot-add" class="mt-3 rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white">제보 추가</button>
+    <section class="mt-6 grid gap-4 lg:grid-cols-[1.1fr_1fr]">
+      <article class="rounded-xl border border-slate-200 bg-white p-4">
+        <h2 class="text-lg font-bold">지역 선택 지도</h2>
+        <p class="mt-1 text-sm text-slate-500">지역 버튼을 눌러 필터/제보 지역을 선택하세요.</p>
+
+        <div class="relative mt-3 h-[360px] rounded-xl bg-slate-100 p-3">
+          <div class="absolute inset-3 rounded-xl border border-dashed border-slate-300"></div>
+
+          <button data-region="서울" class="map-region absolute left-[40%] top-[20%]">서울</button>
+          <button data-region="인천" class="map-region absolute left-[30%] top-[23%]">인천</button>
+          <button data-region="경기" class="map-region absolute left-[42%] top-[30%]">경기</button>
+          <button data-region="강원" class="map-region absolute left-[58%] top-[25%]">강원</button>
+          <button data-region="충북" class="map-region absolute left-[49%] top-[40%]">충북</button>
+          <button data-region="충남" class="map-region absolute left-[38%] top-[44%]">충남</button>
+          <button data-region="대전" class="map-region absolute left-[44%] top-[52%]">대전</button>
+          <button data-region="전북" class="map-region absolute left-[33%] top-[58%]">전북</button>
+          <button data-region="광주" class="map-region absolute left-[30%] top-[69%]">광주</button>
+          <button data-region="전남" class="map-region absolute left-[39%] top-[76%]">전남</button>
+          <button data-region="경북" class="map-region absolute left-[58%] top-[52%]">경북</button>
+          <button data-region="대구" class="map-region absolute left-[54%] top-[61%]">대구</button>
+          <button data-region="경남" class="map-region absolute left-[47%] top-[71%]">경남</button>
+          <button data-region="부산" class="map-region absolute left-[58%] top-[77%]">부산</button>
+          <button data-region="울산" class="map-region absolute left-[64%] top-[70%]">울산</button>
+          <button data-region="제주" class="map-region absolute left-[20%] top-[84%]">제주</button>
+        </div>
+
+        <p class="mt-3 text-sm">선택 지역: <span id="selected-region" class="font-semibold">전체</span></p>
+
+        <div class="mt-3 flex flex-wrap gap-2">
+          <button id="region-all" class="rounded-md border border-slate-300 px-3 py-1 text-sm">전체 보기</button>
+        </div>
+      </article>
+
+      <article class="rounded-xl border border-slate-200 bg-white p-4">
+        <h2 class="text-lg font-bold">새 제보 등록</h2>
+        <p class="mt-1 text-sm text-slate-500">지도에서 선택한 지역으로 자동 입력됩니다.</p>
+
+        <div class="mt-3 grid gap-3">
+          <input id="spot-name" class="rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="가게명 (예: OO붕어빵)" type="text" />
+          <input id="spot-region" class="rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm" placeholder="지역 선택" type="text" readonly />
+          <textarea id="spot-note" class="rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="메뉴/가격/영업시간 메모" rows="3"></textarea>
+        </div>
+
+        <button id="spot-add" class="mt-3 rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white">제보 추가</button>
+      </article>
     </section>
 
     <section class="mt-6">
       <h2 class="text-lg font-bold">제보 목록</h2>
-      <p class="mt-1 text-sm text-slate-500">추천이 많고 비추천이 적은 순서로 정렬됩니다.</p>
+      <p class="mt-1 text-sm text-slate-500">선택 지역 기준으로 보이며, 신뢰점수(추천-비추천) 순으로 정렬됩니다.</p>
       <div id="spot-list" class="mt-3 space-y-3"></div>
+      <p id="spot-empty" class="mt-3 hidden rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-600">해당 지역 제보가 없습니다.</p>
     </section>
 
     <AdSense slotName="본문 중간" />
@@ -36,13 +74,13 @@ import Recommend from '../../components/Recommend.astro';
   <Footer />
 
   <script is:inline>
-    const KEY = 'funhub_fishbread_spots_v1';
+    const KEY = 'funhub_fishbread_spots_v2';
 
     const seed = [
       {
         id: 'seed-1',
         name: '강남역 3번출구 붕어빵',
-        region: '서울 강남구',
+        region: '서울',
         note: '팥/슈크림, 저녁 시간대 인기',
         up: 6,
         down: 1,
@@ -51,7 +89,7 @@ import Recommend from '../../components/Recommend.astro';
       {
         id: 'seed-2',
         name: '부산 서면 포장마차 붕어빵',
-        region: '부산 부산진구',
+        region: '부산',
         note: '팥 위주, 가격 저렴',
         up: 4,
         down: 0,
@@ -76,19 +114,52 @@ import Recommend from '../../components/Recommend.astro';
     const save = (data) => localStorage.setItem(KEY, JSON.stringify(data));
 
     const listEl = document.getElementById('spot-list');
+    const emptyEl = document.getElementById('spot-empty');
     const addBtn = document.getElementById('spot-add');
     const nameEl = document.getElementById('spot-name');
     const regionEl = document.getElementById('spot-region');
     const noteEl = document.getElementById('spot-note');
+    const selectedRegionEl = document.getElementById('selected-region');
+    const allBtn = document.getElementById('region-all');
+    const regionBtns = document.querySelectorAll('[data-region]');
 
     let spots = load();
+    let selectedRegion = '전체';
 
     const score = (s) => s.up - s.down;
 
+    const setRegion = (region) => {
+      selectedRegion = region;
+      if (selectedRegionEl) selectedRegionEl.textContent = region;
+      if (regionEl instanceof HTMLInputElement) {
+        regionEl.value = region === '전체' ? '' : region;
+      }
+
+      regionBtns.forEach((btn) => {
+        if (!(btn instanceof HTMLButtonElement)) return;
+        const active = btn.dataset.region === region;
+        btn.classList.toggle('bg-sky-600', active);
+        btn.classList.toggle('text-white', active);
+        btn.classList.toggle('border-sky-600', active);
+      });
+
+      render();
+    };
+
     const render = () => {
-      const sorted = [...spots].sort((a, b) => score(b) - score(a));
+      const filtered = selectedRegion === '전체' ? spots : spots.filter((s) => s.region === selectedRegion);
+      const sorted = [...filtered].sort((a, b) => score(b) - score(a));
 
       if (!listEl) return;
+
+      if (sorted.length === 0) {
+        listEl.innerHTML = '';
+        emptyEl?.classList.remove('hidden');
+        return;
+      }
+
+      emptyEl?.classList.add('hidden');
+
       listEl.innerHTML = sorted
         .map(
           (s) => `
@@ -123,9 +194,9 @@ import Recommend from '../../components/Recommend.astro';
     };
 
     const addSpot = () => {
-      const name = nameEl?.value?.trim() ?? '';
-      const region = regionEl?.value?.trim() ?? '';
-      const note = noteEl?.value?.trim() ?? '';
+      const name = nameEl instanceof HTMLInputElement ? nameEl.value.trim() : '';
+      const region = regionEl instanceof HTMLInputElement ? regionEl.value.trim() : '';
+      const note = noteEl instanceof HTMLTextAreaElement ? noteEl.value.trim() : '';
       if (!name || !region) return;
 
       spots.push({
@@ -138,15 +209,25 @@ import Recommend from '../../components/Recommend.astro';
         comments: []
       });
 
-      if (nameEl) nameEl.value = '';
-      if (regionEl) regionEl.value = '';
-      if (noteEl) noteEl.value = '';
+      if (nameEl instanceof HTMLInputElement) nameEl.value = '';
+      if (noteEl instanceof HTMLTextAreaElement) noteEl.value = '';
 
       save(spots);
       render();
     };
 
     addBtn?.addEventListener('click', addSpot);
+
+    regionBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        if (!(btn instanceof HTMLButtonElement)) return;
+        const region = btn.dataset.region;
+        if (!region) return;
+        setRegion(region);
+      });
+    });
+
+    allBtn?.addEventListener('click', () => setRegion('전체'));
 
     listEl?.addEventListener('click', (e) => {
       const target = e.target;
@@ -176,6 +257,18 @@ import Recommend from '../../components/Recommend.astro';
       render();
     });
 
-    render();
+    setRegion('전체');
   </script>
+
+  <style>
+    .map-region {
+      border: 1px solid #cbd5e1;
+      border-radius: 0.5rem;
+      background: white;
+      color: #0f172a;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.45rem;
+      line-height: 1;
+    }
+  </style>
 </Layout>
