@@ -31,6 +31,16 @@ const enHref = new URL(pathNoLocale === '/' ? '/en' : `/en${pathNoLocale}`, site
 const jaHref = new URL(pathNoLocale === '/' ? '/ja' : `/ja${pathNoLocale}`, siteUrl).toString();
 const gaId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID;
 const googleSiteVerification = import.meta.env.PUBLIC_GOOGLE_SITE_VERIFICATION;
+const naverSiteVerification = import.meta.env.PUBLIC_NAVER_SITE_VERIFICATION;
+const localeTitlePrefix = locale === 'ko' ? '' : locale === 'en' ? '[EN] ' : '[JA] ';
+const localeDescSuffix = locale === 'ko'
+  ? ''
+  : locale === 'en'
+    ? ' | English version of this page.'
+    : ' | 日本語ページです。';
+const normalizedPathLabel = pathNoLocale === '/' ? 'main' : pathNoLocale.replace(/\//g, ' ').trim();
+const resolvedTitle = `${localeTitlePrefix}${title}`;
+const resolvedDescription = `${description}${localeDescSuffix}${locale === 'ko' ? '' : ` (path: ${normalizedPathLabel})`}`;
 const segments = pathNoLocale.split('/').filter(Boolean);
 const labelMap: Record<string, string> = {
   about: '소개',
@@ -88,8 +98,8 @@ const websiteJsonLd = {
 const webPageJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebPage',
-  name: title,
-  description,
+  name: resolvedTitle,
+  description: resolvedDescription,
   url: canonical,
   isPartOf: {
     '@type': 'WebSite',
@@ -119,20 +129,20 @@ const breadcrumbJsonLd = {
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
     <meta name="generator" content={Astro.generator} />
-    <title>{title}</title>
-    <meta name="description" content={description} />
+    <title>{resolvedTitle}</title>
+    <meta name="description" content={resolvedDescription} />
     <meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1'} />
     <link rel="canonical" href={canonical} />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="ManyTool" />
     <meta property="og:locale" content={ogLocale} />
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content={description} />
+    <meta property="og:title" content={resolvedTitle} />
+    <meta property="og:description" content={resolvedDescription} />
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={ogImage} />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={title} />
-    <meta name="twitter:description" content={description} />
+    <meta name="twitter:title" content={resolvedTitle} />
+    <meta name="twitter:description" content={resolvedDescription} />
     <meta name="twitter:image" content={ogImage} />
     <meta name="author" content="ManyTool" />
     <link rel="alternate" hrefLang="ko-KR" href={koHref} />
@@ -140,6 +150,7 @@ const breadcrumbJsonLd = {
     <link rel="alternate" hrefLang="ja" href={jaHref} />
     <link rel="alternate" hrefLang="x-default" href={koHref} />
     {googleSiteVerification && <meta name="google-site-verification" content={googleSiteVerification} />}
+    {naverSiteVerification && <meta name="naver-site-verification" content={naverSiteVerification} />}
     <script type="application/ld+json" set:html={JSON.stringify(websiteJsonLd)}></script>
     <script type="application/ld+json" set:html={JSON.stringify(webPageJsonLd)}></script>
     <script type="application/ld+json" set:html={JSON.stringify(breadcrumbJsonLd)}></script>
