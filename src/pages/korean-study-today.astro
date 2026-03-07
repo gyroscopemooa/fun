@@ -1,0 +1,72 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import AdSense from '../components/AdSense.astro';
+import Recommend from '../components/Recommend.astro';
+
+const pathname = Astro.url.pathname;
+const locale = pathname.startsWith('/en/') || pathname === '/en'
+  ? 'en'
+  : pathname.startsWith('/ja/') || pathname === '/ja'
+    ? 'ja'
+    : 'ko';
+
+const t = {
+  ko: { title: '오늘의 한국어공부 | ManyTool', desc: '매일 1개의 한국어 표현과 예문으로 한국어를 공부합니다.', h1: '오늘의 한국어공부', sub: '매일 한 포인트씩 가볍게 학습', copy: '복사', copied: '복사됨' },
+  en: { title: 'Daily Korean Study | ManyTool', desc: 'Learn one Korean expression each day with simple examples.', h1: 'Daily Korean Study', sub: 'One Korean learning point every day', copy: 'Copy', copied: 'Copied' },
+  ja: { title: '今日の韓国語学習 | ManyTool', desc: '毎日1つの韓国語表現を例文と一緒に学べます。', h1: '今日の韓国語学習', sub: '毎日1ポイントずつ学習', copy: 'コピー', copied: 'コピー完了' }
+}[locale];
+
+const entries = [
+  { word: '안녕하세요', meaning: 'Hello', ex: '안녕하세요. 만나서 반가워요.' },
+  { word: '감사합니다', meaning: 'Thank you', ex: '도와주셔서 감사합니다.' },
+  { word: '괜찮아요', meaning: 'It is okay', ex: '네, 괜찮아요.' },
+  { word: '어디예요?', meaning: 'Where is it?', ex: '화장실은 어디예요?' },
+  { word: '맛있어요', meaning: 'It is delicious', ex: '김치찌개가 정말 맛있어요.' },
+  { word: '천천히 말해 주세요', meaning: 'Please speak slowly', ex: '한국어 초보라서 천천히 말해 주세요.' },
+  { word: '다음에 또 봐요', meaning: 'See you next time', ex: '오늘 즐거웠어요. 다음에 또 봐요.' },
+  { word: '도와주세요', meaning: 'Please help me', ex: '길을 잃었어요. 도와주세요.' }
+];
+---
+
+<Layout title={t.title} description={t.desc}>
+  <Header />
+  <main class="mx-auto max-w-4xl px-4 py-8">
+    <h1 class="text-3xl font-black">{t.h1}</h1>
+    <p class="mt-2 text-slate-700">{t.sub}</p>
+    <AdSense slotName="본문 상단" />
+    <section class="mt-5 rounded-xl border border-slate-200 bg-white p-6">
+      <h2 id="word" class="text-3xl font-black text-slate-900">-</h2>
+      <p id="meaning" class="mt-2 text-lg font-semibold text-slate-800">-</p>
+      <p id="example" class="mt-2 rounded-lg bg-slate-100 px-3 py-2 text-slate-700">-</p>
+      <button id="copy-btn" class="mt-4 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold">{t.copy}</button>
+    </section>
+    <section class="mt-5 rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-700">
+      <h2 class="text-lg font-bold">FAQ</h2>
+      <p class="mt-2">Q. 데이터 저장이 필요한가요?</p>
+      <p>A. 필요 없습니다. 매일 접속하면 오늘 학습 표현을 확인할 수 있습니다.</p>
+    </section>
+    <AdSense slotName="본문 하단" />
+    <Recommend />
+  </main>
+  <Footer />
+  <script is:inline define:vars={{ entries, copiedText: t.copied }}>
+    const date = new Date();
+    const key = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+    let hash = 0;
+    for (let i = 0; i < key.length; i += 1) hash = (hash * 37 + key.charCodeAt(i)) >>> 0;
+    const pick = entries[hash % entries.length];
+    const wordEl = document.getElementById('word');
+    const meaningEl = document.getElementById('meaning');
+    const exampleEl = document.getElementById('example');
+    const copyBtn = document.getElementById('copy-btn');
+    if (wordEl) wordEl.textContent = pick.word;
+    if (meaningEl) meaningEl.textContent = pick.meaning;
+    if (exampleEl) exampleEl.textContent = pick.ex;
+    copyBtn?.addEventListener('click', async () => {
+      await navigator.clipboard.writeText(`${pick.word} - ${pick.meaning} / ${pick.ex}`);
+      if (copyBtn instanceof HTMLButtonElement) copyBtn.textContent = copiedText;
+    });
+  </script>
+</Layout>

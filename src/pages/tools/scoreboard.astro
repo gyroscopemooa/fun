@@ -4,34 +4,107 @@ import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import AdSense from '../../components/AdSense.astro';
 import Recommend from '../../components/Recommend.astro';
+
+const pathname = Astro.url.pathname;
+const locale = pathname.startsWith('/en/') || pathname === '/en'
+  ? 'en'
+  : pathname.startsWith('/ja/') || pathname === '/ja'
+    ? 'ja'
+    : 'ko';
+
+const t = {
+  ko: {
+    title: '스트리머 방송 점수판 | ManyTool',
+    desc: '방송 중 팀 점수를 쉽게 관리할 수 있는 도구입니다. OBS 브라우저 소스로 추가하여 방송 화면에 표시할 수 있습니다.',
+    obs: '이 페이지는 OBS 브라우저 소스로 추가하여 방송 점수판으로 사용할 수 있습니다.',
+    h1: '스트리머 방송 점수판',
+    sub: '로그인 없이 로컬 저장으로 즉시 사용',
+    reset: '점수 초기화',
+    fullReset: '전체 초기화',
+    teamA: 'Team A',
+    teamB: 'Team B',
+    allowNegative: '마이너스 점수 허용',
+    allowHelp: '비허용 시 점수는 0 아래로 내려가지 않습니다.',
+    playersA: 'Team A 참가자',
+    playersB: 'Team B 참가자',
+    add: '+ 추가',
+    history: '기록',
+    kbd: '키보드: A/Z (Team A +1/-1), K/M (Team B +1/-1)',
+    noHistory: '기록이 없습니다.',
+    remove: '삭제',
+    playerPlaceholder: '참가자 이름'
+  },
+  en: {
+    title: 'Streamer Scoreboard | ManyTool',
+    desc: 'A simple scoreboard tool for live streamers. Add it to OBS as a browser source.',
+    obs: 'This tool can be added to OBS as a browser source to display scores during live streams.',
+    h1: 'Streamer Scoreboard',
+    sub: 'Simple local scoreboard for live streaming',
+    reset: 'Reset Scores',
+    fullReset: 'Full Reset',
+    teamA: 'Team A',
+    teamB: 'Team B',
+    allowNegative: 'Allow negative scores',
+    allowHelp: 'When disabled, score cannot go below 0.',
+    playersA: 'Team A Players',
+    playersB: 'Team B Players',
+    add: '+ Add',
+    history: 'History',
+    kbd: 'Keyboard: A/Z (Team A +1/-1), K/M (Team B +1/-1)',
+    noHistory: 'No history yet.',
+    remove: 'Remove',
+    playerPlaceholder: 'Player name'
+  },
+  ja: {
+    title: 'ストリーマー配信スコアボード | ManyTool',
+    desc: '配信中にチームスコアを簡単に管理できるツールです。OBSブラウザソースで表示できます。',
+    obs: 'このページはOBSブラウザソースとして追加し、配信スコアボードに使えます。',
+    h1: 'ストリーマー配信スコアボード',
+    sub: 'ログイン不要、ローカル保存ですぐ使える',
+    reset: 'スコア初期化',
+    fullReset: '全体初期化',
+    teamA: 'Team A',
+    teamB: 'Team B',
+    allowNegative: 'マイナス点を許可',
+    allowHelp: '無効時は0未満になりません。',
+    playersA: 'Team A 参加者',
+    playersB: 'Team B 参加者',
+    add: '+ 追加',
+    history: '履歴',
+    kbd: 'キー: A/Z (Team A +1/-1), K/M (Team B +1/-1)',
+    noHistory: '履歴はありません。',
+    remove: '削除',
+    playerPlaceholder: '参加者名'
+  }
+}[locale];
 ---
 
 <Layout
-  title="Streamer Scoreboard | ManyTool"
-  description="라이브 스트리머를 위한 경량 점수판 도구. 로그인 없이 로컬 저장으로 즉시 사용 가능하며 OBS Browser Source에 적합합니다."
+  title={t.title}
+  description={t.desc}
 >
   <Header />
 
   <main class="mx-auto max-w-6xl px-4 py-6">
     <section class="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-900">
-      This tool can be added to OBS as a browser source to display scores during live streams.
+      {t.obs}
     </section>
 
     <section class="mt-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 class="text-3xl font-black tracking-tight">Streamer Scoreboard</h1>
-          <p class="mt-1 text-sm text-slate-500">Simple local scoreboard for live streaming</p>
+          <h1 class="text-3xl font-black tracking-tight">{t.h1}</h1>
+          <p class="mt-1 text-sm text-slate-500">{t.sub}</p>
         </div>
         <div class="flex flex-wrap gap-2">
-          <button id="reset-scores" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50">Reset Scores</button>
-          <button id="full-reset" class="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700">Full Reset</button>
+          <button id="reset-scores" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50">{t.reset}</button>
+          <button id="full-reset" class="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700">{t.fullReset}</button>
         </div>
       </div>
 
       <div class="grid gap-4 md:grid-cols-2">
         <article class="rounded-xl border border-slate-200 bg-slate-50 p-4">
-          <input id="team-a-name" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-lg font-bold" value="Team A" />
+          <input id="team-a-name" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-lg font-bold" value={t.teamA} />
           <p id="team-a-score" class="mt-3 text-center text-7xl font-black leading-none text-slate-900">0</p>
           <div class="mt-4 grid grid-cols-4 gap-2">
             <button data-team="a" data-delta="1" class="score-btn">+1</button>
@@ -42,7 +115,7 @@ import Recommend from '../../components/Recommend.astro';
         </article>
 
         <article class="rounded-xl border border-slate-200 bg-slate-50 p-4">
-          <input id="team-b-name" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-lg font-bold" value="Team B" />
+          <input id="team-b-name" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-lg font-bold" value={t.teamB} />
           <p id="team-b-score" class="mt-3 text-center text-7xl font-black leading-none text-slate-900">0</p>
           <div class="mt-4 grid grid-cols-4 gap-2">
             <button data-team="b" data-delta="1" class="score-btn">+1</button>
@@ -56,34 +129,34 @@ import Recommend from '../../components/Recommend.astro';
       <div class="mt-4 flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
         <label class="inline-flex items-center gap-2 font-semibold">
           <input id="allow-negative" type="checkbox" class="h-4 w-4" />
-          Allow negative scores
+          {t.allowNegative}
         </label>
-        <p class="text-slate-500">Disabled면 점수는 0 아래로 내려가지 않습니다.</p>
+        <p class="text-slate-500">{t.allowHelp}</p>
       </div>
     </section>
 
     <section class="mt-4 grid gap-4 md:grid-cols-2">
       <article class="rounded-xl border border-slate-200 bg-white p-4">
         <div class="mb-3 flex items-center justify-between gap-2">
-          <h2 class="text-xl font-bold">Team A Players</h2>
-          <button id="add-player-a" class="rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white hover:bg-sky-700">+ Add</button>
+          <h2 class="text-xl font-bold">{t.playersA}</h2>
+          <button id="add-player-a" class="rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white hover:bg-sky-700">{t.add}</button>
         </div>
         <ul id="players-a" class="space-y-2"></ul>
       </article>
 
       <article class="rounded-xl border border-slate-200 bg-white p-4">
         <div class="mb-3 flex items-center justify-between gap-2">
-          <h2 class="text-xl font-bold">Team B Players</h2>
-          <button id="add-player-b" class="rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white hover:bg-sky-700">+ Add</button>
+          <h2 class="text-xl font-bold">{t.playersB}</h2>
+          <button id="add-player-b" class="rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white hover:bg-sky-700">{t.add}</button>
         </div>
         <ul id="players-b" class="space-y-2"></ul>
       </article>
     </section>
 
     <section class="mt-4 rounded-xl border border-slate-200 bg-white p-4">
-      <h2 class="text-lg font-bold">History</h2>
+      <h2 class="text-lg font-bold">{t.history}</h2>
       <ul id="history-list" class="mt-2 space-y-1 text-sm text-slate-600"></ul>
-      <p class="mt-3 text-xs text-slate-500">Keyboard: A/Z (Team A +1/-1), K/M (Team B +1/-1)</p>
+      <p class="mt-3 text-xs text-slate-500">{t.kbd}</p>
     </section>
 
     <AdSense slotName="본문 상단" />
@@ -93,11 +166,11 @@ import Recommend from '../../components/Recommend.astro';
 
   <Footer />
 
-  <script is:inline>
+  <script is:inline define:vars={{ t }}>
     const KEY = 'manytool_streamer_scoreboard_v1';
     const initialState = {
-      teamAName: 'Team A',
-      teamBName: 'Team B',
+      teamAName: t.teamA,
+      teamBName: t.teamB,
       teamAScore: 0,
       teamBScore: 0,
       teamAPlayers: [],
@@ -156,7 +229,7 @@ import Recommend from '../../components/Recommend.astro';
       const input = document.createElement('input');
       input.className = 'flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm';
       input.value = name;
-      input.placeholder = 'Player name';
+      input.placeholder = t.playerPlaceholder;
       input.addEventListener('input', () => {
         const arr = team === 'a' ? state.teamAPlayers : state.teamBPlayers;
         arr[index] = input.value;
@@ -165,7 +238,7 @@ import Recommend from '../../components/Recommend.astro';
 
       const del = document.createElement('button');
       del.className = 'rounded-md border border-rose-300 px-2 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50';
-      del.textContent = 'Remove';
+      del.textContent = t.remove;
       del.addEventListener('click', () => {
         const arr = team === 'a' ? state.teamAPlayers : state.teamBPlayers;
         arr.splice(index, 1);
@@ -196,7 +269,7 @@ import Recommend from '../../components/Recommend.astro';
       if (state.history.length === 0) {
         const li = document.createElement('li');
         li.className = 'text-slate-400';
-        li.textContent = 'No history yet.';
+        li.textContent = t.noHistory;
         historyListEl.appendChild(li);
         return;
       }
@@ -228,14 +301,14 @@ import Recommend from '../../components/Recommend.astro';
 
     teamANameEl?.addEventListener('input', () => {
       if (!(teamANameEl instanceof HTMLInputElement)) return;
-      state.teamAName = teamANameEl.value || 'Team A';
+      state.teamAName = teamANameEl.value || t.teamA;
       save();
       render();
     });
 
     teamBNameEl?.addEventListener('input', () => {
       if (!(teamBNameEl instanceof HTMLInputElement)) return;
-      state.teamBName = teamBNameEl.value || 'Team B';
+      state.teamBName = teamBNameEl.value || t.teamB;
       save();
       render();
     });
