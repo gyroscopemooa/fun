@@ -5,76 +5,99 @@ import AdSense from '../components/AdSense.astro';
 import SponsorBanner from '../components/SponsorBanner.astro';
 import Recommend from '../components/Recommend.astro';
 
-const tabs = ['전체', '테스트', '게임', '지도', '랜덤'];
+const tabs = ['전체', '게임', '도구', '아트', '기타'];
 
 const cards = [
-  { href: '/animal-test', title: '동물상 테스트', desc: '사진 기반 AI 분석', tag: '테스트', icon: 'AI' },
-  { href: '/personal-color', title: '퍼스널컬러', desc: '얼굴 기반 색상 추천', tag: '테스트', icon: '색' },
-  { href: '/mbti-test', title: 'MBTI 테스트', desc: '간단 문답형 성향 테스트', tag: '테스트', icon: 'MB' },
-  { href: '/love-compatibility', title: '연애 궁합', desc: '두 사람 궁합 확인', tag: '테스트', icon: '궁' },
-  { href: '/pinball', title: '핀볼 게임', desc: '웹 미니게임', tag: '게임', icon: '게' },
-  { href: '/reaction-test', title: '반응속도', desc: '클릭 속도 측정', tag: '게임', icon: '속' },
-  { href: '/magic-book', title: '마법책', desc: '오늘의 랜덤 문구', tag: '게임', icon: '책' },
-  { href: '/maps/fishbread', title: '붕어빵 지도', desc: '근처 붕어빵 찾기', tag: '지도', icon: '지' },
-  { href: '/maps/hidden-cafe', title: '숨은 카페 지도', desc: '분위기 좋은 카페', tag: '지도', icon: '카' },
-  { href: '/maps/local-eats', title: '지역 맛집 지도', desc: '동네 인기 맛집', tag: '지도', icon: '맛' },
-  { href: '/random-food', title: '랜덤 음식', desc: '오늘 메뉴 추천', tag: '랜덤', icon: '랜' }
+  { href: '/animal-test', title: '동물상 테스트', desc: '사진으로 동물상 분석', icon: '동' },
+  { href: '/pinball', title: '핀볼 게임', desc: '가볍게 즐기는 미니게임', icon: '게' },
+  { href: '/personal-color', title: '퍼스널컬러', desc: '얼굴 기반 색상 추천', icon: '색' },
+  { href: '/magic-book', title: '마법책', desc: '랜덤 문구 뽑기', icon: '책' },
+  { href: '/reaction-test', title: '반응속도', desc: '클릭 속도 측정', icon: '속' },
+  { href: '/mbti-test', title: 'MBTI 테스트', desc: '성향 빠른 확인', icon: 'MB' },
+  { href: '/maps/fishbread', title: '붕어빵 지도', desc: '근처 붕어빵 찾기', icon: '지' },
+  { href: '/maps/hidden-cafe', title: '숨은 카페 지도', desc: '조용한 카페 탐색', icon: '카' },
+  { href: '/maps/local-eats', title: '지역 맛집 지도', desc: '동네 인기 맛집', icon: '맛' },
+  { href: '/love-compatibility', title: '연애 궁합', desc: '두 사람 궁합 테스트', icon: '궁' },
+  { href: '/random-food', title: '랜덤 음식', desc: '오늘 메뉴 추천', icon: '랜' },
+  { href: '/maps/fishbread/seoul', title: '서울 붕어빵', desc: '서울 지역 빠른 탐색', icon: '서' }
 ];
+
+const rows = [cards.slice(0, 4), cards.slice(4, 8), cards.slice(8, 12)];
 ---
 
-<Layout title="FunHub | 테스트, 게임, 지도, 랜덤 도구 포털" description="카드형 허브 메인 페이지">
-  <main class="mx-auto max-w-6xl px-4 py-8 md:py-10">
-    <section class="rounded-2xl border border-sky-100 bg-white p-5 md:p-7">
-      <div class="flex items-center gap-2 text-sky-600">
-        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-100 text-sm font-bold">F</div>
-        <p class="font-bold tracking-tight">FunHub</p>
-      </div>
+<Layout title="FunHub | 카드형 포털" description="테스트, 게임, 지도, 랜덤 도구를 카드로 탐색하는 메인 페이지">
+  <main class="min-h-screen bg-slate-100">
+    <div class="mx-auto max-w-6xl">
+      <header class="flex items-center justify-between border-b border-sky-100 px-6 py-4 lg:px-10">
+        <div class="flex items-center gap-3">
+          <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-100 text-sky-600 text-sm font-bold">F</div>
+          <h2 class="text-xl font-bold tracking-tight text-slate-900">FunHub</h2>
+        </div>
+        <div class="flex gap-2">
+          <button class="flex h-9 w-9 items-center justify-center rounded-full bg-sky-100 text-xs font-bold text-sky-600">설</button>
+          <button class="flex h-9 w-9 items-center justify-center rounded-full bg-sky-100 text-xs font-bold text-sky-600">내</button>
+        </div>
+      </header>
 
-      <h1 class="mt-4 text-3xl font-bold tracking-tight">재밌는 기능을 카드로 바로 시작</h1>
-      <p class="mt-2 text-slate-600">테스트, 게임, 지도, 랜덤 도구를 한 화면에서 탐색하세요.</p>
+      <section class="px-6 py-6 lg:px-10">
+        <div class="max-w-md">
+          <input
+            class="w-full rounded-full border border-sky-100 bg-white px-4 py-3 text-sm outline-none focus:border-sky-400"
+            placeholder="원하는 기능을 검색해보세요"
+            type="text"
+          />
+        </div>
 
-      <div class="mt-5">
-        <input
-          class="w-full rounded-full border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400"
-          placeholder="원하는 기능을 찾아보세요 (예: 붕어빵, MBTI, 랜덤 음식)"
-          type="text"
-        />
-      </div>
+        <div class="mt-5">
+          <h1 class="text-3xl font-bold tracking-tight text-slate-900">재미 도구 모음</h1>
+          <p class="mt-1 text-slate-500">카드에서 바로 시작하세요.</p>
+        </div>
 
-      <div class="mt-4 flex flex-wrap gap-2">
-        {tabs.map((tab, idx) => (
-          <button
-            class:list={[
-              'rounded-full border px-4 py-2 text-sm font-medium',
-              idx === 0
-                ? 'border-sky-500 bg-sky-500 text-white'
-                : 'border-slate-200 bg-white text-slate-600'
-            ]}
-          >
-            {tab}
-          </button>
+        <div class="mt-4 flex gap-2 overflow-x-auto pb-2">
+          {tabs.map((tab, idx) => (
+            <button
+              class:list={[
+                'whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium',
+                idx === 0
+                  ? 'bg-sky-500 text-white'
+                  : 'border border-sky-100 bg-white text-slate-600'
+              ]}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section class="space-y-4 px-6 pb-4 lg:px-10">
+        {rows.map((row) => (
+          <div class="flex items-center gap-2">
+            <button class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-sky-100 bg-white text-sky-500">‹</button>
+            <div class="grid flex-1 grid-cols-2 gap-3 lg:grid-cols-4">
+              {row.map((card) => (
+                <a href={card.href} class="rounded-xl border border-sky-100 bg-white p-4 transition hover:shadow-sm">
+                  <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-100 text-sm font-bold text-sky-700">{card.icon}</div>
+                  <h2 class="mt-3 text-base font-bold tracking-tight text-slate-900">{card.title}</h2>
+                  <p class="mt-1 text-xs leading-relaxed text-slate-500">{card.desc}</p>
+                </a>
+              ))}
+            </div>
+            <button class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-sky-100 bg-white text-sky-500">›</button>
+          </div>
         ))}
-      </div>
-    </section>
+      </section>
 
-    <AdSense slotName="Header 아래" />
+      <AdSense slotName="Header 아래" />
+      <AdSense slotName="본문 상단" />
+      <SponsorBanner position="본문 중간" />
+      <AdSense slotName="본문 중간" />
 
-    <section class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {cards.map((card) => (
-        <a href={card.href} class="group rounded-2xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-sm">
-          <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-sky-100 text-sky-700 font-bold">{card.icon}</div>
-          <h2 class="mt-4 text-lg font-bold tracking-tight">{card.title}</h2>
-          <p class="mt-1 text-sm text-slate-600">{card.desc}</p>
-          <p class="mt-3 text-xs font-semibold text-sky-700">#{card.tag}</p>
-        </a>
-      ))}
-    </section>
+      <section class="px-6 pb-10 lg:px-10">
+        <Recommend />
+        <AdSense slotName="추천 콘텐츠 위" />
+      </section>
+    </div>
 
-    <AdSense slotName="본문 상단" />
-    <SponsorBanner position="본문 중간" />
-    <AdSense slotName="본문 중간" />
-    <Recommend />
-    <AdSense slotName="추천 콘텐츠 위" />
+    <Footer />
   </main>
-  <Footer />
 </Layout>
