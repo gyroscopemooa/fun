@@ -8,18 +8,18 @@ import Recommend from '../components/Recommend.astro';
 const tabs = ['전체', '게임', '도구', '아트', '기타'];
 
 const cards = [
-  { href: '/animal-test', title: '동물상 테스트', desc: '사진으로 동물상 분석', icon: '동' },
-  { href: '/pinball', title: '핀볼 게임', desc: '가볍게 즐기는 미니게임', icon: '게' },
-  { href: '/personal-color', title: '퍼스널컬러', desc: '얼굴 기반 색상 추천', icon: '색' },
-  { href: '/magic-book', title: '마법책', desc: '랜덤 문구 뽑기', icon: '책' },
-  { href: '/reaction-test', title: '반응속도', desc: '클릭 속도 측정', icon: '속' },
-  { href: '/mbti-test', title: 'MBTI 테스트', desc: '성향 빠른 확인', icon: 'MB' },
-  { href: '/maps/fishbread', title: '붕어빵 지도', desc: '근처 붕어빵 찾기', icon: '지' },
-  { href: '/maps/hidden-cafe', title: '숨은 카페 지도', desc: '조용한 카페 탐색', icon: '카' },
-  { href: '/maps/local-eats', title: '지역 맛집 지도', desc: '동네 인기 맛집', icon: '맛' },
-  { href: '/love-compatibility', title: '연애 궁합', desc: '두 사람 궁합 테스트', icon: '궁' },
-  { href: '/random-food', title: '랜덤 음식', desc: '오늘 메뉴 추천', icon: '랜' },
-  { href: '/maps/fishbread/seoul', title: '서울 붕어빵', desc: '서울 지역 빠른 탐색', icon: '서' }
+  { href: '/animal-test', title: '동물상 테스트', desc: '사진으로 동물상 분석', icon: '🐾', iconClass: 'bg-sky-100 text-sky-700' },
+  { href: '/pinball', title: '핀볼 게임', desc: '가볍게 즐기는 미니게임', icon: '🎮', iconClass: 'bg-emerald-100 text-emerald-700' },
+  { href: '/personal-color', title: '퍼스널컬러', desc: '얼굴 기반 색상 추천', icon: '🎨', iconClass: 'bg-amber-100 text-amber-700' },
+  { href: '/magic-book', title: '마법책', desc: '랜덤 문구 뽑기', icon: '✨', iconClass: 'bg-fuchsia-100 text-fuchsia-700' },
+  { href: '/reaction-test', title: '반응속도', desc: '클릭 속도 측정', icon: '⚡', iconClass: 'bg-rose-100 text-rose-700' },
+  { href: '/mbti-test', title: 'MBTI 테스트', desc: '성향 빠른 확인', icon: '🧠', iconClass: 'bg-indigo-100 text-indigo-700' },
+  { href: '/maps/fishbread', title: '붕어빵 지도', desc: '근처 붕어빵 찾기', icon: '🗺️', iconClass: 'bg-cyan-100 text-cyan-700' },
+  { href: '/maps/hidden-cafe', title: '숨은 카페 지도', desc: '조용한 카페 탐색', icon: '☕', iconClass: 'bg-orange-100 text-orange-700' },
+  { href: '/maps/local-eats', title: '지역 맛집 지도', desc: '동네 인기 맛집', icon: '🍜', iconClass: 'bg-red-100 text-red-700' },
+  { href: '/love-compatibility', title: '연애 궁합', desc: '두 사람 궁합 테스트', icon: '💜', iconClass: 'bg-violet-100 text-violet-700' },
+  { href: '/random-food', title: '랜덤 음식', desc: '오늘 메뉴 추천', icon: '🎲', iconClass: 'bg-yellow-100 text-yellow-700' },
+  { href: '/ladder-game', title: '사다리타기', desc: '랜덤 당첨 뽑기', icon: '🪜', iconClass: 'bg-lime-100 text-lime-700' }
 ];
 
 const rows = [cards.slice(0, 4), cards.slice(4, 8), cards.slice(8, 12)];
@@ -30,7 +30,7 @@ const rows = [cards.slice(0, 4), cards.slice(4, 8), cards.slice(8, 12)];
     <div class="mx-auto max-w-6xl">
       <header class="flex items-center justify-between border-b border-sky-100 px-6 py-4 lg:px-10">
         <div class="flex items-center gap-3">
-          <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-100 text-sky-600 text-sm font-bold">F</div>
+          <img src="/favicon.svg" alt="FunHub 로고" class="h-8 w-8 rounded-lg bg-sky-100 p-1" />
           <h2 class="text-xl font-bold tracking-tight text-slate-900">FunHub</h2>
         </div>
         <div class="flex gap-2">
@@ -70,19 +70,24 @@ const rows = [cards.slice(0, 4), cards.slice(4, 8), cards.slice(8, 12)];
       </section>
 
       <section class="space-y-4 px-6 pb-4 lg:px-10">
-        {rows.map((row) => (
-          <div class="flex items-center gap-2">
-            <button class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-sky-100 bg-white text-sky-500">‹</button>
-            <div class="grid flex-1 grid-cols-2 gap-3 lg:grid-cols-4">
-              {row.map((card) => (
-                <a href={card.href} class="rounded-xl border border-sky-100 bg-white p-4 transition hover:shadow-sm">
-                  <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-100 text-sm font-bold text-sky-700">{card.icon}</div>
-                  <h2 class="mt-3 text-base font-bold tracking-tight text-slate-900">{card.title}</h2>
-                  <p class="mt-1 text-xs leading-relaxed text-slate-500">{card.desc}</p>
-                </a>
-              ))}
+        {rows.map((row, idx) => (
+          <div class="flex items-center gap-2" data-slider data-row={idx}>
+            <button class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-sky-100 bg-white text-sky-500" data-nav="prev">‹</button>
+            <div class="flex-1 overflow-hidden">
+              <div class="flex gap-3 overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" data-track>
+                {row.map((card) => (
+                  <a
+                    href={card.href}
+                    class="min-w-[165px] rounded-xl border border-sky-100 bg-white p-4 transition hover:shadow-sm sm:min-w-[200px] lg:min-w-[230px]"
+                  >
+                    <div class:list={['flex h-10 w-10 items-center justify-center rounded-lg text-base', card.iconClass]}>{card.icon}</div>
+                    <h2 class="mt-3 text-base font-bold tracking-tight text-slate-900">{card.title}</h2>
+                    <p class="mt-1 text-xs leading-relaxed text-slate-500">{card.desc}</p>
+                  </a>
+                ))}
+              </div>
             </div>
-            <button class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-sky-100 bg-white text-sky-500">›</button>
+            <button class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-sky-100 bg-white text-sky-500" data-nav="next">›</button>
           </div>
         ))}
       </section>
@@ -100,4 +105,53 @@ const rows = [cards.slice(0, 4), cards.slice(4, 8), cards.slice(8, 12)];
 
     <Footer />
   </main>
+
+  <script is:inline>
+    const sliderRows = document.querySelectorAll('[data-slider]');
+
+    sliderRows.forEach((rowEl) => {
+      const track = rowEl.querySelector('[data-track]');
+      const prevBtn = rowEl.querySelector('[data-nav="prev"]');
+      const nextBtn = rowEl.querySelector('[data-nav="next"]');
+
+      if (!track || !prevBtn || !nextBtn) return;
+
+      const step = () => {
+        const firstCard = track.querySelector('a');
+        if (!firstCard) return 240;
+        const cardWidth = firstCard.getBoundingClientRect().width;
+        return Math.round(cardWidth + 12);
+      };
+
+      const slideNext = () => {
+        const amount = step();
+        const maxLeft = track.scrollWidth - track.clientWidth;
+        const target = track.scrollLeft + amount;
+        if (target >= maxLeft - 4) {
+          track.scrollTo({ left: 0, behavior: 'smooth' });
+          return;
+        }
+        track.scrollBy({ left: amount, behavior: 'smooth' });
+      };
+
+      const slidePrev = () => {
+        const amount = step();
+        const target = track.scrollLeft - amount;
+        if (target <= 0) {
+          track.scrollTo({ left: 0, behavior: 'smooth' });
+          return;
+        }
+        track.scrollBy({ left: -amount, behavior: 'smooth' });
+      };
+
+      prevBtn.addEventListener('click', slidePrev);
+      nextBtn.addEventListener('click', slideNext);
+
+      let timer = window.setInterval(slideNext, 2800);
+      rowEl.addEventListener('mouseenter', () => window.clearInterval(timer));
+      rowEl.addEventListener('mouseleave', () => {
+        timer = window.setInterval(slideNext, 2800);
+      });
+    });
+  </script>
 </Layout>

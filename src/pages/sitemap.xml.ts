@@ -14,6 +14,7 @@ const paths = [
   '/reaction-test',
   '/mbti-test',
   '/love-compatibility',
+  '/ladder-game',
   '/maps/fishbread',
   '/maps/fishbread/seoul',
   '/maps/fishbread/busan',
