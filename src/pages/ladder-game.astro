@@ -21,6 +21,13 @@ import Recommend from '../components/Recommend.astro';
         placeholder="예: 민수, 지연, 태훈, 수아"
         type="text"
       />
+      <label class="mt-3 block text-sm font-semibold text-slate-700" for="ladder-items">걸릴 항목</label>
+      <input
+        id="ladder-items"
+        class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500"
+        placeholder="예: 커피사기, 설거지, 노래하기, 면제"
+        type="text"
+      />
       <div class="ladder-stage mt-4 overflow-hidden rounded-xl border border-slate-200 bg-slate-950 p-2">
         <canvas id="ladder-map" width="900" height="360" class="w-full rounded-lg"></canvas>
       </div>
@@ -38,6 +45,7 @@ import Recommend from '../components/Recommend.astro';
       const drawBtnEl = document.getElementById('ladder-btn');
       const resetBtnEl = document.getElementById('ladder-reset');
       const resultEl = document.getElementById('ladder-result');
+      const itemInputEl = document.getElementById('ladder-items');
       const mapCanvas = document.getElementById('ladder-map');
       const mapCtx = mapCanvas instanceof HTMLCanvasElement ? mapCanvas.getContext('2d') : null;
 
@@ -50,6 +58,12 @@ import Recommend from '../components/Recommend.astro';
         (inputEl?.value ?? '')
           .split(',')
           .map((name) => name.trim())
+          .filter(Boolean);
+
+      const parseItems = () =>
+        (itemInputEl instanceof HTMLInputElement ? itemInputEl.value : '')
+          .split(',')
+          .map((item) => item.trim())
           .filter(Boolean);
 
       const getGeometry = (count) => {
@@ -149,8 +163,12 @@ import Recommend from '../components/Recommend.astro';
           ctx.textAlign = 'center';
           ctx.fillText(name, x, top - 14);
 
+          const itemText = items.length > 0 ? items[idx % items.length] : `결과 ${idx + 1}`;
           ctx.fillStyle = idx === winnerIdx ? '#34d399' : '#64748b';
           ctx.fillRect(x - 24, bottom + 8, 48, 18);
+          ctx.fillStyle = '#e2e8f0';
+          ctx.font = 'bold 12px sans-serif';
+          ctx.fillText(itemText, x, bottom + 40);
         });
       };
 
@@ -258,21 +276,28 @@ import Recommend from '../components/Recommend.astro';
           if (resultEl) resultEl.textContent = '참여자는 2명 이상 입력해 주세요.';
           return;
         }
+        const items = parseItems();
+        if (items.length === 0) {
+          if (resultEl) resultEl.textContent = '걸릴 항목을 1개 이상 입력해 주세요.';
+          return;
+        }
         const prevCount = lastNames.length;
         const winnerIdx = Math.floor(Math.random() * names.length);
         const winner = names[winnerIdx];
+        const pickedItem = items[Math.floor(Math.random() * items.length)];
         lastNames = names;
         lastWinnerIdx = winnerIdx;
         if (lastRungs.length === 0 || prevCount !== names.length) {
           lastRungs = buildRungs(names.length);
         }
         drawLadderMap(lastNames, lastWinnerIdx, lastRungs);
-        if (resultEl) resultEl.textContent = `당첨: ${winner}`;
+        if (resultEl) resultEl.textContent = `당첨: ${winner} | 걸린 항목: ${pickedItem}`;
       });
 
       resetBtnEl?.addEventListener('click', () => {
         if (animId) window.cancelAnimationFrame(animId);
         if (inputEl) inputEl.value = '';
+        if (itemInputEl instanceof HTMLInputElement) itemInputEl.value = '';
         if (resultEl) resultEl.textContent = '입력 후 결과 뽑기를 눌러주세요.';
         if (mapCtx && mapCanvas) {
           mapCtx.fillStyle = '#020617';
@@ -314,3 +339,4 @@ import Recommend from '../components/Recommend.astro';
   </main>
   <Footer />
 </Layout>
+        const items = parseItems();
