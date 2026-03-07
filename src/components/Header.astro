@@ -1,20 +1,74 @@
 ﻿---
-const navItems = [
-  { href: '/', label: '홈' },
-  { href: '/today-fortune', label: '운세' },
-  { href: '/pinball', label: '게임' },
-  { href: '/maps/fishbread', label: '붕어빵 지도' },
-  { href: '/contact', label: '문의' }
+const pathname = Astro.url.pathname;
+const locale = pathname.startsWith('/en/') || pathname === '/en'
+  ? 'en'
+  : pathname.startsWith('/ja/') || pathname === '/ja'
+    ? 'ja'
+    : 'ko';
+
+const localePrefix = locale === 'ko' ? '' : `/${locale}`;
+const strippedPath = pathname.replace(/^\/(en|ja)(?=\/|$)/, '') || '/';
+
+const withLocale = (path: string) => {
+  const normalized = path === '/' ? '' : path;
+  return `${localePrefix}${normalized || '/'}`.replace(/\/{2,}/g, '/');
+};
+
+const navByLocale = {
+  ko: [
+    { href: '/', label: '홈' },
+    { href: '/today-fortune', label: '운세' },
+    { href: '/pinball', label: '게임' },
+    { href: '/maps/fishbread', label: '붕어빵 지도' },
+    { href: '/contact', label: '문의' }
+  ],
+  en: [
+    { href: '/', label: 'Home' },
+    { href: '/today-fortune', label: 'Fortune' },
+    { href: '/pinball', label: 'Game' },
+    { href: '/maps/fishbread', label: 'Fishbread Map' },
+    { href: '/contact', label: 'Contact' }
+  ],
+  ja: [
+    { href: '/', label: 'ホーム' },
+    { href: '/today-fortune', label: '運勢' },
+    { href: '/pinball', label: 'ゲーム' },
+    { href: '/maps/fishbread', label: 'たい焼きマップ' },
+    { href: '/contact', label: 'お問い合わせ' }
+  ]
+} as const;
+
+const navItems = navByLocale[locale as keyof typeof navByLocale];
+
+const langLinks = [
+  { code: 'ko', href: `${strippedPath}`.replace(/\/{2,}/g, '/') || '/' },
+  { code: 'en', href: `/en${strippedPath}`.replace(/\/{2,}/g, '/') || '/en' },
+  { code: 'ja', href: `/ja${strippedPath}`.replace(/\/{2,}/g, '/') || '/ja' }
 ];
 ---
 
 <header class="border-b border-slate-200 bg-white">
   <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-    <a href="/" class="text-xl font-bold tracking-tight">ManyTool</a>
-    <nav class="flex items-center gap-2 text-sm">
-      {navItems.map((item) => (
-        <a class="rounded-md px-2 py-1 whitespace-nowrap hover:bg-slate-100" href={item.href}>{item.label}</a>
-      ))}
-    </nav>
+    <a href={withLocale('/')} class="text-xl font-bold tracking-tight">ManyTool</a>
+    <div class="flex items-center gap-2">
+      <nav class="hidden items-center gap-2 text-sm md:flex">
+        {navItems.map((item) => (
+          <a class="rounded-md px-2 py-1 whitespace-nowrap hover:bg-slate-100" href={withLocale(item.href)}>{item.label}</a>
+        ))}
+      </nav>
+      <div class="flex items-center gap-1 rounded-md border border-slate-200 p-1 text-xs">
+        {langLinks.map((lang) => (
+          <a
+            href={lang.href}
+            class:list={[
+              'rounded px-2 py-1 font-semibold uppercase',
+              lang.code === locale ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+            ]}
+          >
+            {lang.code}
+          </a>
+        ))}
+      </div>
+    </div>
   </div>
 </header>

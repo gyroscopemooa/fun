@@ -24,6 +24,11 @@ const paths = [
   '/maps/local-eats'
 ];
 
+const localePaths = ['en', 'ja'].flatMap((locale) =>
+  paths.map((path) => (path === '/' ? `/${locale}` : `/${locale}${path}`))
+);
+const allPaths = [...paths, ...localePaths];
+
 export const GET: APIRoute = ({ site }) => {
   const base = site ?? new URL('https://fun.pages.dev');
   const now = new Date().toISOString().split('T')[0];
@@ -44,7 +49,7 @@ export const GET: APIRoute = ({ site }) => {
 
   const body = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${paths
+${allPaths
   .map((path) => {
     const loc = new URL(path, base).toString();
     return `  <url><loc>${loc}</loc><lastmod>${now}</lastmod><changefreq>${changefreqFor(path)}</changefreq><priority>${priorityFor(path)}</priority></url>`;
