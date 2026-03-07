@@ -50,6 +50,7 @@ import Recommend from '../components/Recommend.astro';
       const mapCtx = mapCanvas instanceof HTMLCanvasElement ? mapCanvas.getContext('2d') : null;
 
       let lastNames = [];
+      let lastItems = [];
       let lastWinnerIdx = -1;
       let lastRungs = [];
       let animId = 0;
@@ -66,6 +67,17 @@ import Recommend from '../components/Recommend.astro';
           .split(',')
           .map((item) => item.trim())
           .filter(Boolean);
+
+      const shuffle = (arr) => {
+        const copy = [...arr];
+        for (let i = copy.length - 1; i > 0; i -= 1) {
+          const j = Math.floor(Math.random() * (i + 1));
+          const tmp = copy[i];
+          copy[i] = copy[j];
+          copy[j] = tmp;
+        }
+        return copy;
+      };
 
       const getGeometry = (count) => {
         if (!mapCanvas) return null;
@@ -95,13 +107,12 @@ import Recommend from '../components/Recommend.astro';
         return rungs;
       };
 
-      const drawLadderMap = (names, winnerIdx, rungs, trace = [], dot = null) => {
+      const drawLadderMap = (names, items, winnerIdx, rungs, trace = [], dot = null) => {
         if (!mapCanvas || !mapCtx) return;
         const geo = getGeometry(names.length);
         if (!geo) return;
         const { W, H, top, bottom, left, xStep, yStep } = geo;
         const ctx = mapCtx;
-        const items = parseItems();
         const sourceItems = items.length > 0 ? items : fallbackItems;
 
         const grad = ctx.createLinearGradient(0, 0, 0, H);
@@ -201,7 +212,7 @@ import Recommend from '../components/Recommend.astro';
         return points;
       };
 
-      const animatePath = (names, rungs, startIdx) => {
+      const animatePath = (names, items, rungs, startIdx) => {
         if (animId) window.cancelAnimationFrame(animId);
         const path = computePath(names, rungs, startIdx);
         if (path.length < 2) return;
@@ -242,55 +253,66 @@ import Recommend from '../components/Recommend.astro';
             break;
           }
 
-          drawLadderMap(names, -1, rungs, trace, dot);
+          drawLadderMap(names, items, -1, rungs, trace, dot);
           if (t < 1) {
             animId = window.requestAnimationFrame(step);
           } else {
-            drawLadderMap(names, -1, rungs, path, path[path.length - 1]);
+            drawLadderMap(names, items, -1, rungs, path, path[path.length - 1]);
           }
         };
 
         animId = window.requestAnimationFrame(step);
       };
 
+      const traceLane = (names, rungs, startIdx) => {
+        const geo = getGeometry(names.length);
+        if (!geo) return startIdx;
+        const { rows } = geo;
+        let lane = startIdx;
+        for (let row = 0; row < rows; row += 1) {
+          const goRight = rungs.some((r) => r.row === row && r.col === lane);
+          const goLeft = rungs.some((r) => r.row === row && r.col === lane - 1);
+          if (goRight) lane += 1;
+          else if (goLeft) lane -= 1;
+        }
+        return lane;
+      };
+
       const prepareMap = () => {
-        const names = parseNames();
-        if (names.length < 2) {
+        const rawNames = parseNames();
+        if (rawNames.length < 2) {
           if (resultEl) resultEl.textContent = '참여자는 2명 이상 입력해 주세요.';
           return null;
         }
-        lastNames = names;
-        lastRungs = buildRungs(names.length);
+        const rawItems = parseItems();
+        const sourceItems = rawItems.length > 0 ? rawItems : fallbackItems;
+
+        lastNames = shuffle(rawNames);
+        lastItems = shuffle(sourceItems);
+        lastRungs = buildRungs(lastNames.length);
         lastWinnerIdx = -1;
-        drawLadderMap(lastNames, -1, lastRungs);
-        return names;
+        drawLadderMap(lastNames, lastItems, -1, lastRungs);
+        return { names: lastNames, items: lastItems };
       };
 
       startBtnEl?.addEventListener('click', () => {
-        const names = prepareMap();
-        if (!names) return;
-        const startIdx = Math.floor(Math.random() * names.length);
-        animatePath(names, lastRungs, startIdx);
+        const prepared = prepareMap();
+        if (!prepared) return;
+        const startIdx = Math.floor(Math.random() * prepared.names.length);
+        animatePath(prepared.names, prepared.items, lastRungs, startIdx);
       });
 
       drawBtnEl?.addEventListener('click', () => {
-        const names = parseNames();
-        if (names.length < 2) {
-          if (resultEl) resultEl.textContent = '참여자는 2명 이상 입력해 주세요.';
-          return;
+        if (lastNames.length < 2 || lastRungs.length === 0) {
+          const prepared = prepareMap();
+          if (!prepared) return;
         }
-        const items = parseItems();
-        const sourceItems = items.length > 0 ? items : fallbackItems;
-        const prevCount = lastNames.length;
-        const winnerIdx = Math.floor(Math.random() * names.length);
-        const winner = names[winnerIdx];
-        const pickedItem = sourceItems[Math.floor(Math.random() * sourceItems.length)];
-        lastNames = names;
-        lastWinnerIdx = winnerIdx;
-        if (lastRungs.length === 0 || prevCount !== names.length) {
-          lastRungs = buildRungs(names.length);
-        }
-        drawLadderMap(lastNames, lastWinnerIdx, lastRungs);
+        const startIdx = Math.floor(Math.random() * lastNames.length);
+        const endIdx = traceLane(lastNames, lastRungs, startIdx);
+        const winner = lastNames[startIdx];
+        const pickedItem = lastItems[endIdx % lastItems.length];
+        lastWinnerIdx = startIdx;
+        drawLadderMap(lastNames, lastItems, lastWinnerIdx, lastRungs);
         if (resultEl) resultEl.textContent = `당첨: ${winner} | 걸린 항목: ${pickedItem}`;
       });
 
@@ -304,6 +326,7 @@ import Recommend from '../components/Recommend.astro';
           mapCtx.fillRect(0, 0, mapCanvas.width, mapCanvas.height);
         }
         lastNames = [];
+        lastItems = [];
         lastWinnerIdx = -1;
         lastRungs = [];
       });
