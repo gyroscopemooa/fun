@@ -75,7 +75,7 @@ const rows = [cards.slice(0, 8), cards.slice(4, 12), cards.slice(8, 16)];
             <button class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-sky-100 bg-white text-sky-500" data-nav="prev">‹</button>
             <div class="flex-1 overflow-hidden">
               <div class="flex gap-3 overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" data-track>
-                {row.map((card) => (
+                {[...row, ...row].map((card) => (
                   <a
                     href={card.href}
                     data-card
@@ -127,32 +127,37 @@ const rows = [cards.slice(0, 8), cards.slice(4, 12), cards.slice(8, 16)];
         return Math.round(cardWidth + 12);
       };
 
+      const setWidth = () => Math.floor(track.scrollWidth / 2);
+
+      const normalizeLoop = () => {
+        const loopWidth = setWidth();
+        if (loopWidth <= 0) return;
+        if (track.scrollLeft >= loopWidth) {
+          track.scrollLeft -= loopWidth;
+        } else if (track.scrollLeft < 0) {
+          track.scrollLeft += loopWidth;
+        }
+      };
+
       const slideNext = () => {
         const amount = step();
-        const maxLeft = track.scrollWidth - track.clientWidth;
-        if (maxLeft <= 0) return;
-        if (track.scrollLeft >= maxLeft - 2) {
-          track.scrollTo({ left: 0, behavior: 'smooth' });
-          return;
-        }
-        const target = Math.min(track.scrollLeft + amount, maxLeft);
-        track.scrollTo({ left: target, behavior: 'smooth' });
+        normalizeLoop();
+        track.scrollBy({ left: amount, behavior: 'smooth' });
       };
 
       const slidePrev = () => {
         const amount = step();
-        const maxLeft = track.scrollWidth - track.clientWidth;
-        if (maxLeft <= 0) return;
+        const loopWidth = setWidth();
+        if (loopWidth <= 0) return;
         if (track.scrollLeft <= 2) {
-          track.scrollTo({ left: maxLeft, behavior: 'smooth' });
-          return;
+          track.scrollLeft += loopWidth;
         }
-        const target = Math.max(track.scrollLeft - amount, 0);
-        track.scrollTo({ left: target, behavior: 'smooth' });
+        track.scrollBy({ left: -amount, behavior: 'smooth' });
       };
 
       prevBtn.addEventListener('click', slidePrev);
       nextBtn.addEventListener('click', slideNext);
+      track.addEventListener('scroll', normalizeLoop);
 
       let timer = window.setInterval(slideNext, 2800);
       rowEl.addEventListener('mouseenter', () => window.clearInterval(timer));
