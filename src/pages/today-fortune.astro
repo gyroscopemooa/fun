@@ -1,0 +1,47 @@
+﻿---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import AdSense from '../components/AdSense.astro';
+import Recommend from '../components/Recommend.astro';
+---
+
+<Layout title="오늘의 운세 | FunHub" description="랜덤 운세로 오늘의 흐름을 확인해보세요.">
+  <Header />
+  <main class="mx-auto max-w-3xl px-4 py-8">
+    <h1 class="text-2xl font-bold">오늘의 운세</h1>
+    <p class="mt-3 text-slate-700">버튼을 눌러 오늘의 운세를 확인하세요.</p>
+
+    <AdSense slotName="본문 상단" />
+
+    <section class="mt-5 rounded-xl border border-slate-200 bg-white p-6">
+      <p id="fortune-result" class="text-lg font-semibold text-slate-800">아직 운세를 뽑지 않았습니다.</p>
+      <button id="fortune-btn" class="mt-4 rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white">운세 뽑기</button>
+    </section>
+
+    <script is:inline>
+      const fortunes = [
+        '집중력이 높아지는 날입니다. 중요한 일을 먼저 끝내세요.',
+        '대화운이 좋습니다. 연락을 미뤘던 사람에게 먼저 연락해보세요.',
+        '작은 실수는 있을 수 있지만 결과는 좋게 마무리됩니다.',
+        '새로운 아이디어가 떠오르는 날입니다. 메모를 남겨두세요.',
+        '건강 리듬을 챙기면 전체 운이 올라갑니다.',
+        '예상치 못한 제안이 들어올 수 있습니다. 유연하게 대응하세요.',
+        '금전운은 무난, 지출 계획만 점검하면 안정적입니다.',
+        '오늘은 꾸준함이 이기는 날입니다. 루틴을 지키세요.'
+      ];
+
+      const resultEl = document.getElementById('fortune-result');
+      const btnEl = document.getElementById('fortune-btn');
+
+      btnEl?.addEventListener('click', () => {
+        const idx = Math.floor(Math.random() * fortunes.length);
+        if (resultEl) resultEl.textContent = fortunes[idx];
+      });
+    </script>
+
+    <AdSense slotName="본문 하단" />
+    <Recommend />
+  </main>
+  <Footer />
+</Layout>

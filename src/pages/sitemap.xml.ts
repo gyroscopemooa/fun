@@ -11,6 +11,7 @@ const paths = [
   '/magic-book',
   '/pinball',
   '/random-food',
+  '/today-fortune',
   '/reaction-test',
   '/mbti-test',
   '/love-compatibility',
