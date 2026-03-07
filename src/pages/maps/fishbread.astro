@@ -19,7 +19,8 @@ const t = {
     search: '지역/가게명 검색',
     list: '제보 목록',
     add: '제보 추가',
-    report: '새 제보 등록'
+    report: '새 제보 등록',
+    mapHint: '먼저 지도에서 위치를 클릭하면 좌표가 자동 입력됩니다.'
   },
   en: {
     title: 'Fishbread Map | ManyTool',
@@ -28,7 +29,8 @@ const t = {
     search: 'Search region/vendor',
     list: 'Reports',
     add: 'Add Report',
-    report: 'Report New Vendor'
+    report: 'Report New Vendor',
+    mapHint: 'Pick a location on the map first to auto-fill coordinates.'
   },
   ja: {
     title: 'たい焼きマップ | ManyTool',
@@ -37,7 +39,8 @@ const t = {
     search: '地域/店舗検索',
     list: '投稿一覧',
     add: '投稿追加',
-    report: '新規投稿'
+    report: '新規投稿',
+    mapHint: '先に地図をタップすると座標が自動入力されます。'
   }
 }[locale];
 ---
@@ -83,7 +86,8 @@ const t = {
             <input id="spot-flavor" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="대표 메뉴 (예: 팥/슈크림)" type="text" />
             <input id="spot-detail" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="상세 위치 (예: OO역 2번 출구)" type="text" />
             <input id="spot-latlng" class="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-xs text-slate-500" placeholder="지도 클릭 시 좌표 자동 입력" type="text" readonly />
-            <button id="spot-add" class="mt-3 w-full rounded-xl bg-amber-500 py-2.5 font-bold text-white">{t.report}</button>
+            <p class="mt-2 text-xs text-slate-500">{t.mapHint}</p>
+            <button id="spot-add" class="mt-3 w-full rounded-xl bg-amber-500 py-2.5 font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300" disabled>{t.report}</button>
           </div>
         </aside>
 
@@ -189,6 +193,11 @@ const t = {
     let map;
     let markersLayer;
 
+    const updateAddButtonState = () => {
+      if (!(addBtn instanceof HTMLButtonElement)) return;
+      addBtn.disabled = !(typeof selectedLat === 'number' && typeof selectedLng === 'number');
+    };
+
     const score = (v) => v.up - v.down;
 
     const filteredVendors = () => {
@@ -259,6 +268,19 @@ const t = {
       if (selectedRegion !== '전체' && REGION_COORD[selectedRegion]) {
         const c = REGION_COORD[selectedRegion];
         map.setView([c.lat, c.lng], c.zoom);
+      }
+
+      if (typeof selectedLat === 'number' && typeof selectedLng === 'number') {
+        window.L
+          .circleMarker([selectedLat, selectedLng], {
+            radius: 8,
+            color: '#f59e0b',
+            weight: 2,
+            fillColor: '#f59e0b',
+            fillOpacity: 0.35
+          })
+          .bindPopup('선택된 제보 위치')
+          .addTo(markersLayer);
       }
     };
 
@@ -331,6 +353,7 @@ const t = {
       const flavor = flavorEl instanceof HTMLInputElement ? flavorEl.value.trim() : '';
       const detail = detailEl instanceof HTMLInputElement ? detailEl.value.trim() : '';
       if (!name || !region) return;
+      if (!(typeof selectedLat === 'number' && typeof selectedLng === 'number')) return;
 
       vendors.push({
         id: `v-${Date.now()}`,
@@ -351,6 +374,7 @@ const t = {
       if (latlngEl instanceof HTMLInputElement) latlngEl.value = '';
       selectedLat = null;
       selectedLng = null;
+      updateAddButtonState();
       save(vendors);
       render();
     });
@@ -366,8 +390,10 @@ const t = {
         const region = nearestRegion(selectedLat, selectedLng);
         setRegion(region);
         if (latlngEl instanceof HTMLInputElement) latlngEl.value = `${selectedLat}, ${selectedLng}`;
+        updateAddButtonState();
       });
       setRegion('전체');
+      updateAddButtonState();
     };
 
     if (document.readyState === 'loading') {
