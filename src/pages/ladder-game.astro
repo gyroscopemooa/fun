@@ -21,7 +21,11 @@ import Recommend from '../components/Recommend.astro';
         placeholder="예: 민수, 지연, 태훈, 수아"
         type="text"
       />
+      <div class="ladder-stage mt-4 overflow-hidden rounded-xl border border-slate-200 bg-slate-950 p-2">
+        <canvas id="ladder-map" width="900" height="360" class="w-full rounded-lg"></canvas>
+      </div>
       <div class="mt-3 flex gap-2">
+        <button id="ladder-start" class="rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white">시작</button>
         <button id="ladder-btn" class="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white">결과 뽑기</button>
         <button id="ladder-reset" class="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold">초기화</button>
       </div>
@@ -30,16 +34,118 @@ import Recommend from '../components/Recommend.astro';
 
     <script is:inline>
       const inputEl = document.getElementById('ladder-input');
+      const startBtnEl = document.getElementById('ladder-start');
       const drawBtnEl = document.getElementById('ladder-btn');
       const resetBtnEl = document.getElementById('ladder-reset');
       const resultEl = document.getElementById('ladder-result');
+      const mapCanvas = document.getElementById('ladder-map');
+      const mapCtx = mapCanvas instanceof HTMLCanvasElement ? mapCanvas.getContext('2d') : null;
 
-      drawBtnEl?.addEventListener('click', () => {
-        const raw = inputEl?.value ?? '';
-        const names = raw
+      let lastNames = [];
+      let lastWinnerIdx = -1;
+      let lastRungs = [];
+
+      const parseNames = () =>
+        (inputEl?.value ?? '')
           .split(',')
           .map((name) => name.trim())
           .filter(Boolean);
+
+      const buildRungs = (count) => {
+        const rungs = [];
+        const rows = 9;
+        for (let r = 0; r < rows; r += 1) {
+          for (let c = 0; c < count - 1; c += 1) {
+            const probability = 0.34 + (r % 2) * 0.08;
+            if (Math.random() < probability) {
+              rungs.push({ row: r, col: c });
+            }
+          }
+        }
+        return rungs;
+      };
+
+      const drawLadderMap = (names, winnerIdx, rungs) => {
+        if (!mapCanvas || !mapCtx) return;
+        const ctx = mapCtx;
+        const W = mapCanvas.width;
+        const H = mapCanvas.height;
+        const top = 42;
+        const bottom = H - 42;
+        const left = 62;
+        const right = W - 62;
+        const count = names.length;
+        const xStep = count > 1 ? (right - left) / (count - 1) : 0;
+        const rowCount = 9;
+        const yStep = (bottom - top) / rowCount;
+
+        const grad = ctx.createLinearGradient(0, 0, 0, H);
+        grad.addColorStop(0, '#020617');
+        grad.addColorStop(1, '#0f172a');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+
+        for (let i = 0; i < count; i += 1) {
+          const x = left + i * xStep;
+          ctx.beginPath();
+          ctx.moveTo(x, top);
+          ctx.lineTo(x, bottom);
+          ctx.strokeStyle = i === winnerIdx ? '#22d3ee' : '#334155';
+          ctx.lineWidth = i === winnerIdx ? 4 : 2;
+          ctx.shadowColor = i === winnerIdx ? '#22d3ee' : 'transparent';
+          ctx.shadowBlur = i === winnerIdx ? 12 : 0;
+          ctx.stroke();
+        }
+
+        ctx.shadowBlur = 0;
+        rungs.forEach((rung) => {
+          const y = top + (rung.row + 1) * yStep;
+          const x1 = left + rung.col * xStep;
+          const x2 = x1 + xStep;
+          ctx.beginPath();
+          ctx.moveTo(x1, y);
+          ctx.lineTo(x2, y);
+          ctx.strokeStyle = '#64748b';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        });
+
+        names.forEach((name, idx) => {
+          const x = left + idx * xStep;
+          ctx.fillStyle = idx === winnerIdx ? '#a5f3fc' : '#cbd5e1';
+          ctx.font = 'bold 18px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(name, x, top - 14);
+
+          ctx.fillStyle = idx === winnerIdx ? '#34d399' : '#64748b';
+          ctx.fillRect(x - 24, bottom + 8, 48, 18);
+        });
+      };
+
+      const prepareMap = () => {
+        const names = parseNames();
+        if (names.length < 2) {
+          if (resultEl) resultEl.textContent = '참여자는 2명 이상 입력해 주세요.';
+          return null;
+        }
+        lastNames = names;
+        lastRungs = buildRungs(names.length);
+        lastWinnerIdx = -1;
+        drawLadderMap(lastNames, lastWinnerIdx, lastRungs);
+        return names;
+      };
+
+      startBtnEl?.addEventListener('click', () => {
+        prepareMap();
+      });
+
+      drawBtnEl?.addEventListener('click', () => {
+        let names = parseNames();
+        if (lastNames.join('|') !== names.join('|') || lastRungs.length === 0) {
+          const prepared = prepareMap();
+          if (!prepared) return;
+          names = prepared;
+        }
 
         if (names.length < 2) {
           if (resultEl) resultEl.textContent = '참여자는 2명 이상 입력해 주세요.';
@@ -48,14 +154,48 @@ import Recommend from '../components/Recommend.astro';
 
         const winnerIdx = Math.floor(Math.random() * names.length);
         const winner = names[winnerIdx];
+        lastWinnerIdx = winnerIdx;
+        drawLadderMap(lastNames, lastWinnerIdx, lastRungs);
         if (resultEl) resultEl.textContent = `당첨: ${winner}`;
       });
 
       resetBtnEl?.addEventListener('click', () => {
         if (inputEl) inputEl.value = '';
         if (resultEl) resultEl.textContent = '입력 후 결과 뽑기를 눌러주세요.';
+        if (mapCtx && mapCanvas) {
+          mapCtx.fillStyle = '#020617';
+          mapCtx.fillRect(0, 0, mapCanvas.width, mapCanvas.height);
+        }
+        lastNames = [];
+        lastWinnerIdx = -1;
+        lastRungs = [];
       });
+
+      if (mapCtx && mapCanvas) {
+        mapCtx.fillStyle = '#020617';
+        mapCtx.fillRect(0, 0, mapCanvas.width, mapCanvas.height);
+      }
     </script>
+
+    <style>
+      .ladder-stage {
+        position: relative;
+      }
+      .ladder-stage::after {
+        content: '';
+        pointer-events: none;
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(120deg, transparent 20%, rgba(34, 211, 238, 0.1) 50%, transparent 80%);
+        transform: translateX(-120%);
+        animation: ladderShine 3.8s linear infinite;
+      }
+      @keyframes ladderShine {
+        to {
+          transform: translateX(120%);
+        }
+      }
+    </style>
 
     <AdSense slotName="본문 하단" />
     <Recommend />
