@@ -18,16 +18,6 @@ const t = {
   ja: { title: '今日のスペイン語 | ManyTool', desc: '毎日1つのスペイン語表現を意味と例文で学びます。', h1: '今日のスペイン語', sub: '短くて実用的な表現を毎日1つ', copy: 'コピー', copied: 'コピー完了' }
 }[locale];
 
-const entries = [
-  { word: 'Buenos dias', meaning: '좋은 아침이에요', ex: 'Buenos dias, ¿como estas?' },
-  { word: 'Gracias', meaning: '고마워요', ex: 'Gracias por tu ayuda.' },
-  { word: 'Por favor', meaning: '부탁합니다', ex: 'Un cafe, por favor.' },
-  { word: 'Lo siento', meaning: '미안해요', ex: 'Lo siento por llegar tarde.' },
-  { word: 'Hasta luego', meaning: '또 봐요', ex: 'Hasta luego, amigo.' },
-  { word: '¿Cuanto cuesta?', meaning: '얼마인가요?', ex: '¿Cuanto cuesta este libro?' },
-  { word: 'Tengo hambre', meaning: '배고파요', ex: 'Tengo hambre ahora.' },
-  { word: 'Me gusta', meaning: '좋아해요', ex: 'Me gusta esta musica.' }
-];
 ---
 
 <Layout title={t.title} description={t.desc}>
@@ -46,7 +36,36 @@ const entries = [
     <Recommend />
   </main>
   <Footer />
-  <script is:inline define:vars={{ entries, copiedText: t.copied }}>
+  <script is:inline define:vars={{ copiedText: t.copied }}>
+    const words = [
+      ['Gracias', '고마워요'],
+      ['Por favor', '부탁합니다'],
+      ['Buenos dias', '좋은 아침입니다'],
+      ['Lo siento', '미안해요'],
+      ['Hasta luego', '또 봐요'],
+      ['Me gusta', '좋아해요'],
+      ['No pasa nada', '괜찮아요'],
+      ['Vamos', '가요']
+    ];
+    const contexts = [
+      'en clase', 'en casa', 'en el trabajo', 'en el viaje',
+      'con amigos', 'en la tienda', 'en el cafe', 'en la calle'
+    ];
+    const templates = [
+      '%w% hoy %c%.',
+      'Practica %w% %c%.',
+      'Usa %w% %c%.',
+      '%w% es util %c%.',
+      'Recuerda decir %w% %c%.'
+    ];
+    const entries = [];
+    words.forEach(([w, m]) => {
+      contexts.forEach((c) => {
+        templates.forEach((t) => {
+          entries.push({ word: w, meaning: m, ex: t.replace('%w%', w).replace('%c%', c) });
+        });
+      });
+    });
     const date = new Date();
     const key = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
     let hash = 0;

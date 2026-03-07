@@ -15,43 +15,32 @@ const locale = pathname.startsWith('/en/') || pathname === '/en'
 const t = {
   ko: {
     title: '하루 한문장 | ManyTool',
-    desc: '매일 1개의 실전 문장을 확인하고 바로 복습할 수 있는 페이지입니다.',
+    desc: '영어/스페인어/한국어를 선택해 오늘의 문장을 확인하는 페이지입니다.',
     h1: '하루 한문장',
-    sub: '짧지만 자주 쓰는 표현을 매일 1개씩.',
-    explain: '문장은 날짜 기준으로 자동 갱신됩니다.',
+    sub: '언어를 선택하면 오늘 문장이 고정 표시됩니다.',
+    langLabel: '언어 선택',
     copy: '문장 복사',
     copied: '복사됨'
   },
   en: {
     title: 'Sentence of the Day | ManyTool',
-    desc: 'One practical sentence every day for quick daily practice.',
+    desc: 'Choose English, Spanish, or Korean and get a fixed sentence of the day.',
     h1: 'Sentence of the Day',
-    sub: 'One practical sentence, every day.',
-    explain: 'Sentence rotates by date automatically.',
+    sub: 'Pick a language to view today’s fixed sentence.',
+    langLabel: 'Language',
     copy: 'Copy sentence',
     copied: 'Copied'
   },
   ja: {
     title: '今日の一文 | ManyTool',
-    desc: '毎日1つの実用フレーズを確認して学習できるページです。',
+    desc: '英語/スペイン語/韓国語から選んで今日の一文を確認できます。',
     h1: '今日の一文',
-    sub: '短くてもよく使う表現を毎日1つ。',
-    explain: '文は日付ベースで自動更新されます。',
+    sub: '言語を選ぶと当日の文が固定表示されます。',
+    langLabel: '言語',
     copy: '文をコピー',
     copied: 'コピー完了'
   }
 }[locale];
-
-const lines = [
-  'Small progress every day beats big plans someday.',
-  'Start now, improve while moving.',
-  'Consistency makes difficult things simple.',
-  'Focus on what you can control today.',
-  'Clear priorities reduce stress.',
-  'Done is better than delayed perfection.',
-  'Practice turns confusion into confidence.',
-  'Energy follows action.'
-];
 ---
 
 <Layout title={t.title} description={t.desc}>
@@ -62,14 +51,14 @@ const lines = [
     <AdSense slotName="본문 상단" />
 
     <section class="mt-5 rounded-xl border border-slate-200 bg-white p-6">
-      <p class="text-sm text-slate-500">{t.explain}</p>
-      <blockquote id="line" class="mt-3 text-2xl font-bold leading-snug text-slate-900">-</blockquote>
+      <label for="lang" class="text-sm font-semibold text-slate-700">{t.langLabel}</label>
+      <select id="lang" class="ml-2 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm">
+        <option value="en">English</option>
+        <option value="es">Espanol</option>
+        <option value="ko">Korean</option>
+      </select>
+      <blockquote id="line" class="mt-4 text-2xl font-bold leading-snug text-slate-900">-</blockquote>
       <button id="copy-line" class="mt-4 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold">{t.copy}</button>
-    </section>
-
-    <section class="mt-5 rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-700">
-      <h2 class="text-lg font-bold">사용 방법</h2>
-      <p class="mt-2">매일 문장을 확인하고 소리 내어 3번 읽어보세요. 복사해 메모장/노트앱에 저장해도 좋습니다.</p>
     </section>
 
     <AdSense slotName="본문 하단" />
@@ -77,17 +66,62 @@ const lines = [
   </main>
   <Footer />
 
-  <script is:inline define:vars={{ lines, copiedText: t.copied }}>
-    const date = new Date();
-    const key = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
-    let hash = 0;
-    for (let i = 0; i < key.length; i += 1) hash = (hash * 33 + key.charCodeAt(i)) >>> 0;
-    const line = lines[hash % lines.length];
+  <script is:inline define:vars={{ copiedText: t.copied }}>
+    const subjects = {
+      en: ['Small progress', 'Clear priorities', 'Consistent effort', 'Focused practice', 'Simple routines', 'Honest feedback'],
+      es: ['El progreso pequeno', 'Las prioridades claras', 'El esfuerzo constante', 'La practica enfocada', 'Las rutinas simples', 'La retroalimentacion honesta'],
+      ko: ['작은 진전', '명확한 우선순위', '꾸준한 노력', '집중된 연습', '단순한 루틴', '정직한 피드백']
+    };
+    const verbs = {
+      en: ['builds confidence.', 'creates momentum.', 'reduces stress.', 'improves results.', 'changes habits.', 'makes growth visible.'],
+      es: ['construye confianza.', 'crea impulso.', 'reduce estres.', 'mejora resultados.', 'cambia habitos.', 'hace visible el crecimiento.'],
+      ko: ['자신감을 만듭니다.', '추진력을 만듭니다.', '스트레스를 줄입니다.', '결과를 개선합니다.', '습관을 바꿉니다.', '성장을 눈에 보이게 합니다.']
+    };
+    const openers = {
+      en: ['Today,', 'Right now,', 'This week,', 'In your next task,', 'From this moment,', 'Step by step,'],
+      es: ['Hoy,', 'Ahora mismo,', 'Esta semana,', 'En tu proxima tarea,', 'Desde este momento,', 'Paso a paso,'],
+      ko: ['오늘,', '지금,', '이번 주,', '다음 작업에서,', '이 순간부터,', '한 걸음씩,']
+    };
+
+    const buildList = (lang) => {
+      const out = [];
+      for (const o of openers[lang]) {
+        for (const s of subjects[lang]) {
+          for (const v of verbs[lang]) out.push(`${o} ${s} ${v}`);
+        }
+      }
+      return out;
+    };
+
+    const bank = { en: buildList('en'), es: buildList('es'), ko: buildList('ko') };
+    const langEl = document.getElementById('lang');
     const lineEl = document.getElementById('line');
     const copyBtn = document.getElementById('copy-line');
-    if (lineEl) lineEl.textContent = line;
+
+    const now = new Date();
+    const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+    const dateKey = `${kst.getUTCFullYear()}-${kst.getUTCMonth() + 1}-${kst.getUTCDate()}`;
+
+    const hash = (text) => {
+      let h = 0;
+      for (let i = 0; i < text.length; i += 1) h = (h * 33 + text.charCodeAt(i)) >>> 0;
+      return h;
+    };
+
+    const render = () => {
+      const lang = langEl instanceof HTMLSelectElement ? langEl.value : 'en';
+      const list = bank[lang] ?? bank.en;
+      const idx = hash(`${dateKey}:${lang}`) % list.length;
+      const line = list[idx];
+      if (lineEl) lineEl.textContent = line;
+      return line;
+    };
+
+    const initial = render();
+    langEl?.addEventListener('change', render);
     copyBtn?.addEventListener('click', async () => {
-      await navigator.clipboard.writeText(line);
+      const line = render();
+      await navigator.clipboard.writeText(line ?? initial ?? '');
       if (copyBtn instanceof HTMLButtonElement) copyBtn.textContent = copiedText;
     });
   </script>

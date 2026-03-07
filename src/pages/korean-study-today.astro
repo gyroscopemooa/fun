@@ -18,16 +18,6 @@ const t = {
   ja: { title: '今日の韓国語学習 | ManyTool', desc: '毎日1つの韓国語表現を例文と一緒に学べます。', h1: '今日の韓国語学習', sub: '毎日1ポイントずつ学習', copy: 'コピー', copied: 'コピー完了' }
 }[locale];
 
-const entries = [
-  { word: '안녕하세요', meaning: 'Hello', ex: '안녕하세요. 만나서 반가워요.' },
-  { word: '감사합니다', meaning: 'Thank you', ex: '도와주셔서 감사합니다.' },
-  { word: '괜찮아요', meaning: 'It is okay', ex: '네, 괜찮아요.' },
-  { word: '어디예요?', meaning: 'Where is it?', ex: '화장실은 어디예요?' },
-  { word: '맛있어요', meaning: 'It is delicious', ex: '김치찌개가 정말 맛있어요.' },
-  { word: '천천히 말해 주세요', meaning: 'Please speak slowly', ex: '한국어 초보라서 천천히 말해 주세요.' },
-  { word: '다음에 또 봐요', meaning: 'See you next time', ex: '오늘 즐거웠어요. 다음에 또 봐요.' },
-  { word: '도와주세요', meaning: 'Please help me', ex: '길을 잃었어요. 도와주세요.' }
-];
 ---
 
 <Layout title={t.title} description={t.desc}>
@@ -51,7 +41,27 @@ const entries = [
     <Recommend />
   </main>
   <Footer />
-  <script is:inline define:vars={{ entries, copiedText: t.copied }}>
+  <script is:inline define:vars={{ copiedText: t.copied }}>
+    const words = [
+      ['안녕하세요', 'Hello'],
+      ['감사합니다', 'Thank you'],
+      ['괜찮아요', 'It is okay'],
+      ['어디예요?', 'Where is it?'],
+      ['맛있어요', 'It is delicious'],
+      ['천천히 말해 주세요', 'Please speak slowly'],
+      ['다음에 또 봐요', 'See you next time'],
+      ['도와주세요', 'Please help me']
+    ];
+    const contexts = ['카페에서', '식당에서', '여행 중', '학교에서', '회사에서', '길에서', '대화 중', '연습할 때'];
+    const templates = ['%c% "%w%"를 써보세요.', '오늘은 %c% %w%가 유용합니다.', '%c% %w%를 말해보세요.', '%c% 상황에서는 %w%가 자연스럽습니다.'];
+    const entries = [];
+    words.forEach(([w, m]) => {
+      contexts.forEach((c) => {
+        templates.forEach((tmp) => {
+          entries.push({ word: w, meaning: m, ex: tmp.replace('%w%', w).replace('%c%', c) });
+        });
+      });
+    });
     const date = new Date();
     const key = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
     let hash = 0;

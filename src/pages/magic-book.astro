@@ -19,15 +19,17 @@ import Recommend from '../components/Recommend.astro';
     </section>
 
     <script is:inline>
-      const quotes = [
-        '작은 행동이 오늘의 흐름을 바꿉니다.',
-        '예상 못 한 기회는 가까운 곳에 있습니다.',
-        '결정은 빠르게, 실행은 더 빠르게.',
-        '한 번 더 시도하면 결과가 달라집니다.',
-        '오늘의 키워드는 집중과 반복입니다.',
-        '주저하던 일을 먼저 끝내보세요.',
-        '좋은 소식은 준비된 사람에게 옵니다.'
-      ];
+      const starts = ['오늘은', '지금은', '이번 주는', '다음 선택은', '새로운 흐름은', '당신의 리듬은'];
+      const middles = ['작은 집중이', '차분한 실행이', '꾸준한 반복이', '명확한 우선순위가', '짧은 결단이', '가벼운 시도가'];
+      const ends = ['큰 변화를 만듭니다.', '좋은 결과를 부릅니다.', '생각보다 빨리 보답됩니다.', '불필요한 고민을 줄입니다.', '새 기회를 당겨옵니다.', '오늘의 흐름을 정리해줍니다.'];
+      const quotes = [];
+      starts.forEach((a) => {
+        middles.forEach((b) => {
+          ends.forEach((c) => {
+            quotes.push(`${a} ${b} ${c}`);
+          });
+        });
+      });
       const resultEl = document.getElementById('magic-result');
       const buttonEl = document.getElementById('magic-btn');
       buttonEl?.addEventListener('click', () => {

@@ -18,16 +18,6 @@ const t = {
   ja: { title: '今日の日本語 | ManyTool', desc: '毎日1つの日本語表現を意味と例文で学びます。', h1: '今日の日本語', sub: '会話で使える表現を毎日1つ', copy: 'コピー', copied: 'コピー完了' }
 }[locale];
 
-const entries = [
-  { word: 'おはようございます', meaning: '좋은 아침입니다', ex: 'おはようございます。今日もよろしくお願いします。' },
-  { word: 'ありがとうございます', meaning: '감사합니다', ex: '手伝ってくれてありがとうございます。' },
-  { word: 'すみません', meaning: '실례합니다 / 죄송합니다', ex: 'すみません、駅はどこですか。' },
-  { word: '大丈夫です', meaning: '괜찮습니다', ex: '私は大丈夫です。' },
-  { word: 'お願いします', meaning: '부탁합니다', ex: 'もう一度お願いします。' },
-  { word: 'わかりました', meaning: '알겠습니다', ex: 'はい、わかりました。' },
-  { word: '楽しいです', meaning: '재미있습니다', ex: 'このゲームは楽しいです。' },
-  { word: 'また明日', meaning: '내일 또 봐요', ex: 'それでは、また明日。' }
-];
 ---
 
 <Layout title={t.title} description={t.desc}>
@@ -46,7 +36,27 @@ const entries = [
     <Recommend />
   </main>
   <Footer />
-  <script is:inline define:vars={{ entries, copiedText: t.copied }}>
+  <script is:inline define:vars={{ copiedText: t.copied }}>
+    const words = [
+      ['おはようございます', '좋은 아침입니다'],
+      ['ありがとうございます', '감사합니다'],
+      ['すみません', '실례합니다 / 죄송합니다'],
+      ['大丈夫です', '괜찮습니다'],
+      ['お願いします', '부탁합니다'],
+      ['わかりました', '알겠습니다'],
+      ['楽しいです', '재미있습니다'],
+      ['また明日', '내일 또 봐요']
+    ];
+    const contexts = ['仕事で', '学校で', '旅行で', 'お店で', '会話で', '配信で', '練習で', '日常で'];
+    const templates = ['%c% %w%。', '%w% を %c% 使いましょう。', '%c% %w% が役立ちます。', '今日は %c% %w%。'];
+    const entries = [];
+    words.forEach(([w, m]) => {
+      contexts.forEach((c) => {
+        templates.forEach((tmp) => {
+          entries.push({ word: w, meaning: m, ex: tmp.replace('%w%', w).replace('%c%', c) });
+        });
+      });
+    });
     const date = new Date();
     const key = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
     let hash = 0;
