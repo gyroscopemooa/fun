@@ -130,22 +130,25 @@ const rows = [cards.slice(0, 8), cards.slice(4, 12), cards.slice(8, 16)];
       const slideNext = () => {
         const amount = step();
         const maxLeft = track.scrollWidth - track.clientWidth;
-        const target = track.scrollLeft + amount;
-        if (target >= maxLeft - 4) {
+        if (maxLeft <= 0) return;
+        if (track.scrollLeft >= maxLeft - 2) {
           track.scrollTo({ left: 0, behavior: 'smooth' });
           return;
         }
-        track.scrollBy({ left: amount, behavior: 'smooth' });
+        const target = Math.min(track.scrollLeft + amount, maxLeft);
+        track.scrollTo({ left: target, behavior: 'smooth' });
       };
 
       const slidePrev = () => {
         const amount = step();
-        const target = track.scrollLeft - amount;
-        if (target <= 0) {
-          track.scrollTo({ left: 0, behavior: 'smooth' });
+        const maxLeft = track.scrollWidth - track.clientWidth;
+        if (maxLeft <= 0) return;
+        if (track.scrollLeft <= 2) {
+          track.scrollTo({ left: maxLeft, behavior: 'smooth' });
           return;
         }
-        track.scrollBy({ left: -amount, behavior: 'smooth' });
+        const target = Math.max(track.scrollLeft - amount, 0);
+        track.scrollTo({ left: target, behavior: 'smooth' });
       };
 
       prevBtn.addEventListener('click', slidePrev);
