@@ -53,6 +53,7 @@ import Recommend from '../components/Recommend.astro';
       let lastWinnerIdx = -1;
       let lastRungs = [];
       let animId = 0;
+      const fallbackItems = ['벌칙', '패스', '보너스', '미션'];
 
       const parseNames = () =>
         (inputEl?.value ?? '')
@@ -100,6 +101,8 @@ import Recommend from '../components/Recommend.astro';
         if (!geo) return;
         const { W, H, top, bottom, left, xStep, yStep } = geo;
         const ctx = mapCtx;
+        const items = parseItems();
+        const sourceItems = items.length > 0 ? items : fallbackItems;
 
         const grad = ctx.createLinearGradient(0, 0, 0, H);
         grad.addColorStop(0, '#020617');
@@ -163,7 +166,7 @@ import Recommend from '../components/Recommend.astro';
           ctx.textAlign = 'center';
           ctx.fillText(name, x, top - 14);
 
-          const itemText = items.length > 0 ? items[idx % items.length] : `결과 ${idx + 1}`;
+          const itemText = sourceItems[idx % sourceItems.length];
           ctx.fillStyle = idx === winnerIdx ? '#34d399' : '#64748b';
           ctx.fillRect(x - 24, bottom + 8, 48, 18);
           ctx.fillStyle = '#e2e8f0';
@@ -277,14 +280,11 @@ import Recommend from '../components/Recommend.astro';
           return;
         }
         const items = parseItems();
-        if (items.length === 0) {
-          if (resultEl) resultEl.textContent = '걸릴 항목을 1개 이상 입력해 주세요.';
-          return;
-        }
+        const sourceItems = items.length > 0 ? items : fallbackItems;
         const prevCount = lastNames.length;
         const winnerIdx = Math.floor(Math.random() * names.length);
         const winner = names[winnerIdx];
-        const pickedItem = items[Math.floor(Math.random() * items.length)];
+        const pickedItem = sourceItems[Math.floor(Math.random() * sourceItems.length)];
         lastNames = names;
         lastWinnerIdx = winnerIdx;
         if (lastRungs.length === 0 || prevCount !== names.length) {
@@ -339,4 +339,3 @@ import Recommend from '../components/Recommend.astro';
   </main>
   <Footer />
 </Layout>
-        const items = parseItems();
