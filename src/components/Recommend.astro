@@ -13,12 +13,51 @@ const items = [
 ---
 
 <section class="mt-10">
-  <h2 class="mb-3 text-lg font-semibold">추천 콘텐츠</h2>
-  <div class="grid gap-3 md:grid-cols-2">
-    {items.map((item) => (
-      <a href={item.href} class="rounded-lg border border-slate-200 bg-white p-4 hover:border-slate-400">
-        {item.label}
-      </a>
-    ))}
+  <h2 class="mb-3 text-lg font-semibold">실시간 인기 콘텐츠</h2>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-4">
+    <p class="text-sm text-slate-500">현재 인기 1위</p>
+    <a id="hot-top-link" href={items[0].href} class="mt-1 block text-lg font-bold text-slate-900 hover:underline">
+      1위: {items[0].label}
+    </a>
+
+    <div id="hot-rank-list" class="mt-4 grid gap-2 md:grid-cols-2">
+      {items.map((item, idx) => (
+        <a href={item.href} class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm hover:border-slate-400">
+          {idx + 1}위. {item.label}
+        </a>
+      ))}
+    </div>
   </div>
+
+  <script is:inline define:vars={{ items }}>
+    const source = [...items];
+    const listEl = document.getElementById('hot-rank-list');
+    const topLinkEl = document.getElementById('hot-top-link');
+
+    const getRanked = () =>
+      source
+        .map((item) => ({ ...item, score: Math.random() + Math.random() }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 8);
+
+    const renderRank = () => {
+      const ranked = getRanked();
+      if (topLinkEl && ranked[0]) {
+        topLinkEl.setAttribute('href', ranked[0].href);
+        topLinkEl.textContent = `1위: ${ranked[0].label}`;
+      }
+
+      if (!listEl) return;
+      listEl.innerHTML = ranked
+        .map(
+          (item, idx) =>
+            `<a href="${item.href}" class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm hover:border-slate-400">${idx + 1}위. ${item.label}</a>`
+        )
+        .join('');
+    };
+
+    renderRank();
+    window.setInterval(renderRank, 4500);
+  </script>
 </section>
