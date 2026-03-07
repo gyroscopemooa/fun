@@ -21,6 +21,7 @@ const paths = [
   '/mbti-test',
   '/love-compatibility',
   '/ladder-game',
+  '/tools/scoreboard',
   '/maps/fishbread',
   '/maps/hidden-cafe',
   '/maps/local-eats'

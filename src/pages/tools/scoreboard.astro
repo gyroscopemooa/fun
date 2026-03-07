@@ -1,0 +1,305 @@
+﻿---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import AdSense from '../../components/AdSense.astro';
+import Recommend from '../../components/Recommend.astro';
+---
+
+<Layout
+  title="Streamer Scoreboard | ManyTool"
+  description="라이브 스트리머를 위한 경량 점수판 도구. 로그인 없이 로컬 저장으로 즉시 사용 가능하며 OBS Browser Source에 적합합니다."
+>
+  <Header />
+
+  <main class="mx-auto max-w-6xl px-4 py-6">
+    <section class="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-900">
+      This tool can be added to OBS as a browser source to display scores during live streams.
+    </section>
+
+    <section class="mt-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 class="text-3xl font-black tracking-tight">Streamer Scoreboard</h1>
+          <p class="mt-1 text-sm text-slate-500">Simple local scoreboard for live streaming</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button id="reset-scores" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50">Reset Scores</button>
+          <button id="full-reset" class="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700">Full Reset</button>
+        </div>
+      </div>
+
+      <div class="grid gap-4 md:grid-cols-2">
+        <article class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <input id="team-a-name" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-lg font-bold" value="Team A" />
+          <p id="team-a-score" class="mt-3 text-center text-7xl font-black leading-none text-slate-900">0</p>
+          <div class="mt-4 grid grid-cols-4 gap-2">
+            <button data-team="a" data-delta="1" class="score-btn">+1</button>
+            <button data-team="a" data-delta="-1" class="score-btn">-1</button>
+            <button data-team="a" data-delta="5" class="score-btn">+5</button>
+            <button data-team="a" data-delta="-5" class="score-btn">-5</button>
+          </div>
+        </article>
+
+        <article class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <input id="team-b-name" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-lg font-bold" value="Team B" />
+          <p id="team-b-score" class="mt-3 text-center text-7xl font-black leading-none text-slate-900">0</p>
+          <div class="mt-4 grid grid-cols-4 gap-2">
+            <button data-team="b" data-delta="1" class="score-btn">+1</button>
+            <button data-team="b" data-delta="-1" class="score-btn">-1</button>
+            <button data-team="b" data-delta="5" class="score-btn">+5</button>
+            <button data-team="b" data-delta="-5" class="score-btn">-5</button>
+          </div>
+        </article>
+      </div>
+
+      <div class="mt-4 flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
+        <label class="inline-flex items-center gap-2 font-semibold">
+          <input id="allow-negative" type="checkbox" class="h-4 w-4" />
+          Allow negative scores
+        </label>
+        <p class="text-slate-500">Disabled면 점수는 0 아래로 내려가지 않습니다.</p>
+      </div>
+    </section>
+
+    <section class="mt-4 grid gap-4 md:grid-cols-2">
+      <article class="rounded-xl border border-slate-200 bg-white p-4">
+        <div class="mb-3 flex items-center justify-between gap-2">
+          <h2 class="text-xl font-bold">Team A Players</h2>
+          <button id="add-player-a" class="rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white hover:bg-sky-700">+ Add</button>
+        </div>
+        <ul id="players-a" class="space-y-2"></ul>
+      </article>
+
+      <article class="rounded-xl border border-slate-200 bg-white p-4">
+        <div class="mb-3 flex items-center justify-between gap-2">
+          <h2 class="text-xl font-bold">Team B Players</h2>
+          <button id="add-player-b" class="rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white hover:bg-sky-700">+ Add</button>
+        </div>
+        <ul id="players-b" class="space-y-2"></ul>
+      </article>
+    </section>
+
+    <section class="mt-4 rounded-xl border border-slate-200 bg-white p-4">
+      <h2 class="text-lg font-bold">History</h2>
+      <ul id="history-list" class="mt-2 space-y-1 text-sm text-slate-600"></ul>
+      <p class="mt-3 text-xs text-slate-500">Keyboard: A/Z (Team A +1/-1), K/M (Team B +1/-1)</p>
+    </section>
+
+    <AdSense slotName="본문 상단" />
+    <Recommend />
+    <AdSense slotName="본문 하단" />
+  </main>
+
+  <Footer />
+
+  <script is:inline>
+    const KEY = 'manytool_streamer_scoreboard_v1';
+    const initialState = {
+      teamAName: 'Team A',
+      teamBName: 'Team B',
+      teamAScore: 0,
+      teamBScore: 0,
+      teamAPlayers: [],
+      teamBPlayers: [],
+      allowNegative: false,
+      history: []
+    };
+
+    const load = () => {
+      try {
+        const raw = localStorage.getItem(KEY);
+        if (!raw) return { ...initialState };
+        return { ...initialState, ...JSON.parse(raw) };
+      } catch {
+        return { ...initialState };
+      }
+    };
+
+    const save = () => localStorage.setItem(KEY, JSON.stringify(state));
+
+    const state = load();
+
+    const teamANameEl = document.getElementById('team-a-name');
+    const teamBNameEl = document.getElementById('team-b-name');
+    const teamAScoreEl = document.getElementById('team-a-score');
+    const teamBScoreEl = document.getElementById('team-b-score');
+    const allowNegativeEl = document.getElementById('allow-negative');
+    const playersAEl = document.getElementById('players-a');
+    const playersBEl = document.getElementById('players-b');
+    const historyListEl = document.getElementById('history-list');
+
+    const addHistory = (text) => {
+      const stamp = new Date().toLocaleTimeString();
+      state.history.unshift(`[${stamp}] ${text}`);
+      state.history = state.history.slice(0, 20);
+    };
+
+    const safeScore = (value) => (state.allowNegative ? value : Math.max(0, value));
+
+    const updateScore = (team, delta) => {
+      if (team === 'a') {
+        state.teamAScore = safeScore(state.teamAScore + delta);
+        addHistory(`${state.teamAName} ${delta > 0 ? '+' : ''}${delta} -> ${state.teamAScore}`);
+      } else {
+        state.teamBScore = safeScore(state.teamBScore + delta);
+        addHistory(`${state.teamBName} ${delta > 0 ? '+' : ''}${delta} -> ${state.teamBScore}`);
+      }
+      render();
+      save();
+    };
+
+    const createPlayerRow = (team, name, index) => {
+      const li = document.createElement('li');
+      li.className = 'flex items-center gap-2';
+
+      const input = document.createElement('input');
+      input.className = 'flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm';
+      input.value = name;
+      input.placeholder = 'Player name';
+      input.addEventListener('input', () => {
+        const arr = team === 'a' ? state.teamAPlayers : state.teamBPlayers;
+        arr[index] = input.value;
+        save();
+      });
+
+      const del = document.createElement('button');
+      del.className = 'rounded-md border border-rose-300 px-2 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50';
+      del.textContent = 'Remove';
+      del.addEventListener('click', () => {
+        const arr = team === 'a' ? state.teamAPlayers : state.teamBPlayers;
+        arr.splice(index, 1);
+        addHistory(`${team === 'a' ? state.teamAName : state.teamBName} player removed`);
+        render();
+        save();
+      });
+
+      li.appendChild(input);
+      li.appendChild(del);
+      return li;
+    };
+
+    const renderPlayers = () => {
+      if (playersAEl) {
+        playersAEl.innerHTML = '';
+        state.teamAPlayers.forEach((name, i) => playersAEl.appendChild(createPlayerRow('a', name, i)));
+      }
+      if (playersBEl) {
+        playersBEl.innerHTML = '';
+        state.teamBPlayers.forEach((name, i) => playersBEl.appendChild(createPlayerRow('b', name, i)));
+      }
+    };
+
+    const renderHistory = () => {
+      if (!historyListEl) return;
+      historyListEl.innerHTML = '';
+      if (state.history.length === 0) {
+        const li = document.createElement('li');
+        li.className = 'text-slate-400';
+        li.textContent = 'No history yet.';
+        historyListEl.appendChild(li);
+        return;
+      }
+      state.history.forEach((item) => {
+        const li = document.createElement('li');
+        li.textContent = item;
+        historyListEl.appendChild(li);
+      });
+    };
+
+    const render = () => {
+      if (teamANameEl instanceof HTMLInputElement) teamANameEl.value = state.teamAName;
+      if (teamBNameEl instanceof HTMLInputElement) teamBNameEl.value = state.teamBName;
+      if (teamAScoreEl) teamAScoreEl.textContent = String(state.teamAScore);
+      if (teamBScoreEl) teamBScoreEl.textContent = String(state.teamBScore);
+      if (allowNegativeEl instanceof HTMLInputElement) allowNegativeEl.checked = state.allowNegative;
+      renderPlayers();
+      renderHistory();
+    };
+
+    document.querySelectorAll('.score-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        if (!(btn instanceof HTMLButtonElement)) return;
+        const team = btn.dataset.team;
+        const delta = Number(btn.dataset.delta);
+        if ((team === 'a' || team === 'b') && Number.isFinite(delta)) updateScore(team, delta);
+      });
+    });
+
+    teamANameEl?.addEventListener('input', () => {
+      if (!(teamANameEl instanceof HTMLInputElement)) return;
+      state.teamAName = teamANameEl.value || 'Team A';
+      save();
+      render();
+    });
+
+    teamBNameEl?.addEventListener('input', () => {
+      if (!(teamBNameEl instanceof HTMLInputElement)) return;
+      state.teamBName = teamBNameEl.value || 'Team B';
+      save();
+      render();
+    });
+
+    allowNegativeEl?.addEventListener('change', () => {
+      if (!(allowNegativeEl instanceof HTMLInputElement)) return;
+      state.allowNegative = allowNegativeEl.checked;
+      state.teamAScore = safeScore(state.teamAScore);
+      state.teamBScore = safeScore(state.teamBScore);
+      addHistory(`Allow negative: ${state.allowNegative ? 'ON' : 'OFF'}`);
+      save();
+      render();
+    });
+
+    document.getElementById('add-player-a')?.addEventListener('click', () => {
+      state.teamAPlayers.push(`Player ${state.teamAPlayers.length + 1}`);
+      addHistory(`${state.teamAName} player added`);
+      save();
+      render();
+    });
+
+    document.getElementById('add-player-b')?.addEventListener('click', () => {
+      state.teamBPlayers.push(`Player ${state.teamBPlayers.length + 1}`);
+      addHistory(`${state.teamBName} player added`);
+      save();
+      render();
+    });
+
+    document.getElementById('reset-scores')?.addEventListener('click', () => {
+      state.teamAScore = 0;
+      state.teamBScore = 0;
+      addHistory('Scores reset');
+      save();
+      render();
+    });
+
+    document.getElementById('full-reset')?.addEventListener('click', () => {
+      localStorage.removeItem(KEY);
+      Object.assign(state, { ...initialState });
+      render();
+      save();
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'a' || e.key === 'A') updateScore('a', 1);
+      if (e.key === 'z' || e.key === 'Z') updateScore('a', -1);
+      if (e.key === 'k' || e.key === 'K') updateScore('b', 1);
+      if (e.key === 'm' || e.key === 'M') updateScore('b', -1);
+    });
+
+    render();
+  </script>
+
+  <style>
+    .score-btn {
+      border: 1px solid #cbd5e1;
+      border-radius: 0.5rem;
+      background: #fff;
+      padding: 0.7rem 0.2rem;
+      font-size: 1rem;
+      font-weight: 800;
+    }
+    .score-btn:hover {
+      background: #f8fafc;
+    }
+  </style>
+</Layout>

@@ -85,6 +85,7 @@ const cards = [
   { href: '/today-fortune', title: '오늘의 운세', desc: '오늘 운세 랜덤 확인', icon: '🔮', iconClass: 'bg-purple-100 text-purple-700' },
   { href: '/fortune-cookie-2026', title: '올해 포츈쿠키', desc: '2026년 키워드 뽑기', icon: '🥠', iconClass: 'bg-amber-100 text-amber-700' },
   { href: '/ladder-game', title: '사다리타기', desc: '랜덤 당첨 뽑기', icon: '🪜', iconClass: 'bg-lime-100 text-lime-700' }
+  ,{ href: '/tools/scoreboard', title: '스트리머 점수판', desc: 'OBS용 실시간 스코어보드', icon: '📊', iconClass: 'bg-teal-100 text-teal-700' }
 ].map((card) => ({ ...card, href: withLocale(card.href) }));
 
 const rows = [cards.slice(0, 8), cards.slice(4, 12), cards.slice(8, 16)];
