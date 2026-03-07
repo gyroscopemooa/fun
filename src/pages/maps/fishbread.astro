@@ -1,92 +1,115 @@
 ﻿---
 import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
 import AdSense from '../../components/AdSense.astro';
 import Recommend from '../../components/Recommend.astro';
 ---
 
 <Layout title="붕어빵 지도 | ManyTool" description="지도 기반 붕어빵 벤더 탐색/제보 페이지">
-  <main class="h-[calc(100vh-0px)] overflow-hidden bg-amber-50 text-slate-900">
-    <header class="flex h-16 items-center justify-between border-b border-amber-200 bg-white px-4 lg:px-6">
-      <div class="flex items-center gap-3">
-        <div class="rounded-lg bg-amber-500 p-2 text-white">🐟</div>
-        <h1 class="text-xl font-bold tracking-tight">ManyTool <span class="text-amber-500">Bungeoppang</span></h1>
+  <Header />
+
+  <main class="bg-amber-50 text-slate-900">
+    <section class="mx-auto max-w-6xl px-4 pb-4 pt-4">
+      <div class="mb-4 flex items-center justify-between rounded-2xl border border-amber-200 bg-white px-4 py-3">
+        <div class="flex items-center gap-3">
+          <div class="rounded-lg bg-amber-500 px-2 py-1 text-white">🐟</div>
+          <h1 class="text-lg font-bold tracking-tight md:text-xl">전국 붕어빵 지도</h1>
+        </div>
+        <p id="selected-region" class="rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-700">전체</p>
       </div>
-      <div class="hidden flex-1 px-8 md:block">
-        <input id="vendor-search" class="w-full rounded-xl border border-slate-200 bg-slate-100 px-4 py-2.5 text-sm" placeholder="지역/가게명 검색" type="text" />
+
+      <div class="grid gap-4 lg:grid-cols-[360px_1fr]">
+        <aside class="order-2 rounded-2xl border border-slate-200 bg-white lg:order-1">
+          <div class="border-b border-slate-100 p-4">
+            <input id="vendor-search" class="w-full rounded-xl border border-slate-200 bg-slate-100 px-4 py-2.5 text-sm" placeholder="지역/가게명 검색" type="text" />
+          </div>
+
+          <div class="border-b border-slate-100 p-4">
+            <div class="mb-3 flex items-center justify-between">
+              <h2 class="text-lg font-bold">제보 목록</h2>
+              <button id="region-all" class="text-sm font-semibold text-amber-600">전체</button>
+            </div>
+            <div class="flex gap-2 overflow-x-auto pb-1 text-xs">
+              <button class="rounded-full bg-amber-500 px-3 py-1.5 font-semibold text-white">All</button>
+              <button class="rounded-full bg-slate-100 px-3 py-1.5">팥</button>
+              <button class="rounded-full bg-slate-100 px-3 py-1.5">슈크림</button>
+              <button class="rounded-full bg-slate-100 px-3 py-1.5">피자</button>
+            </div>
+          </div>
+
+          <div id="vendor-list" class="max-h-[420px] space-y-3 overflow-y-auto p-4 lg:max-h-[520px]"></div>
+
+          <div class="border-t border-slate-100 bg-slate-50 p-4">
+            <h3 class="text-sm font-bold">제보 추가</h3>
+            <input id="spot-name" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="가게명" type="text" />
+            <input id="spot-region" class="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" placeholder="지역(지도/버튼 선택)" type="text" readonly />
+            <input id="spot-flavor" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="대표 메뉴 (예: 팥/슈크림)" type="text" />
+            <button id="spot-add" class="mt-3 w-full rounded-xl bg-amber-500 py-2.5 font-bold text-white">Report a New Vendor</button>
+          </div>
+        </aside>
+
+        <section class="order-1 rounded-2xl border border-slate-200 bg-white p-3 lg:order-2">
+          <div id="fishbread-map" class="h-[420px] w-full rounded-xl border border-slate-200 md:h-[620px]"></div>
+
+          <div class="mt-3 flex flex-wrap gap-2">
+            <button data-region="서울" class="map-region">서울</button>
+            <button data-region="경기" class="map-region">경기</button>
+            <button data-region="인천" class="map-region">인천</button>
+            <button data-region="강원" class="map-region">강원</button>
+            <button data-region="충남" class="map-region">충남</button>
+            <button data-region="충북" class="map-region">충북</button>
+            <button data-region="대전" class="map-region">대전</button>
+            <button data-region="전북" class="map-region">전북</button>
+            <button data-region="광주" class="map-region">광주</button>
+            <button data-region="전남" class="map-region">전남</button>
+            <button data-region="경북" class="map-region">경북</button>
+            <button data-region="대구" class="map-region">대구</button>
+            <button data-region="경남" class="map-region">경남</button>
+            <button data-region="울산" class="map-region">울산</button>
+            <button data-region="부산" class="map-region">부산</button>
+            <button data-region="제주" class="map-region">제주</button>
+          </div>
+        </section>
       </div>
-      <p id="selected-region" class="rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-700">전체</p>
-    </header>
+    </section>
 
-    <div class="flex h-[calc(100%-4rem)]">
-      <aside class="w-full border-r border-slate-200 bg-white md:w-96">
-        <div class="border-b border-slate-100 p-4">
-          <div class="mb-3 flex items-center justify-between">
-            <h2 class="text-lg font-bold">Nearby Vendors</h2>
-            <button id="region-all" class="text-sm font-semibold text-amber-600">전체</button>
-          </div>
-          <div class="flex gap-2 overflow-x-auto pb-1 text-xs">
-            <button class="rounded-full bg-amber-500 px-3 py-1.5 font-semibold text-white">All</button>
-            <button class="rounded-full bg-slate-100 px-3 py-1.5">팥</button>
-            <button class="rounded-full bg-slate-100 px-3 py-1.5">슈크림</button>
-            <button class="rounded-full bg-slate-100 px-3 py-1.5">피자</button>
-          </div>
-        </div>
-
-        <div id="vendor-list" class="h-[calc(100%-260px)] space-y-3 overflow-y-auto p-4"></div>
-
-        <div class="border-t border-slate-100 bg-slate-50 p-4">
-          <h3 class="text-sm font-bold">제보 추가</h3>
-          <input id="spot-name" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="가게명" type="text" />
-          <input id="spot-region" class="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" placeholder="지역(지도 선택)" type="text" readonly />
-          <input id="spot-flavor" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="대표 메뉴 (예: 팥/슈크림)" type="text" />
-          <button id="spot-add" class="mt-3 w-full rounded-xl bg-amber-500 py-2.5 font-bold text-white">Report a New Vendor</button>
-        </div>
-      </aside>
-
-      <section class="relative hidden flex-1 md:block">
-        <div class="absolute inset-0 bg-gradient-to-br from-emerald-50 via-sky-50 to-slate-100"></div>
-        <div class="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(245,158,11,0.15),transparent_40%),radial-gradient(circle_at_70%_70%,rgba(14,165,233,0.14),transparent_40%)]"></div>
-
-        <div class="absolute inset-6 rounded-2xl border border-slate-200 bg-white/70 p-4 backdrop-blur-sm">
-          <p class="text-sm font-semibold text-slate-700">지도에서 지역 선택</p>
-
-          <div class="relative mt-3 h-[82%] rounded-xl border border-dashed border-slate-300 bg-white/70">
-            <button data-region="서울" class="map-region absolute left-[45%] top-[20%]">서울</button>
-            <button data-region="경기" class="map-region absolute left-[45%] top-[30%]">경기</button>
-            <button data-region="인천" class="map-region absolute left-[34%] top-[24%]">인천</button>
-            <button data-region="강원" class="map-region absolute left-[60%] top-[24%]">강원</button>
-            <button data-region="충남" class="map-region absolute left-[36%] top-[44%]">충남</button>
-            <button data-region="충북" class="map-region absolute left-[50%] top-[42%]">충북</button>
-            <button data-region="대전" class="map-region absolute left-[44%] top-[52%]">대전</button>
-            <button data-region="전북" class="map-region absolute left-[34%] top-[58%]">전북</button>
-            <button data-region="광주" class="map-region absolute left-[30%] top-[68%]">광주</button>
-            <button data-region="전남" class="map-region absolute left-[40%] top-[76%]">전남</button>
-            <button data-region="경북" class="map-region absolute left-[60%] top-[53%]">경북</button>
-            <button data-region="대구" class="map-region absolute left-[56%] top-[62%]">대구</button>
-            <button data-region="경남" class="map-region absolute left-[48%] top-[71%]">경남</button>
-            <button data-region="울산" class="map-region absolute left-[65%] top-[71%]">울산</button>
-            <button data-region="부산" class="map-region absolute left-[60%] top-[79%]">부산</button>
-            <button data-region="제주" class="map-region absolute left-[21%] top-[86%]">제주</button>
-
-            <div id="map-markers"></div>
-          </div>
-        </div>
-      </section>
-    </div>
-
-    <section class="mx-auto max-w-5xl px-4 pb-8 pt-4">
+    <section class="mx-auto max-w-5xl px-4 pb-8 pt-2">
       <AdSense slotName="본문 중간" />
       <Recommend />
     </section>
   </main>
 
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+
   <script is:inline>
-    const KEY = 'manytool_fishbread_v3';
-    const REGION_POS = {
-      서울: { x: 46, y: 22 }, 경기: { x: 45, y: 31 }, 인천: { x: 34, y: 24 }, 강원: { x: 61, y: 24 },
-      충남: { x: 36, y: 44 }, 충북: { x: 50, y: 43 }, 대전: { x: 44, y: 52 }, 전북: { x: 34, y: 58 },
-      광주: { x: 30, y: 68 }, 전남: { x: 40, y: 76 }, 경북: { x: 60, y: 53 }, 대구: { x: 56, y: 62 },
-      경남: { x: 48, y: 71 }, 울산: { x: 65, y: 71 }, 부산: { x: 60, y: 79 }, 제주: { x: 21, y: 86 }
+    const KEY = 'manytool_fishbread_v4';
+    const REGION_COORD = {
+      서울: { lat: 37.5665, lng: 126.978, zoom: 11 },
+      경기: { lat: 37.4138, lng: 127.5183, zoom: 9 },
+      인천: { lat: 37.4563, lng: 126.7052, zoom: 11 },
+      강원: { lat: 37.8228, lng: 128.1555, zoom: 9 },
+      충남: { lat: 36.5184, lng: 126.8, zoom: 9 },
+      충북: { lat: 36.8, lng: 127.7, zoom: 9 },
+      대전: { lat: 36.3504, lng: 127.3845, zoom: 11 },
+      전북: { lat: 35.7175, lng: 127.153, zoom: 9 },
+      광주: { lat: 35.1595, lng: 126.8526, zoom: 11 },
+      전남: { lat: 34.8161, lng: 126.463, zoom: 9 },
+      경북: { lat: 36.4919, lng: 128.8889, zoom: 9 },
+      대구: { lat: 35.8714, lng: 128.6014, zoom: 11 },
+      경남: { lat: 35.4606, lng: 128.2132, zoom: 9 },
+      울산: { lat: 35.5384, lng: 129.3114, zoom: 11 },
+      부산: { lat: 35.1796, lng: 129.0756, zoom: 11 },
+      제주: { lat: 33.4996, lng: 126.5312, zoom: 10 }
     };
 
     const seed = [
@@ -102,31 +125,27 @@ import Recommend from '../../components/Recommend.astro';
         return [...seed];
       }
       try { return JSON.parse(raw); }
-      catch { localStorage.setItem(KEY, JSON.stringify(seed)); return [...seed]; }
+      catch {
+        localStorage.setItem(KEY, JSON.stringify(seed));
+        return [...seed];
+      }
     };
-
     const save = (data) => localStorage.setItem(KEY, JSON.stringify(data));
 
     const searchEl = document.getElementById('vendor-search');
     const selectedRegionEl = document.getElementById('selected-region');
     const regionInputEl = document.getElementById('spot-region');
     const listEl = document.getElementById('vendor-list');
-    const markersEl = document.getElementById('map-markers');
     const addBtn = document.getElementById('spot-add');
     const nameEl = document.getElementById('spot-name');
     const flavorEl = document.getElementById('spot-flavor');
 
     let vendors = load();
     let selectedRegion = '전체';
+    let map;
+    let markersLayer;
 
     const score = (v) => v.up - v.down;
-
-    const setRegion = (region) => {
-      selectedRegion = region;
-      if (selectedRegionEl) selectedRegionEl.textContent = region;
-      if (regionInputEl instanceof HTMLInputElement) regionInputEl.value = region === '전체' ? '' : region;
-      render();
-    };
 
     const filteredVendors = () => {
       const q = searchEl instanceof HTMLInputElement ? searchEl.value.trim().toLowerCase() : '';
@@ -168,21 +187,46 @@ import Recommend from '../../components/Recommend.astro';
         </article>`).join('');
     };
 
-    const renderMarkers = (items) => {
-      if (!markersEl) return;
-      markersEl.innerHTML = items
-        .slice(0, 10)
-        .map((v) => {
-          const pos = REGION_POS[v.region] || { x: 45, y: 50 };
-          return `<button title="${v.name}" style="left:${pos.x}%;top:${pos.y}%;" class="absolute -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-amber-500 px-2 py-1 text-xs text-white shadow">🐟</button>`;
-        })
-        .join('');
+    const initMap = () => {
+      if (typeof window === 'undefined' || !window.L || map) return;
+      map = window.L.map('fishbread-map').setView([36.5, 127.8], 7);
+      window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+      markersLayer = window.L.layerGroup().addTo(map);
+    };
+
+    const renderMap = (items) => {
+      if (!map || !markersLayer || !window.L) return;
+      markersLayer.clearLayers();
+
+      items.forEach((v) => {
+        const coord = REGION_COORD[v.region];
+        if (!coord) return;
+        window.L
+          .marker([coord.lat, coord.lng])
+          .bindPopup(`<strong>${v.name}</strong><br/>${v.region} · ${v.flavor}`)
+          .addTo(markersLayer);
+      });
+
+      if (selectedRegion !== '전체' && REGION_COORD[selectedRegion]) {
+        const c = REGION_COORD[selectedRegion];
+        map.setView([c.lat, c.lng], c.zoom);
+      }
     };
 
     const render = () => {
       const items = filteredVendors();
       renderList(items);
-      renderMarkers(items);
+      renderMap(items);
+    };
+
+    const setRegion = (region) => {
+      selectedRegion = region;
+      if (selectedRegionEl) selectedRegionEl.textContent = region;
+      if (regionInputEl instanceof HTMLInputElement) regionInputEl.value = region === '전체' ? '' : region;
+      render();
     };
 
     document.querySelectorAll('[data-region]').forEach((btn) => {
@@ -192,7 +236,6 @@ import Recommend from '../../components/Recommend.astro';
         if (region) setRegion(region);
       });
     });
-
     document.getElementById('region-all')?.addEventListener('click', () => setRegion('전체'));
 
     listEl?.addEventListener('click', (e) => {
@@ -240,23 +283,32 @@ import Recommend from '../../components/Recommend.astro';
 
       if (nameEl instanceof HTMLInputElement) nameEl.value = '';
       if (flavorEl instanceof HTMLInputElement) flavorEl.value = '';
-
       save(vendors);
       render();
     });
 
     searchEl?.addEventListener('input', render);
-    setRegion('전체');
+
+    const boot = () => {
+      initMap();
+      setRegion('전체');
+    };
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', boot);
+    } else {
+      boot();
+    }
   </script>
 
   <style>
     .map-region {
       border: 1px solid #cbd5e1;
-      border-radius: 0.5rem;
-      background: white;
+      border-radius: 9999px;
+      background: #ffffff;
       font-size: 0.75rem;
       line-height: 1;
-      padding: 0.2rem 0.45rem;
+      padding: 0.35rem 0.65rem;
     }
   </style>
 </Layout>
