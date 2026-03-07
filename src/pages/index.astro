@@ -121,9 +121,6 @@ const rows = [cards.slice(0, 8), cards.slice(4, 12), cards.slice(8, 16)];
       const nextBtn = rowEl.querySelector('[data-nav="next"]');
 
       if (!track || !prevBtn || !nextBtn) return;
-      const rowIdx = Number(rowEl.getAttribute('data-row') ?? '0');
-      const speedPxPerMs = 0.022 + rowIdx * 0.004;
-
       const step = () => {
         const firstCard = track.querySelector('a');
         if (!firstCard) return 240;
@@ -162,37 +159,7 @@ const rows = [cards.slice(0, 8), cards.slice(4, 12), cards.slice(8, 16)];
       nextBtn.addEventListener('click', slideNext);
       track.addEventListener('scroll', normalizeLoop);
 
-      let paused = false;
-      let rafId = 0;
-      let lastTs = 0;
-
-      const tick = (ts) => {
-        if (!lastTs) lastTs = ts;
-        const dt = ts - lastTs;
-        lastTs = ts;
-
-        if (!paused) {
-          track.scrollLeft += dt * speedPxPerMs;
-          normalizeLoop();
-        }
-
-        rafId = window.requestAnimationFrame(tick);
-      };
-
-      const pause = () => { paused = true; };
-      const resume = () => { paused = false; };
-
-      rowEl.addEventListener('mouseenter', pause);
-      rowEl.addEventListener('mouseleave', resume);
-      rowEl.addEventListener('touchstart', pause, { passive: true });
-      rowEl.addEventListener('touchend', resume);
-
-      document.addEventListener('visibilitychange', () => {
-        paused = document.hidden;
-      });
-
       track.scrollLeft = setWidth();
-      rafId = window.requestAnimationFrame(tick);
     });
 
     const applySearch = () => {
