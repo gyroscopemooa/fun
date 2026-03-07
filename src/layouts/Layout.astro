@@ -31,12 +31,83 @@ const enHref = new URL(pathNoLocale === '/' ? '/en' : `/en${pathNoLocale}`, site
 const jaHref = new URL(pathNoLocale === '/' ? '/ja' : `/ja${pathNoLocale}`, siteUrl).toString();
 const gaId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID;
 const googleSiteVerification = import.meta.env.PUBLIC_GOOGLE_SITE_VERIFICATION;
+const segments = pathNoLocale.split('/').filter(Boolean);
+const labelMap: Record<string, string> = {
+  about: '소개',
+  contact: '문의',
+  privacy: '개인정보 처리방침',
+  terms: '이용약관',
+  'editorial-policy': '콘텐츠 운영 원칙',
+  'content-disclaimer': '면책 고지',
+  'animal-test': '동물상 테스트',
+  'personal-color': '퍼스널컬러 테스트',
+  'magic-book': '마법책',
+  pinball: '핀볼',
+  'random-food': '랜덤 음식 추천',
+  'name-meaning': '이름풀이',
+  'name-compatibility': '이름궁합',
+  'today-fortune': '오늘의 운세',
+  'fortune-cookie-2026': '올해 포츈쿠키',
+  'reaction-test': '반응속도 테스트',
+  'mbti-test': 'MBTI 테스트',
+  'love-compatibility': '연애 궁합',
+  'ladder-game': '사다리타기',
+  maps: '지도',
+  fishbread: '붕어빵 지도',
+  'hidden-cafe': '숨은 카페 지도',
+  'local-eats': '지역 맛집 지도',
+  en: 'English',
+  ja: '日本語'
+};
+
+const breadcrumbs = [
+  { name: '홈', href: locale === 'ko' ? '/' : `/${locale}` },
+  ...segments.map((seg, idx) => {
+    const path = `/${segments.slice(0, idx + 1).join('/')}`;
+    const localizedPath = locale === 'ko' ? path : `/${locale}${path}`;
+    return {
+      name: labelMap[seg] ?? seg,
+      href: localizedPath
+    };
+  })
+];
+
 const websiteJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
   name: 'ManyTool',
   url: siteUrl,
-  inLanguage: 'ko-KR'
+  inLanguage: locale === 'ko' ? 'ko-KR' : locale === 'ja' ? 'ja-JP' : 'en-US',
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: `${siteUrl}/?q={search_term_string}`,
+    'query-input': 'required name=search_term_string'
+  }
+};
+
+const webPageJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: title,
+  description,
+  url: canonical,
+  isPartOf: {
+    '@type': 'WebSite',
+    name: 'ManyTool',
+    url: siteUrl
+  },
+  inLanguage: locale === 'ko' ? 'ko-KR' : locale === 'ja' ? 'ja-JP' : 'en-US'
+};
+
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: breadcrumbs.map((crumb, idx) => ({
+    '@type': 'ListItem',
+    position: idx + 1,
+    name: crumb.name,
+    item: new URL(crumb.href, siteUrl).toString()
+  }))
 };
 ---
 
@@ -70,6 +141,8 @@ const websiteJsonLd = {
     <link rel="alternate" hrefLang="x-default" href={koHref} />
     {googleSiteVerification && <meta name="google-site-verification" content={googleSiteVerification} />}
     <script type="application/ld+json" set:html={JSON.stringify(websiteJsonLd)}></script>
+    <script type="application/ld+json" set:html={JSON.stringify(webPageJsonLd)}></script>
+    <script type="application/ld+json" set:html={JSON.stringify(breadcrumbJsonLd)}></script>
     {gaId && (
       <>
         <script async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}></script>
@@ -81,6 +154,18 @@ const websiteJsonLd = {
     )}
   </head>
   <body class="bg-slate-50 text-slate-900">
+    {pathNoLocale !== '/' && (
+      <nav aria-label="Breadcrumb" class="mx-auto max-w-5xl px-4 pt-3 text-xs text-slate-500">
+        <ol class="flex flex-wrap items-center gap-1">
+          {breadcrumbs.map((crumb, idx) => (
+            <li class="flex items-center gap-1">
+              {idx > 0 && <span>/</span>}
+              <a href={crumb.href} class="hover:text-slate-700 hover:underline">{crumb.name}</a>
+            </li>
+          ))}
+        </ol>
+      </nav>
+    )}
     <slot />
   </body>
 </html>
