@@ -1,0 +1,59 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+const lastUpdated = '2026-03-08';
+---
+
+<Layout
+  title="AI 검색 최적화 가이드 | ManyTool"
+  description="Google AI 검색 가이드와 실무 SEO 인사이트를 바탕으로 ManyTool의 GEO/SEO 운영 원칙을 정리한 페이지입니다."
+  keywords="AI 검색 최적화, GEO, SEO 가이드, ManyTool"
+>
+  <Header />
+  <main class="mx-auto max-w-5xl px-4 py-8">
+    <h1 class="text-3xl font-black">ManyTool AI 검색 최적화 가이드</h1>
+    <p class="mt-3 text-slate-700">
+      ManyTool is a web platform that provides various online tools, tests, games, and maps that users can access directly in their browser.
+    </p>
+    <p class="mt-1 text-sm text-slate-500">Last reviewed: {lastUpdated}</p>
+
+    <section class="mt-6 rounded-xl border border-slate-200 bg-white p-5">
+      <h2 class="text-xl font-bold">핵심 원칙</h2>
+      <ul class="mt-3 list-disc space-y-2 pl-5 text-slate-700">
+        <li>AI 검색을 따로 공략하기보다, 사용자에게 실제로 도움이 되는 고유 콘텐츠를 우선 제작합니다.</li>
+        <li>각 도구 페이지에 목적, 사용 방법, 예시, FAQ를 명확히 제공해 요약/인용 가능성을 높입니다.</li>
+        <li>브랜드/페이지 신뢰 신호(정책 페이지, 운영 원칙, 최신성 표기)를 지속적으로 강화합니다.</li>
+      </ul>
+    </section>
+
+    <section class="mt-5 rounded-xl border border-slate-200 bg-white p-5">
+      <h2 class="text-xl font-bold">ManyTool 적용 항목</h2>
+      <ul class="mt-3 list-disc space-y-2 pl-5 text-slate-700">
+        <li>도구별 독립 랜딩 URL + 명확한 H1/설명/FAQ 구성</li>
+        <li>구조화된 데이터(WebSite, WebPage, FAQ, SoftwareApplication, Organization) 제공</li>
+        <li>사이트맵/robots/RSS 정리 및 검색엔진 크롤링 접근성 유지</li>
+        <li>모바일 우선 UI, 가벼운 페이지, 즉시 실행 가능한 툴 중심 구성</li>
+      </ul>
+    </section>
+
+    <section class="mt-5 rounded-xl border border-slate-200 bg-white p-5">
+      <h2 class="text-xl font-bold">운영 체크리스트</h2>
+      <ol class="mt-3 list-decimal space-y-2 pl-5 text-slate-700">
+        <li>새 도구 배포 시: 설명/사용법/예시/FAQ를 함께 게시</li>
+        <li>월 1회: 상위 유입 페이지 본문 최신화 및 FAQ 보강</li>
+        <li>주 1회: Search Console 색인/쿼리/노출 변화 점검</li>
+      </ol>
+    </section>
+
+    <section class="mt-5 rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-700">
+      <h2 class="text-lg font-bold">참고 자료</h2>
+      <ul class="mt-2 list-disc space-y-1 pl-5">
+        <li><a class="underline" href="https://developers.google.com/search/blog/2025/05/succeeding-in-ai-search?hl=ko" target="_blank" rel="noopener noreferrer">Google Search Central: AI 검색에서 성공하기</a></li>
+        <li><a class="underline" href="https://www.tosspayments.com/blog/articles/39461" target="_blank" rel="noopener noreferrer">토스페이먼츠 블로그: AI 검색/SEO 실무 인사이트</a></li>
+      </ul>
+    </section>
+  </main>
+  <Footer />
+</Layout>

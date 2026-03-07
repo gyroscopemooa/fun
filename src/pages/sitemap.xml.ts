@@ -8,6 +8,7 @@ const paths = [
   '/maps',
   '/what-is-manytool',
   '/online-tools',
+  '/ai-search',
   '/seo',
   '/about',
   '/contact',
