@@ -9,8 +9,13 @@ const showPlaceholder = import.meta.env.DEV || import.meta.env.PUBLIC_SHOW_AD_PL
 
 {
   showPlaceholder && (
-    <div class="my-6 rounded-lg border border-amber-300 bg-amber-50 px-4 py-4 text-sm text-amber-800">
-      SponsorBanner ({position}) - 직접 광고 배너 영역
-    </div>
+    <section aria-label={`${position} 스폰서 배너`} class="my-5 px-4 lg:px-10">
+      <div class="mx-auto w-full max-w-5xl rounded-xl border border-amber-300 bg-amber-50 p-3">
+        <p class="mb-2 text-center text-[11px] font-semibold uppercase tracking-wide text-amber-700">스폰서 배너</p>
+        <div class="flex min-h-[84px] items-center justify-center rounded-lg bg-white text-sm text-amber-800 sm:min-h-[110px]">
+          SponsorBanner ({position}) - 직접 광고 배너 영역
+        </div>
+      </div>
+    </section>
   )
 }

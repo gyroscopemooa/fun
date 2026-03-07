@@ -9,8 +9,22 @@ const showPlaceholder = import.meta.env.DEV || import.meta.env.PUBLIC_SHOW_AD_PL
 
 {
   showPlaceholder && (
-    <div class="my-6 rounded-lg border border-dashed border-slate-300 bg-slate-100 px-4 py-6 text-center text-sm text-slate-600">
-      Adsense Placeholder: {slotName}
-    </div>
+    <section aria-label={`${slotName} 광고`} class="my-5 px-4 lg:px-10">
+      <div class="mx-auto w-full max-w-5xl rounded-xl border border-dashed border-slate-300 bg-slate-100 p-3">
+        <p class="mb-2 text-center text-[11px] font-semibold uppercase tracking-wide text-slate-500">광고</p>
+        <div class="flex min-h-[96px] items-center justify-center rounded-lg bg-white text-center text-sm text-slate-600 sm:min-h-[120px]">
+          Adsense Placeholder: {slotName}
+        </div>
+      </div>
+    </section>
+  )
+}
+{
+  !showPlaceholder && (
+    <section aria-label={`${slotName} 광고`} class="my-5 px-4 lg:px-10">
+      <div class="mx-auto w-full max-w-5xl">
+        <p class="mb-2 text-center text-[11px] font-semibold uppercase tracking-wide text-slate-500">광고</p>
+      </div>
+    </section>
   )
 }
