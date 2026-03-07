@@ -1,0 +1,20 @@
+﻿---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="Hidden Cafe Map | ManyTool" description="숨은 카페 지도 도구 설명과 사용 방법 페이지입니다.">
+  <Header />
+  <main class="mx-auto max-w-4xl px-4 py-8">
+    <h1 class="text-3xl font-black">Hidden Cafe Map</h1>
+    <section class="mt-4 space-y-3 text-slate-700">
+      <h2 class="text-xl font-bold">도구 설명</h2><p>숨은 카페 위치를 빠르게 찾는 지도형 도구입니다.</p>
+      <h2 class="text-xl font-bold">사용 방법</h2><p>지역을 선택해 후보 카페를 탐색합니다.</p>
+      <h2 class="text-xl font-bold">예시</h2><p>조용한 작업 장소를 찾을 때 유용합니다.</p>
+      <h2 class="text-xl font-bold">FAQ</h2><p>Q. 무료인가요? A. 네.</p>
+      <p><a class="underline" href="/maps/hidden-cafe">실행 페이지로 이동</a></p>
+    </section>
+  </main>
+  <Footer />
+</Layout>

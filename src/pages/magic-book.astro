@@ -5,7 +5,7 @@ import Footer from '../components/Footer.astro';
 import Recommend from '../components/Recommend.astro';
 ---
 
-<Layout title="마법책 | FunHub" description="오늘의 랜덤 메시지 마법책">
+<Layout title="마법책 | ManyTool" description="랜덤 문구를 뽑는 웹 기반 마법책 도구입니다.">
   <Header />
   <main class="mx-auto max-w-3xl px-4 py-8">
     <h1 class="text-2xl font-bold">마법책</h1>
@@ -35,6 +35,15 @@ import Recommend from '../components/Recommend.astro';
         if (resultEl) resultEl.textContent = quotes[idx];
       });
     </script>
+
+    <section class="mt-5 rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-700">
+      <h2 class="text-lg font-semibold text-slate-900">마법책이란?</h2>
+      <p class="mt-1">버튼 클릭으로 랜덤 메시지를 보여주는 가벼운 운세형 도구입니다.</p>
+      <h2 class="mt-4 text-lg font-semibold text-slate-900">예시</h2>
+      <p class="mt-1">하루 시작 전 오늘의 한 문장, 방송 중 랜덤 미션 뽑기에 사용할 수 있습니다.</p>
+      <h2 class="mt-4 text-lg font-semibold text-slate-900">FAQ</h2>
+      <p class="mt-1">Q. 결과 저장되나요? A. 저장하지 않습니다.</p>
+    </section>
 
     <Recommend />
   </main>

@@ -2,6 +2,13 @@
 
 const paths = [
   '/',
+  '/tools',
+  '/games',
+  '/tests',
+  '/maps',
+  '/what-is-manytool',
+  '/online-tools',
+  '/seo',
   '/about',
   '/contact',
   '/editorial-policy',
@@ -12,19 +19,25 @@ const paths = [
   '/personal-color',
   '/magic-book',
   '/pinball',
+  '/pinball-game',
   '/random-food',
+  '/name-generator',
   '/name-meaning',
   '/name-compatibility',
   '/today-fortune',
   '/fortune-cookie-2026',
   '/reaction-test',
+  '/reaction-speed',
   '/mbti-test',
   '/love-compatibility',
   '/ladder-game',
   '/tools/scoreboard',
   '/maps/fishbread',
+  '/fishbread-map',
   '/maps/hidden-cafe',
-  '/maps/local-eats'
+  '/hidden-cafe-map',
+  '/maps/local-eats',
+  '/local-restaurant-map'
 ];
 
 const localePaths = ['en', 'ja'].flatMap((locale) =>

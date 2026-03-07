@@ -6,7 +6,7 @@ import AdSense from '../components/AdSense.astro';
 import Recommend from '../components/Recommend.astro';
 ---
 
-<Layout title="동물상 테스트 | FunHub" description="사진 업로드 기반 동물상 테스트 (무API)">
+<Layout title="동물상 테스트 | ManyTool" description="사진 업로드 기반 동물상 테스트. 브라우저 로컬 분석으로 빠르게 결과를 확인합니다.">
   <Header />
   <main class="mx-auto max-w-3xl px-4 py-8">
     <h1 class="text-2xl font-bold">동물상 테스트</h1>
@@ -15,10 +15,19 @@ import Recommend from '../components/Recommend.astro';
 
     <section class="mt-4 rounded-xl border border-slate-200 bg-white p-5">
       <input id="animal-file" accept="image/*" class="block w-full text-sm" type="file" />
-      <img id="animal-preview" class="mt-3 hidden max-h-72 w-full rounded-lg object-contain" alt="미리보기" />
+      <img id="animal-preview" class="mt-3 hidden max-h-72 w-full rounded-lg object-contain" alt="미리보기" loading="lazy" decoding="async" />
       <button id="animal-run" class="mt-3 rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white">분석하기</button>
       <p id="animal-result" class="mt-3 rounded-md bg-slate-100 px-3 py-3 text-sm text-slate-700">이미지를 올리고 분석 버튼을 눌러주세요.</p>
       <canvas id="animal-canvas" class="hidden"></canvas>
+    </section>
+
+    <section class="mt-5 rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-700">
+      <h2 class="text-lg font-semibold text-slate-900">동물상 테스트란?</h2>
+      <p class="mt-1">사진의 색감/밝기 패턴을 기준으로 재미형 동물상 결과를 보여주는 웹 도구입니다.</p>
+      <h2 class="mt-4 text-lg font-semibold text-slate-900">사용 방법</h2>
+      <p class="mt-1">사진 업로드 후 분석하기를 누르면 즉시 결과가 표시됩니다.</p>
+      <h2 class="mt-4 text-lg font-semibold text-slate-900">FAQ</h2>
+      <p class="mt-1">Q. 사진 저장하나요? A. 저장하지 않고 현재 브라우저에서만 처리합니다.</p>
     </section>
 
     <AdSense slotName="본문 하단" />

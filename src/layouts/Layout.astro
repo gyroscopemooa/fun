@@ -1,18 +1,21 @@
 ﻿---
 import '../styles/global.css';
 import AdSense from '../components/AdSense.astro';
+import globalCssUrl from '../styles/global.css?url';
 
 interface Props {
   title?: string;
   description?: string;
   image?: string;
+  keywords?: string;
   noindex?: boolean;
 }
 
 const {
-  title = 'ManyTool | 테스트, 게임, 지도, 랜덤 도구 포털',
-  description = '재미있는 테스트, 미니게임, 지도, 랜덤 추천 기능을 한곳에서 즐기는 ManyTool',
-  image = '/favicon.svg',
+  title = 'ManyTool | 재미있는 온라인 도구 모음',
+  description = 'ManyTool은 다양한 재미있는 온라인 도구와 테스트, 게임, 지도 기능을 제공하는 웹 기반 툴 플랫폼입니다.',
+  image = '/og-image.png',
+  keywords,
   noindex = false
 } = Astro.props;
 
@@ -43,6 +46,8 @@ const localeDescSuffix = locale === 'ko'
 const normalizedPathLabel = pathNoLocale === '/' ? 'main' : pathNoLocale.replace(/\//g, ' ').trim();
 const resolvedTitle = `${localeTitlePrefix}${title}`;
 const resolvedDescription = `${description}${localeDescSuffix}${locale === 'ko' ? '' : ` (path: ${normalizedPathLabel})`}`;
+const defaultKeywords = '온라인 도구, 웹툴, 테스트 사이트, MBTI 테스트, 이름 궁합, 랜덤 테스트';
+const resolvedKeywords = keywords ?? defaultKeywords;
 const segments = pathNoLocale.split('/').filter(Boolean);
 const labelMap: Record<string, string> = {
   about: '소개',
@@ -97,6 +102,63 @@ const websiteJsonLd = {
   }
 };
 
+const softwareApplicationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'ManyTool',
+  applicationCategory: 'UtilityApplication',
+  operatingSystem: 'Web',
+  description: '테스트, 게임, 지도, 랜덤 도구를 제공하는 온라인 툴 플랫폼',
+  url: siteUrl
+};
+
+const organizationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'ManyTool',
+  url: siteUrl,
+  logo: new URL('/logo.png', siteUrl).toString()
+};
+
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'ManyTool은 무엇인가?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'ManyTool은 온라인 도구, 테스트, 게임, 지도 기능을 제공하는 웹 기반 플랫폼입니다.'
+      }
+    },
+    {
+      '@type': 'Question',
+      name: '온라인 도구란 무엇인가?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: '브라우저에서 설치 없이 바로 사용하는 웹 기반 도구입니다.'
+      }
+    },
+    {
+      '@type': 'Question',
+      name: 'MBTI 테스트는 무엇인가?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: '질문 응답을 기반으로 성격 유형을 분류하는 테스트입니다.'
+      }
+    },
+    {
+      '@type': 'Question',
+      name: '궁합 테스트는 어떻게 작동하는가?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: '입력값 기반 규칙으로 궁합 점수와 결과를 계산해 보여줍니다.'
+      }
+    }
+  ]
+};
+
 const webPageJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebPage',
@@ -131,9 +193,11 @@ const breadcrumbJsonLd = {
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
     <meta name="generator" content={Astro.generator} />
+    <link rel="preload" as="style" href={globalCssUrl} />
     <title>{resolvedTitle}</title>
     <meta name="description" content={resolvedDescription} />
-    <meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1'} />
+    <meta name="keywords" content={resolvedKeywords} />
+    <meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow'} />
     <link rel="canonical" href={canonical} />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="ManyTool" />
@@ -155,8 +219,11 @@ const breadcrumbJsonLd = {
     {googleSiteVerification && <meta name="google-site-verification" content={googleSiteVerification} />}
     {naverSiteVerification && <meta name="naver-site-verification" content={naverSiteVerification} />}
     <script type="application/ld+json" set:html={JSON.stringify(websiteJsonLd)}></script>
+    <script type="application/ld+json" set:html={JSON.stringify(softwareApplicationJsonLd)}></script>
+    <script type="application/ld+json" set:html={JSON.stringify(organizationJsonLd)}></script>
     <script type="application/ld+json" set:html={JSON.stringify(webPageJsonLd)}></script>
     <script type="application/ld+json" set:html={JSON.stringify(breadcrumbJsonLd)}></script>
+    <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)}></script>
     <script
       async
       src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseClient}`}

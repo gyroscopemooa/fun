@@ -6,13 +6,22 @@ import AdSense from '../components/AdSense.astro';
 import Recommend from '../components/Recommend.astro';
 ---
 
-<Layout title="MBTI 테스트 | FunHub" description="간단 문답으로 보는 MBTI 성향 테스트">
+<Layout title="MBTI 테스트 | ManyTool" description="간단 문답으로 MBTI 성향을 확인하는 웹 테스트입니다.">
   <Header />
   <main class="mx-auto max-w-3xl px-4 py-8">
     <h1 class="text-2xl font-bold">MBTI 테스트</h1>
     <p class="mt-3 text-slate-700">짧은 질문으로 현재 성향을 빠르게 확인해보세요.</p>
     <AdSense slotName="본문 상단" />
-    <div class="mt-4 rounded-lg border bg-white p-6">MBTI Question Placeholder</div>
+    <section class="mt-4 rounded-lg border bg-white p-6">
+      <h2 class="text-lg font-semibold">MBTI 테스트란 무엇인가</h2>
+      <p class="mt-2 text-sm text-slate-700">질문 응답을 기반으로 성향 유형을 분류하는 성격 테스트입니다.</p>
+      <h2 class="mt-4 text-lg font-semibold">테스트 방법</h2>
+      <p class="mt-2 text-sm text-slate-700">질문에 솔직하게 답변하면 현재 성향 기준 결과를 확인할 수 있습니다.</p>
+      <h2 class="mt-4 text-lg font-semibold">예시</h2>
+      <p class="mt-2 text-sm text-slate-700">친구와 결과 비교, 팀 성향 파악, 자기 이해 목적으로 활용할 수 있습니다.</p>
+      <h2 class="mt-4 text-lg font-semibold">FAQ</h2>
+      <p class="mt-2 text-sm text-slate-700">Q. 로그인 필요한가요? A. 필요 없습니다.</p>
+    </section>
     <Recommend />
   </main>
   <Footer />

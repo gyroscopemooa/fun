@@ -1,4 +1,4 @@
 ﻿User-agent: *
 Allow: /
 
-Sitemap: https://fun.pages.dev/sitemap.xml
+Sitemap: https://manytool.net/sitemap.xml

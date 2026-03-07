@@ -6,13 +6,20 @@ import AdSense from '../components/AdSense.astro';
 import Recommend from '../components/Recommend.astro';
 ---
 
-<Layout title="연애 궁합 테스트 | FunHub" description="두 사람의 성향 기반 연애 궁합 테스트">
+<Layout title="연애 궁합 테스트 | ManyTool" description="두 사람의 입력값으로 확인하는 연애 궁합 테스트입니다.">
   <Header />
   <main class="mx-auto max-w-3xl px-4 py-8">
     <h1 class="text-2xl font-bold">연애 궁합 테스트</h1>
     <p class="mt-3 text-slate-700">간단한 입력으로 궁합 결과를 확인하는 재미형 테스트입니다.</p>
     <AdSense slotName="본문 상단" />
-    <div class="mt-4 rounded-lg border bg-white p-6">Love Compatibility Placeholder</div>
+    <section class="mt-4 rounded-lg border bg-white p-6">
+      <h2 class="text-lg font-semibold">연애 궁합 테스트란?</h2>
+      <p class="mt-2 text-sm text-slate-700">이름/성향 기반 규칙으로 궁합 점수를 계산하는 재미형 도구입니다.</p>
+      <h2 class="mt-4 text-lg font-semibold">사용 방법</h2>
+      <p class="mt-2 text-sm text-slate-700">입력 후 결과를 확인하고 친구와 공유해 비교해볼 수 있습니다.</p>
+      <h2 class="mt-4 text-lg font-semibold">FAQ</h2>
+      <p class="mt-2 text-sm text-slate-700">Q. 결과는 과학적 진단인가요? A. 엔터테인먼트용 참고 결과입니다.</p>
+    </section>
     <Recommend />
   </main>
   <Footer />

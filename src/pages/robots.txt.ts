@@ -1,7 +1,7 @@
 ﻿import type { APIRoute } from 'astro';
 
 export const GET: APIRoute = ({ site }) => {
-  const base = site ?? new URL('https://fun.pages.dev');
+  const base = site ?? new URL('https://manytool.net');
   const body = `User-agent: *
 Allow: /
 
