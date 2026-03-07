@@ -20,11 +20,6 @@ const paths = [
   '/love-compatibility',
   '/ladder-game',
   '/maps/fishbread',
-  '/maps/fishbread/seoul',
-  '/maps/fishbread/busan',
-  '/maps/fishbread/ulsan',
-  '/maps/fishbread/daegu',
-  '/maps/fishbread/incheon',
   '/maps/hidden-cafe',
   '/maps/local-eats'
 ];
