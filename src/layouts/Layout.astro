@@ -17,8 +17,16 @@ const {
 
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).toString();
 const ogImage = new URL(image, Astro.site ?? Astro.url.origin).toString();
+const siteUrl = Astro.site?.toString() ?? Astro.url.origin;
 const gaId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID;
 const googleSiteVerification = import.meta.env.PUBLIC_GOOGLE_SITE_VERIFICATION;
+const websiteJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'ManyTool',
+  url: siteUrl,
+  inLanguage: 'ko-KR'
+};
 ---
 
 <!doctype html>
@@ -31,8 +39,10 @@ const googleSiteVerification = import.meta.env.PUBLIC_GOOGLE_SITE_VERIFICATION;
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1'} />
     <link rel="canonical" href={canonical} />
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="ManyTool" />
     <meta property="og:locale" content="ko_KR" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
@@ -42,8 +52,11 @@ const googleSiteVerification = import.meta.env.PUBLIC_GOOGLE_SITE_VERIFICATION;
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
+    <meta name="author" content="ManyTool" />
+    <link rel="alternate" hrefLang="ko-KR" href={canonical} />
+    <link rel="alternate" hrefLang="x-default" href={canonical} />
     {googleSiteVerification && <meta name="google-site-verification" content={googleSiteVerification} />}
-    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    <script type="application/ld+json" set:html={JSON.stringify(websiteJsonLd)}></script>
     {gaId && (
       <>
         <script async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}></script>

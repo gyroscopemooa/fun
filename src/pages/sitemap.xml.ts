@@ -26,14 +26,28 @@ const paths = [
 
 export const GET: APIRoute = ({ site }) => {
   const base = site ?? new URL('https://fun.pages.dev');
-  const now = new Date().toISOString();
+  const now = new Date().toISOString().split('T')[0];
+
+  const priorityFor = (path: string) => {
+    if (path === '/') return '1.0';
+    if (path.startsWith('/maps/')) return '0.9';
+    if (path === '/privacy' || path === '/terms' || path === '/contact' || path === '/about') return '0.5';
+    return '0.8';
+  };
+
+  const changefreqFor = (path: string) => {
+    if (path === '/') return 'daily';
+    if (path.startsWith('/maps/')) return 'daily';
+    if (path === '/privacy' || path === '/terms' || path === '/about') return 'monthly';
+    return 'weekly';
+  };
 
   const body = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${paths
   .map((path) => {
     const loc = new URL(path, base).toString();
-    return `  <url><loc>${loc}</loc><lastmod>${now}</lastmod></url>`;
+    return `  <url><loc>${loc}</loc><lastmod>${now}</lastmod><changefreq>${changefreqFor(path)}</changefreq><priority>${priorityFor(path)}</priority></url>`;
   })
   .join('\n')}
 </urlset>`;
