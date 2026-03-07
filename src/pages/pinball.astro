@@ -1,128 +1,454 @@
 ﻿---
 import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
 import Recommend from '../components/Recommend.astro';
 ---
 
-<Layout title="핀볼 게임 | FunHub" description="웹에서 즐기는 미니 핀볼 게임">
+<Layout title="핀볼 아레나 | ManyTool" description="참가자 이름과 공 개수를 넣고 자동으로 튕기는 핀볼/플링코 스타일 게임">
   <Header />
-  <main class="mx-auto max-w-3xl px-4 py-8">
-    <h1 class="text-2xl font-bold">핀볼 게임</h1>
-    <p class="mt-3 text-slate-700">패들을 좌우로 움직여 공을 떨어뜨리지 마세요. 벽 충돌마다 점수가 올라갑니다.</p>
 
-    <section class="mt-4 rounded-xl border border-slate-200 bg-white p-4">
-      <div class="mb-3 flex items-center justify-between text-sm">
-        <p>점수: <span id="pinball-score" class="font-bold">0</span></p>
-        <button id="pinball-reset" class="rounded-md border border-slate-300 px-3 py-1">다시 시작</button>
+  <main class="bg-slate-100 pb-10">
+    <section class="mx-auto max-w-6xl px-4 py-5">
+      <div class="mb-4 rounded-2xl border border-sky-200 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 px-5 py-4 text-white shadow-lg">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p class="text-xs uppercase tracking-[0.2em] text-sky-300">ManyTool Pinball Arena</p>
+            <h1 class="text-2xl font-black tracking-tight">실시간 내기 핀볼</h1>
+          </div>
+          <div class="rounded-full border border-sky-300/40 bg-sky-400/10 px-4 py-2 text-sm text-sky-200">
+            참가 공 <span id="ball-count" class="font-bold text-white">0</span>개
+          </div>
+        </div>
       </div>
-      <canvas id="pinball-canvas" width="720" height="420" class="w-full rounded-lg bg-slate-900"></canvas>
-      <p class="mt-2 text-xs text-slate-500">조작: ← → 또는 A D</p>
+
+      <div class="grid gap-4 lg:grid-cols-[300px_1fr_260px]">
+        <aside class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h2 class="text-lg font-bold text-slate-900">참가자 입력</h2>
+          <p class="mt-1 text-xs text-slate-500">중복 이름 허용, 공 개수 자유 입력</p>
+
+          <div class="mt-4 space-y-2">
+            <input id="player-name" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" placeholder="이름 (예: 철수)" type="text" />
+            <input id="player-balls" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" placeholder="공 개수 (예: 5)" type="number" min="1" max="30" value="3" />
+            <button id="add-player" class="w-full rounded-xl bg-sky-500 py-2.5 text-sm font-bold text-white">참가자 추가</button>
+          </div>
+
+          <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <div class="mb-2 flex items-center justify-between">
+              <h3 class="text-sm font-bold">대기열</h3>
+              <button id="clear-players" class="text-xs font-semibold text-rose-500">전체 삭제</button>
+            </div>
+            <ul id="players-list" class="space-y-2 text-sm"></ul>
+          </div>
+
+          <div class="mt-4 grid grid-cols-2 gap-2">
+            <button id="start-game" class="rounded-xl bg-emerald-500 py-2.5 text-sm font-bold text-white">시작</button>
+            <button id="stop-game" class="rounded-xl bg-slate-800 py-2.5 text-sm font-bold text-white">중지</button>
+            <button id="reset-game" class="col-span-2 rounded-xl border border-slate-300 bg-white py-2.5 text-sm font-bold">리셋</button>
+          </div>
+        </aside>
+
+        <section class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+          <div class="mb-2 flex items-center justify-between px-1">
+            <p class="text-sm font-semibold text-slate-600">DROP ZONE</p>
+            <p id="status-text" class="text-xs font-bold uppercase tracking-wide text-sky-600">ready</p>
+          </div>
+          <canvas id="pinball-board" width="920" height="760" class="w-full rounded-xl border border-slate-200 bg-slate-950"></canvas>
+          <div class="mt-2 text-xs text-slate-500">공은 자동으로 투하되고, 하단 슬롯 도착 순서로 결과가 집계됩니다.</div>
+        </section>
+
+        <aside class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h2 class="text-lg font-bold text-slate-900">실시간 결과</h2>
+          <div class="mt-3 rounded-xl bg-slate-50 p-3">
+            <p class="text-xs text-slate-500">현재 1등</p>
+            <p id="leader-text" class="mt-1 text-xl font-black text-emerald-600">-</p>
+            <p id="leader-meta" class="text-xs text-slate-500">진행 전</p>
+          </div>
+
+          <div class="mt-4">
+            <h3 class="text-sm font-bold">도착 순위</h3>
+            <ol id="finish-list" class="mt-2 space-y-2 text-sm"></ol>
+          </div>
+
+          <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <h3 class="text-sm font-bold">슬롯 배수</h3>
+            <div id="slot-info" class="mt-2 grid grid-cols-3 gap-2 text-xs"></div>
+          </div>
+        </aside>
+      </div>
     </section>
 
-    <Recommend />
+    <section class="mx-auto max-w-5xl px-4">
+      <Recommend />
+    </section>
   </main>
-  <Footer />
 
   <script is:inline>
-    const canvas = document.getElementById('pinball-canvas');
-    const scoreEl = document.getElementById('pinball-score');
-    const resetEl = document.getElementById('pinball-reset');
-    if (!(canvas instanceof HTMLCanvasElement)) {
-      throw new Error('Canvas not found');
-    }
+    const canvas = document.getElementById('pinball-board');
+    const playersListEl = document.getElementById('players-list');
+    const addPlayerBtn = document.getElementById('add-player');
+    const clearPlayersBtn = document.getElementById('clear-players');
+    const startBtn = document.getElementById('start-game');
+    const stopBtn = document.getElementById('stop-game');
+    const resetBtn = document.getElementById('reset-game');
+    const playerNameEl = document.getElementById('player-name');
+    const playerBallsEl = document.getElementById('player-balls');
+    const finishListEl = document.getElementById('finish-list');
+    const leaderTextEl = document.getElementById('leader-text');
+    const leaderMetaEl = document.getElementById('leader-meta');
+    const ballCountEl = document.getElementById('ball-count');
+    const statusTextEl = document.getElementById('status-text');
+    const slotInfoEl = document.getElementById('slot-info');
+
+    if (!(canvas instanceof HTMLCanvasElement)) throw new Error('pinball board missing');
     const ctx = canvas.getContext('2d');
-    if (!ctx) throw new Error('2D context not available');
+    if (!ctx) throw new Error('2d context missing');
 
     const W = canvas.width;
     const H = canvas.height;
+    const WALL = 16;
+    const DROP_Y = 78;
+    const SLOT_H = 62;
+    const PEG_R = 5;
+    const BALL_R = 8;
+    const GRAVITY = 0.19;
+    const AIR = 0.999;
+    const BOUNCE = 0.78;
 
-    let paddleX = W / 2 - 55;
-    const paddleY = H - 30;
-    const paddleW = 110;
-    const paddleH = 12;
-    const paddleSpeed = 7;
+    const SLOT_MULT = [1.2, 1.8, 2.5, 5, 10, 5, 2.5, 1.8, 1.2];
+    const slotWidth = (W - WALL * 2) / SLOT_MULT.length;
 
-    let ballX = W / 2;
-    let ballY = H / 2;
-    let vx = 3.2;
-    let vy = -3.1;
-    const r = 8;
+    const colorPool = ['#22d3ee', '#a3e635', '#f97316', '#f43f5e', '#60a5fa', '#c084fc', '#34d399', '#facc15'];
 
-    let left = false;
-    let right = false;
-    let score = 0;
+    const pegs = [];
+    for (let row = 0; row < 13; row += 1) {
+      const count = 7 + (row % 2);
+      const y = 132 + row * 42;
+      const usable = W - 2 * (WALL + 46);
+      const step = usable / (count - 1);
+      for (let i = 0; i < count; i += 1) {
+        const offset = row % 2 ? step / 2 : 0;
+        const x = WALL + 46 + i * step + offset;
+        if (x < W - WALL - 36) pegs.push({ x, y, r: PEG_R });
+      }
+    }
+
+    let participants = [
+      { id: 'p1', name: 'Jake', balls: 3, color: colorPool[0] },
+      { id: 'p2', name: 'Sarah', balls: 2, color: colorPool[5] },
+      { id: 'p3', name: 'Tom', balls: 4, color: colorPool[1] }
+    ];
+
+    let balls = [];
+    let finishOrder = [];
+    let dropQueue = [];
+    let running = false;
+    let rafId = 0;
+    let lastDrop = 0;
+
+    const fmt = (n) => Number(n).toFixed(n >= 10 ? 0 : 1).replace('.0', '');
+
+    const totalBallCount = () => participants.reduce((sum, p) => sum + p.balls, 0);
+
+    const renderSlotInfo = () => {
+      if (!slotInfoEl) return;
+      slotInfoEl.innerHTML = SLOT_MULT.map((m) => `<div class="rounded-md border border-slate-200 bg-white px-2 py-1 text-center font-semibold">${fmt(m)}x</div>`).join('');
+    };
+
+    const renderParticipants = () => {
+      if (!playersListEl) return;
+      if (participants.length === 0) {
+        playersListEl.innerHTML = '<li class="rounded-lg bg-white px-2 py-2 text-xs text-slate-500">참가자를 추가하세요.</li>';
+      } else {
+        playersListEl.innerHTML = participants.map((p) => `
+          <li class="flex items-center justify-between rounded-lg bg-white px-2 py-2">
+            <div class="flex items-center gap-2">
+              <span class="h-2.5 w-2.5 rounded-full" style="background:${p.color}"></span>
+              <span class="font-semibold">${p.name}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-slate-500">x${p.balls}</span>
+              <button data-remove="${p.id}" class="text-xs text-rose-500">삭제</button>
+            </div>
+          </li>
+        `).join('');
+      }
+      if (ballCountEl) ballCountEl.textContent = String(totalBallCount());
+    };
+
+    const renderFinish = () => {
+      if (!finishListEl) return;
+      if (finishOrder.length === 0) {
+        finishListEl.innerHTML = '<li class="rounded-lg bg-slate-50 px-2 py-2 text-xs text-slate-500">아직 도착한 공 없음</li>';
+      } else {
+        finishListEl.innerHTML = finishOrder.slice(0, 12).map((f, i) => `
+          <li class="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-2 py-2">
+            <span><b>${i + 1}.</b> ${f.name}</span>
+            <span class="text-xs font-semibold text-sky-600">${fmt(f.mult)}x</span>
+          </li>
+        `).join('');
+      }
+
+      if (leaderTextEl && leaderMetaEl) {
+        if (finishOrder[0]) {
+          leaderTextEl.textContent = finishOrder[0].name;
+          leaderMetaEl.textContent = `첫 골인 · ${fmt(finishOrder[0].mult)}x 슬롯`;
+        } else {
+          leaderTextEl.textContent = '-';
+          leaderMetaEl.textContent = '진행 전';
+        }
+      }
+    };
+
+    const setStatus = (v) => {
+      if (statusTextEl) statusTextEl.textContent = v;
+    };
+
+    const buildQueue = () => {
+      const queue = [];
+      participants.forEach((p) => {
+        for (let i = 0; i < p.balls; i += 1) {
+          queue.push({ ownerId: p.id, owner: p.name, color: p.color, serial: i + 1 });
+        }
+      });
+      for (let i = queue.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const tmp = queue[i];
+        queue[i] = queue[j];
+        queue[j] = tmp;
+      }
+      return queue;
+    };
+
+    const spawnBall = (item) => {
+      balls.push({
+        id: `${item.ownerId}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        ownerId: item.ownerId,
+        name: item.owner,
+        color: item.color,
+        x: W / 2 + (Math.random() * 20 - 10),
+        y: DROP_Y,
+        vx: Math.random() * 1.3 - 0.65,
+        vy: 0,
+        r: BALL_R,
+        done: false
+      });
+    };
+
+    const addParticipant = () => {
+      const name = playerNameEl instanceof HTMLInputElement ? playerNameEl.value.trim() : '';
+      const ballsInput = playerBallsEl instanceof HTMLInputElement ? Number(playerBallsEl.value) : 1;
+      const ballsCount = Number.isFinite(ballsInput) ? Math.max(1, Math.min(30, Math.floor(ballsInput))) : 1;
+      if (!name) return;
+
+      participants.push({
+        id: `p-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+        name,
+        balls: ballsCount,
+        color: colorPool[participants.length % colorPool.length]
+      });
+
+      if (playerNameEl instanceof HTMLInputElement) playerNameEl.value = '';
+      renderParticipants();
+    };
 
     const resetGame = () => {
-      paddleX = W / 2 - 55;
-      ballX = W / 2;
-      ballY = H / 2;
-      vx = (Math.random() > 0.5 ? 1 : -1) * 3.2;
-      vy = -3.1;
-      score = 0;
-      if (scoreEl) scoreEl.textContent = '0';
+      running = false;
+      balls = [];
+      finishOrder = [];
+      dropQueue = [];
+      renderFinish();
+      setStatus('ready');
     };
 
-    const draw = () => {
-      ctx.clearRect(0, 0, W, H);
+    const startGame = () => {
+      if (participants.length === 0 || totalBallCount() === 0) return;
+      balls = [];
+      finishOrder = [];
+      dropQueue = buildQueue();
+      running = true;
+      lastDrop = 0;
+      renderFinish();
+      setStatus('running');
+    };
 
-      ctx.fillStyle = '#0f172a';
+    const stopGame = () => {
+      running = false;
+      setStatus('paused');
+    };
+
+    const resolvePegCollision = (ball, peg) => {
+      const dx = ball.x - peg.x;
+      const dy = ball.y - peg.y;
+      const minDist = ball.r + peg.r;
+      const dist2 = dx * dx + dy * dy;
+      if (dist2 > minDist * minDist || dist2 === 0) return;
+
+      const dist = Math.sqrt(dist2);
+      const nx = dx / dist;
+      const ny = dy / dist;
+      const overlap = minDist - dist;
+      ball.x += nx * overlap;
+      ball.y += ny * overlap;
+
+      const dot = ball.vx * nx + ball.vy * ny;
+      ball.vx -= (1 + BOUNCE) * dot * nx;
+      ball.vy -= (1 + BOUNCE) * dot * ny;
+      ball.vx *= 0.985;
+      ball.vy *= 0.985;
+    };
+
+    const settleBall = (ball) => {
+      const idx = Math.max(0, Math.min(SLOT_MULT.length - 1, Math.floor((ball.x - WALL) / slotWidth)));
+      const mult = SLOT_MULT[idx];
+      finishOrder.push({ name: ball.name, mult, slot: idx + 1 });
+      ball.done = true;
+      renderFinish();
+    };
+
+    const update = (ts) => {
+      if (running && dropQueue.length > 0 && ts - lastDrop > 360) {
+        const item = dropQueue.shift();
+        if (item) spawnBall(item);
+        lastDrop = ts;
+      }
+
+      balls.forEach((ball) => {
+        if (ball.done) return;
+
+        ball.vy += GRAVITY;
+        ball.vx *= AIR;
+        ball.vy *= AIR;
+        ball.x += ball.vx;
+        ball.y += ball.vy;
+
+        if (ball.x < WALL + ball.r) {
+          ball.x = WALL + ball.r;
+          ball.vx *= -0.88;
+        }
+        if (ball.x > W - WALL - ball.r) {
+          ball.x = W - WALL - ball.r;
+          ball.vx *= -0.88;
+        }
+
+        pegs.forEach((peg) => resolvePegCollision(ball, peg));
+
+        if (ball.y >= H - SLOT_H - ball.r) {
+          settleBall(ball);
+        }
+      });
+
+      balls = balls.filter((b) => !b.done);
+
+      if (running && balls.length === 0 && dropQueue.length === 0) {
+        running = false;
+        setStatus('finished');
+      }
+    };
+
+    const drawBoard = () => {
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, '#020617');
+      grad.addColorStop(1, '#0b1120');
+      ctx.fillStyle = grad;
       ctx.fillRect(0, 0, W, H);
 
-      ctx.fillStyle = '#38bdf8';
-      ctx.fillRect(paddleX, paddleY, paddleW, paddleH);
-
-      ctx.beginPath();
-      ctx.arc(ballX, ballY, r, 0, Math.PI * 2);
-      ctx.fillStyle = '#fbbf24';
-      ctx.fill();
-
-      if (left) paddleX -= paddleSpeed;
-      if (right) paddleX += paddleSpeed;
-      if (paddleX < 0) paddleX = 0;
-      if (paddleX + paddleW > W) paddleX = W - paddleW;
-
-      ballX += vx;
-      ballY += vy;
-
-      if (ballX - r <= 0 || ballX + r >= W) {
-        vx *= -1;
-        score += 1;
-      }
-      if (ballY - r <= 0) {
-        vy *= -1;
-        score += 1;
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1;
+      for (let y = 0; y < H - SLOT_H; y += 44) {
+        ctx.beginPath();
+        ctx.moveTo(WALL, y + 0.5);
+        ctx.lineTo(W - WALL, y + 0.5);
+        ctx.stroke();
       }
 
-      const hitPaddle = ballY + r >= paddleY && ballY + r <= paddleY + paddleH && ballX >= paddleX && ballX <= paddleX + paddleW;
-      if (hitPaddle) {
-        vy = -Math.abs(vy);
-        const hitPos = (ballX - (paddleX + paddleW / 2)) / (paddleW / 2);
-        vx = hitPos * 4.2;
-        score += 3;
+      ctx.fillStyle = '#06b6d4';
+      ctx.fillRect(W / 2 - 68, 22, 136, 26);
+      ctx.fillStyle = '#ecfeff';
+      ctx.font = 'bold 13px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('START ZONE', W / 2, 40);
+
+      pegs.forEach((peg) => {
+        ctx.beginPath();
+        ctx.arc(peg.x, peg.y, peg.r, 0, Math.PI * 2);
+        ctx.fillStyle = '#dbeafe';
+        ctx.shadowColor = '#60a5fa';
+        ctx.shadowBlur = 8;
+        ctx.fill();
+      });
+      ctx.shadowBlur = 0;
+
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(WALL, H - SLOT_H, W - WALL * 2, SLOT_H);
+
+      for (let i = 0; i <= SLOT_MULT.length; i += 1) {
+        const x = WALL + i * slotWidth;
+        ctx.strokeStyle = '#1e3a8a';
+        ctx.lineWidth = 1.3;
+        ctx.beginPath();
+        ctx.moveTo(x, H - SLOT_H);
+        ctx.lineTo(x, H);
+        ctx.stroke();
       }
 
-      if (ballY - r > H) {
-        resetGame();
-      }
+      SLOT_MULT.forEach((m, i) => {
+        const x = WALL + i * slotWidth + slotWidth / 2;
+        ctx.fillStyle = m >= 10 ? '#fde047' : m >= 5 ? '#7dd3fc' : '#93c5fd';
+        ctx.font = `bold ${m >= 10 ? 28 : 16}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText(`${fmt(m)}x`, x, H - 18);
+      });
 
-      if (scoreEl) scoreEl.textContent = String(score);
-      requestAnimationFrame(draw);
+      balls.forEach((ball) => {
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+        ctx.fillStyle = ball.color;
+        ctx.shadowColor = ball.color;
+        ctx.shadowBlur = 16;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      });
+
+      ctx.strokeStyle = '#0ea5e9';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(WALL, WALL, W - WALL * 2, H - WALL * 2);
     };
 
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') left = true;
-      if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') right = true;
+    const tick = (ts) => {
+      update(ts);
+      drawBoard();
+      rafId = window.requestAnimationFrame(tick);
+    };
+
+    addPlayerBtn?.addEventListener('click', addParticipant);
+    clearPlayersBtn?.addEventListener('click', () => {
+      participants = [];
+      renderParticipants();
+      resetGame();
     });
 
-    window.addEventListener('keyup', (e) => {
-      if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') left = false;
-      if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') right = false;
+    playersListEl?.addEventListener('click', (e) => {
+      const target = e.target;
+      if (!(target instanceof HTMLElement)) return;
+      const id = target.dataset.remove;
+      if (!id) return;
+      participants = participants.filter((p) => p.id !== id);
+      renderParticipants();
+      resetGame();
     });
 
-    resetEl?.addEventListener('click', resetGame);
+    startBtn?.addEventListener('click', startGame);
+    stopBtn?.addEventListener('click', stopGame);
+    resetBtn?.addEventListener('click', resetGame);
 
-    resetGame();
-    draw();
+    renderSlotInfo();
+    renderParticipants();
+    renderFinish();
+    drawBoard();
+    rafId = window.requestAnimationFrame(tick);
+
+    window.addEventListener('beforeunload', () => {
+      if (rafId) window.cancelAnimationFrame(rafId);
+    });
   </script>
 </Layout>
