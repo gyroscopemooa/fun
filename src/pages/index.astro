@@ -130,6 +130,7 @@ const rows = [cards.slice(0, 8), cards.slice(4, 12), cards.slice(8, 16)];
         const cardWidth = firstCard.getBoundingClientRect().width;
         return Math.round(cardWidth + 12);
       };
+      const jump = () => Math.max(Math.round(step() * 2.8), Math.round(track.clientWidth * 0.85));
 
       const setWidth = () => Math.max(0, Math.floor(track.scrollWidth / 3));
 
@@ -146,13 +147,13 @@ const rows = [cards.slice(0, 8), cards.slice(4, 12), cards.slice(8, 16)];
       };
 
       const slideNext = () => {
-        const amount = step();
+        const amount = jump();
         track.scrollLeft += amount;
         normalizeLoop();
       };
 
       const slidePrev = () => {
-        const amount = step();
+        const amount = jump();
         track.scrollLeft -= amount;
         normalizeLoop();
       };
