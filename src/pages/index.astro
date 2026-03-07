@@ -13,6 +13,12 @@ const locale = pathname.startsWith('/en/') || pathname === '/en'
     : 'ko';
 const localePrefix = locale === 'ko' ? '' : `/${locale}`;
 const withLocale = (path: string) => `${localePrefix}${path}`.replace(/\/{2,}/g, '/');
+const strippedPath = pathname.replace(/^\/(en|ja)(?=\/|$)/, '') || '/';
+const langLinks = [
+  { code: 'ko', label: '한국어', href: `${strippedPath}`.replace(/\/{2,}/g, '/') || '/' },
+  { code: 'en', label: 'English', href: `/en${strippedPath}`.replace(/\/{2,}/g, '/') || '/en' },
+  { code: 'ja', label: '日本語', href: `/ja${strippedPath}`.replace(/\/{2,}/g, '/') || '/ja' }
+];
 
 const t = {
   ko: {
@@ -137,6 +143,19 @@ const faqJsonLd = {
           <img src="/favicon.svg" alt="ManyTool 로고" class="h-8 w-8 rounded-lg bg-sky-100 p-1" loading="eager" decoding="async" />
           <h2 class="text-lg font-bold tracking-tight text-slate-900 sm:text-xl">ManyTool</h2>
         </a>
+        <div class="flex items-center gap-1 rounded-md border border-slate-200 bg-white p-1 text-xs">
+          {langLinks.map((lang) => (
+            <a
+              href={lang.href}
+              class:list={[
+                'rounded px-2 py-1 font-semibold',
+                lang.code === locale ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+              ]}
+            >
+              {lang.label}
+            </a>
+          ))}
+        </div>
       </header>
 
       <section class="px-4 py-5 lg:px-10">
