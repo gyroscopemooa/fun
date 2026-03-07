@@ -112,17 +112,51 @@ import Recommend from '../components/Recommend.astro';
         const rows = 9;
         const cols = Math.max(1, count - 1);
         const matrix = Array.from({ length: rows }, () => Array(cols).fill(false));
+        const colUsage = Array(cols).fill(0);
+
+        const canPlace = (r, c) => {
+          if (r < 0 || c < 0 || r >= rows || c >= cols) return false;
+          if (matrix[r][c]) return false;
+          if (c > 0 && matrix[r][c - 1]) return false;
+          if (c < cols - 1 && matrix[r][c + 1]) return false;
+          if (r > 0 && matrix[r - 1][c]) return false;
+          return true;
+        };
+
+        const place = (r, c) => {
+          matrix[r][c] = true;
+          colUsage[c] += 1;
+        };
+
         for (let r = 0; r < rows; r += 1) {
+          const candidates = [];
           for (let c = 0; c < cols; c += 1) {
-            if (c > 0 && matrix[r][c - 1]) continue;
-            if (c < cols - 1 && matrix[r][c + 1]) continue;
-            if (r > 0 && matrix[r - 1][c]) continue;
-            const probability = 0.32 + (r % 2) * 0.07;
+            if (canPlace(r, c)) candidates.push(c);
+          }
+          if (candidates.length === 0) continue;
+
+          const forced = candidates[Math.floor(Math.random() * candidates.length)];
+          place(r, forced);
+
+          for (let c = 0; c < cols; c += 1) {
+            if (!canPlace(r, c)) continue;
+            const probability = 0.18 + (r % 2) * 0.05;
             if (Math.random() < probability) {
-              matrix[r][c] = true;
+              place(r, c);
             }
           }
         }
+
+        for (let c = 0; c < cols; c += 1) {
+          if (colUsage[c] > 0) continue;
+          for (let r = 0; r < rows; r += 1) {
+            if (canPlace(r, c)) {
+              place(r, c);
+              break;
+            }
+          }
+        }
+
         return matrix;
       };
 
