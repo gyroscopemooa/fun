@@ -52,6 +52,7 @@ import Recommend from '../components/Recommend.astro';
       let lastNames = [];
       let lastItems = [];
       let lastWinnerIdx = -1;
+      let lastEndIdx = -1;
       let lastRungs = [];
       let animId = 0;
       const fallbackItems = ['벌칙', '패스', '보너스', '미션'];
@@ -107,7 +108,7 @@ import Recommend from '../components/Recommend.astro';
         return rungs;
       };
 
-      const drawLadderMap = (names, items, winnerIdx, rungs, trace = [], dot = null) => {
+      const drawLadderMap = (names, items, winnerIdx, endIdx, rungs, trace = [], dot = null) => {
         if (!mapCanvas || !mapCtx) return;
         const geo = getGeometry(names.length);
         if (!geo) return;
@@ -178,8 +179,9 @@ import Recommend from '../components/Recommend.astro';
           ctx.fillText(name, x, top - 14);
 
           const itemText = sourceItems[idx % sourceItems.length];
-          ctx.fillStyle = idx === winnerIdx ? '#34d399' : '#64748b';
-          ctx.fillRect(x - 24, bottom + 8, 48, 18);
+          const boxW = Math.max(56, Math.min(96, xStep * 0.68));
+          ctx.fillStyle = idx === endIdx ? '#22c55e' : '#64748b';
+          ctx.fillRect(x - boxW / 2, bottom + 8, boxW, 18);
           ctx.fillStyle = '#e2e8f0';
           ctx.font = 'bold 12px sans-serif';
           ctx.fillText(itemText, x, bottom + 40);
@@ -253,11 +255,12 @@ import Recommend from '../components/Recommend.astro';
             break;
           }
 
-          drawLadderMap(names, items, -1, rungs, trace, dot);
+          drawLadderMap(names, items, startIdx, -1, rungs, trace, dot);
           if (t < 1) {
             animId = window.requestAnimationFrame(step);
           } else {
-            drawLadderMap(names, items, -1, rungs, path, path[path.length - 1]);
+            const endIdx = traceLane(names, rungs, startIdx);
+            drawLadderMap(names, items, startIdx, endIdx, rungs, path, path[path.length - 1]);
           }
         };
 
@@ -291,7 +294,8 @@ import Recommend from '../components/Recommend.astro';
         lastItems = shuffle(sourceItems);
         lastRungs = buildRungs(lastNames.length);
         lastWinnerIdx = -1;
-        drawLadderMap(lastNames, lastItems, -1, lastRungs);
+        lastEndIdx = -1;
+        drawLadderMap(lastNames, lastItems, -1, -1, lastRungs);
         return { names: lastNames, items: lastItems };
       };
 
@@ -312,8 +316,50 @@ import Recommend from '../components/Recommend.astro';
         const winner = lastNames[startIdx];
         const pickedItem = lastItems[endIdx % lastItems.length];
         lastWinnerIdx = startIdx;
-        drawLadderMap(lastNames, lastItems, lastWinnerIdx, lastRungs);
+        lastEndIdx = endIdx;
+        drawLadderMap(lastNames, lastItems, lastWinnerIdx, lastEndIdx, lastRungs);
         if (resultEl) resultEl.textContent = `당첨: ${winner} | 걸린 항목: ${pickedItem}`;
+      });
+
+      mapCanvas?.addEventListener('click', (e) => {
+        if (!mapCanvas || lastNames.length < 2 || lastRungs.length === 0) return;
+        const geo = getGeometry(lastNames.length);
+        if (!geo) return;
+        const { top, bottom, left, xStep } = geo;
+
+        const rect = mapCanvas.getBoundingClientRect();
+        const scaleX = mapCanvas.width / rect.width;
+        const scaleY = mapCanvas.height / rect.height;
+        const x = (e.clientX - rect.left) * scaleX;
+        const y = (e.clientY - rect.top) * scaleY;
+        const lane = Math.max(0, Math.min(lastNames.length - 1, Math.round((x - left) / xStep)));
+
+        if (y >= top - 28 && y <= top + 18) {
+          const endIdx = traceLane(lastNames, lastRungs, lane);
+          const item = lastItems[endIdx % lastItems.length];
+          const path = computePath(lastNames, lastRungs, lane);
+          lastWinnerIdx = lane;
+          lastEndIdx = endIdx;
+          drawLadderMap(lastNames, lastItems, lane, endIdx, lastRungs, path, path[path.length - 1]);
+          if (resultEl) resultEl.textContent = `선택: ${lastNames[lane]} → ${item}`;
+          return;
+        }
+
+        if (y >= bottom - 8 && y <= bottom + 50) {
+          let startLane = 0;
+          for (let i = 0; i < lastNames.length; i += 1) {
+            if (traceLane(lastNames, lastRungs, i) === lane) {
+              startLane = i;
+              break;
+            }
+          }
+          const item = lastItems[lane % lastItems.length];
+          const path = computePath(lastNames, lastRungs, startLane);
+          lastWinnerIdx = startLane;
+          lastEndIdx = lane;
+          drawLadderMap(lastNames, lastItems, startLane, lane, lastRungs, path, path[path.length - 1]);
+          if (resultEl) resultEl.textContent = `선택: ${item} ← ${lastNames[startLane]}`;
+        }
       });
 
       resetBtnEl?.addEventListener('click', () => {
@@ -328,6 +374,7 @@ import Recommend from '../components/Recommend.astro';
         lastNames = [];
         lastItems = [];
         lastWinnerIdx = -1;
+        lastEndIdx = -1;
         lastRungs = [];
       });
 
