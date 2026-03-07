@@ -137,6 +137,7 @@ const t = {
 
   <script is:inline>
     const KEY = 'manytool_fishbread_v4';
+    const AUTO_REMOVE_THRESHOLD = 100;
     const REGION_COORD = {
       서울: { lat: 37.5665, lng: 126.978, zoom: 11 },
       경기: { lat: 37.4138, lng: 127.5183, zoom: 9 },
@@ -199,6 +200,8 @@ const t = {
     };
 
     const score = (v) => v.up - v.down;
+    const shouldAutoRemove = (v) => (v.down - v.up) >= AUTO_REMOVE_THRESHOLD;
+    vendors = vendors.filter((v) => !shouldAutoRemove(v));
 
     const filteredVendors = () => {
       const q = searchEl instanceof HTMLInputElement ? searchEl.value.trim().toLowerCase() : '';
@@ -341,6 +344,10 @@ const t = {
             input.value = '';
           }
         }
+      }
+
+      if (shouldAutoRemove(item)) {
+        vendors = vendors.filter((v) => v.id !== id);
       }
 
       save(vendors);
