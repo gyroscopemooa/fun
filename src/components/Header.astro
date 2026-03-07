@@ -1,19 +1,19 @@
----
+ï»¿---
 const navItems = [
-  { href: '/', label: 'È¨' },
-  { href: '/animal-test', label: 'µ¿¹°»ó Å×½ºÆ®' },
-  { href: '/personal-color', label: 'ÆÛ½º³ÎÄÃ·¯' },
-  { href: '/maps/fishbread', label: 'ºØ¾î»§ Áöµµ' },
-  { href: '/contact', label: '±¤°í ¹®ÀÇ' }
+  { href: '/', label: 'í™ˆ' },
+  { href: '/today-fortune', label: 'ìš´ì„¸' },
+  { href: '/pinball', label: 'ê²Œì„' },
+  { href: '/maps/fishbread', label: 'ë¶•ì–´ë¹µ ì§€ë„' },
+  { href: '/contact', label: 'ë¬¸ì˜' }
 ];
 ---
 
 <header class="border-b border-slate-200 bg-white">
-  <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-    <a href="/" class="text-xl font-bold tracking-tight">FunHub</a>
-    <nav class="flex flex-wrap gap-3 text-sm">
+  <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
+    <a href="/" class="text-xl font-bold tracking-tight">ManyTool</a>
+    <nav class="flex items-center gap-2 text-sm">
       {navItems.map((item) => (
-        <a class="rounded-md px-2 py-1 hover:bg-slate-100" href={item.href}>{item.label}</a>
+        <a class="rounded-md px-2 py-1 whitespace-nowrap hover:bg-slate-100" href={item.href}>{item.label}</a>
       ))}
     </nav>
   </div>
