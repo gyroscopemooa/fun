@@ -18,6 +18,13 @@ const {
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).toString();
 const ogImage = new URL(image, Astro.site ?? Astro.url.origin).toString();
 const siteUrl = Astro.site?.toString() ?? Astro.url.origin;
+const locale = Astro.url.pathname.startsWith('/en/') || Astro.url.pathname === '/en'
+  ? 'en'
+  : Astro.url.pathname.startsWith('/ja/') || Astro.url.pathname === '/ja'
+    ? 'ja'
+    : 'ko';
+const htmlLang = locale === 'ko' ? 'ko' : locale === 'ja' ? 'ja' : 'en';
+const ogLocale = locale === 'ko' ? 'ko_KR' : locale === 'ja' ? 'ja_JP' : 'en_US';
 const pathNoLocale = Astro.url.pathname.replace(/^\/(en|ja)(?=\/|$)/, '') || '/';
 const koHref = new URL(pathNoLocale, siteUrl).toString();
 const enHref = new URL(pathNoLocale === '/' ? '/en' : `/en${pathNoLocale}`, siteUrl).toString();
@@ -34,7 +41,7 @@ const websiteJsonLd = {
 ---
 
 <!doctype html>
-<html lang="ko">
+<html lang={htmlLang}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -47,7 +54,7 @@ const websiteJsonLd = {
     <link rel="canonical" href={canonical} />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="ManyTool" />
-    <meta property="og:locale" content="ko_KR" />
+    <meta property="og:locale" content={ogLocale} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />

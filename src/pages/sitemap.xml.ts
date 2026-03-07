@@ -4,6 +4,8 @@ const paths = [
   '/',
   '/about',
   '/contact',
+  '/editorial-policy',
+  '/content-disclaimer',
   '/privacy',
   '/terms',
   '/animal-test',
@@ -36,14 +38,31 @@ export const GET: APIRoute = ({ site }) => {
   const priorityFor = (path: string) => {
     if (path === '/') return '1.0';
     if (path.startsWith('/maps/')) return '0.9';
-    if (path === '/privacy' || path === '/terms' || path === '/contact' || path === '/about') return '0.5';
+    if (
+      path === '/privacy' ||
+      path === '/terms' ||
+      path === '/contact' ||
+      path === '/about' ||
+      path === '/editorial-policy' ||
+      path === '/content-disclaimer'
+    ) {
+      return '0.5';
+    }
     return '0.8';
   };
 
   const changefreqFor = (path: string) => {
     if (path === '/') return 'daily';
     if (path.startsWith('/maps/')) return 'daily';
-    if (path === '/privacy' || path === '/terms' || path === '/about') return 'monthly';
+    if (
+      path === '/privacy' ||
+      path === '/terms' ||
+      path === '/about' ||
+      path === '/editorial-policy' ||
+      path === '/content-disclaimer'
+    ) {
+      return 'monthly';
+    }
     return 'weekly';
   };
 
