@@ -119,6 +119,8 @@ const rows = [cards.slice(0, 8), cards.slice(4, 12), cards.slice(8, 16)];
       const nextBtn = rowEl.querySelector('[data-nav="next"]');
 
       if (!track || !prevBtn || !nextBtn) return;
+      const rowIdx = Number(rowEl.getAttribute('data-row') ?? '0');
+      const speedPxPerMs = 0.022 + rowIdx * 0.004;
 
       const step = () => {
         const firstCard = track.querySelector('a');
@@ -127,7 +129,7 @@ const rows = [cards.slice(0, 8), cards.slice(4, 12), cards.slice(8, 16)];
         return Math.round(cardWidth + 12);
       };
 
-      const setWidth = () => Math.floor(track.scrollWidth / 2);
+      const setWidth = () => Math.max(0, Math.floor(track.scrollWidth / 2));
 
       const normalizeLoop = () => {
         const loopWidth = setWidth();
@@ -141,29 +143,49 @@ const rows = [cards.slice(0, 8), cards.slice(4, 12), cards.slice(8, 16)];
 
       const slideNext = () => {
         const amount = step();
+        track.scrollLeft += amount;
         normalizeLoop();
-        track.scrollBy({ left: amount, behavior: 'smooth' });
       };
 
       const slidePrev = () => {
         const amount = step();
-        const loopWidth = setWidth();
-        if (loopWidth <= 0) return;
-        if (track.scrollLeft <= 2) {
-          track.scrollLeft += loopWidth;
-        }
-        track.scrollBy({ left: -amount, behavior: 'smooth' });
+        track.scrollLeft -= amount;
+        normalizeLoop();
       };
 
       prevBtn.addEventListener('click', slidePrev);
       nextBtn.addEventListener('click', slideNext);
-      track.addEventListener('scroll', normalizeLoop);
 
-      let timer = window.setInterval(slideNext, 2800);
-      rowEl.addEventListener('mouseenter', () => window.clearInterval(timer));
-      rowEl.addEventListener('mouseleave', () => {
-        timer = window.setInterval(slideNext, 2800);
+      let paused = false;
+      let rafId = 0;
+      let lastTs = 0;
+
+      const tick = (ts) => {
+        if (!lastTs) lastTs = ts;
+        const dt = ts - lastTs;
+        lastTs = ts;
+
+        if (!paused) {
+          track.scrollLeft += dt * speedPxPerMs;
+          normalizeLoop();
+        }
+
+        rafId = window.requestAnimationFrame(tick);
+      };
+
+      const pause = () => { paused = true; };
+      const resume = () => { paused = false; };
+
+      rowEl.addEventListener('mouseenter', pause);
+      rowEl.addEventListener('mouseleave', resume);
+      rowEl.addEventListener('touchstart', pause, { passive: true });
+      rowEl.addEventListener('touchend', resume);
+
+      document.addEventListener('visibilitychange', () => {
+        paused = document.hidden;
       });
+
+      rafId = window.requestAnimationFrame(tick);
     });
 
     const applySearch = () => {
