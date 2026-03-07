@@ -1,0 +1,16 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import Recommend from '../components/Recommend.astro';
+---
+
+<Layout title="마법책 | FunHub" description="오늘의 랜덤 메시지 마법책">
+  <Header />
+  <main class="mx-auto max-w-3xl px-4 py-8">
+    <h1 class="text-2xl font-bold">마법책</h1>
+    <p class="mt-3 text-slate-700">랜덤 문구를 뽑아보는 가벼운 재미 콘텐츠입니다.</p>
+    <Recommend />
+  </main>
+  <Footer />
+</Layout>

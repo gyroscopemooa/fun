@@ -1,0 +1,33 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import AdSense from '../components/AdSense.astro';
+import SponsorBanner from '../components/SponsorBanner.astro';
+import Recommend from '../components/Recommend.astro';
+---
+
+<Layout title="FunHub | 테스트, 게임, 지도, 랜덤 도구 포털" description="FunHub 메인 포털 페이지">
+  <Header />
+  <main class="mx-auto max-w-5xl px-4 py-8">
+    <h1 class="text-3xl font-bold">재미를 모은 만능 포털, FunHub</h1>
+    <p class="mt-3 text-slate-600">테스트, 게임, 지도, 랜덤 도구를 바로 시작하세요.</p>
+
+    <AdSense slotName="Header 아래" />
+
+    <section class="mt-8 grid gap-3 md:grid-cols-2">
+      <a href="/animal-test" class="rounded-lg border bg-white p-4">동물상 테스트</a>
+      <a href="/personal-color" class="rounded-lg border bg-white p-4">퍼스널컬러 테스트</a>
+      <a href="/maps/fishbread" class="rounded-lg border bg-white p-4">붕어빵 위치 지도</a>
+      <a href="/pinball" class="rounded-lg border bg-white p-4">핀볼 게임</a>
+      <a href="/magic-book" class="rounded-lg border bg-white p-4">마법책</a>
+      <a href="/random-food" class="rounded-lg border bg-white p-4">랜덤 음식 추천</a>
+    </section>
+
+    <AdSense slotName="본문 중간" />
+    <SponsorBanner position="본문 중간" />
+    <Recommend />
+    <AdSense slotName="추천 콘텐츠 위" />
+  </main>
+  <Footer />
+</Layout>

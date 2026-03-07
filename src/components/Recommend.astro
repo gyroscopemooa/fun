@@ -1,0 +1,20 @@
+---
+const items = [
+  { href: '/animal-test', label: '동물상 테스트' },
+  { href: '/personal-color', label: '퍼스널컬러 테스트' },
+  { href: '/magic-book', label: '마법책' },
+  { href: '/pinball', label: '핀볼 게임' },
+  { href: '/random-food', label: '랜덤 음식 추천' }
+];
+---
+
+<section class="mt-10">
+  <h2 class="mb-3 text-lg font-semibold">추천 콘텐츠</h2>
+  <div class="grid gap-3 md:grid-cols-2">
+    {items.map((item) => (
+      <a href={item.href} class="rounded-lg border border-slate-200 bg-white p-4 hover:border-slate-400">
+        {item.label}
+      </a>
+    ))}
+  </div>
+</section>

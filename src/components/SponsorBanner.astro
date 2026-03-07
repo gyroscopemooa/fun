@@ -1,0 +1,11 @@
+---
+interface Props {
+  position?: string;
+}
+
+const { position = '본문 중간' } = Astro.props;
+---
+
+<div class="my-6 rounded-lg border border-amber-300 bg-amber-50 px-4 py-4 text-sm text-amber-800">
+  SponsorBanner ({position}) - 직접 광고 배너 영역
+</div>

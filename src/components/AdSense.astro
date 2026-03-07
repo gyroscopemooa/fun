@@ -1,0 +1,11 @@
+---
+interface Props {
+  slotName?: string;
+}
+
+const { slotName = '본문 상단' } = Astro.props;
+---
+
+<div class="my-6 rounded-lg border border-dashed border-slate-300 bg-slate-100 px-4 py-6 text-center text-sm text-slate-600">
+  Adsense Placeholder: {slotName}
+</div>
