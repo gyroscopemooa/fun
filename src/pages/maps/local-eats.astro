@@ -1,0 +1,19 @@
+﻿---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import AdSense from '../../components/AdSense.astro';
+import Recommend from '../../components/Recommend.astro';
+---
+
+<Layout title="지역 맛집 지도 | FunHub" description="지역별 맛집 위치를 확인하는 지도 랜딩 페이지">
+  <Header />
+  <main class="mx-auto max-w-4xl px-4 py-8">
+    <h1 class="text-2xl font-bold">지역 맛집 지도</h1>
+    <p class="mt-3 text-slate-700">지역별로 인기 있는 맛집 위치를 확인하는 지도 페이지입니다.</p>
+    <AdSense slotName="본문 상단" />
+    <div class="mt-4 rounded-lg border bg-white p-6">Local Eats Map Placeholder</div>
+    <Recommend />
+  </main>
+  <Footer />
+</Layout>

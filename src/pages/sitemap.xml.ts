@@ -11,7 +11,17 @@ const paths = [
   '/magic-book',
   '/pinball',
   '/random-food',
-  '/maps/fishbread'
+  '/reaction-test',
+  '/mbti-test',
+  '/love-compatibility',
+  '/maps/fishbread',
+  '/maps/fishbread/seoul',
+  '/maps/fishbread/busan',
+  '/maps/fishbread/ulsan',
+  '/maps/fishbread/daegu',
+  '/maps/fishbread/incheon',
+  '/maps/hidden-cafe',
+  '/maps/local-eats'
 ];
 
 export const GET: APIRoute = ({ site }) => {

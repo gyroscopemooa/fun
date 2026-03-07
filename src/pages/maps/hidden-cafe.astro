@@ -1,0 +1,19 @@
+﻿---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import AdSense from '../../components/AdSense.astro';
+import Recommend from '../../components/Recommend.astro';
+---
+
+<Layout title="숨은 카페 지도 | FunHub" description="동네 숨은 카페를 찾는 지도 랜딩 페이지">
+  <Header />
+  <main class="mx-auto max-w-4xl px-4 py-8">
+    <h1 class="text-2xl font-bold">숨은 카페 지도</h1>
+    <p class="mt-3 text-slate-700">조용하고 분위기 좋은 숨은 카페 위치를 찾기 위한 페이지입니다.</p>
+    <AdSense slotName="본문 상단" />
+    <div class="mt-4 rounded-lg border bg-white p-6">Hidden Cafe Map Placeholder</div>
+    <Recommend />
+  </main>
+  <Footer />
+</Layout>

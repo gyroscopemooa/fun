@@ -17,6 +17,8 @@ const {
 
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).toString();
 const ogImage = new URL(image, Astro.site ?? Astro.url.origin).toString();
+const gaId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID;
+const googleSiteVerification = import.meta.env.PUBLIC_GOOGLE_SITE_VERIFICATION;
 ---
 
 <!doctype html>
@@ -40,7 +42,17 @@ const ogImage = new URL(image, Astro.site ?? Astro.url.origin).toString();
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
+    {googleSiteVerification && <meta name="google-site-verification" content={googleSiteVerification} />}
     {noindex && <meta name="robots" content="noindex, nofollow" />}
+    {gaId && (
+      <>
+        <script async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}></script>
+        <script
+          is:inline
+          define:vars={{ gaId }}
+        >{`window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', gaId);`}</script>
+      </>
+    )}
   </head>
   <body class="bg-slate-50 text-slate-900">
     <slot />
