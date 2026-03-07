@@ -18,10 +18,14 @@ const cards = [
   { href: '/maps/local-eats', title: '지역 맛집 지도', desc: '동네 인기 맛집', icon: '🍜', iconClass: 'bg-red-100 text-red-700' },
   { href: '/love-compatibility', title: '연애 궁합', desc: '두 사람 궁합 테스트', icon: '💜', iconClass: 'bg-violet-100 text-violet-700' },
   { href: '/random-food', title: '랜덤 음식', desc: '오늘 메뉴 추천', icon: '🎲', iconClass: 'bg-yellow-100 text-yellow-700' },
-  { href: '/ladder-game', title: '사다리타기', desc: '랜덤 당첨 뽑기', icon: '🪜', iconClass: 'bg-lime-100 text-lime-700' }
+  { href: '/ladder-game', title: '사다리타기', desc: '랜덤 당첨 뽑기', icon: '🪜', iconClass: 'bg-lime-100 text-lime-700' },
+  { href: '/maps/fishbread/seoul', title: '서울 붕어빵', desc: '서울 붕어빵 위치', icon: '📍', iconClass: 'bg-slate-100 text-slate-700' },
+  { href: '/maps/fishbread/busan', title: '부산 붕어빵', desc: '부산 붕어빵 위치', icon: '📌', iconClass: 'bg-teal-100 text-teal-700' },
+  { href: '/maps/fishbread/daegu', title: '대구 붕어빵', desc: '대구 붕어빵 위치', icon: '🧭', iconClass: 'bg-orange-100 text-orange-700' },
+  { href: '/maps/fishbread/incheon', title: '인천 붕어빵', desc: '인천 붕어빵 위치', icon: '📎', iconClass: 'bg-cyan-100 text-cyan-700' }
 ];
 
-const rows = [cards.slice(0, 4), cards.slice(4, 8), cards.slice(8, 12)];
+const rows = [cards.slice(0, 8), cards.slice(4, 12), cards.slice(8, 16)];
 ---
 
 <Layout title="FunHub | 카드형 포털" description="테스트, 게임, 지도, 랜덤 도구를 카드로 탐색하는 메인 페이지">
@@ -37,6 +41,7 @@ const rows = [cards.slice(0, 4), cards.slice(4, 8), cards.slice(8, 12)];
       <section class="px-6 py-6 lg:px-10">
         <div class="max-w-md">
           <input
+            id="tool-search"
             class="w-full rounded-full border border-sky-100 bg-white px-4 py-3 text-sm outline-none focus:border-sky-400"
             placeholder="원하는 기능을 검색해보세요"
             type="text"
@@ -66,13 +71,15 @@ const rows = [cards.slice(0, 4), cards.slice(4, 8), cards.slice(8, 12)];
 
       <section class="space-y-4 px-6 pb-4 lg:px-10">
         {rows.map((row, idx) => (
-          <div class="flex items-center gap-2" data-slider data-row={idx}>
+          <div class="flex items-center gap-2" data-slider data-row={idx} data-row-wrap>
             <button class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-sky-100 bg-white text-sky-500" data-nav="prev">‹</button>
             <div class="flex-1 overflow-hidden">
               <div class="flex gap-3 overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" data-track>
                 {row.map((card) => (
                   <a
                     href={card.href}
+                    data-card
+                    data-search={`${card.title} ${card.desc}`.toLowerCase()}
                     class="min-w-[165px] rounded-xl border border-sky-100 bg-white p-4 transition hover:shadow-sm sm:min-w-[200px] lg:min-w-[230px]"
                   >
                     <div class:list={['flex h-10 w-10 items-center justify-center rounded-lg text-base', card.iconClass]}>{card.icon}</div>
@@ -86,6 +93,7 @@ const rows = [cards.slice(0, 4), cards.slice(4, 8), cards.slice(8, 12)];
           </div>
         ))}
       </section>
+      <p id="search-empty" class="hidden px-6 pb-4 text-sm text-slate-500 lg:px-10">검색 결과가 없습니다.</p>
 
       <AdSense slotName="Header 아래" />
       <AdSense slotName="본문 상단" />
@@ -102,6 +110,8 @@ const rows = [cards.slice(0, 4), cards.slice(4, 8), cards.slice(8, 12)];
 
   <script is:inline>
     const sliderRows = document.querySelectorAll('[data-slider]');
+    const searchInput = document.getElementById('tool-search');
+    const emptyEl = document.getElementById('search-empty');
 
     sliderRows.forEach((rowEl) => {
       const track = rowEl.querySelector('[data-track]');
@@ -147,5 +157,32 @@ const rows = [cards.slice(0, 4), cards.slice(4, 8), cards.slice(8, 12)];
         timer = window.setInterval(slideNext, 2800);
       });
     });
+
+    const applySearch = () => {
+      if (!searchInput) return;
+      const keyword = searchInput.value.trim().toLowerCase();
+      let visibleTotal = 0;
+
+      sliderRows.forEach((rowEl) => {
+        const cards = rowEl.querySelectorAll('[data-card]');
+        let rowVisible = 0;
+
+        cards.forEach((cardEl) => {
+          const haystack = cardEl.getAttribute('data-search') ?? '';
+          const matched = keyword === '' || haystack.includes(keyword);
+          cardEl.classList.toggle('hidden', !matched);
+          if (matched) rowVisible += 1;
+        });
+
+        rowEl.classList.toggle('hidden', rowVisible === 0);
+        visibleTotal += rowVisible;
+      });
+
+      if (emptyEl) {
+        emptyEl.classList.toggle('hidden', visibleTotal > 0);
+      }
+    };
+
+    searchInput?.addEventListener('input', applySearch);
   </script>
 </Layout>
