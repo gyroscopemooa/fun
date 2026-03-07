@@ -32,7 +32,7 @@ const enHref = new URL(pathNoLocale === '/' ? '/en' : `/en${pathNoLocale}`, site
 const jaHref = new URL(pathNoLocale === '/' ? '/ja' : `/ja${pathNoLocale}`, siteUrl).toString();
 const gaId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID;
 const googleSiteVerification = import.meta.env.PUBLIC_GOOGLE_SITE_VERIFICATION;
-const naverSiteVerification = import.meta.env.PUBLIC_NAVER_SITE_VERIFICATION;
+const naverSiteVerification = import.meta.env.PUBLIC_NAVER_SITE_VERIFICATION ?? 'ab286ec18ea2904617f2827146d5b7fb2b5389cc';
 const adsenseClient = 'ca-pub-1009841039120964';
 const localeTitlePrefix = locale === 'ko' ? '' : locale === 'en' ? '[EN] ' : '[JA] ';
 const localeDescSuffix = locale === 'ko'
