@@ -1,13 +1,29 @@
-﻿<footer class="mt-12 border-t border-slate-200 bg-white">
+﻿---
+const pathname = Astro.url.pathname;
+const locale = pathname.startsWith('/en/') || pathname === '/en'
+  ? 'en'
+  : pathname.startsWith('/ja/') || pathname === '/ja'
+    ? 'ja'
+    : 'ko';
+const localePrefix = locale === 'ko' ? '' : `/${locale}`;
+const t = {
+  ko: { rights: 'All rights reserved.', about: '소개', privacy: '개인정보', terms: '약관', contact: '문의', editorial: '운영원칙', disclaimer: '면책고지' },
+  en: { rights: 'All rights reserved.', about: 'About', privacy: 'Privacy', terms: 'Terms', contact: 'Contact', editorial: 'Editorial', disclaimer: 'Disclaimer' },
+  ja: { rights: 'All rights reserved.', about: '概要', privacy: 'プライバシー', terms: '利用規約', contact: 'お問い合わせ', editorial: '運営方針', disclaimer: '免責事項' }
+}[locale];
+const withLocale = (path: string) => `${localePrefix}${path}`.replace(/\/{2,}/g, '/');
+---
+
+<footer class="mt-12 border-t border-slate-200 bg-white">
   <div class="mx-auto grid max-w-5xl gap-2 px-4 py-6 text-sm text-slate-600 md:grid-cols-2">
-    <p>ⓒ {new Date().getFullYear()} ManyTool. All rights reserved.</p>
-    <div class="flex gap-3 md:justify-end">
-      <a href="/about" class="hover:underline">About</a>
-      <a href="/privacy" class="hover:underline">Privacy</a>
-      <a href="/terms" class="hover:underline">Terms</a>
-      <a href="/contact" class="hover:underline">Contact</a>
-      <a href="/editorial-policy" class="hover:underline">Editorial</a>
-      <a href="/content-disclaimer" class="hover:underline">Disclaimer</a>
+    <p>ⓒ {new Date().getFullYear()} ManyTool. {t.rights}</p>
+    <div class="flex flex-wrap gap-3 md:justify-end">
+      <a href={withLocale('/about')} class="hover:underline">{t.about}</a>
+      <a href={withLocale('/privacy')} class="hover:underline">{t.privacy}</a>
+      <a href={withLocale('/terms')} class="hover:underline">{t.terms}</a>
+      <a href={withLocale('/contact')} class="hover:underline">{t.contact}</a>
+      <a href={withLocale('/editorial-policy')} class="hover:underline">{t.editorial}</a>
+      <a href={withLocale('/content-disclaimer')} class="hover:underline">{t.disclaimer}</a>
     </div>
   </div>
 </footer>

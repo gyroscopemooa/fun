@@ -3,9 +3,46 @@ import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
 import AdSense from '../../components/AdSense.astro';
 import Recommend from '../../components/Recommend.astro';
+import Footer from '../../components/Footer.astro';
+
+const pathname = Astro.url.pathname;
+const locale = pathname.startsWith('/en/') || pathname === '/en'
+  ? 'en'
+  : pathname.startsWith('/ja/') || pathname === '/ja'
+    ? 'ja'
+    : 'ko';
+const t = {
+  ko: {
+    title: '붕어빵 지도 | ManyTool',
+    desc: '지도 기반 붕어빵 벤더 탐색/제보 페이지',
+    pageTitle: '전국 붕어빵 지도',
+    search: '지역/가게명 검색',
+    list: '제보 목록',
+    add: '제보 추가',
+    report: '새 제보 등록'
+  },
+  en: {
+    title: 'Fishbread Map | ManyTool',
+    desc: 'Map-based fishbread vendor explorer and report page',
+    pageTitle: 'Nationwide Fishbread Map',
+    search: 'Search region/vendor',
+    list: 'Reports',
+    add: 'Add Report',
+    report: 'Report New Vendor'
+  },
+  ja: {
+    title: 'たい焼きマップ | ManyTool',
+    desc: '地図ベースのたい焼きスポット探索・投稿ページ',
+    pageTitle: '全国たい焼きマップ',
+    search: '地域/店舗検索',
+    list: '投稿一覧',
+    add: '投稿追加',
+    report: '新規投稿'
+  }
+}[locale];
 ---
 
-<Layout title="붕어빵 지도 | ManyTool" description="지도 기반 붕어빵 벤더 탐색/제보 페이지">
+<Layout title={t.title} description={t.desc}>
   <Header />
 
   <main class="bg-amber-50 text-slate-900">
@@ -13,7 +50,7 @@ import Recommend from '../../components/Recommend.astro';
       <div class="mb-4 flex items-center justify-between rounded-2xl border border-amber-200 bg-white px-4 py-3">
         <div class="flex items-center gap-3">
           <div class="rounded-lg bg-amber-500 px-2 py-1 text-white">🐟</div>
-          <h1 class="text-lg font-bold tracking-tight md:text-xl">전국 붕어빵 지도</h1>
+          <h1 class="text-lg font-bold tracking-tight md:text-xl">{t.pageTitle}</h1>
         </div>
         <p id="selected-region" class="rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-700">전체</p>
       </div>
@@ -21,12 +58,12 @@ import Recommend from '../../components/Recommend.astro';
       <div class="grid gap-4 lg:grid-cols-[360px_1fr]">
         <aside class="order-2 rounded-2xl border border-slate-200 bg-white lg:order-1">
           <div class="border-b border-slate-100 p-4">
-            <input id="vendor-search" class="w-full rounded-xl border border-slate-200 bg-slate-100 px-4 py-2.5 text-sm" placeholder="지역/가게명 검색" type="text" />
+            <input id="vendor-search" class="w-full rounded-xl border border-slate-200 bg-slate-100 px-4 py-2.5 text-sm" placeholder={t.search} type="text" />
           </div>
 
           <div class="border-b border-slate-100 p-4">
             <div class="mb-3 flex items-center justify-between">
-              <h2 class="text-lg font-bold">제보 목록</h2>
+              <h2 class="text-lg font-bold">{t.list}</h2>
               <button id="region-all" class="text-sm font-semibold text-amber-600">전체</button>
             </div>
             <div class="flex gap-2 overflow-x-auto pb-1 text-xs">
@@ -40,18 +77,18 @@ import Recommend from '../../components/Recommend.astro';
           <div id="vendor-list" class="max-h-[420px] space-y-3 overflow-y-auto p-4 lg:max-h-[520px]"></div>
 
           <div class="border-t border-slate-100 bg-slate-50 p-4">
-            <h3 class="text-sm font-bold">제보 추가</h3>
+            <h3 class="text-sm font-bold">{t.add}</h3>
             <input id="spot-name" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="가게명" type="text" />
             <input id="spot-region" class="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" placeholder="지역(지도/버튼 선택)" type="text" readonly />
             <input id="spot-flavor" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="대표 메뉴 (예: 팥/슈크림)" type="text" />
             <input id="spot-detail" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="상세 위치 (예: OO역 2번 출구)" type="text" />
             <input id="spot-latlng" class="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-xs text-slate-500" placeholder="지도 클릭 시 좌표 자동 입력" type="text" readonly />
-            <button id="spot-add" class="mt-3 w-full rounded-xl bg-amber-500 py-2.5 font-bold text-white">Report a New Vendor</button>
+            <button id="spot-add" class="mt-3 w-full rounded-xl bg-amber-500 py-2.5 font-bold text-white">{t.report}</button>
           </div>
         </aside>
 
         <section class="order-1 rounded-2xl border border-slate-200 bg-white p-3 lg:order-2">
-          <div id="fishbread-map" class="h-[420px] w-full rounded-xl border border-slate-200 md:h-[620px]"></div>
+          <div id="fishbread-map" class="h-[340px] w-full rounded-xl border border-slate-200 sm:h-[420px] md:h-[620px]"></div>
 
           <div class="mt-3 flex flex-wrap gap-2">
             <button data-region="서울" class="map-region">서울</button>
@@ -80,6 +117,7 @@ import Recommend from '../../components/Recommend.astro';
       <Recommend />
     </section>
   </main>
+  <Footer />
 
   <link
     rel="stylesheet"

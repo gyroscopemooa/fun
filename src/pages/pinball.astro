@@ -2,9 +2,73 @@
 import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 import Recommend from '../components/Recommend.astro';
+import Footer from '../components/Footer.astro';
+
+const pathname = Astro.url.pathname;
+const locale = pathname.startsWith('/en/') || pathname === '/en'
+  ? 'en'
+  : pathname.startsWith('/ja/') || pathname === '/ja'
+    ? 'ja'
+    : 'ko';
+const t = {
+  ko: {
+    title: '핀볼 아레나 | ManyTool',
+    desc: '참가자 이름과 공 개수를 넣고 자동으로 튕기는 핀볼/플링코 스타일 게임',
+    subtitle: 'ManyTool Pinball Arena',
+    main: '실시간 내기 핀볼',
+    participants: '참가 공',
+    inputTitle: '참가자 입력',
+    inputHint: '중복 이름 허용, 공 개수 자유 입력',
+    namePh: '이름 (예: 철수)',
+    ballsPh: '공 개수 (예: 5)',
+    addBtn: '참가자 추가',
+    queue: '대기열',
+    clear: '전체 삭제',
+    start: '시작',
+    stop: '중지',
+    reset: '리셋',
+    result: '실시간 결과'
+  },
+  en: {
+    title: 'Pinball Arena | ManyTool',
+    desc: 'Add player names and ball counts for an auto-bouncing pinball/plinko game',
+    subtitle: 'ManyTool Pinball Arena',
+    main: 'Live Pinball Match',
+    participants: 'Balls',
+    inputTitle: 'Participants',
+    inputHint: 'Duplicate names allowed',
+    namePh: 'Name (e.g. Alex)',
+    ballsPh: 'Ball count (e.g. 5)',
+    addBtn: 'Add Player',
+    queue: 'Queue',
+    clear: 'Clear',
+    start: 'Start',
+    stop: 'Stop',
+    reset: 'Reset',
+    result: 'Live Result'
+  },
+  ja: {
+    title: 'ピンボールアリーナ | ManyTool',
+    desc: '参加者名とボール数を入力して自動で進行するピンボールゲーム',
+    subtitle: 'ManyTool Pinball Arena',
+    main: 'リアルタイムピンボール',
+    participants: 'ボール数',
+    inputTitle: '参加者入力',
+    inputHint: '同名可・ボール数自由',
+    namePh: '名前 (例: タロウ)',
+    ballsPh: 'ボール数 (例: 5)',
+    addBtn: '参加者追加',
+    queue: '待機列',
+    clear: '全削除',
+    start: '開始',
+    stop: '停止',
+    reset: 'リセット',
+    result: 'リアルタイム結果'
+  }
+}[locale];
 ---
 
-<Layout title="핀볼 아레나 | ManyTool" description="참가자 이름과 공 개수를 넣고 자동으로 튕기는 핀볼/플링코 스타일 게임">
+<Layout title={t.title} description={t.desc}>
   <Header />
 
   <main class="bg-slate-100 pb-10">
@@ -12,38 +76,38 @@ import Recommend from '../components/Recommend.astro';
       <div class="mb-4 rounded-2xl border border-sky-200 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 px-5 py-4 text-white shadow-lg">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p class="text-xs uppercase tracking-[0.2em] text-sky-300">ManyTool Pinball Arena</p>
-            <h1 class="text-2xl font-black tracking-tight">실시간 내기 핀볼</h1>
+            <p class="text-xs uppercase tracking-[0.2em] text-sky-300">{t.subtitle}</p>
+            <h1 class="text-2xl font-black tracking-tight">{t.main}</h1>
           </div>
           <div class="rounded-full border border-sky-300/40 bg-sky-400/10 px-4 py-2 text-sm text-sky-200">
-            참가 공 <span id="ball-count" class="font-bold text-white">0</span>개
+            {t.participants} <span id="ball-count" class="font-bold text-white">0</span>
           </div>
         </div>
       </div>
 
       <div class="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)_250px]">
         <aside class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <h2 class="text-lg font-bold text-slate-900">참가자 입력</h2>
-          <p class="mt-1 text-xs text-slate-500">중복 이름 허용, 공 개수 자유 입력</p>
+          <h2 class="text-lg font-bold text-slate-900">{t.inputTitle}</h2>
+          <p class="mt-1 text-xs text-slate-500">{t.inputHint}</p>
 
           <div class="mt-4 space-y-2">
-            <input id="player-name" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" placeholder="이름 (예: 철수)" type="text" />
-            <input id="player-balls" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" placeholder="공 개수 (예: 5)" type="number" min="1" max="30" value="3" />
-            <button id="add-player" class="w-full rounded-xl bg-sky-500 py-2.5 text-sm font-bold text-white">참가자 추가</button>
+            <input id="player-name" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" placeholder={t.namePh} type="text" />
+            <input id="player-balls" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" placeholder={t.ballsPh} type="number" min="1" max="30" value="3" />
+            <button id="add-player" class="w-full rounded-xl bg-sky-500 py-2.5 text-sm font-bold text-white">{t.addBtn}</button>
           </div>
 
           <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
             <div class="mb-2 flex items-center justify-between">
-              <h3 class="text-sm font-bold">대기열</h3>
-              <button id="clear-players" class="text-xs font-semibold text-rose-500">전체 삭제</button>
+              <h3 class="text-sm font-bold">{t.queue}</h3>
+              <button id="clear-players" class="text-xs font-semibold text-rose-500">{t.clear}</button>
             </div>
             <ul id="players-list" class="space-y-2 text-sm"></ul>
           </div>
 
           <div class="mt-4 grid grid-cols-2 gap-2">
-            <button id="start-game" class="rounded-xl bg-emerald-500 py-2.5 text-sm font-bold text-white">시작</button>
-            <button id="stop-game" class="rounded-xl bg-slate-800 py-2.5 text-sm font-bold text-white">중지</button>
-            <button id="reset-game" class="col-span-2 rounded-xl border border-slate-300 bg-white py-2.5 text-sm font-bold">리셋</button>
+            <button id="start-game" class="rounded-xl bg-emerald-500 py-2.5 text-sm font-bold text-white">{t.start}</button>
+            <button id="stop-game" class="rounded-xl bg-slate-800 py-2.5 text-sm font-bold text-white">{t.stop}</button>
+            <button id="reset-game" class="col-span-2 rounded-xl border border-slate-300 bg-white py-2.5 text-sm font-bold">{t.reset}</button>
           </div>
         </aside>
 
@@ -57,7 +121,7 @@ import Recommend from '../components/Recommend.astro';
         </section>
 
         <aside class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <h2 class="text-lg font-bold text-slate-900">실시간 결과</h2>
+          <h2 class="text-lg font-bold text-slate-900">{t.result}</h2>
           <div class="mt-3 rounded-xl bg-slate-50 p-3">
             <p class="text-xs text-slate-500">현재 1등</p>
             <p id="leader-text" class="mt-1 text-xl font-black text-emerald-600">-</p>
@@ -528,4 +592,5 @@ import Recommend from '../components/Recommend.astro';
       if (rafId) window.cancelAnimationFrame(rafId);
     });
   </script>
+  <Footer />
 </Layout>

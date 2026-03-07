@@ -1,40 +1,67 @@
 ﻿---
+const pathname = Astro.url.pathname;
+const locale = pathname.startsWith('/en/') || pathname === '/en'
+  ? 'en'
+  : pathname.startsWith('/ja/') || pathname === '/ja'
+    ? 'ja'
+    : 'ko';
+const localePrefix = locale === 'ko' ? '' : `/${locale}`;
+const withLocale = (path: string) => `${localePrefix}${path}`.replace(/\/{2,}/g, '/');
+
+const labels = {
+  ko: {
+    title: '실시간 인기 콘텐츠',
+    top: '현재 인기 1위',
+    rankPrefix: '1위:'
+  },
+  en: {
+    title: 'Trending Now',
+    top: 'Current #1',
+    rankPrefix: '#1:'
+  },
+  ja: {
+    title: '人気コンテンツ',
+    top: '現在の1位',
+    rankPrefix: '1位:'
+  }
+}[locale];
+
 const items = [
-  { href: '/animal-test', label: '동물상 테스트' },
-  { href: '/personal-color', label: '퍼스널컬러 테스트' },
-  { href: '/mbti-test', label: 'MBTI 테스트' },
-  { href: '/love-compatibility', label: '연애 궁합 테스트' },
-  { href: '/name-meaning', label: '이름풀이' },
-  { href: '/name-compatibility', label: '이름궁합' },
-  { href: '/reaction-test', label: '반응속도 테스트' },
-  { href: '/ladder-game', label: '사다리타기' },
-  { href: '/today-fortune', label: '오늘의 운세' },
-  { href: '/fortune-cookie-2026', label: '올해 포츈쿠키' },
-  { href: '/maps/hidden-cafe', label: '숨은 카페 지도' },
-  { href: '/pinball', label: '핀볼 게임' },
-  { href: '/random-food', label: '랜덤 음식 추천' }
-];
+  { href: '/animal-test', ko: '동물상 테스트', en: 'Animal Face Test', ja: '動物顔テスト' },
+  { href: '/personal-color', ko: '퍼스널컬러 테스트', en: 'Personal Color Test', ja: 'パーソナルカラーテスト' },
+  { href: '/mbti-test', ko: 'MBTI 테스트', en: 'MBTI Test', ja: 'MBTIテスト' },
+  { href: '/love-compatibility', ko: '연애 궁합 테스트', en: 'Love Compatibility', ja: '恋愛相性テスト' },
+  { href: '/name-meaning', ko: '이름풀이', en: 'Name Meaning', ja: '名前診断' },
+  { href: '/name-compatibility', ko: '이름궁합', en: 'Name Match', ja: '名前相性' },
+  { href: '/reaction-test', ko: '반응속도 테스트', en: 'Reaction Test', ja: '反応速度テスト' },
+  { href: '/ladder-game', ko: '사다리타기', en: 'Ladder Game', ja: 'あみだくじ' },
+  { href: '/today-fortune', ko: '오늘의 운세', en: 'Today Fortune', ja: '今日の運勢' },
+  { href: '/fortune-cookie-2026', ko: '올해 포츈쿠키', en: 'Year Fortune Cookie', ja: '今年のフォーチュンクッキー' },
+  { href: '/maps/hidden-cafe', ko: '숨은 카페 지도', en: 'Hidden Cafe Map', ja: '隠れカフェマップ' },
+  { href: '/pinball', ko: '핀볼 게임', en: 'Pinball Game', ja: 'ピンボールゲーム' },
+  { href: '/random-food', ko: '랜덤 음식 추천', en: 'Random Food', ja: 'ランダム料理おすすめ' }
+].map((item) => ({ href: withLocale(item.href), label: item[locale] }));
 ---
 
 <section class="mt-10">
-  <h2 class="mb-3 text-lg font-semibold">실시간 인기 콘텐츠</h2>
+  <h2 class="mb-3 text-lg font-semibold">{labels.title}</h2>
 
   <div class="rounded-xl border border-slate-200 bg-white p-4">
-    <p class="text-sm text-slate-500">현재 인기 1위</p>
+    <p class="text-sm text-slate-500">{labels.top}</p>
     <a id="hot-top-link" href={items[0].href} class="mt-1 block text-lg font-bold text-slate-900 hover:underline">
-      1위: {items[0].label}
+      {labels.rankPrefix} {items[0].label}
     </a>
 
     <div id="hot-rank-list" class="mt-4 grid gap-2 md:grid-cols-2">
       {items.map((item, idx) => (
         <a href={item.href} class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm hover:border-slate-400">
-          {idx + 1}위. {item.label}
+          {idx + 1}. {item.label}
         </a>
       ))}
     </div>
   </div>
 
-  <script is:inline define:vars={{ items }}>
+  <script is:inline define:vars={{ items, labels }}>
     const source = [...items];
     const listEl = document.getElementById('hot-rank-list');
     const topLinkEl = document.getElementById('hot-top-link');
@@ -49,14 +76,14 @@ const items = [
       const ranked = getRanked();
       if (topLinkEl && ranked[0]) {
         topLinkEl.setAttribute('href', ranked[0].href);
-        topLinkEl.textContent = `1위: ${ranked[0].label}`;
+        topLinkEl.textContent = `${labels.rankPrefix} ${ranked[0].label}`;
       }
 
       if (!listEl) return;
       listEl.innerHTML = ranked
         .map(
           (item, idx) =>
-            `<a href="${item.href}" class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm hover:border-slate-400">${idx + 1}위. ${item.label}</a>`
+            `<a href="${item.href}" class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm hover:border-slate-400">${idx + 1}. ${item.label}</a>`
         )
         .join('');
     };

@@ -3,8 +3,70 @@ import Layout from '../layouts/Layout.astro';
 import AdSense from '../components/AdSense.astro';
 import SponsorBanner from '../components/SponsorBanner.astro';
 import Recommend from '../components/Recommend.astro';
+import Footer from '../components/Footer.astro';
 
-const tabs = ['전체', '게임', '도구', '아트', '기타'];
+const pathname = Astro.url.pathname;
+const locale = pathname.startsWith('/en/') || pathname === '/en'
+  ? 'en'
+  : pathname.startsWith('/ja/') || pathname === '/ja'
+    ? 'ja'
+    : 'ko';
+const localePrefix = locale === 'ko' ? '' : `/${locale}`;
+const withLocale = (path: string) => `${localePrefix}${path}`.replace(/\/{2,}/g, '/');
+
+const t = {
+  ko: {
+    tabs: ['전체', '게임', '도구', '아트', '기타'],
+    searchPlaceholder: '원하는 기능을 검색해보세요',
+    heroTitle: '재미 도구 모음',
+    heroDesc: '카드에서 바로 시작하세요.',
+    noResult: '검색 결과가 없습니다.',
+    guideTitle: 'ManyTool 사용 가이드',
+    guideP1: 'ManyTool은 짧은 시간에 바로 사용할 수 있는 기능형 페이지를 중심으로 구성됩니다.',
+    guideP2: '테스트, 게임, 지도, 랜덤 도구를 카드에서 바로 열고, 하단 추천 링크를 통해 연관 기능으로 이동할 수 있습니다.',
+    faqTitle: '자주 묻는 질문',
+    faqQ1: 'Q. ManyTool은 무료인가요?',
+    faqA1: 'A. 현재 제공되는 기능은 무료로 이용할 수 있습니다.',
+    faqQ2: 'Q. 지도 정보가 다를 수도 있나요?',
+    faqA2: 'A. 제보 기반 정보가 포함될 수 있어, 방문 전 최신 운영 여부 확인을 권장합니다.',
+    faqQ3: 'Q. 정책 페이지는 어디에서 확인하나요?',
+    faqA3: 'A. 페이지 하단 푸터(개인정보/약관/운영원칙/면책고지)에서 확인할 수 있습니다.'
+  },
+  en: {
+    tabs: ['All', 'Games', 'Tools', 'Art', 'Etc'],
+    searchPlaceholder: 'Search tools',
+    heroTitle: 'Playful Tools',
+    heroDesc: 'Start directly from cards.',
+    noResult: 'No results found.',
+    guideTitle: 'ManyTool Guide',
+    guideP1: 'ManyTool is built for fast, practical pages you can use immediately.',
+    guideP2: 'Open tests, games, maps, and random tools directly from cards.',
+    faqTitle: 'FAQ',
+    faqQ1: 'Q. Is ManyTool free?',
+    faqA1: 'A. Yes, current features are free.',
+    faqQ2: 'Q. Can map information be outdated?',
+    faqA2: 'A. Some spots are user-submitted, so please verify before visiting.',
+    faqQ3: 'Q. Where are policy pages?',
+    faqA3: 'A. Check the footer links for Privacy, Terms, Editorial, and Disclaimer.'
+  },
+  ja: {
+    tabs: ['全体', 'ゲーム', 'ツール', 'アート', 'その他'],
+    searchPlaceholder: 'ツールを検索',
+    heroTitle: '楽しいツール集',
+    heroDesc: 'カードからすぐ開始できます。',
+    noResult: '検索結果がありません。',
+    guideTitle: 'ManyTool ガイド',
+    guideP1: 'ManyToolはすぐ使える実用ページを中心に構成されています。',
+    guideP2: 'テスト、ゲーム、マップ、ランダムツールをカードから直接開けます。',
+    faqTitle: 'よくある質問',
+    faqQ1: 'Q. ManyToolは無料ですか？',
+    faqA1: 'A. 現在の機能は無料です。',
+    faqQ2: 'Q. 地図情報が異なる場合はありますか？',
+    faqA2: 'A. ユーザー投稿情報を含むため、訪問前の確認をおすすめします。',
+    faqQ3: 'Q. ポリシーページはどこですか？',
+    faqA3: 'A. フッターのプライバシー/利用規約/運営方針/免責事項をご確認ください。'
+  }
+}[locale];
 
 const cards = [
   { href: '/animal-test', title: '동물상 테스트', desc: '사진으로 동물상 분석', icon: '🐾', iconClass: 'bg-sky-100 text-sky-700' },
@@ -23,7 +85,7 @@ const cards = [
   { href: '/today-fortune', title: '오늘의 운세', desc: '오늘 운세 랜덤 확인', icon: '🔮', iconClass: 'bg-purple-100 text-purple-700' },
   { href: '/fortune-cookie-2026', title: '올해 포츈쿠키', desc: '2026년 키워드 뽑기', icon: '🥠', iconClass: 'bg-amber-100 text-amber-700' },
   { href: '/ladder-game', title: '사다리타기', desc: '랜덤 당첨 뽑기', icon: '🪜', iconClass: 'bg-lime-100 text-lime-700' }
-];
+].map((card) => ({ ...card, href: withLocale(card.href) }));
 
 const rows = [cards.slice(0, 8), cards.slice(4, 12), cards.slice(8, 16)];
 const faqJsonLd = {
@@ -62,7 +124,7 @@ const faqJsonLd = {
   <main class="min-h-screen bg-slate-100">
     <div class="mx-auto max-w-6xl">
       <header class="flex items-center justify-between border-b border-sky-100 px-4 py-3 lg:px-10">
-        <a href="/" class="flex items-center gap-3">
+        <a href={withLocale('/')} class="flex items-center gap-3">
           <img src="/favicon.svg" alt="ManyTool 로고" class="h-8 w-8 rounded-lg bg-sky-100 p-1" />
           <h2 class="text-lg font-bold tracking-tight text-slate-900 sm:text-xl">ManyTool</h2>
         </a>
@@ -73,18 +135,18 @@ const faqJsonLd = {
           <input
             id="tool-search"
             class="w-full rounded-full border border-sky-100 bg-white px-4 py-3 text-sm outline-none focus:border-sky-400"
-            placeholder="원하는 기능을 검색해보세요"
+            placeholder={t.searchPlaceholder}
             type="text"
           />
         </div>
 
         <div class="mt-5">
-          <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">재미 도구 모음</h1>
-          <p class="mt-1 text-slate-500">카드에서 바로 시작하세요.</p>
+          <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{t.heroTitle}</h1>
+          <p class="mt-1 text-slate-500">{t.heroDesc}</p>
         </div>
 
         <div class="mt-4 flex gap-2 overflow-x-auto pb-2">
-          {tabs.map((tab, idx) => (
+          {t.tabs.map((tab, idx) => (
             <button
               class:list={[
                 'whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium',
@@ -125,36 +187,35 @@ const faqJsonLd = {
           </div>
         ))}
       </section>
-      <p id="search-empty" class="hidden px-4 pb-4 text-sm text-slate-500 lg:px-10">검색 결과가 없습니다.</p>
+      <p id="search-empty" class="hidden px-4 pb-4 text-sm text-slate-500 lg:px-10">{t.noResult}</p>
 
       <section class="px-4 pb-2 lg:px-10">
         <article class="rounded-xl border border-slate-200 bg-white p-5">
-          <h2 class="text-xl font-semibold">ManyTool 사용 가이드</h2>
+          <h2 class="text-xl font-semibold">{t.guideTitle}</h2>
           <p class="mt-2 text-slate-700">
-            ManyTool은 짧은 시간에 바로 사용할 수 있는 기능형 페이지를 중심으로 구성됩니다.
-            테스트, 게임, 지도, 랜덤 도구를 카드에서 바로 열고, 하단 추천 링크를 통해 연관 기능으로 이동할 수 있습니다.
+            {t.guideP1}
           </p>
           <p class="mt-2 text-slate-700">
-            각 기능은 모바일 환경에서도 빠르게 동작하도록 설계했으며, 페이지별 제목과 설명을 독립적으로 관리해 검색 접근성을 높였습니다.
+            {t.guideP2}
           </p>
         </article>
       </section>
 
       <section class="px-4 pb-2 lg:px-10">
         <article class="rounded-xl border border-slate-200 bg-white p-5">
-          <h2 class="text-xl font-semibold">자주 묻는 질문</h2>
+          <h2 class="text-xl font-semibold">{t.faqTitle}</h2>
           <div class="mt-3 space-y-3 text-slate-700">
             <div>
-              <h3 class="font-semibold text-slate-900">Q. ManyTool은 무료인가요?</h3>
-              <p>A. 현재 제공되는 기능은 무료로 이용할 수 있습니다.</p>
+              <h3 class="font-semibold text-slate-900">{t.faqQ1}</h3>
+              <p>{t.faqA1}</p>
             </div>
             <div>
-              <h3 class="font-semibold text-slate-900">Q. 지도 정보가 다를 수도 있나요?</h3>
-              <p>A. 제보 기반 정보가 포함될 수 있어, 방문 전 최신 운영 여부 확인을 권장합니다.</p>
+              <h3 class="font-semibold text-slate-900">{t.faqQ2}</h3>
+              <p>{t.faqA2}</p>
             </div>
             <div>
-              <h3 class="font-semibold text-slate-900">Q. 정책 페이지는 어디에서 확인하나요?</h3>
-              <p>A. 개인정보 처리방침, 이용약관, 콘텐츠 운영 원칙, 면책 고지를 푸터에서 확인할 수 있습니다.</p>
+              <h3 class="font-semibold text-slate-900">{t.faqQ3}</h3>
+              <p>{t.faqA3}</p>
             </div>
           </div>
         </article>
@@ -170,6 +231,7 @@ const faqJsonLd = {
         <AdSense slotName="추천 콘텐츠 위" />
       </section>
     </div>
+    <Footer />
 
   </main>
 
