@@ -8,7 +8,7 @@ import Recommend from '../components/Recommend.astro';
   <Header />
 
   <main class="bg-slate-100 pb-10">
-    <section class="mx-auto max-w-6xl px-4 py-5">
+    <section class="mx-auto max-w-[1400px] px-4 py-5">
       <div class="mb-4 rounded-2xl border border-sky-200 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 px-5 py-4 text-white shadow-lg">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -21,7 +21,7 @@ import Recommend from '../components/Recommend.astro';
         </div>
       </div>
 
-      <div class="grid gap-4 lg:grid-cols-[300px_1fr_260px]">
+      <div class="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)_250px]">
         <aside class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <h2 class="text-lg font-bold text-slate-900">참가자 입력</h2>
           <p class="mt-1 text-xs text-slate-500">중복 이름 허용, 공 개수 자유 입력</p>
@@ -52,7 +52,7 @@ import Recommend from '../components/Recommend.astro';
             <p class="text-sm font-semibold text-slate-600">DROP ZONE</p>
             <p id="status-text" class="text-xs font-bold uppercase tracking-wide text-sky-600">ready</p>
           </div>
-          <canvas id="pinball-board" width="920" height="760" class="w-full rounded-xl border border-slate-200 bg-slate-950"></canvas>
+          <canvas id="pinball-board" width="1200" height="920" class="w-full rounded-xl border border-slate-200 bg-slate-950"></canvas>
           <div class="mt-2 text-xs text-slate-500">공은 자동으로 투하되고, 하단 슬롯 도착 순서로 결과가 집계됩니다.</div>
         </section>
 
@@ -106,9 +106,9 @@ import Recommend from '../components/Recommend.astro';
     const W = canvas.width;
     const H = canvas.height;
     const WALL = 16;
-    const DROP_Y = 78;
-    const SLOT_H = 62;
-    const PEG_R = 5;
+    const DROP_Y = 88;
+    const SLOT_H = 74;
+    const PEG_R_BASE = 4;
     const BALL_R = 8;
     const GRAVITY = 0.19;
     const AIR = 0.999;
@@ -120,17 +120,34 @@ import Recommend from '../components/Recommend.astro';
     const colorPool = ['#22d3ee', '#a3e635', '#f97316', '#f43f5e', '#60a5fa', '#c084fc', '#34d399', '#facc15'];
 
     const pegs = [];
-    for (let row = 0; row < 13; row += 1) {
-      const count = 7 + (row % 2);
-      const y = 132 + row * 42;
-      const usable = W - 2 * (WALL + 46);
+    for (let row = 0; row < 16; row += 1) {
+      const count = 7 + (row % 5);
+      const y = 136 + row * 42;
+      const usable = W - 2 * (WALL + 54);
       const step = usable / (count - 1);
       for (let i = 0; i < count; i += 1) {
         const offset = row % 2 ? step / 2 : 0;
-        const x = WALL + 46 + i * step + offset;
-        if (x < W - WALL - 36) pegs.push({ x, y, r: PEG_R });
+        const jitter = Math.sin((row + 1) * (i + 2)) * 8.5;
+        const x = WALL + 54 + i * step + offset + jitter;
+        const r = PEG_R_BASE + ((row + i) % 3);
+        const avoidDropLane = row < 3 && Math.abs(x - W / 2) < 82;
+        if (x > WALL + 34 && x < W - WALL - 34 && !avoidDropLane) pegs.push({ x, y, r });
       }
     }
+
+    const bumpers = [
+      { x: W * 0.22, y: H * 0.34, r: 18, bounce: 0.96 },
+      { x: W * 0.76, y: H * 0.38, r: 16, bounce: 0.94 },
+      { x: W * 0.36, y: H * 0.55, r: 20, bounce: 0.98 },
+      { x: W * 0.67, y: H * 0.61, r: 14, bounce: 0.92 }
+    ];
+
+    const rails = [
+      { x1: W * 0.18, y1: H * 0.23, x2: W * 0.34, y2: H * 0.38, thickness: 4, bounce: 0.88 },
+      { x1: W * 0.82, y1: H * 0.3, x2: W * 0.65, y2: H * 0.46, thickness: 4, bounce: 0.88 },
+      { x1: W * 0.27, y1: H * 0.62, x2: W * 0.12, y2: H * 0.76, thickness: 4, bounce: 0.9 },
+      { x1: W * 0.73, y1: H * 0.67, x2: W * 0.88, y2: H * 0.8, thickness: 4, bounce: 0.9 }
+    ];
 
     let participants = [
       { id: 'p1', name: 'Jake', balls: 3, color: colorPool[0] },
@@ -297,6 +314,32 @@ import Recommend from '../components/Recommend.astro';
       ball.vy *= 0.985;
     };
 
+    const resolveRailCollision = (ball, rail) => {
+      const vx = rail.x2 - rail.x1;
+      const vy = rail.y2 - rail.y1;
+      const segLen2 = vx * vx + vy * vy;
+      if (segLen2 === 0) return;
+      const t = Math.max(0, Math.min(1, ((ball.x - rail.x1) * vx + (ball.y - rail.y1) * vy) / segLen2));
+      const cx = rail.x1 + t * vx;
+      const cy = rail.y1 + t * vy;
+      const dx = ball.x - cx;
+      const dy = ball.y - cy;
+      const minDist = ball.r + rail.thickness;
+      const dist2 = dx * dx + dy * dy;
+      if (dist2 > minDist * minDist || dist2 === 0) return;
+
+      const dist = Math.sqrt(dist2);
+      const nx = dx / dist;
+      const ny = dy / dist;
+      const overlap = minDist - dist;
+      ball.x += nx * overlap;
+      ball.y += ny * overlap;
+
+      const dot = ball.vx * nx + ball.vy * ny;
+      ball.vx -= (1 + rail.bounce) * dot * nx;
+      ball.vy -= (1 + rail.bounce) * dot * ny;
+    };
+
     const settleBall = (ball) => {
       const idx = Math.max(0, Math.min(SLOT_MULT.length - 1, Math.floor((ball.x - WALL) / slotWidth)));
       const mult = SLOT_MULT[idx];
@@ -331,6 +374,8 @@ import Recommend from '../components/Recommend.astro';
         }
 
         pegs.forEach((peg) => resolvePegCollision(ball, peg));
+        bumpers.forEach((b) => resolvePegCollision(ball, b));
+        rails.forEach((rail) => resolveRailCollision(ball, rail));
 
         if (ball.y >= H - SLOT_H - ball.r) {
           settleBall(ball);
@@ -361,6 +406,13 @@ import Recommend from '../components/Recommend.astro';
         ctx.stroke();
       }
 
+      for (let x = WALL; x < W - WALL; x += 56) {
+        ctx.beginPath();
+        ctx.moveTo(x + 0.5, WALL);
+        ctx.lineTo(x + 0.5, H - SLOT_H);
+        ctx.stroke();
+      }
+
       ctx.fillStyle = '#06b6d4';
       ctx.fillRect(W / 2 - 68, 22, 136, 26);
       ctx.fillStyle = '#ecfeff';
@@ -375,6 +427,31 @@ import Recommend from '../components/Recommend.astro';
         ctx.shadowColor = '#60a5fa';
         ctx.shadowBlur = 8;
         ctx.fill();
+      });
+
+      bumpers.forEach((b) => {
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(236,72,153,0.22)';
+        ctx.shadowColor = '#f472b6';
+        ctx.shadowBlur = 20;
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.r - 4, 0, Math.PI * 2);
+        ctx.strokeStyle = '#f472b6';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      });
+
+      rails.forEach((rail) => {
+        ctx.strokeStyle = '#22d3ee';
+        ctx.lineWidth = 4;
+        ctx.shadowColor = '#06b6d4';
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        ctx.moveTo(rail.x1, rail.y1);
+        ctx.lineTo(rail.x2, rail.y2);
+        ctx.stroke();
       });
       ctx.shadowBlur = 0;
 
