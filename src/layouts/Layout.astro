@@ -1,5 +1,6 @@
 ﻿---
 import '../styles/global.css';
+import AdSense from '../components/AdSense.astro';
 
 interface Props {
   title?: string;
@@ -184,6 +185,8 @@ const breadcrumbJsonLd = {
         </ol>
       </nav>
     )}
+    <AdSense slotName="글로벌 본문 상단" />
     <slot />
+    <AdSense slotName="글로벌 본문 하단" />
   </body>
 </html>
