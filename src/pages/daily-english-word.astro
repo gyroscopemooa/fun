@@ -110,17 +110,31 @@ const t = {
       'Small %w% makes a big difference %c%.',
       'Practice %w% every day %c%.'
     ];
+    const tones = [
+      'with focus',
+      'with calm',
+      'with consistency',
+      'with confidence',
+      'with patience',
+      'with clarity',
+      'with intention',
+      'with discipline',
+      'with curiosity',
+      'with momentum'
+    ];
 
     const words = [];
     for (const root of roots) {
       for (const context of contexts) {
         for (const pattern of patterns) {
-          words.push({
-            word: root[0],
-            pron: root[1],
-            meaning: root[2],
-            ex: pattern.replace('%w%', root[0]).replace('%c%', context)
-          });
+          for (const tone of tones) {
+            words.push({
+              word: root[0],
+              pron: root[1],
+              meaning: root[2],
+              ex: `${pattern.replace('%w%', root[0]).replace('%c%', context)} ${tone}.`
+            });
+          }
         }
       }
     }

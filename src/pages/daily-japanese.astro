@@ -49,11 +49,14 @@ const t = {
     ];
     const contexts = ['仕事で', '学校で', '旅行で', 'お店で', '会話で', '配信で', '練習で', '日常で'];
     const templates = ['%c% %w%。', '%w% を %c% 使いましょう。', '%c% %w% が役立ちます。', '今日は %c% %w%。'];
+    const tones = ['ゆっくり', 'しっかり', '自然に', '丁寧に', '気軽に', '前向きに', '明るく', '実用的に', '短く', '毎日', '集中して', '楽しく', '柔らかく', '確実に', '一歩ずつ'];
     const entries = [];
     words.forEach(([w, m]) => {
       contexts.forEach((c) => {
         templates.forEach((tmp) => {
-          entries.push({ word: w, meaning: m, ex: tmp.replace('%w%', w).replace('%c%', c) });
+          tones.forEach((tone) => {
+            entries.push({ word: w, meaning: m, ex: `${tmp.replace('%w%', w).replace('%c%', c)} ${tone}` });
+          });
         });
       });
     });

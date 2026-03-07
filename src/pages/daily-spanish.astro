@@ -58,11 +58,18 @@ const t = {
       '%w% es util %c%.',
       'Recuerda decir %w% %c%.'
     ];
+    const tones = [
+      'con calma', 'con energia', 'con confianza', 'con enfoque', 'con constancia',
+      'con claridad', 'con ritmo', 'con precision', 'con paciencia', 'con buena actitud',
+      'de forma natural', 'de manera practica'
+    ];
     const entries = [];
     words.forEach(([w, m]) => {
       contexts.forEach((c) => {
         templates.forEach((t) => {
-          entries.push({ word: w, meaning: m, ex: t.replace('%w%', w).replace('%c%', c) });
+          tones.forEach((tone) => {
+            entries.push({ word: w, meaning: m, ex: `${t.replace('%w%', w).replace('%c%', c)} ${tone}.` });
+          });
         });
       });
     });

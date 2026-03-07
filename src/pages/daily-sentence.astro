@@ -82,12 +82,18 @@ const t = {
       es: ['Hoy,', 'Ahora mismo,', 'Esta semana,', 'En tu proxima tarea,', 'Desde este momento,', 'Paso a paso,'],
       ko: ['오늘,', '지금,', '이번 주,', '다음 작업에서,', '이 순간부터,', '한 걸음씩,']
     };
+    const tails = {
+      en: ['for better flow.', 'for long-term growth.', 'for clear results.', 'to reduce noise.', 'to stay consistent.', 'to keep momentum.', 'for stable progress.', 'for stronger habits.', 'to simplify decisions.', 'for cleaner execution.', 'to avoid delay.', 'for visible outcomes.', 'to sharpen focus.', 'to build confidence.', 'to improve daily.', 'for practical wins.', 'to stay calm.', 'to move forward.'],
+      es: ['para un mejor flujo.', 'para crecer a largo plazo.', 'para resultados claros.', 'para reducir ruido.', 'para mantener constancia.', 'para mantener impulso.', 'para progreso estable.', 'para habitos mas fuertes.', 'para simplificar decisiones.', 'para ejecutar mejor.', 'para evitar retrasos.', 'para resultados visibles.', 'para enfocar mejor.', 'para ganar confianza.', 'para mejorar cada dia.', 'para logros practicos.', 'para mantener calma.', 'para avanzar.'],
+      ko: ['더 나은 흐름을 위해.', '장기 성장을 위해.', '명확한 결과를 위해.', '잡음을 줄이기 위해.', '일관성을 지키기 위해.', '추진력을 유지하기 위해.', '안정적 진전을 위해.', '강한 습관을 위해.', '결정을 단순화하기 위해.', '실행력을 높이기 위해.', '지연을 줄이기 위해.', '눈에 보이는 결과를 위해.', '집중력을 높이기 위해.', '자신감을 위해.', '매일 개선을 위해.', '실용적 성과를 위해.', '침착함을 위해.', '계속 전진하기 위해.']
+    };
 
     const buildList = (lang) => {
       const out = [];
       for (const o of openers[lang]) {
         for (const s of subjects[lang]) {
           for (const v of verbs[lang]) out.push(`${o} ${s} ${v}`);
+          for (const t of tails[lang]) out.push(`${o} ${s} ${v} ${t}`);
         }
       }
       return out;
