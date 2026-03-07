@@ -32,7 +32,7 @@ const localePaths = ['en', 'ja'].flatMap((locale) =>
 const allPaths = [...paths, ...localePaths];
 
 export const GET: APIRoute = ({ site }) => {
-  const base = site ?? new URL('https://fun.pages.dev');
+  const base = site ?? new URL('https://manytool.net');
   const now = new Date().toISOString().split('T')[0];
 
   const priorityFor = (path: string) => {
