@@ -14,30 +14,30 @@ const locale = pathname.startsWith('/en/') || pathname === '/en'
 
 const t = {
   ko: {
-    title: '하루 한문장 | ManyTool',
-    desc: '영어/스페인어/한국어를 선택해 오늘의 문장을 확인하는 페이지입니다.',
-    h1: '하루 한문장',
-    sub: '언어를 선택하면 오늘 문장이 고정 표시됩니다.',
+    title: '하루 영어 한문장 | ManyTool',
+    desc: '영어/스페인어/일본어/한국어 중 선택해 오늘의 문장을 확인하세요.',
+    h1: '하루 영어 한문장',
+    sub: '언어를 선택하면 오늘 날짜 기준 고정 문장이 표시됩니다.',
     langLabel: '언어 선택',
     copy: '문장 복사',
     copied: '복사됨'
   },
   en: {
-    title: 'Sentence of the Day | ManyTool',
-    desc: 'Choose English, Spanish, or Korean and get a fixed sentence of the day.',
-    h1: 'Sentence of the Day',
-    sub: 'Pick a language to view today’s fixed sentence.',
+    title: 'Daily English Sentence | ManyTool',
+    desc: 'Choose English, Spanish, Japanese, or Korean and get a fixed sentence of the day.',
+    h1: 'Daily English Sentence',
+    sub: 'Pick a language to see today\'s fixed sentence.',
     langLabel: 'Language',
     copy: 'Copy sentence',
     copied: 'Copied'
   },
   ja: {
-    title: '今日の一文 | ManyTool',
-    desc: '英語/スペイン語/韓国語から選んで今日の一文を確認できます。',
-    h1: '今日の一文',
-    sub: '言語を選ぶと当日の文が固定表示されます。',
-    langLabel: '言語',
-    copy: '文をコピー',
+    title: '毎日の英語一文 | ManyTool',
+    desc: '英語/スペイン語/日本語/韓国語から選んで今日の一文を確認できます。',
+    h1: '毎日の英語一文',
+    sub: '言語を選ぶと今日の日付で固定された文章が表示されます。',
+    langLabel: '言語選択',
+    copy: 'コピー',
     copied: 'コピー完了'
   }
 }[locale];
@@ -55,8 +55,10 @@ const t = {
       <select id="lang" class="ml-2 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm">
         <option value="en">English</option>
         <option value="es">Espanol</option>
+        <option value="ja">Japanese</option>
         <option value="ko">Korean</option>
       </select>
+
       <blockquote id="line" class="mt-4 text-2xl font-bold leading-snug text-slate-900">-</blockquote>
       <button id="copy-line" class="mt-4 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold">{t.copy}</button>
     </section>
@@ -67,39 +69,57 @@ const t = {
   <Footer />
 
   <script is:inline define:vars={{ copiedText: t.copied }}>
-    const subjects = {
-      en: ['Small progress', 'Clear priorities', 'Consistent effort', 'Focused practice', 'Simple routines', 'Honest feedback'],
-      es: ['El progreso pequeno', 'Las prioridades claras', 'El esfuerzo constante', 'La practica enfocada', 'Las rutinas simples', 'La retroalimentacion honesta'],
-      ko: ['작은 진전', '명확한 우선순위', '꾸준한 노력', '집중된 연습', '단순한 루틴', '정직한 피드백']
-    };
-    const verbs = {
-      en: ['builds confidence.', 'creates momentum.', 'reduces stress.', 'improves results.', 'changes habits.', 'makes growth visible.'],
-      es: ['construye confianza.', 'crea impulso.', 'reduce estres.', 'mejora resultados.', 'cambia habitos.', 'hace visible el crecimiento.'],
-      ko: ['자신감을 만듭니다.', '추진력을 만듭니다.', '스트레스를 줄입니다.', '결과를 개선합니다.', '습관을 바꿉니다.', '성장을 눈에 보이게 합니다.']
-    };
-    const openers = {
-      en: ['Today,', 'Right now,', 'This week,', 'In your next task,', 'From this moment,', 'Step by step,'],
-      es: ['Hoy,', 'Ahora mismo,', 'Esta semana,', 'En tu proxima tarea,', 'Desde este momento,', 'Paso a paso,'],
-      ko: ['오늘,', '지금,', '이번 주,', '다음 작업에서,', '이 순간부터,', '한 걸음씩,']
-    };
-    const tails = {
-      en: ['for better flow.', 'for long-term growth.', 'for clear results.', 'to reduce noise.', 'to stay consistent.', 'to keep momentum.', 'for stable progress.', 'for stronger habits.', 'to simplify decisions.', 'for cleaner execution.', 'to avoid delay.', 'for visible outcomes.', 'to sharpen focus.', 'to build confidence.', 'to improve daily.', 'for practical wins.', 'to stay calm.', 'to move forward.'],
-      es: ['para un mejor flujo.', 'para crecer a largo plazo.', 'para resultados claros.', 'para reducir ruido.', 'para mantener constancia.', 'para mantener impulso.', 'para progreso estable.', 'para habitos mas fuertes.', 'para simplificar decisiones.', 'para ejecutar mejor.', 'para evitar retrasos.', 'para resultados visibles.', 'para enfocar mejor.', 'para ganar confianza.', 'para mejorar cada dia.', 'para logros practicos.', 'para mantener calma.', 'para avanzar.'],
-      ko: ['더 나은 흐름을 위해.', '장기 성장을 위해.', '명확한 결과를 위해.', '잡음을 줄이기 위해.', '일관성을 지키기 위해.', '추진력을 유지하기 위해.', '안정적 진전을 위해.', '강한 습관을 위해.', '결정을 단순화하기 위해.', '실행력을 높이기 위해.', '지연을 줄이기 위해.', '눈에 보이는 결과를 위해.', '집중력을 높이기 위해.', '자신감을 위해.', '매일 개선을 위해.', '실용적 성과를 위해.', '침착함을 위해.', '계속 전진하기 위해.']
+    const bank = {
+      en: [
+        'Small progress beats perfect timing.',
+        'Clear priorities reduce daily stress.',
+        'Consistency creates visible results.',
+        'Simple routines build strong habits.',
+        'Focus on one task and finish it.',
+        'Calm execution wins over rushed effort.',
+        'Start now and adjust on the way.',
+        'Good systems make hard work lighter.',
+        'One clear decision can change your day.',
+        'Momentum grows when you keep moving.'
+      ],
+      es: [
+        'El progreso pequeno supera el momento perfecto.',
+        'Las prioridades claras reducen el estres diario.',
+        'La constancia crea resultados visibles.',
+        'Las rutinas simples construyen habitos fuertes.',
+        'Enfocate en una tarea y terminala.',
+        'La ejecucion tranquila gana al apuro.',
+        'Empieza ahora y ajusta en el camino.',
+        'Los buenos sistemas hacen el esfuerzo mas ligero.',
+        'Una decision clara puede cambiar tu dia.',
+        'El impulso crece cuando sigues avanzando.'
+      ],
+      ja: [
+        '小さな前進は完璧なタイミングより強い。',
+        '優先順位を明確にすると毎日が楽になる。',
+        '継続は見える結果を作る。',
+        'シンプルな習慣が強い土台になる。',
+        '一つの作業に集中して終わらせよう。',
+        '焦るより落ち着いた実行が勝つ。',
+        '今始めて、進みながら調整しよう。',
+        '良い仕組みは努力を軽くする。',
+        '明確な一つの決断が一日を変える。',
+        '動き続けるほど勢いは増える。'
+      ],
+      ko: [
+        '작은 전진이 완벽한 타이밍보다 강하다.',
+        '우선순위를 명확히 하면 하루가 가벼워진다.',
+        '꾸준함은 눈에 보이는 결과를 만든다.',
+        '단순한 루틴이 강한 습관을 만든다.',
+        '한 가지 일에 집중하고 끝내라.',
+        '급한 실행보다 차분한 실행이 이긴다.',
+        '지금 시작하고 가면서 조정하면 된다.',
+        '좋은 시스템은 노력을 가볍게 만든다.',
+        '명확한 한 번의 결정이 하루를 바꾼다.',
+        '계속 움직일수록 추진력은 커진다.'
+      ]
     };
 
-    const buildList = (lang) => {
-      const out = [];
-      for (const o of openers[lang]) {
-        for (const s of subjects[lang]) {
-          for (const v of verbs[lang]) out.push(`${o} ${s} ${v}`);
-          for (const t of tails[lang]) out.push(`${o} ${s} ${v} ${t}`);
-        }
-      }
-      return out;
-    };
-
-    const bank = { en: buildList('en'), es: buildList('es'), ko: buildList('ko') };
     const langEl = document.getElementById('lang');
     const lineEl = document.getElementById('line');
     const copyBtn = document.getElementById('copy-line');
@@ -109,7 +129,7 @@ const t = {
     const dateKey = `${kst.getUTCFullYear()}-${kst.getUTCMonth() + 1}-${kst.getUTCDate()}`;
 
     const hash = (text) => {
-      let h = 0;
+      let h = 5381;
       for (let i = 0; i < text.length; i += 1) h = (h * 33 + text.charCodeAt(i)) >>> 0;
       return h;
     };
@@ -126,8 +146,8 @@ const t = {
     const initial = render();
     langEl?.addEventListener('change', render);
     copyBtn?.addEventListener('click', async () => {
-      const line = render();
-      await navigator.clipboard.writeText(line ?? initial ?? '');
+      const line = render() ?? initial ?? '';
+      await navigator.clipboard.writeText(line);
       if (copyBtn instanceof HTMLButtonElement) copyBtn.textContent = copiedText;
     });
   </script>
