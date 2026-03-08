@@ -308,6 +308,7 @@ const seoKeywords = locale === 'ko'
           <div class="mt-2 flex gap-2">
             <button data-act="up" data-id="${v.id}" class="rounded-md border border-slate-300 px-2 py-1 text-xs ${votedIds.has(v.id) ? 'opacity-50' : ''}" ${votedIds.has(v.id) ? 'disabled' : ''}>추천 ${v.up}</button>
             <button data-act="down" data-id="${v.id}" class="rounded-md border border-slate-300 px-2 py-1 text-xs ${votedIds.has(v.id) ? 'opacity-50' : ''}" ${votedIds.has(v.id) ? 'disabled' : ''}>비추천 ${v.down}</button>
+            ${isAdmin() ? `<button data-act="delete" data-id="${v.id}" class="rounded-md border border-rose-500 px-2 py-1 text-xs text-rose-700">삭제</button>` : ''}
           </div>
           <div class="mt-2 rounded-md bg-white p-2">
             <ul class="space-y-1 text-xs text-slate-600">
@@ -554,6 +555,18 @@ const seoKeywords = locale === 'ko'
         votedIds.add(id);
         saveVotedIds();
         render();
+        return;
+      }
+      if (act === 'delete') {
+        if (!supabase || !isAdmin()) return;
+        const ok = window.confirm('이 제보를 삭제할까요?');
+        if (!ok) return;
+        const { error } = await supabase.from('fishbread_reports').delete().eq('id', id);
+        if (error) {
+          alert(`삭제 실패: ${error.message}`);
+          return;
+        }
+        await reloadAll();
         return;
       }
 
