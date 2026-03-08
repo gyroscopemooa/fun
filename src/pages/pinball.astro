@@ -25,9 +25,15 @@ const t = {
     queue: '대기열',
     clear: '전체 삭제',
     start: '시작',
+    shuffle: '셔플',
     stop: '중지',
     reset: '리셋',
-    result: '실시간 결과'
+    result: '실시간 결과',
+    queuePreview: '다음 투하',
+    modeReady: 'ready',
+    modeRunning: 'running',
+    modePaused: 'paused',
+    modeFinished: 'finished'
   },
   en: {
     title: 'Pinball Arena | ManyTool',
@@ -43,9 +49,15 @@ const t = {
     queue: 'Queue',
     clear: 'Clear',
     start: 'Start',
+    shuffle: 'Shuffle',
     stop: 'Stop',
     reset: 'Reset',
-    result: 'Live Result'
+    result: 'Live Result',
+    queuePreview: 'Next Drops',
+    modeReady: 'ready',
+    modeRunning: 'running',
+    modePaused: 'paused',
+    modeFinished: 'finished'
   },
   ja: {
     title: 'ピンボールアリーナ | ManyTool',
@@ -61,9 +73,15 @@ const t = {
     queue: '待機列',
     clear: '全削除',
     start: '開始',
+    shuffle: 'シャッフル',
     stop: '停止',
     reset: 'リセット',
-    result: 'リアルタイム結果'
+    result: 'リアルタイム結果',
+    queuePreview: '次の投下',
+    modeReady: 'ready',
+    modeRunning: 'running',
+    modePaused: 'paused',
+    modeFinished: 'finished'
   }
 }[locale];
 ---
@@ -104,10 +122,11 @@ const t = {
             <ul id="players-list" class="space-y-2 text-sm"></ul>
           </div>
 
-          <div class="mt-4 grid grid-cols-2 gap-2">
+          <div class="mt-4 grid grid-cols-3 gap-2">
             <button id="start-game" class="rounded-xl bg-emerald-500 py-2.5 text-sm font-bold text-white">{t.start}</button>
+            <button id="shuffle-game" class="rounded-xl bg-sky-500 py-2.5 text-sm font-bold text-white">{t.shuffle}</button>
             <button id="stop-game" class="rounded-xl bg-slate-800 py-2.5 text-sm font-bold text-white">{t.stop}</button>
-            <button id="reset-game" class="col-span-2 rounded-xl border border-slate-300 bg-white py-2.5 text-sm font-bold">{t.reset}</button>
+            <button id="reset-game" class="col-span-3 rounded-xl border border-slate-300 bg-white py-2.5 text-sm font-bold">{t.reset}</button>
           </div>
         </aside>
 
@@ -137,6 +156,11 @@ const t = {
             <h3 class="text-sm font-bold">슬롯 배수</h3>
             <div id="slot-info" class="mt-2 grid grid-cols-3 gap-2 text-xs"></div>
           </div>
+
+          <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <h3 class="text-sm font-bold">{t.queuePreview}</h3>
+            <ul id="queue-preview" class="mt-2 space-y-1 text-xs text-slate-600"></ul>
+          </div>
         </aside>
       </div>
     </section>
@@ -153,6 +177,7 @@ const t = {
     const clearPlayersBtn = document.getElementById('clear-players');
     const startBtn = document.getElementById('start-game');
     const stopBtn = document.getElementById('stop-game');
+    const shuffleBtn = document.getElementById('shuffle-game');
     const resetBtn = document.getElementById('reset-game');
     const playerNameEl = document.getElementById('player-name');
     const playerBallsEl = document.getElementById('player-balls');
@@ -162,6 +187,7 @@ const t = {
     const ballCountEl = document.getElementById('ball-count');
     const statusTextEl = document.getElementById('status-text');
     const slotInfoEl = document.getElementById('slot-info');
+    const queuePreviewEl = document.getElementById('queue-preview');
 
     if (!(canvas instanceof HTMLCanvasElement)) throw new Error('pinball board missing');
     const ctx = canvas.getContext('2d');
@@ -200,10 +226,10 @@ const t = {
     }
 
     const bumpers = [
-      { x: W * 0.22, y: H * 0.34, r: 18, bounce: 0.96 },
-      { x: W * 0.76, y: H * 0.38, r: 16, bounce: 0.94 },
-      { x: W * 0.36, y: H * 0.55, r: 20, bounce: 0.98 },
-      { x: W * 0.67, y: H * 0.61, r: 14, bounce: 0.92 }
+      { x: W * 0.22, y: H * 0.34, baseX: W * 0.22, baseY: H * 0.34, amp: 26, speed: 0.0008, phase: 0.2, r: 18, bounce: 0.96 },
+      { x: W * 0.76, y: H * 0.38, baseX: W * 0.76, baseY: H * 0.38, amp: 24, speed: 0.001, phase: 1.1, r: 16, bounce: 0.94 },
+      { x: W * 0.36, y: H * 0.55, baseX: W * 0.36, baseY: H * 0.55, amp: 22, speed: 0.0012, phase: 2.0, r: 20, bounce: 0.98 },
+      { x: W * 0.67, y: H * 0.61, baseX: W * 0.67, baseY: H * 0.61, amp: 20, speed: 0.0009, phase: 2.8, r: 14, bounce: 0.92 }
     ];
 
     const rails = [
@@ -300,6 +326,15 @@ const t = {
       return queue;
     };
 
+    const renderQueuePreview = () => {
+      if (!queuePreviewEl) return;
+      if (dropQueue.length === 0) {
+        queuePreviewEl.innerHTML = '<li>-</li>';
+        return;
+      }
+      queuePreviewEl.innerHTML = dropQueue.slice(0, 6).map((q, i) => `<li>${i + 1}. ${q.owner}</li>`).join('');
+    };
+
     const spawnBall = (item) => {
       balls.push({
         id: `${item.ownerId}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
@@ -338,7 +373,8 @@ const t = {
       finishOrder = [];
       dropQueue = [];
       renderFinish();
-      setStatus('ready');
+      renderQueuePreview();
+      setStatus(t.modeReady);
     };
 
     const startGame = () => {
@@ -349,12 +385,21 @@ const t = {
       running = true;
       lastDrop = 0;
       renderFinish();
-      setStatus('running');
+      renderQueuePreview();
+      setStatus(t.modeRunning);
     };
 
     const stopGame = () => {
       running = false;
-      setStatus('paused');
+      setStatus(t.modePaused);
+    };
+
+    const shuffleGame = () => {
+      participants = [...participants].sort(() => Math.random() - 0.5);
+      renderParticipants();
+      dropQueue = buildQueue();
+      renderQueuePreview();
+      setStatus(t.modeReady);
     };
 
     const resolvePegCollision = (ball, peg) => {
@@ -410,13 +455,46 @@ const t = {
       finishOrder.push({ name: ball.name, mult, slot: idx + 1 });
       ball.done = true;
       renderFinish();
+      renderQueuePreview();
+    };
+
+    const resolveBallCollision = (a, b) => {
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const dist2 = dx * dx + dy * dy;
+      const minDist = a.r + b.r;
+      if (dist2 <= 0 || dist2 > minDist * minDist) return;
+      const dist = Math.sqrt(dist2);
+      const nx = dx / dist;
+      const ny = dy / dist;
+      const overlap = (minDist - dist) * 0.5;
+      a.x -= nx * overlap;
+      a.y -= ny * overlap;
+      b.x += nx * overlap;
+      b.y += ny * overlap;
+      const rvx = b.vx - a.vx;
+      const rvy = b.vy - a.vy;
+      const velAlongNormal = rvx * nx + rvy * ny;
+      if (velAlongNormal > 0) return;
+      const impulse = -(1 + 0.86) * velAlongNormal * 0.5;
+      const ix = impulse * nx;
+      const iy = impulse * ny;
+      a.vx -= ix;
+      a.vy -= iy;
+      b.vx += ix;
+      b.vy += iy;
     };
 
     const update = (ts) => {
+      bumpers.forEach((b) => {
+        b.x = b.baseX + Math.sin(ts * b.speed + b.phase) * b.amp;
+      });
+
       if (running && dropQueue.length > 0 && ts - lastDrop > 360) {
         const item = dropQueue.shift();
         if (item) spawnBall(item);
         lastDrop = ts;
+        renderQueuePreview();
       }
 
       balls.forEach((ball) => {
@@ -446,11 +524,17 @@ const t = {
         }
       });
 
+      for (let i = 0; i < balls.length; i += 1) {
+        for (let j = i + 1; j < balls.length; j += 1) {
+          resolveBallCollision(balls[i], balls[j]);
+        }
+      }
+
       balls = balls.filter((b) => !b.done);
 
       if (running && balls.length === 0 && dropQueue.length === 0) {
         running = false;
-        setStatus('finished');
+        setStatus(t.modeFinished);
       }
     };
 
@@ -579,12 +663,14 @@ const t = {
     });
 
     startBtn?.addEventListener('click', startGame);
+    shuffleBtn?.addEventListener('click', shuffleGame);
     stopBtn?.addEventListener('click', stopGame);
     resetBtn?.addEventListener('click', resetGame);
 
     renderSlotInfo();
     renderParticipants();
     renderFinish();
+    renderQueuePreview();
     drawBoard();
     rafId = window.requestAnimationFrame(tick);
 
