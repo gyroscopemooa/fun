@@ -1,0 +1,20 @@
+---
+const target = '/maps/fishbread?admin=1';
+---
+
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="refresh" content={`0;url=${target}`} />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>관리자 이동</title>
+  </head>
+  <body>
+    <script is:inline>
+      window.location.replace('/maps/fishbread?admin=1');
+    </script>
+    <p>이동 중입니다. 자동 이동되지 않으면 <a href={target}>여기를 클릭</a>하세요.</p>
+  </body>
+</html>
