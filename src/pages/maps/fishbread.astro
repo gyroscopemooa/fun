@@ -227,6 +227,7 @@ const seoKeywords = locale === 'ko'
     const supabase = supabaseReady ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
     const state = { vendors: [], pendingReports: [], pendingComments: [] };
     let currentUser = null;
+    let adminGranted = false;
     let votedIds = new Set();
     let selectedRegion = '전체';
     let selectedLat = null;
@@ -266,9 +267,23 @@ const seoKeywords = locale === 'ko'
     const saveVotedIds = () => {
       localStorage.setItem(LOCAL_VOTE_KEY, JSON.stringify([...votedIds]));
     };
-    const isAdmin = () => {
-      const email = (currentUser?.email || '').toLowerCase();
-      return Boolean(email) && ADMIN_EMAILS.includes(email);
+    const isAdmin = () => adminGranted;
+    const refreshAdminGranted = async () => {
+      if (!supabase || !currentUser?.email) {
+        adminGranted = false;
+        return;
+      }
+      const email = currentUser.email.toLowerCase();
+      if (ADMIN_EMAILS.includes(email)) {
+        adminGranted = true;
+        return;
+      }
+      const { data } = await supabase
+        .from('fishbread_admins')
+        .select('email')
+        .eq('email', email)
+        .maybeSingle();
+      adminGranted = Boolean(data?.email);
     };
     const updateAdminUiState = () => {
       if (adminStateEl) {
@@ -694,6 +709,7 @@ const seoKeywords = locale === 'ko'
       }
       const { data } = await supabase.auth.getUser();
       currentUser = data?.user || null;
+      await refreshAdminGranted();
       updateAdminUiState();
       await reloadAll();
     });
@@ -702,6 +718,7 @@ const seoKeywords = locale === 'ko'
       if (!supabase) return;
       await supabase.auth.signOut();
       currentUser = null;
+      adminGranted = false;
       updateAdminUiState();
       await reloadAll();
     });
@@ -745,8 +762,25 @@ const seoKeywords = locale === 'ko'
       });
       setRegion('전체');
       updateAddButtonState();
-      updateAdminUiState();
-      reloadAll();
+      const syncAuth = async () => {
+        if (!supabase) {
+          updateAdminUiState();
+          await reloadAll();
+          return;
+        }
+        const { data } = await supabase.auth.getSession();
+        currentUser = data?.session?.user || null;
+        await refreshAdminGranted();
+        updateAdminUiState();
+        await reloadAll();
+      };
+      syncAuth();
+      supabase?.auth.onAuthStateChange(async (_event, session) => {
+        currentUser = session?.user || null;
+        await refreshAdminGranted();
+        updateAdminUiState();
+        await reloadAll();
+      });
     };
 
     if (document.readyState === 'loading') {
