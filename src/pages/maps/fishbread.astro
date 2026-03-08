@@ -43,6 +43,9 @@ const t = {
     mapHint: '先に地図をタップすると座標が自動入力されます。'
   }
 }[locale];
+const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL ?? '';
+const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? '';
+const adminEmails = import.meta.env.PUBLIC_FISHBREAD_ADMIN_EMAILS ?? '';
 ---
 
 <Layout title={t.title} description={t.desc}>
@@ -88,6 +91,32 @@ const t = {
             <input id="spot-latlng" class="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-xs text-slate-500" placeholder="지도 클릭 시 좌표 자동 입력" type="text" readonly />
             <p class="mt-2 text-xs text-slate-500">{t.mapHint}</p>
             <button id="spot-add" class="mt-3 w-full rounded-xl bg-amber-500 py-2.5 font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300" disabled>{t.report}</button>
+            <p class="mt-2 text-xs text-slate-500">비회원 제보/댓글은 등록 즉시 공개됩니다.</p>
+          </div>
+
+          <div class="border-t border-slate-100 bg-white p-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-bold">관리자</h3>
+              <button id="admin-toggle" class="hidden rounded-md border border-slate-300 px-2 py-1 text-xs">패널</button>
+            </div>
+            <div id="admin-panel" class="mt-2 hidden">
+              <p id="admin-state" class="text-xs text-slate-500">로그아웃 상태</p>
+              <div class="mt-2 grid gap-2">
+                <input id="admin-email" class="rounded-md border border-slate-300 px-3 py-2 text-xs" placeholder="이메일" type="email" />
+                <input id="admin-password" class="rounded-md border border-slate-300 px-3 py-2 text-xs" placeholder="비밀번호" type="password" />
+              </div>
+              <div class="mt-2 flex gap-2">
+                <button id="admin-login" class="rounded-md bg-slate-900 px-3 py-1.5 text-xs text-white">로그인</button>
+                <button id="admin-logout" class="rounded-md border border-slate-300 px-3 py-1.5 text-xs">로그아웃</button>
+              </div>
+              <div id="admin-moderation" class="mt-3 hidden">
+                <p class="text-xs font-semibold text-slate-700">승인 대기 제보</p>
+                <div id="pending-report-list" class="mt-2 max-h-36 space-y-2 overflow-y-auto"></div>
+                <p class="mt-3 text-xs font-semibold text-slate-700">승인 대기 댓글</p>
+                <div id="pending-comment-list" class="mt-2 max-h-36 space-y-2 overflow-y-auto"></div>
+              </div>
+              <p class="mt-2 text-[11px] text-slate-400">관리자 패널: Ctrl + Shift + M</p>
+            </div>
           </div>
         </aside>
 
@@ -135,9 +164,17 @@ const t = {
     crossorigin=""
   ></script>
 
-  <script is:inline>
-    const KEY = 'manytool_fishbread_v4';
-    const AUTO_REMOVE_THRESHOLD = 100;
+  <script type="module" is:inline>
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+    const SUPABASE_URL = {JSON.stringify(supabaseUrl)};
+    const SUPABASE_ANON_KEY = {JSON.stringify(supabaseAnonKey)};
+    const ADMIN_EMAILS = {JSON.stringify(adminEmails)}
+      .split(',')
+      .map((v) => v.trim().toLowerCase())
+      .filter(Boolean);
+    const DEVICE_KEY = 'manytool_fishbread_device_v1';
+    const LOCAL_VOTE_KEY = 'manytool_fishbread_vote_ids_v1';
     const REGION_COORD = {
       서울: { lat: 37.5665, lng: 126.978, zoom: 11 },
       경기: { lat: 37.4138, lng: 127.5183, zoom: 9 },
@@ -157,26 +194,6 @@ const t = {
       제주: { lat: 33.4996, lng: 126.5312, zoom: 10 }
     };
 
-    const seed = [
-      { id: 's1', name: '강남역 붕어빵', region: '서울', flavor: '팥, 슈크림', up: 6, down: 1, comments: ['저녁에 오픈'] },
-      { id: 's2', name: '서면 붕어빵', region: '부산', flavor: '팥', up: 4, down: 0, comments: ['주말도 운영'] },
-      { id: 's3', name: '동성로 붕어빵', region: '대구', flavor: '팥, 치즈', up: 3, down: 1, comments: [] }
-    ];
-
-    const load = () => {
-      const raw = localStorage.getItem(KEY);
-      if (!raw) {
-        localStorage.setItem(KEY, JSON.stringify(seed));
-        return [...seed];
-      }
-      try { return JSON.parse(raw); }
-      catch {
-        localStorage.setItem(KEY, JSON.stringify(seed));
-        return [...seed];
-      }
-    };
-    const save = (data) => localStorage.setItem(KEY, JSON.stringify(data));
-
     const searchEl = document.getElementById('vendor-search');
     const selectedRegionEl = document.getElementById('selected-region');
     const regionInputEl = document.getElementById('spot-region');
@@ -186,8 +203,22 @@ const t = {
     const flavorEl = document.getElementById('spot-flavor');
     const detailEl = document.getElementById('spot-detail');
     const latlngEl = document.getElementById('spot-latlng');
+    const adminToggleEl = document.getElementById('admin-toggle');
+    const adminPanelEl = document.getElementById('admin-panel');
+    const adminStateEl = document.getElementById('admin-state');
+    const adminEmailEl = document.getElementById('admin-email');
+    const adminPasswordEl = document.getElementById('admin-password');
+    const adminLoginEl = document.getElementById('admin-login');
+    const adminLogoutEl = document.getElementById('admin-logout');
+    const adminModerationEl = document.getElementById('admin-moderation');
+    const pendingReportListEl = document.getElementById('pending-report-list');
+    const pendingCommentListEl = document.getElementById('pending-comment-list');
 
-    let vendors = load();
+    const supabaseReady = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+    const supabase = supabaseReady ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+    const state = { vendors: [], pendingReports: [], pendingComments: [] };
+    let currentUser = null;
+    let votedIds = new Set();
     let selectedRegion = '전체';
     let selectedLat = null;
     let selectedLng = null;
@@ -200,12 +231,50 @@ const t = {
     };
 
     const score = (v) => v.up - v.down;
-    const shouldAutoRemove = (v) => (v.down - v.up) >= AUTO_REMOVE_THRESHOLD;
-    vendors = vendors.filter((v) => !shouldAutoRemove(v));
+    const hashDevice = (value) => {
+      let hash = 5381;
+      for (let i = 0; i < value.length; i += 1) {
+        hash = (hash * 33) ^ value.charCodeAt(i);
+      }
+      return (hash >>> 0).toString(36);
+    };
+    const ensureDeviceId = () => {
+      const raw = localStorage.getItem(DEVICE_KEY);
+      if (raw) return raw;
+      const id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+      localStorage.setItem(DEVICE_KEY, id);
+      return id;
+    };
+    const loadVotedIds = () => {
+      try {
+        const raw = localStorage.getItem(LOCAL_VOTE_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return new Set(Array.isArray(parsed) ? parsed : []);
+      } catch {
+        return new Set();
+      }
+    };
+    const saveVotedIds = () => {
+      localStorage.setItem(LOCAL_VOTE_KEY, JSON.stringify([...votedIds]));
+    };
+    const isAdmin = () => {
+      const email = (currentUser?.email || '').toLowerCase();
+      return Boolean(email) && ADMIN_EMAILS.includes(email);
+    };
+    const updateAdminUiState = () => {
+      if (adminStateEl) {
+        adminStateEl.textContent = isAdmin()
+          ? `관리자 로그인: ${currentUser?.email || ''}`
+          : '로그아웃 상태';
+      }
+      if (adminModerationEl) {
+        adminModerationEl.classList.toggle('hidden', !isAdmin());
+      }
+    };
 
     const filteredVendors = () => {
       const q = searchEl instanceof HTMLInputElement ? searchEl.value.trim().toLowerCase() : '';
-      return vendors
+      return state.vendors
         .filter((v) => selectedRegion === '전체' || v.region === selectedRegion)
         .filter((v) => q === '' || `${v.name} ${v.region} ${v.flavor}`.toLowerCase().includes(q))
         .sort((a, b) => score(b) - score(a));
@@ -228,12 +297,12 @@ const t = {
             <p class="text-xs font-semibold text-amber-600">신뢰 ${score(v)}</p>
           </div>
           <div class="mt-2 flex gap-2">
-            <button data-act="up" data-id="${v.id}" class="rounded-md border border-slate-300 px-2 py-1 text-xs">추천 ${v.up}</button>
-            <button data-act="down" data-id="${v.id}" class="rounded-md border border-slate-300 px-2 py-1 text-xs">비추천 ${v.down}</button>
+            <button data-act="up" data-id="${v.id}" class="rounded-md border border-slate-300 px-2 py-1 text-xs ${votedIds.has(v.id) ? 'opacity-50' : ''}" ${votedIds.has(v.id) ? 'disabled' : ''}>추천 ${v.up}</button>
+            <button data-act="down" data-id="${v.id}" class="rounded-md border border-slate-300 px-2 py-1 text-xs ${votedIds.has(v.id) ? 'opacity-50' : ''}" ${votedIds.has(v.id) ? 'disabled' : ''}>비추천 ${v.down}</button>
           </div>
           <div class="mt-2 rounded-md bg-white p-2">
             <ul class="space-y-1 text-xs text-slate-600">
-              ${v.comments.slice(-2).map((c) => `<li>- ${c}</li>`).join('') || '<li>- 댓글 없음</li>'}
+              ${v.comments.slice(-2).map((c) => `<li>- ${c.body}</li>`).join('') || '<li>- 댓글 없음</li>'}
             </ul>
             <div class="mt-2 flex gap-2">
               <input data-input="comment" data-id="${v.id}" class="flex-1 rounded border border-slate-300 px-2 py-1 text-xs" placeholder="정확/부정확 댓글" />
@@ -291,6 +360,123 @@ const t = {
       const items = filteredVendors();
       renderList(items);
       renderMap(items);
+      renderPending();
+    };
+
+    const renderPending = () => {
+      if (!pendingReportListEl || !pendingCommentListEl) return;
+      if (!isAdmin()) {
+        pendingReportListEl.innerHTML = '';
+        pendingCommentListEl.innerHTML = '';
+        return;
+      }
+      pendingReportListEl.innerHTML = state.pendingReports.length
+        ? state.pendingReports.map((v) => `
+          <article class="rounded-md border border-slate-200 bg-slate-50 p-2">
+            <p class="text-xs font-semibold">${v.name} (${v.region})</p>
+            <div class="mt-1 flex gap-1">
+              <button data-admin="approve-report" data-id="${v.id}" class="rounded border border-emerald-500 px-2 py-0.5 text-[11px] text-emerald-700">승인</button>
+              <button data-admin="delete-report" data-id="${v.id}" class="rounded border border-rose-500 px-2 py-0.5 text-[11px] text-rose-700">삭제</button>
+            </div>
+          </article>`).join('')
+        : '<p class="text-xs text-slate-500">대기 없음</p>';
+
+      pendingCommentListEl.innerHTML = state.pendingComments.length
+        ? state.pendingComments.map((c) => `
+          <article class="rounded-md border border-slate-200 bg-slate-50 p-2">
+            <p class="text-xs">${c.body}</p>
+            <div class="mt-1 flex gap-1">
+              <button data-admin="approve-comment" data-id="${c.id}" class="rounded border border-emerald-500 px-2 py-0.5 text-[11px] text-emerald-700">승인</button>
+              <button data-admin="delete-comment" data-id="${c.id}" class="rounded border border-rose-500 px-2 py-0.5 text-[11px] text-rose-700">삭제</button>
+            </div>
+          </article>`).join('')
+        : '<p class="text-xs text-slate-500">대기 없음</p>';
+    };
+
+    const loadApprovedReports = async () => {
+      if (!supabase) return;
+      const { data: reports, error: reportsError } = await supabase
+        .from('fishbread_reports')
+        .select('id,name,region,flavor,detail,lat,lng,up_count,down_count,created_at')
+        .eq('status', 'approved')
+        .order('created_at', { ascending: false })
+        .limit(300);
+      if (reportsError) throw reportsError;
+
+      const ids = (reports || []).map((v) => v.id);
+      const { data: comments, error: commentsError } = ids.length
+        ? await supabase
+            .from('fishbread_comments')
+            .select('id,report_id,body,created_at')
+            .eq('status', 'approved')
+            .in('report_id', ids)
+            .order('created_at', { ascending: true })
+        : { data: [], error: null };
+      if (commentsError) throw commentsError;
+
+      const commentMap = (comments || []).reduce((acc, cur) => {
+        if (!acc[cur.report_id]) acc[cur.report_id] = [];
+        acc[cur.report_id].push({ id: cur.id, body: cur.body });
+        return acc;
+      }, {});
+
+      state.vendors = (reports || []).map((v) => ({
+        id: v.id,
+        name: v.name,
+        region: v.region,
+        flavor: v.flavor || '팥',
+        detail: v.detail || '',
+        lat: v.lat,
+        lng: v.lng,
+        up: v.up_count || 0,
+        down: v.down_count || 0,
+        comments: commentMap[v.id] || []
+      }));
+    };
+
+    const loadPendingForAdmin = async () => {
+      if (!supabase || !isAdmin()) return;
+      const [{ data: pendingReports, error: pErr }, { data: pendingComments, error: cErr }] = await Promise.all([
+        supabase
+          .from('fishbread_reports')
+          .select('id,name,region,created_at')
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false })
+          .limit(100),
+        supabase
+          .from('fishbread_comments')
+          .select('id,report_id,body,created_at')
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false })
+          .limit(100)
+      ]);
+      if (pErr) throw pErr;
+      if (cErr) throw cErr;
+      state.pendingReports = pendingReports || [];
+      state.pendingComments = pendingComments || [];
+    };
+
+    const reloadAll = async () => {
+      try {
+        if (!supabaseReady) {
+          if (listEl) {
+            listEl.innerHTML = '<p class="rounded-xl bg-rose-50 px-3 py-3 text-sm text-rose-700">Supabase 환경 변수가 없어 지도 데이터를 불러올 수 없습니다.</p>';
+          }
+          return;
+        }
+        await loadApprovedReports();
+        if (isAdmin()) {
+          await loadPendingForAdmin();
+        } else {
+          state.pendingReports = [];
+          state.pendingComments = [];
+        }
+        render();
+      } catch (error) {
+        if (listEl) {
+          listEl.innerHTML = '<p class="rounded-xl bg-rose-50 px-3 py-3 text-sm text-rose-700">데이터를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</p>';
+        }
+      }
     };
 
     const setRegion = (region) => {
@@ -323,57 +509,87 @@ const t = {
     });
     document.getElementById('region-all')?.addEventListener('click', () => setRegion('전체'));
 
-    listEl?.addEventListener('click', (e) => {
+    listEl?.addEventListener('click', async (e) => {
       const target = e.target;
       if (!(target instanceof HTMLElement)) return;
       const act = target.dataset.act;
       const id = target.dataset.id;
       if (!act || !id) return;
 
-      const item = vendors.find((v) => v.id === id);
+      const item = state.vendors.find((v) => v.id === id);
       if (!item) return;
 
-      if (act === 'up') item.up += 1;
-      if (act === 'down') item.down += 1;
+      if (act === 'up' || act === 'down') {
+        if (votedIds.has(id) || !supabase) return;
+        const deviceHash = hashDevice(ensureDeviceId());
+        const voteType = act === 'up' ? 'up' : 'down';
+        const { data, error } = await supabase.rpc('submit_fishbread_vote', {
+          p_report_id: id,
+          p_vote_type: voteType,
+          p_device_hash: deviceHash
+        });
+        if (error) {
+          alert('투표 처리에 실패했습니다.');
+          return;
+        }
+        const result = Array.isArray(data) ? data[0] : data;
+        if (!result?.applied) {
+          votedIds.add(id);
+          saveVotedIds();
+          render();
+          alert('이미 투표한 제보입니다.');
+          return;
+        }
+        item.up = Number(result.up_count || item.up);
+        item.down = Number(result.down_count || item.down);
+        votedIds.add(id);
+        saveVotedIds();
+        render();
+        return;
+      }
+
       if (act === 'comment') {
         const input = listEl.querySelector(`input[data-input="comment"][data-id="${id}"]`);
         if (input instanceof HTMLInputElement) {
           const text = input.value.trim();
-          if (text) {
-            item.comments.push(text);
+          if (text && supabase) {
+            const { error } = await supabase.from('fishbread_comments').insert({
+              report_id: id,
+              body: text,
+              status: 'approved'
+            });
+            if (error) {
+              alert('댓글 등록 실패');
+              return;
+            }
             input.value = '';
+            alert('댓글이 등록되었습니다.');
           }
         }
       }
-
-      if (shouldAutoRemove(item)) {
-        vendors = vendors.filter((v) => v.id !== id);
-      }
-
-      save(vendors);
-      render();
     });
 
-    addBtn?.addEventListener('click', () => {
+    addBtn?.addEventListener('click', async () => {
       const name = nameEl instanceof HTMLInputElement ? nameEl.value.trim() : '';
       const region = regionInputEl instanceof HTMLInputElement ? regionInputEl.value.trim() : '';
       const flavor = flavorEl instanceof HTMLInputElement ? flavorEl.value.trim() : '';
       const detail = detailEl instanceof HTMLInputElement ? detailEl.value.trim() : '';
       if (!name || !region) return;
       if (!(typeof selectedLat === 'number' && typeof selectedLng === 'number')) return;
-
-      vendors.push({
-        id: `v-${Date.now()}`,
+      if (!supabase) return;
+      const { error } = await supabase.from('fishbread_reports').insert({
         name,
         region,
         flavor: flavor || '팥',
         detail,
-        lat: typeof selectedLat === 'number' ? selectedLat : undefined,
-        lng: typeof selectedLng === 'number' ? selectedLng : undefined,
-        up: 0,
-        down: 0,
-        comments: []
+        lat: selectedLat,
+        lng: selectedLng,
+        status: 'approved'
       });
+      if (error) {
+        alert('제보 등록 실패');
+        return;
+      }
 
       if (nameEl instanceof HTMLInputElement) nameEl.value = '';
       if (flavorEl instanceof HTMLInputElement) flavorEl.value = '';
@@ -382,14 +598,72 @@ const t = {
       selectedLat = null;
       selectedLng = null;
       updateAddButtonState();
-      save(vendors);
-      render();
+      alert('제보가 등록되었습니다.');
+      await reloadAll();
     });
 
     searchEl?.addEventListener('input', render);
+    adminToggleEl?.addEventListener('click', () => {
+      adminPanelEl?.classList.toggle('hidden');
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'm') {
+        adminPanelEl?.classList.toggle('hidden');
+      }
+    });
+
+    adminLoginEl?.addEventListener('click', async () => {
+      if (!supabase) return;
+      const email = adminEmailEl instanceof HTMLInputElement ? adminEmailEl.value.trim() : '';
+      const password = adminPasswordEl instanceof HTMLInputElement ? adminPasswordEl.value : '';
+      if (!email || !password) return;
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        alert('관리자 로그인 실패');
+        return;
+      }
+      const { data } = await supabase.auth.getUser();
+      currentUser = data?.user || null;
+      updateAdminUiState();
+      await reloadAll();
+    });
+
+    adminLogoutEl?.addEventListener('click', async () => {
+      if (!supabase) return;
+      await supabase.auth.signOut();
+      currentUser = null;
+      updateAdminUiState();
+      await reloadAll();
+    });
+
+    adminModerationEl?.addEventListener('click', async (e) => {
+      const target = e.target;
+      if (!(target instanceof HTMLElement) || !supabase || !isAdmin()) return;
+      const action = target.dataset.admin;
+      const id = target.dataset.id;
+      if (!action || !id) return;
+
+      if (action === 'approve-report') {
+        await supabase
+          .from('fishbread_reports')
+          .update({ status: 'approved', approved_at: new Date().toISOString() })
+          .eq('id', id);
+      }
+      if (action === 'delete-report') {
+        await supabase.from('fishbread_reports').delete().eq('id', id);
+      }
+      if (action === 'approve-comment') {
+        await supabase.from('fishbread_comments').update({ status: 'approved' }).eq('id', id);
+      }
+      if (action === 'delete-comment') {
+        await supabase.from('fishbread_comments').delete().eq('id', id);
+      }
+      await reloadAll();
+    });
 
     const boot = () => {
       initMap();
+      votedIds = loadVotedIds();
       map?.on('click', (e) => {
         const { lat, lng } = e.latlng;
         selectedLat = Number(lat.toFixed(6));
@@ -401,6 +675,8 @@ const t = {
       });
       setRegion('전체');
       updateAddButtonState();
+      updateAdminUiState();
+      reloadAll();
     };
 
     if (document.readyState === 'loading') {
