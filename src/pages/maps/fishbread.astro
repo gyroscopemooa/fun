@@ -1,7 +1,6 @@
 ﻿---
 import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
-import AdSense from '../../components/AdSense.astro';
 import Recommend from '../../components/Recommend.astro';
 import Footer from '../../components/Footer.astro';
 
@@ -93,7 +92,7 @@ const seoKeywords = locale === 'ko'
             <input id="spot-region" class="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" placeholder="지역(지도/버튼 선택)" type="text" readonly />
             <input id="spot-flavor" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="대표 메뉴 (예: 팥/슈크림)" type="text" />
             <input id="spot-detail" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="상세 위치 (예: OO역 2번 출구)" type="text" />
-            <input id="spot-latlng" class="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-xs text-slate-500" placeholder="지도 클릭 시 좌표 자동 입력" type="text" readonly />
+            <input id="spot-latlng" class="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-xs text-slate-500" placeholder="지도 클릭 시 좌표 자동 입력 (예: 37.5665,126.9780)" type="text" readonly />
             <p class="mt-2 text-xs text-slate-500">{t.mapHint}</p>
             <button id="spot-add" class="mt-3 w-full rounded-xl bg-amber-500 py-2.5 font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300" disabled>{t.report}</button>
             <p class="mt-2 text-xs text-slate-500">비회원 제보/댓글은 등록 즉시 공개됩니다.</p>
@@ -128,7 +127,6 @@ const seoKeywords = locale === 'ko'
     </section>
 
     <section class="mx-auto max-w-5xl px-4 pb-8 pt-2">
-      <AdSense slotName="본문 중간" />
       <Recommend />
     </section>
   </main>
@@ -175,7 +173,25 @@ const seoKeywords = locale === 'ko'
     is:inline
     define:vars={{ supabaseUrl, supabaseAnonKey, adminEmails }}
   >
-    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+    const loadSupabaseCreateClient = async () => {
+      const urls = [
+        'https://esm.sh/@supabase/supabase-js@2',
+        'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+      ];
+      let lastError = null;
+      for (const url of urls) {
+        try {
+          const mod = await import(url);
+          if (typeof mod?.createClient === 'function') {
+            return mod.createClient;
+          }
+        } catch (error) {
+          lastError = error;
+        }
+      }
+      return null;
+    };
+    const createClient = await loadSupabaseCreateClient();
 
     const SUPABASE_URL = supabaseUrl;
     const SUPABASE_ANON_KEY = supabaseAnonKey;
@@ -227,7 +243,17 @@ const seoKeywords = locale === 'ko'
     const pendingCommentListEl = document.getElementById('pending-comment-list');
 
     const supabaseReady = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
-    const supabase = supabaseReady ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+    const supabaseSdkReady = supabaseReady && typeof createClient === 'function';
+    const supabasePublic = supabaseSdkReady
+      ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+          auth: {
+            persistSession: false,
+            autoRefreshToken: false,
+            detectSessionInUrl: false
+          }
+        })
+      : null;
+    const supabaseAuth = supabaseSdkReady ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
     const state = { vendors: [], pendingReports: [], pendingComments: [] };
     let currentUser = null;
     let adminGranted = false;
@@ -235,15 +261,42 @@ const seoKeywords = locale === 'ko'
     let selectedRegion = '전체';
     let selectedLat = null;
     let selectedLng = null;
+    let mapUnavailable = false;
     let map;
     let markersLayer;
 
+    const parseLatLng = (value) => {
+      const text = `${value || ''}`.trim();
+      const matched = text.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/);
+      if (!matched) return null;
+      const lat = Number(matched[1]);
+      const lng = Number(matched[2]);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+      if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+      return { lat, lng };
+    };
+
     const updateAddButtonState = () => {
       if (!(addBtn instanceof HTMLButtonElement)) return;
-      addBtn.disabled = !(typeof selectedLat === 'number' && typeof selectedLng === 'number');
+      const manual = latlngEl instanceof HTMLInputElement ? parseLatLng(latlngEl.value) : null;
+      const hasCoord = (typeof selectedLat === 'number' && typeof selectedLng === 'number') || Boolean(manual);
+      addBtn.disabled = !hasCoord;
     };
 
     const score = (v) => v.up - v.down;
+    const fetchRest = async (path) => {
+      if (!supabaseReady) throw new Error('Supabase env missing');
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error(`REST ${response.status}`);
+      }
+      return response.json();
+    };
     const hashDevice = (value) => {
       let hash = 5381;
       for (let i = 0; i < value.length; i += 1) {
@@ -272,7 +325,7 @@ const seoKeywords = locale === 'ko'
     };
     const isAdmin = () => adminGranted;
     const refreshAdminGranted = async () => {
-      if (!supabase || !currentUser?.email) {
+      if (!supabaseAuth || !currentUser?.email) {
         adminGranted = false;
         return;
       }
@@ -281,7 +334,7 @@ const seoKeywords = locale === 'ko'
         adminGranted = true;
         return;
       }
-      const { data } = await supabase
+      const { data } = await supabaseAuth
         .from('fishbread_admins')
         .select('email')
         .eq('email', email)
@@ -291,7 +344,7 @@ const seoKeywords = locale === 'ko'
     const updateAdminUiState = () => {
       if (adminStateEl) {
         adminStateEl.textContent = isAdmin()
-          ? `관리자 로그인: ${currentUser?.email || ''}`
+          ? '관리자 로그인 상태'
           : '로그아웃 상태';
       }
       if (adminModerationEl) {
@@ -348,6 +401,24 @@ const seoKeywords = locale === 'ko'
         attribution: '&copy; OpenStreetMap contributors'
       }).addTo(map);
       markersLayer = window.L.layerGroup().addTo(map);
+    };
+
+    const enableManualLatLngInput = () => {
+      if (!(latlngEl instanceof HTMLInputElement)) return;
+      latlngEl.readOnly = false;
+      latlngEl.placeholder = '지도가 안 보이면 좌표를 직접 입력하세요. 예: 37.5665,126.9780';
+      latlngEl.addEventListener('input', () => {
+        const parsed = parseLatLng(latlngEl.value);
+        if (parsed) {
+          selectedLat = Number(parsed.lat.toFixed(6));
+          selectedLng = Number(parsed.lng.toFixed(6));
+          const region = nearestRegion(selectedLat, selectedLng);
+          if (regionInputEl instanceof HTMLInputElement && !regionInputEl.value.trim()) {
+            regionInputEl.value = region;
+          }
+        }
+        updateAddButtonState();
+      });
     };
 
     const renderMap = (items) => {
@@ -422,25 +493,39 @@ const seoKeywords = locale === 'ko'
     };
 
     const loadApprovedReports = async () => {
-      if (!supabase) return;
-      const { data: reports, error: reportsError } = await supabase
-        .from('fishbread_reports')
-        .select('id,name,region,flavor,detail,lat,lng,up_count,down_count,created_at')
-        .eq('status', 'approved')
-        .order('created_at', { ascending: false })
-        .limit(300);
-      if (reportsError) throw reportsError;
-
-      const ids = (reports || []).map((v) => v.id);
-      const { data: comments, error: commentsError } = ids.length
-        ? await supabase
-            .from('fishbread_comments')
-            .select('id,report_id,body,created_at')
-            .eq('status', 'approved')
-            .in('report_id', ids)
-            .order('created_at', { ascending: true })
-        : { data: [], error: null };
-      if (commentsError) throw commentsError;
+      let reports = [];
+      let comments = [];
+      if (supabasePublic) {
+        const { data: sdkReports, error: reportsError } = await supabasePublic
+          .from('fishbread_reports')
+          .select('id,name,region,flavor,detail,lat,lng,up_count,down_count,created_at')
+          .eq('status', 'approved')
+          .order('created_at', { ascending: false })
+          .limit(300);
+        if (reportsError) throw reportsError;
+        reports = sdkReports || [];
+        const ids = reports.map((v) => v.id);
+        const { data: sdkComments, error: commentsError } = ids.length
+          ? await supabasePublic
+              .from('fishbread_comments')
+              .select('id,report_id,body,created_at')
+              .eq('status', 'approved')
+              .in('report_id', ids)
+              .order('created_at', { ascending: true })
+          : { data: [], error: null };
+        if (commentsError) throw commentsError;
+        comments = sdkComments || [];
+      } else {
+        const reportPath =
+          'fishbread_reports?select=id,name,region,flavor,detail,lat,lng,up_count,down_count,created_at&status=eq.approved&order=created_at.desc&limit=300';
+        reports = await fetchRest(reportPath);
+        const ids = reports.map((v) => v.id).join(',');
+        comments = ids
+          ? await fetchRest(
+              `fishbread_comments?select=id,report_id,body,created_at&status=eq.approved&report_id=in.(${ids})&order=created_at.asc`
+            )
+          : [];
+      }
 
       const commentMap = (comments || []).reduce((acc, cur) => {
         if (!acc[cur.report_id]) acc[cur.report_id] = [];
@@ -463,15 +548,15 @@ const seoKeywords = locale === 'ko'
     };
 
     const loadPendingForAdmin = async () => {
-      if (!supabase || !isAdmin()) return;
+      if (!supabaseAuth || !isAdmin()) return;
       const [{ data: pendingReports, error: pErr }, { data: pendingComments, error: cErr }] = await Promise.all([
-        supabase
+        supabaseAuth
           .from('fishbread_reports')
           .select('id,name,region,created_at')
           .eq('status', 'pending')
           .order('created_at', { ascending: false })
           .limit(100),
-        supabase
+        supabaseAuth
           .from('fishbread_comments')
           .select('id,report_id,body,created_at')
           .eq('status', 'pending')
@@ -492,6 +577,9 @@ const seoKeywords = locale === 'ko'
           }
           return;
         }
+        if (!supabaseSdkReady && listEl) {
+          listEl.innerHTML = '<p class="rounded-xl bg-amber-50 px-3 py-3 text-sm text-amber-700">브라우저에서 외부 모듈이 차단되어 읽기 전용 모드로 실행 중입니다. 업체 목록 조회는 계속 동작합니다.</p>';
+        }
         await loadApprovedReports();
         if (isAdmin()) {
           await loadPendingForAdmin();
@@ -502,7 +590,8 @@ const seoKeywords = locale === 'ko'
         render();
       } catch (error) {
         if (listEl) {
-          listEl.innerHTML = '<p class="rounded-xl bg-rose-50 px-3 py-3 text-sm text-rose-700">데이터를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</p>';
+          const reason = error instanceof Error ? ` (${error.message})` : '';
+          listEl.innerHTML = `<p class="rounded-xl bg-rose-50 px-3 py-3 text-sm text-rose-700">데이터를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.${reason}</p>`;
         }
       }
     };
@@ -548,10 +637,10 @@ const seoKeywords = locale === 'ko'
       if (!item) return;
 
       if (act === 'up' || act === 'down') {
-        if (votedIds.has(id) || !supabase) return;
+        if (votedIds.has(id) || !supabasePublic) return;
         const deviceHash = hashDevice(ensureDeviceId());
         const voteType = act === 'up' ? 'up' : 'down';
-        const { data, error } = await supabase.rpc('submit_fishbread_vote', {
+        const { data, error } = await supabasePublic.rpc('submit_fishbread_vote', {
           p_report_id: id,
           p_vote_type: voteType,
           p_device_hash: deviceHash
@@ -583,10 +672,10 @@ const seoKeywords = locale === 'ko'
         return;
       }
       if (act === 'delete') {
-        if (!supabase || !isAdmin()) return;
+        if (!supabaseAuth || !isAdmin()) return;
         const ok = window.confirm('이 제보를 삭제할까요?');
         if (!ok) return;
-        const { error } = await supabase.from('fishbread_reports').delete().eq('id', id);
+        const { error } = await supabaseAuth.from('fishbread_reports').delete().eq('id', id);
         if (error) {
           alert(`삭제 실패: ${error.message}`);
           return;
@@ -599,14 +688,14 @@ const seoKeywords = locale === 'ko'
         const input = listEl.querySelector(`input[data-input="comment"][data-id="${id}"]`);
         if (input instanceof HTMLInputElement) {
           const text = input.value.trim();
-          if (text && supabase) {
-            let { error } = await supabase.from('fishbread_comments').insert({
+          if (text && supabasePublic) {
+            let { error } = await supabasePublic.from('fishbread_comments').insert({
               report_id: id,
               body: text,
               status: 'approved'
             });
             if (error) {
-              const fallback = await supabase.from('fishbread_comments').insert({
+              const fallback = await supabasePublic.from('fishbread_comments').insert({
                 report_id: id,
                 body: text,
                 status: 'pending'
@@ -635,9 +724,19 @@ const seoKeywords = locale === 'ko'
       const flavor = flavorEl instanceof HTMLInputElement ? flavorEl.value.trim() : '';
       const detail = detailEl instanceof HTMLInputElement ? detailEl.value.trim() : '';
       if (!name || !region) return;
-      if (!(typeof selectedLat === 'number' && typeof selectedLng === 'number')) return;
-      if (!supabase) return;
-      let { error } = await supabase.from('fishbread_reports').insert({
+      if (!(typeof selectedLat === 'number' && typeof selectedLng === 'number')) {
+        const manual = latlngEl instanceof HTMLInputElement ? parseLatLng(latlngEl.value) : null;
+        if (manual) {
+          selectedLat = Number(manual.lat.toFixed(6));
+          selectedLng = Number(manual.lng.toFixed(6));
+        }
+      }
+      if (!(typeof selectedLat === 'number' && typeof selectedLng === 'number')) {
+        alert('좌표를 먼저 선택하거나 입력해 주세요. 예: 37.5665,126.9780');
+        return;
+      }
+      if (!supabasePublic) return;
+      let { error } = await supabasePublic.from('fishbread_reports').insert({
         name,
         region,
         flavor: flavor || '팥',
@@ -647,7 +746,7 @@ const seoKeywords = locale === 'ko'
         status: 'approved'
       });
       if (error) {
-        const fallback = await supabase.from('fishbread_reports').insert({
+        const fallback = await supabasePublic.from('fishbread_reports').insert({
           name,
           region,
           flavor: flavor || '팥',
@@ -720,58 +819,76 @@ const seoKeywords = locale === 'ko'
     } catch {}
 
     adminLoginEl?.addEventListener('click', async () => {
-      if (!supabase) return;
+      if (!supabaseAuth) {
+        alert('로그인 모듈을 불러오지 못했습니다. 브라우저 보안/확장 설정을 확인해 주세요.');
+        return;
+      }
       const email = adminEmailEl instanceof HTMLInputElement ? adminEmailEl.value.trim() : '';
       const password = adminPasswordEl instanceof HTMLInputElement ? adminPasswordEl.value : '';
       if (!email || !password) return;
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await supabaseAuth.auth.signInWithPassword({ email, password });
       if (error) {
-        alert('관리자 로그인 실패');
+        alert(`관리자 로그인 실패: ${error.message}`);
         return;
       }
-      const { data } = await supabase.auth.getUser();
+      const { data } = await supabaseAuth.auth.getUser();
       currentUser = data?.user || null;
       await refreshAdminGranted();
       updateAdminUiState();
+      if (adminEmailEl instanceof HTMLInputElement) adminEmailEl.value = '';
+      if (adminPasswordEl instanceof HTMLInputElement) adminPasswordEl.value = '';
       await reloadAll();
+      alert('관리자 로그인되었습니다.');
     });
 
     adminLogoutEl?.addEventListener('click', async () => {
-      if (!supabase) return;
-      await supabase.auth.signOut();
+      if (!supabaseAuth) {
+        alert('로그아웃 모듈을 불러오지 못했습니다. 브라우저 보안/확장 설정을 확인해 주세요.');
+        return;
+      }
+      const { error } = await supabaseAuth.auth.signOut();
+      if (error) {
+        alert(`관리자 로그아웃 실패: ${error.message}`);
+        return;
+      }
       currentUser = null;
       adminGranted = false;
       updateAdminUiState();
       await reloadAll();
+      alert('관리자 로그아웃되었습니다.');
     });
 
     adminModerationEl?.addEventListener('click', async (e) => {
       const target = e.target;
-      if (!(target instanceof HTMLElement) || !supabase || !isAdmin()) return;
+      if (!(target instanceof HTMLElement) || !supabaseAuth || !isAdmin()) return;
       const action = target.dataset.admin;
       const id = target.dataset.id;
       if (!action || !id) return;
 
       if (action === 'approve-report') {
-        await supabase
+        await supabaseAuth
           .from('fishbread_reports')
           .update({ status: 'approved', approved_at: new Date().toISOString() })
           .eq('id', id);
       }
       if (action === 'delete-report') {
-        await supabase.from('fishbread_reports').delete().eq('id', id);
+        await supabaseAuth.from('fishbread_reports').delete().eq('id', id);
       }
       if (action === 'approve-comment') {
-        await supabase.from('fishbread_comments').update({ status: 'approved' }).eq('id', id);
+        await supabaseAuth.from('fishbread_comments').update({ status: 'approved' }).eq('id', id);
       }
       if (action === 'delete-comment') {
-        await supabase.from('fishbread_comments').delete().eq('id', id);
+        await supabaseAuth.from('fishbread_comments').delete().eq('id', id);
       }
       await reloadAll();
     });
 
     const boot = () => {
       initMap();
+      mapUnavailable = !map;
+      if (mapUnavailable) {
+        enableManualLatLngInput();
+      }
       votedIds = loadVotedIds();
       map?.on('click', (e) => {
         const { lat, lng } = e.latlng;
@@ -785,19 +902,19 @@ const seoKeywords = locale === 'ko'
       setRegion('전체');
       updateAddButtonState();
       const syncAuth = async () => {
-        if (!supabase) {
+        if (!supabaseAuth) {
           updateAdminUiState();
           await reloadAll();
           return;
         }
-        const { data } = await supabase.auth.getSession();
+        const { data } = await supabaseAuth.auth.getSession();
         currentUser = data?.session?.user || null;
         await refreshAdminGranted();
         updateAdminUiState();
         await reloadAll();
       };
       syncAuth();
-      supabase?.auth.onAuthStateChange(async (_event, session) => {
+      supabaseAuth?.auth.onAuthStateChange(async (_event, session) => {
         currentUser = session?.user || null;
         await refreshAdminGranted();
         updateAdminUiState();
