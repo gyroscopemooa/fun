@@ -154,12 +154,12 @@ begin
   get diagnostics inserted_count = row_count;
 
   if inserted_count = 1 then
-    update public.fishbread_reports
+    update public.fishbread_reports as fr
     set
-      up_count = up_count + case when p_vote_type = 'up' then 1 else 0 end,
-      down_count = down_count + case when p_vote_type = 'down' then 1 else 0 end
-    where id = p_report_id
-      and status = 'approved'
+      up_count = fr.up_count + case when p_vote_type = 'up' then 1 else 0 end,
+      down_count = fr.down_count + case when p_vote_type = 'down' then 1 else 0 end
+    where fr.id = p_report_id
+      and fr.status = 'approved'
     returning * into r;
     return query select true, coalesce(r.up_count, 0), coalesce(r.down_count, 0);
   else
