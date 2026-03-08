@@ -1,0 +1,135 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import AdSense from '../components/AdSense.astro';
+import Recommend from '../components/Recommend.astro';
+
+const pathname = Astro.url.pathname;
+const locale = pathname.startsWith('/en/') || pathname === '/en'
+  ? 'en'
+  : pathname.startsWith('/ja/') || pathname === '/ja'
+    ? 'ja'
+    : 'ko';
+
+const t = {
+  ko: {
+    title: '팀나누기 | ManyTool',
+    desc: '참가자를 입력해 랜덤으로 팀을 나누는 도구',
+    h1: '팀나누기',
+    sub: '이름을 입력하고 팀 수를 선택하세요.',
+    input: '참가자 입력',
+    teams: '팀 수',
+    split: '팀 나누기',
+    clear: '초기화',
+    placeholder: '예) 철수, 영희, 민수, 지우',
+    empty: '참가자를 2명 이상 입력하세요.'
+  },
+  en: {
+    title: 'Team Split | ManyTool',
+    desc: 'Split participants into random teams',
+    h1: 'Team Split',
+    sub: 'Enter names and choose team count.',
+    input: 'Participants',
+    teams: 'Teams',
+    split: 'Split Teams',
+    clear: 'Reset',
+    placeholder: 'e.g. Alex, Mina, John, Hana',
+    empty: 'Please add at least 2 participants.'
+  },
+  ja: {
+    title: 'チーム分け | ManyTool',
+    desc: '参加者をランダムにチーム分けするツール',
+    h1: 'チーム分け',
+    sub: '名前を入力してチーム数を選んでください。',
+    input: '参加者入力',
+    teams: 'チーム数',
+    split: 'チーム分け',
+    clear: 'リセット',
+    placeholder: '例) たろう, はなこ, けん, みな',
+    empty: '2名以上入力してください。'
+  }
+}[locale];
+---
+
+<Layout title={t.title} description={t.desc}>
+  <Header />
+  <main class="mx-auto max-w-5xl px-4 py-8">
+    <h1 class="text-3xl font-black">{t.h1}</h1>
+    <p class="mt-2 text-slate-700">{t.sub}</p>
+    <AdSense slotName="본문 상단" />
+    <section class="mt-5 rounded-xl border border-slate-200 bg-white p-6">
+      <label for="team-input" class="text-sm font-semibold text-slate-700">{t.input}</label>
+      <textarea id="team-input" class="mt-2 h-32 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder={t.placeholder}></textarea>
+      <div class="mt-3 flex flex-wrap items-end gap-3">
+        <div>
+          <label for="team-count" class="text-xs font-semibold text-slate-600">{t.teams}</label>
+          <input id="team-count" class="mt-1 w-24 rounded-md border border-slate-300 px-3 py-2 text-sm" type="number" min="2" max="8" value="2" />
+        </div>
+        <button id="team-split-btn" class="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white">{t.split}</button>
+        <button id="team-reset-btn" class="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold">{t.clear}</button>
+      </div>
+      <p id="team-empty" class="mt-3 hidden text-sm font-semibold text-rose-600">{t.empty}</p>
+    </section>
+
+    <section id="team-result" class="mt-5 grid gap-3 md:grid-cols-2"></section>
+    <AdSense slotName="본문 하단" />
+    <Recommend />
+  </main>
+  <Footer />
+  <script is:inline>
+    const inputEl = document.getElementById('team-input');
+    const countEl = document.getElementById('team-count');
+    const splitBtn = document.getElementById('team-split-btn');
+    const resetBtn = document.getElementById('team-reset-btn');
+    const resultEl = document.getElementById('team-result');
+    const emptyEl = document.getElementById('team-empty');
+
+    const parseNames = () => {
+      const raw = inputEl instanceof HTMLTextAreaElement ? inputEl.value : '';
+      return raw.split(/[\n,]/g).map((v) => v.trim()).filter(Boolean);
+    };
+
+    const shuffle = (arr) => {
+      const out = [...arr];
+      for (let i = out.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const tmp = out[i];
+        out[i] = out[j];
+        out[j] = tmp;
+      }
+      return out;
+    };
+
+    const splitTeams = () => {
+      const names = parseNames();
+      if (names.length < 2) {
+        emptyEl?.classList.remove('hidden');
+        if (resultEl) resultEl.innerHTML = '';
+        return;
+      }
+      emptyEl?.classList.add('hidden');
+      const teamCount = countEl instanceof HTMLInputElement ? Math.max(2, Math.min(8, Number(countEl.value) || 2)) : 2;
+      const teams = Array.from({ length: teamCount }, (_, i) => ({ name: `TEAM ${i + 1}`, members: [] }));
+      shuffle(names).forEach((name, idx) => teams[idx % teamCount].members.push(name));
+
+      if (!resultEl) return;
+      resultEl.innerHTML = teams.map((team) => `
+        <article class="rounded-xl border border-slate-200 bg-white p-4">
+          <h2 class="text-lg font-bold text-slate-900">${team.name}</h2>
+          <ul class="mt-2 list-disc space-y-1 pl-5 text-slate-700">
+            ${team.members.map((m) => `<li>${m}</li>`).join('')}
+          </ul>
+        </article>
+      `).join('');
+    };
+
+    splitBtn?.addEventListener('click', splitTeams);
+    resetBtn?.addEventListener('click', () => {
+      if (inputEl instanceof HTMLTextAreaElement) inputEl.value = '';
+      if (countEl instanceof HTMLInputElement) countEl.value = '2';
+      if (resultEl) resultEl.innerHTML = '';
+      emptyEl?.classList.add('hidden');
+    });
+  </script>
+</Layout>

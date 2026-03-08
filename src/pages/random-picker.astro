@@ -1,0 +1,150 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import AdSense from '../components/AdSense.astro';
+import Recommend from '../components/Recommend.astro';
+
+const pathname = Astro.url.pathname;
+const locale = pathname.startsWith('/en/') || pathname === '/en'
+  ? 'en'
+  : pathname.startsWith('/ja/') || pathname === '/ja'
+    ? 'ja'
+    : 'ko';
+
+const t = {
+  ko: {
+    title: '랜덤뽑기 | ManyTool',
+    desc: '항목을 입력해 랜덤으로 하나 또는 여러 개를 뽑는 도구',
+    h1: '랜덤뽑기',
+    sub: '쉼표 또는 줄바꿈으로 항목을 입력하세요.',
+    input: '항목 입력',
+    count: '뽑을 개수',
+    unique: '중복 없이 뽑기',
+    pick: '뽑기',
+    clear: '초기화',
+    placeholder: '예) 치킨, 피자, 라면',
+    result: '결과',
+    empty: '항목을 먼저 입력하세요.'
+  },
+  en: {
+    title: 'Random Picker | ManyTool',
+    desc: 'Pick one or multiple items randomly',
+    h1: 'Random Picker',
+    sub: 'Use comma or new line for items.',
+    input: 'Items',
+    count: 'Pick count',
+    unique: 'Pick without duplicates',
+    pick: 'Pick',
+    clear: 'Reset',
+    placeholder: 'e.g. Chicken, Pizza, Ramen',
+    result: 'Result',
+    empty: 'Please add items first.'
+  },
+  ja: {
+    title: 'ランダム抽選 | ManyTool',
+    desc: '項目を入力してランダム抽選するツール',
+    h1: 'ランダム抽選',
+    sub: 'カンマまたは改行で項目を入力してください。',
+    input: '項目入力',
+    count: '抽選数',
+    unique: '重複なしで抽選',
+    pick: '抽選する',
+    clear: 'リセット',
+    placeholder: '例) チキン, ピザ, ラーメン',
+    result: '結果',
+    empty: '先に項目を入力してください。'
+  }
+}[locale];
+---
+
+<Layout title={t.title} description={t.desc}>
+  <Header />
+  <main class="mx-auto max-w-4xl px-4 py-8">
+    <h1 class="text-3xl font-black">{t.h1}</h1>
+    <p class="mt-2 text-slate-700">{t.sub}</p>
+    <AdSense slotName="본문 상단" />
+    <section class="mt-5 rounded-xl border border-slate-200 bg-white p-6">
+      <label for="picker-input" class="text-sm font-semibold text-slate-700">{t.input}</label>
+      <textarea id="picker-input" class="mt-2 h-36 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder={t.placeholder}></textarea>
+      <div class="mt-3 grid gap-3 sm:grid-cols-[140px_1fr]">
+        <div>
+          <label for="pick-count" class="text-xs font-semibold text-slate-600">{t.count}</label>
+          <input id="pick-count" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" type="number" min="1" value="1" />
+        </div>
+        <label class="mt-6 inline-flex items-center gap-2 text-sm">
+          <input id="pick-unique" type="checkbox" checked />
+          <span>{t.unique}</span>
+        </label>
+      </div>
+      <div class="mt-4 flex gap-2">
+        <button id="pick-btn" class="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white">{t.pick}</button>
+        <button id="pick-reset" class="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold">{t.clear}</button>
+      </div>
+      <div class="mt-5 rounded-lg bg-slate-100 p-4">
+        <p class="text-sm font-semibold text-slate-700">{t.result}</p>
+        <ul id="pick-result" class="mt-2 list-disc space-y-1 pl-5 text-slate-800"></ul>
+      </div>
+    </section>
+    <AdSense slotName="본문 하단" />
+    <Recommend />
+  </main>
+  <Footer />
+  <script is:inline define:vars={{ emptyText: t.empty }}>
+    const inputEl = document.getElementById('picker-input');
+    const countEl = document.getElementById('pick-count');
+    const uniqueEl = document.getElementById('pick-unique');
+    const resultEl = document.getElementById('pick-result');
+    const pickBtn = document.getElementById('pick-btn');
+    const resetBtn = document.getElementById('pick-reset');
+
+    const parseItems = () => {
+      const raw = inputEl instanceof HTMLTextAreaElement ? inputEl.value : '';
+      return raw
+        .split(/[\n,]/g)
+        .map((v) => v.trim())
+        .filter(Boolean);
+    };
+
+    const render = (items) => {
+      if (!resultEl) return;
+      if (items.length === 0) {
+        resultEl.innerHTML = `<li>${emptyText}</li>`;
+        return;
+      }
+      resultEl.innerHTML = items.map((item) => `<li>${item}</li>`).join('');
+    };
+
+    const pickRandom = () => {
+      const source = parseItems();
+      if (source.length === 0) return render([]);
+      const count = countEl instanceof HTMLInputElement ? Math.max(1, Number(countEl.value) || 1) : 1;
+      const unique = uniqueEl instanceof HTMLInputElement ? uniqueEl.checked : true;
+      const pool = [...source];
+      const picked = [];
+
+      if (unique) {
+        const max = Math.min(count, pool.length);
+        for (let i = 0; i < max; i += 1) {
+          const idx = Math.floor(Math.random() * pool.length);
+          picked.push(pool[idx]);
+          pool.splice(idx, 1);
+        }
+      } else {
+        for (let i = 0; i < count; i += 1) {
+          picked.push(source[Math.floor(Math.random() * source.length)]);
+        }
+      }
+      render(picked);
+    };
+
+    pickBtn?.addEventListener('click', pickRandom);
+    resetBtn?.addEventListener('click', () => {
+      if (inputEl instanceof HTMLTextAreaElement) inputEl.value = '';
+      if (countEl instanceof HTMLInputElement) countEl.value = '1';
+      if (uniqueEl instanceof HTMLInputElement) uniqueEl.checked = true;
+      render([]);
+    });
+    render([]);
+  </script>
+</Layout>

@@ -1,0 +1,110 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import AdSense from '../components/AdSense.astro';
+import Recommend from '../components/Recommend.astro';
+
+const pathname = Astro.url.pathname;
+const locale = pathname.startsWith('/en/') || pathname === '/en'
+  ? 'en'
+  : pathname.startsWith('/ja/') || pathname === '/ja'
+    ? 'ja'
+    : 'ko';
+
+const t = {
+  ko: {
+    title: '글자수세기 | ManyTool',
+    desc: '문장 길이, 단어 수, 줄 수, 바이트를 계산하는 도구',
+    h1: '글자수세기',
+    sub: '텍스트를 입력하면 실시간으로 카운트됩니다.',
+    placeholder: '여기에 텍스트를 입력하세요.',
+    reset: '초기화',
+    chars: '글자수(공백포함)',
+    charsNoSpace: '글자수(공백제외)',
+    words: '단어 수',
+    lines: '줄 수',
+    bytes: '바이트(UTF-8)'
+  },
+  en: {
+    title: 'Text Counter | ManyTool',
+    desc: 'Count characters, words, lines, and bytes',
+    h1: 'Text Counter',
+    sub: 'Counts update instantly while typing.',
+    placeholder: 'Type your text here.',
+    reset: 'Reset',
+    chars: 'Characters (with spaces)',
+    charsNoSpace: 'Characters (no spaces)',
+    words: 'Words',
+    lines: 'Lines',
+    bytes: 'Bytes (UTF-8)'
+  },
+  ja: {
+    title: '文字数カウンター | ManyTool',
+    desc: '文字数・単語数・行数・バイト数を数えるツール',
+    h1: '文字数カウンター',
+    sub: '入力中にリアルタイムで集計されます。',
+    placeholder: 'ここにテキストを入力してください。',
+    reset: 'リセット',
+    chars: '文字数(空白含む)',
+    charsNoSpace: '文字数(空白除く)',
+    words: '単語数',
+    lines: '行数',
+    bytes: 'バイト(UTF-8)'
+  }
+}[locale];
+---
+
+<Layout title={t.title} description={t.desc}>
+  <Header />
+  <main class="mx-auto max-w-5xl px-4 py-8">
+    <h1 class="text-3xl font-black">{t.h1}</h1>
+    <p class="mt-2 text-slate-700">{t.sub}</p>
+    <AdSense slotName="본문 상단" />
+    <section class="mt-5 rounded-xl border border-slate-200 bg-white p-6">
+      <textarea id="counter-input" class="h-56 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder={t.placeholder}></textarea>
+      <button id="counter-reset" class="mt-3 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold">{t.reset}</button>
+      <div class="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+        <article class="rounded-lg bg-slate-100 p-3"><p class="text-xs text-slate-600">{t.chars}</p><p id="c1" class="text-xl font-black">0</p></article>
+        <article class="rounded-lg bg-slate-100 p-3"><p class="text-xs text-slate-600">{t.charsNoSpace}</p><p id="c2" class="text-xl font-black">0</p></article>
+        <article class="rounded-lg bg-slate-100 p-3"><p class="text-xs text-slate-600">{t.words}</p><p id="c3" class="text-xl font-black">0</p></article>
+        <article class="rounded-lg bg-slate-100 p-3"><p class="text-xs text-slate-600">{t.lines}</p><p id="c4" class="text-xl font-black">0</p></article>
+        <article class="rounded-lg bg-slate-100 p-3"><p class="text-xs text-slate-600">{t.bytes}</p><p id="c5" class="text-xl font-black">0</p></article>
+      </div>
+    </section>
+    <AdSense slotName="본문 하단" />
+    <Recommend />
+  </main>
+  <Footer />
+  <script is:inline>
+    const inputEl = document.getElementById('counter-input');
+    const resetBtn = document.getElementById('counter-reset');
+    const c1 = document.getElementById('c1');
+    const c2 = document.getElementById('c2');
+    const c3 = document.getElementById('c3');
+    const c4 = document.getElementById('c4');
+    const c5 = document.getElementById('c5');
+    const enc = new TextEncoder();
+
+    const update = () => {
+      const text = inputEl instanceof HTMLTextAreaElement ? inputEl.value : '';
+      const chars = text.length;
+      const charsNoSpace = text.replace(/\s/g, '').length;
+      const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+      const lines = text === '' ? 0 : text.split('\n').length;
+      const bytes = enc.encode(text).length;
+      if (c1) c1.textContent = String(chars);
+      if (c2) c2.textContent = String(charsNoSpace);
+      if (c3) c3.textContent = String(words);
+      if (c4) c4.textContent = String(lines);
+      if (c5) c5.textContent = String(bytes);
+    };
+
+    inputEl?.addEventListener('input', update);
+    resetBtn?.addEventListener('click', () => {
+      if (inputEl instanceof HTMLTextAreaElement) inputEl.value = '';
+      update();
+    });
+    update();
+  </script>
+</Layout>
