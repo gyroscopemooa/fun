@@ -1,0 +1,75 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import AdSense from '../components/AdSense.astro';
+import Recommend from '../components/Recommend.astro';
+---
+
+<Layout title="닉네임생성기 | ManyTool" description="스타일/키워드 기반 랜덤 닉네임 생성 도구">
+  <Header />
+  <main class="mx-auto max-w-4xl px-4 py-8">
+    <h1 class="text-3xl font-black">닉네임생성기</h1>
+    <p class="mt-2 text-slate-700">스타일과 키워드를 선택해 닉네임을 빠르게 생성하세요.</p>
+    <AdSense slotName="본문 상단" />
+    <section class="mt-5 rounded-xl border border-slate-200 bg-white p-6">
+      <div class="grid gap-3 sm:grid-cols-2">
+        <label class="text-sm font-semibold">스타일
+          <select id="nick-style" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
+            <option value="cute">귀여운</option>
+            <option value="cool">멋있는</option>
+            <option value="simple">심플한</option>
+            <option value="gamer">게이머</option>
+          </select>
+        </label>
+        <label class="text-sm font-semibold">키워드(선택)
+          <input id="nick-keyword" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="예: 고양이" />
+        </label>
+      </div>
+      <div class="mt-4 flex gap-2">
+        <button id="nick-gen" class="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white">생성하기</button>
+        <button id="nick-copy" class="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold">복사</button>
+      </div>
+      <div class="mt-4 rounded-lg bg-slate-100 p-4">
+        <p class="text-sm text-slate-600">결과</p>
+        <p id="nick-result" class="text-2xl font-black text-slate-900">-</p>
+      </div>
+    </section>
+    <AdSense slotName="본문 하단" />
+    <Recommend />
+  </main>
+  <Footer />
+  <script is:inline>
+    const styleEl = document.getElementById('nick-style');
+    const keywordEl = document.getElementById('nick-keyword');
+    const genBtn = document.getElementById('nick-gen');
+    const copyBtn = document.getElementById('nick-copy');
+    const resultEl = document.getElementById('nick-result');
+
+    const bank = {
+      cute: { pre: ['말랑', '복숭', '도토', '젤리', '모찌'], suf: ['냥', '토끼', '요정', '캣', '몽'] },
+      cool: { pre: ['블랙', '스톰', '네온', '팬텀', '실버'], suf: ['헌터', '레이', '스파크', '엣지', '로드'] },
+      simple: { pre: ['미니', '라이트', '스몰', '클린', '프레시'], suf: ['원', '로그', '노트', '플랜', '픽'] },
+      gamer: { pre: ['OP', 'MVP', 'GG', 'Critical', 'Ultra'], suf: ['Player', 'Sniper', 'Wizard', 'Tank', 'Ace'] }
+    };
+
+    const generate = () => {
+      const style = styleEl instanceof HTMLSelectElement ? styleEl.value : 'cute';
+      const keyword = keywordEl instanceof HTMLInputElement ? keywordEl.value.trim() : '';
+      const target = bank[style] ?? bank.cute;
+      const pre = target.pre[Math.floor(Math.random() * target.pre.length)];
+      const suf = target.suf[Math.floor(Math.random() * target.suf.length)];
+      const num = Math.floor(Math.random() * 90 + 10);
+      const nick = keyword ? `${keyword}${pre}${suf}${num}` : `${pre}${suf}${num}`;
+      if (resultEl) resultEl.textContent = nick;
+    };
+
+    genBtn?.addEventListener('click', generate);
+    copyBtn?.addEventListener('click', async () => {
+      const text = resultEl?.textContent ?? '';
+      if (!text || text === '-') return;
+      await navigator.clipboard.writeText(text);
+      if (copyBtn instanceof HTMLButtonElement) copyBtn.textContent = '복사됨';
+    });
+  </script>
+</Layout>

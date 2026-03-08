@@ -1,0 +1,143 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import AdSense from '../components/AdSense.astro';
+import Recommend from '../components/Recommend.astro';
+
+const pathname = Astro.url.pathname;
+const locale = pathname.startsWith('/en/') || pathname === '/en'
+  ? 'en'
+  : pathname.startsWith('/ja/') || pathname === '/ja'
+    ? 'ja'
+    : 'ko';
+
+const t = {
+  ko: {
+    title: '얼굴형테스트 | ManyTool',
+    desc: '간단한 체크로 얼굴형을 추정하는 테스트',
+    h1: '얼굴형테스트',
+    sub: '질문을 선택하면 가장 가까운 얼굴형을 추천합니다.',
+    q1: '얼굴 길이',
+    q2: '광대 폭',
+    q3: '턱 라인',
+    q4: '이마 폭',
+    run: '결과 보기',
+    reset: '초기화',
+    result: '추천 얼굴형',
+    tip: '참고용 결과이며, 실제는 사진 각도/헤어스타일에 따라 달라질 수 있습니다.'
+  },
+  en: {
+    title: 'Face Shape Test | ManyTool',
+    desc: 'Simple quiz to estimate your face shape',
+    h1: 'Face Shape Test',
+    sub: 'Select answers to get the closest face shape.',
+    q1: 'Face length',
+    q2: 'Cheekbone width',
+    q3: 'Jaw line',
+    q4: 'Forehead width',
+    run: 'Show Result',
+    reset: 'Reset',
+    result: 'Recommended shape',
+    tip: 'Reference only. Angle and hairstyle can affect appearance.'
+  },
+  ja: {
+    title: '顔型テスト | ManyTool',
+    desc: '簡単な質問で顔型を推定するテスト',
+    h1: '顔型テスト',
+    sub: '質問に答えると近い顔型を表示します。',
+    q1: '顔の長さ',
+    q2: '頬骨の幅',
+    q3: 'あごライン',
+    q4: 'おでこの幅',
+    run: '結果を見る',
+    reset: 'リセット',
+    result: 'おすすめ顔型',
+    tip: '参考用です。写真の角度や髪型で印象が変わります。'
+  }
+}[locale];
+---
+
+<Layout title={t.title} description={t.desc}>
+  <Header />
+  <main class="mx-auto max-w-4xl px-4 py-8">
+    <h1 class="text-3xl font-black">{t.h1}</h1>
+    <p class="mt-2 text-slate-700">{t.sub}</p>
+    <AdSense slotName="본문 상단" />
+    <section class="mt-5 rounded-xl border border-slate-200 bg-white p-6">
+      <div class="grid gap-4 sm:grid-cols-2">
+        <label class="text-sm font-semibold">{t.q1}
+          <select id="f1" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
+            <option value="short">짧은 편</option><option value="mid">중간</option><option value="long">긴 편</option>
+          </select>
+        </label>
+        <label class="text-sm font-semibold">{t.q2}
+          <select id="f2" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
+            <option value="narrow">좁은 편</option><option value="mid">중간</option><option value="wide">넓은 편</option>
+          </select>
+        </label>
+        <label class="text-sm font-semibold">{t.q3}
+          <select id="f3" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
+            <option value="soft">둥근 편</option><option value="mid">중간</option><option value="sharp">각진 편</option>
+          </select>
+        </label>
+        <label class="text-sm font-semibold">{t.q4}
+          <select id="f4" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
+            <option value="narrow">좁은 편</option><option value="mid">중간</option><option value="wide">넓은 편</option>
+          </select>
+        </label>
+      </div>
+      <div class="mt-4 flex gap-2">
+        <button id="face-run" class="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white">{t.run}</button>
+        <button id="face-reset" class="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold">{t.reset}</button>
+      </div>
+      <div class="mt-4 rounded-lg bg-slate-100 p-4">
+        <p class="text-sm text-slate-600">{t.result}</p>
+        <p id="face-result" class="text-2xl font-black text-slate-900">-</p>
+        <p class="mt-1 text-xs text-slate-500">{t.tip}</p>
+      </div>
+    </section>
+    <AdSense slotName="본문 하단" />
+    <Recommend />
+  </main>
+  <Footer />
+  <script is:inline>
+    const runBtn = document.getElementById('face-run');
+    const resetBtn = document.getElementById('face-reset');
+    const resultEl = document.getElementById('face-result');
+    const f1 = document.getElementById('f1');
+    const f2 = document.getElementById('f2');
+    const f3 = document.getElementById('f3');
+    const f4 = document.getElementById('f4');
+
+    const calc = () => {
+      const scores = { oval: 0, round: 0, square: 0, heart: 0, diamond: 0 };
+      const v1 = f1 instanceof HTMLSelectElement ? f1.value : 'mid';
+      const v2 = f2 instanceof HTMLSelectElement ? f2.value : 'mid';
+      const v3 = f3 instanceof HTMLSelectElement ? f3.value : 'mid';
+      const v4 = f4 instanceof HTMLSelectElement ? f4.value : 'mid';
+
+      if (v1 === 'long') scores.oval += 2;
+      if (v1 === 'short') scores.round += 1;
+      if (v2 === 'wide') scores.diamond += 2;
+      if (v2 === 'narrow') scores.heart += 1;
+      if (v3 === 'sharp') scores.square += 2;
+      if (v3 === 'soft') scores.round += 2;
+      if (v4 === 'wide') scores.heart += 2;
+      if (v4 === 'narrow') scores.diamond += 1;
+      if (v1 === 'mid' && v2 === 'mid' && v3 === 'mid' && v4 === 'mid') scores.oval += 2;
+
+      const [best] = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+      const map = { oval: '타원형', round: '둥근형', square: '각진형', heart: '하트형', diamond: '마름모형' };
+      return map[best[0]] || '타원형';
+    };
+
+    runBtn?.addEventListener('click', () => {
+      if (resultEl) resultEl.textContent = calc();
+    });
+    resetBtn?.addEventListener('click', () => {
+      [f1, f2, f3, f4].forEach((el) => { if (el instanceof HTMLSelectElement) el.selectedIndex = 1; });
+      if (resultEl) resultEl.textContent = '-';
+    });
+  </script>
+</Layout>
