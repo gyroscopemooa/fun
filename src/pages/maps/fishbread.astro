@@ -99,7 +99,7 @@ const seoKeywords = locale === 'ko'
             <p class="mt-2 text-xs text-slate-500">비회원 제보/댓글은 등록 즉시 공개됩니다.</p>
           </div>
 
-          <div class="border-t border-slate-100 bg-white p-4">
+          <div id="admin-shell" class="hidden border-t border-slate-100 bg-white p-4">
             <div class="flex items-center justify-between">
               <h3 class="text-sm font-bold">관리자</h3>
               <button id="admin-toggle" class="hidden rounded-md border border-slate-300 px-2 py-1 text-xs">패널</button>
@@ -120,7 +120,6 @@ const seoKeywords = locale === 'ko'
                 <p class="mt-3 text-xs font-semibold text-slate-700">승인 대기 댓글</p>
                 <div id="pending-comment-list" class="mt-2 max-h-36 space-y-2 overflow-y-auto"></div>
               </div>
-              <p class="mt-2 text-[11px] text-slate-400">관리자 패널: Ctrl + Shift + M</p>
             </div>
           </div>
         </aside>
@@ -213,6 +212,7 @@ const seoKeywords = locale === 'ko'
     const detailEl = document.getElementById('spot-detail');
     const latlngEl = document.getElementById('spot-latlng');
     const adminToggleEl = document.getElementById('admin-toggle');
+    const adminShellEl = document.getElementById('admin-shell');
     const adminPanelEl = document.getElementById('admin-panel');
     const adminStateEl = document.getElementById('admin-state');
     const adminEmailEl = document.getElementById('admin-email');
@@ -562,13 +562,26 @@ const seoKeywords = locale === 'ko'
         if (input instanceof HTMLInputElement) {
           const text = input.value.trim();
           if (text && supabase) {
-            const { error } = await supabase.from('fishbread_comments').insert({
+            let { error } = await supabase.from('fishbread_comments').insert({
               report_id: id,
               body: text,
               status: 'approved'
             });
             if (error) {
-              alert('댓글 등록 실패');
+              const fallback = await supabase.from('fishbread_comments').insert({
+                report_id: id,
+                body: text,
+                status: 'pending'
+              });
+              error = fallback.error;
+              if (!error) {
+                input.value = '';
+                alert('댓글 등록 완료 (현재 DB 정책상 승인대기).');
+                return;
+              }
+            }
+            if (error) {
+              alert(`댓글 등록 실패: ${error.message}`);
               return;
             }
             input.value = '';
@@ -586,7 +599,7 @@ const seoKeywords = locale === 'ko'
       if (!name || !region) return;
       if (!(typeof selectedLat === 'number' && typeof selectedLng === 'number')) return;
       if (!supabase) return;
-      const { error } = await supabase.from('fishbread_reports').insert({
+      let { error } = await supabase.from('fishbread_reports').insert({
         name,
         region,
         flavor: flavor || '팥',
@@ -596,7 +609,30 @@ const seoKeywords = locale === 'ko'
         status: 'approved'
       });
       if (error) {
-        alert('제보 등록 실패');
+        const fallback = await supabase.from('fishbread_reports').insert({
+          name,
+          region,
+          flavor: flavor || '팥',
+          detail,
+          lat: selectedLat,
+          lng: selectedLng,
+          status: 'pending'
+        });
+        error = fallback.error;
+        if (!error) {
+          if (nameEl instanceof HTMLInputElement) nameEl.value = '';
+          if (flavorEl instanceof HTMLInputElement) flavorEl.value = '';
+          if (detailEl instanceof HTMLInputElement) detailEl.value = '';
+          if (latlngEl instanceof HTMLInputElement) latlngEl.value = '';
+          selectedLat = null;
+          selectedLng = null;
+          updateAddButtonState();
+          alert('제보 등록 완료 (현재 DB 정책상 승인대기).');
+          return;
+        }
+      }
+      if (error) {
+        alert(`제보 등록 실패: ${error.message}`);
         return;
       }
 
@@ -615,11 +651,23 @@ const seoKeywords = locale === 'ko'
     adminToggleEl?.addEventListener('click', () => {
       adminPanelEl?.classList.toggle('hidden');
     });
-    document.addEventListener('keydown', (e) => {
-      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'm') {
-        adminPanelEl?.classList.toggle('hidden');
+    const unlockAdminPanel = () => {
+      adminShellEl?.classList.remove('hidden');
+      adminPanelEl?.classList.remove('hidden');
+    };
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const unlocked = localStorage.getItem('manytool_admin_panel') === '1';
+      if (params.get('admin') === '1') {
+        localStorage.setItem('manytool_admin_panel', '1');
       }
-    });
+      if (params.get('admin') === '0') {
+        localStorage.removeItem('manytool_admin_panel');
+      }
+      if (params.get('admin') === '1' || unlocked) {
+        unlockAdminPanel();
+      }
+    } catch {}
 
     adminLoginEl?.addEventListener('click', async () => {
       if (!supabase) return;
