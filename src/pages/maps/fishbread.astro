@@ -265,6 +265,33 @@ const seoKeywords = locale === 'ko'
     let mapUnavailable = false;
     let map;
     let markersLayer;
+    let projectRef = '';
+    try {
+      projectRef = SUPABASE_URL ? new URL(SUPABASE_URL).hostname.split('.')[0] : '';
+    } catch {}
+
+    const clearAdminSessionStorage = () => {
+      const keysToRemove = [];
+      if (projectRef) {
+        keysToRemove.push(`sb-${projectRef}-auth-token`);
+      }
+      const removeMatches = (storage) => {
+        try {
+          Object.keys(storage).forEach((key) => {
+            if (
+              key === 'manytool_admin_panel' ||
+              keysToRemove.includes(key) ||
+              key.includes('supabase') ||
+              (projectRef && key.includes(`sb-${projectRef}`))
+            ) {
+              storage.removeItem(key);
+            }
+          });
+        } catch {}
+      };
+      removeMatches(localStorage);
+      removeMatches(sessionStorage);
+    };
 
     const parseLatLng = (value) => {
       const text = `${value || ''}`.trim();
@@ -808,6 +835,10 @@ const seoKeywords = locale === 'ko'
         localStorage.setItem('manytool_admin_panel', '1');
       }
       if (params.get('admin') === '0') {
+        try {
+          await supabaseAuth?.auth.signOut();
+        } catch {}
+        clearAdminSessionStorage();
         localStorage.removeItem('manytool_admin_panel');
         adminDockEl?.classList.add('hidden');
         adminShellEl?.classList.add('hidden');
