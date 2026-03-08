@@ -74,7 +74,7 @@ const t = {
   }
 }[locale];
 
-const cards = [
+const cardSeed = [
   { href: '/animal-test', title: '동물상 테스트', desc: '사진으로 동물상 분석', icon: '🐾', iconClass: 'bg-sky-100 text-sky-700' },
   { href: '/pinball', title: '핀볼 게임', desc: '가볍게 즐기는 미니게임', icon: '🎮', iconClass: 'bg-emerald-100 text-emerald-700' },
   { href: '/personal-color', title: '퍼스널컬러', desc: '얼굴 기반 색상 추천', icon: '🎨', iconClass: 'bg-amber-100 text-amber-700' },
@@ -107,7 +107,53 @@ const cards = [
   { href: '/daily-spanish', title: '오늘의 스페인어', desc: '매일 1개 스페인어 표현', icon: '🇪🇸', iconClass: 'bg-rose-100 text-rose-700' },
   { href: '/daily-japanese', title: '오늘의 일본어', desc: '매일 1개 일본어 표현', icon: '🇯🇵', iconClass: 'bg-red-100 text-red-700' },
   { href: '/korean-study-today', title: '오늘의 한국어공부', desc: '매일 1개 한국어 포인트', icon: '🇰🇷', iconClass: 'bg-cyan-100 text-cyan-700' }
-].map((card) => ({ ...card, href: withLocale(card.href) }));
+];
+
+const cardTitleI18n: Record<string, { en: string; ja: string }> = {
+  '/animal-test': { en: 'Animal Face Test', ja: '動物顔テスト' },
+  '/pinball': { en: 'Pinball Game', ja: 'ピンボールゲーム' },
+  '/personal-color': { en: 'Personal Color Test', ja: 'パーソナルカラーテスト' },
+  '/magic-book': { en: 'Magic Book', ja: 'マジックブック' },
+  '/reaction-test': { en: 'Reaction Test', ja: '反応速度テスト' },
+  '/mbti-test': { en: 'MBTI Test', ja: 'MBTIテスト' },
+  '/maps/fishbread': { en: 'Fishbread Map', ja: 'たい焼きマップ' },
+  '/maps/solo-dining': { en: 'Solo Dining Map', ja: 'ひとりご飯マップ' },
+  '/name-meaning': { en: 'Name Meaning', ja: '名前診断' },
+  '/name-compatibility': { en: 'Name Match', ja: '名前相性' },
+  '/maps/hidden-cafe': { en: 'Hidden Cafe Map', ja: '隠れカフェマップ' },
+  '/maps/local-eats': { en: 'Local Restaurant Map', ja: '地域グルメマップ' },
+  '/love-compatibility': { en: 'Love Compatibility', ja: '恋愛相性テスト' },
+  '/random-food': { en: 'Random Food', ja: 'ランダム料理おすすめ' },
+  '/today-fortune': { en: 'Today Fortune', ja: '今日の運勢' },
+  '/fortune-cookie-2026': { en: 'Year Fortune Cookie', ja: '今年のフォーチュンクッキー' },
+  '/ladder-game': { en: 'Ladder Game', ja: 'あみだくじ' },
+  '/tools/scoreboard': { en: 'Streamer Scoreboard', ja: 'ストリーマースコアボード' },
+  '/face-shape-test': { en: 'Face Shape Test', ja: '顔型テスト' },
+  '/nickname-generator': { en: 'Nickname Generator', ja: 'ニックネーム生成' },
+  '/chat-random-picker': { en: 'Chat Random Picker', ja: 'チャット抽選' },
+  '/meme-generator': { en: 'Meme Generator', ja: 'ミーム生成' },
+  '/random-picker': { en: 'Random Picker', ja: 'ランダム抽選' },
+  '/roulette': { en: 'Roulette', ja: 'ルーレット' },
+  '/team-split': { en: 'Team Split', ja: 'チーム分け' },
+  '/text-counter': { en: 'Text Counter', ja: '文字数カウンター' },
+  '/daily-english-word': { en: 'Daily English Word', ja: '今日の英単語' },
+  '/daily-sentence': { en: 'Daily English Sentence', ja: '毎日の英語一文' },
+  '/streamer-battle': { en: 'Streamer Battle Tool', ja: 'ストリーマー対決ツール' },
+  '/daily-spanish': { en: 'Daily Spanish', ja: '今日のスペイン語' },
+  '/daily-japanese': { en: 'Daily Japanese', ja: '今日の日本語' },
+  '/korean-study-today': { en: 'Daily Korean Study', ja: '今日の韓国語学習' }
+};
+
+const cards = cardSeed.map((card) => {
+  const i18n = cardTitleI18n[card.href];
+  const title = locale === 'ko' || !i18n ? card.title : i18n[locale];
+  const desc = locale === 'ko'
+    ? card.desc
+    : locale === 'en'
+      ? `${title} tool`
+      : `${title}ツール`;
+  return { ...card, title, desc, href: withLocale(card.href) };
+});
 
 const rowSize = Math.min(10, cards.length);
 const makeRow = (start: number) => Array.from({ length: rowSize }, (_, idx) => cards[(start + idx) % cards.length]);
