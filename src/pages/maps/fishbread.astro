@@ -13,9 +13,9 @@ const locale = pathname.startsWith('/en/') || pathname === '/en'
     : 'ko';
 const t = {
   ko: {
-    title: '붕어빵 지도 | ManyTool',
-    desc: '지도 기반 붕어빵 벤더 탐색/제보 페이지',
-    pageTitle: '전국 붕어빵 지도',
+    title: '붕어빵 지도(붕어빵 맵) | ManyTool',
+    desc: '붕어빵 맵: 지도 기반 붕어빵 벤더 탐색/제보 페이지',
+    pageTitle: '전국 붕어빵 지도 · 붕어빵 맵',
     search: '지역/가게명 검색',
     list: '제보 목록',
     add: '제보 추가',
@@ -46,9 +46,14 @@ const t = {
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL ?? '';
 const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? '';
 const adminEmails = import.meta.env.PUBLIC_FISHBREAD_ADMIN_EMAILS ?? '';
+const seoKeywords = locale === 'ko'
+  ? '붕어빵 지도, 붕어빵 맵, 붕어빵 파는곳, 붕어빵 위치, 길거리 음식 지도'
+  : locale === 'en'
+    ? 'fishbread map, bungeoppang map, fish-shaped pastry locations'
+    : 'たい焼きマップ, たい焼き 地図, たい焼き 場所';
 ---
 
-<Layout title={t.title} description={t.desc}>
+<Layout title={t.title} description={t.desc} keywords={seoKeywords}>
   <Header />
 
   <main class="bg-amber-50 text-slate-900">
@@ -164,12 +169,16 @@ const adminEmails = import.meta.env.PUBLIC_FISHBREAD_ADMIN_EMAILS ?? '';
     crossorigin=""
   ></script>
 
-  <script type="module" is:inline>
+  <script
+    type="module"
+    is:inline
+    define:vars={{ supabaseUrl, supabaseAnonKey, adminEmails }}
+  >
     import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-    const SUPABASE_URL = {JSON.stringify(supabaseUrl)};
-    const SUPABASE_ANON_KEY = {JSON.stringify(supabaseAnonKey)};
-    const ADMIN_EMAILS = {JSON.stringify(adminEmails)}
+    const SUPABASE_URL = supabaseUrl;
+    const SUPABASE_ANON_KEY = supabaseAnonKey;
+    const ADMIN_EMAILS = adminEmails
       .split(',')
       .map((v) => v.trim().toLowerCase())
       .filter(Boolean);
