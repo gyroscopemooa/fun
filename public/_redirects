@@ -1,3 +1,5 @@
 /sitemap.xml /sitemap.xml 200
 /robots.txt /robots.txt 200
 /rss.xml /rss.xml 200
+/maps/fishbread/admin /maps/fishbread?admin=1 302
+/maps/fishbread/admin/ /maps/fishbread?admin=1 302

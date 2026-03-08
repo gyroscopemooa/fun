@@ -692,13 +692,18 @@ const seoKeywords = locale === 'ko'
     adminToggleEl?.addEventListener('click', () => {
       adminShellEl?.classList.add('hidden');
     });
-    const unlockAdminPanel = () => {
+    const unlockAdminPanel = (openPanel = false) => {
       adminDockEl?.classList.remove('hidden');
-      adminShellEl?.classList.add('hidden');
+      if (openPanel) {
+        adminShellEl?.classList.remove('hidden');
+      } else {
+        adminShellEl?.classList.add('hidden');
+      }
     };
     try {
       const params = new URLSearchParams(window.location.search);
       const unlocked = localStorage.getItem('manytool_admin_panel') === '1';
+      const adminPath = window.location.pathname.endsWith('/maps/fishbread/admin');
       if (params.get('admin') === '1') {
         localStorage.setItem('manytool_admin_panel', '1');
       }
@@ -707,8 +712,10 @@ const seoKeywords = locale === 'ko'
         adminDockEl?.classList.add('hidden');
         adminShellEl?.classList.add('hidden');
       }
-      if (params.get('admin') === '1' || unlocked) {
-        unlockAdminPanel();
+      if (params.get('admin') === '1' || adminPath) {
+        unlockAdminPanel(true);
+      } else if (unlocked) {
+        unlockAdminPanel(false);
       }
     } catch {}
 
