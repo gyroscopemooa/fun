@@ -41,6 +41,8 @@ const paths = [
   '/tools/scoreboard',
   '/maps/fishbread',
   '/fishbread-map',
+  '/maps/solo-dining',
+  '/solo-dining-map',
   '/maps/hidden-cafe',
   '/hidden-cafe-map',
   '/maps/local-eats',

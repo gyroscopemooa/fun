@@ -1,0 +1,424 @@
+﻿---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import AdSense from '../../components/AdSense.astro';
+import Recommend from '../../components/Recommend.astro';
+import Footer from '../../components/Footer.astro';
+
+const pathname = Astro.url.pathname;
+const locale = pathname.startsWith('/en/') || pathname === '/en'
+  ? 'en'
+  : pathname.startsWith('/ja/') || pathname === '/ja'
+    ? 'ja'
+    : 'ko';
+const t = {
+  ko: {
+    title: '혼밥 가능 식당 공유 | ManyTool',
+    desc: '지도 기반 혼밥 가능 식당 탐색/제보 페이지',
+    pageTitle: '혼밥 가능 식당 공유 지도',
+    search: '지역/식당명 검색',
+    list: '제보 목록',
+    add: '제보 추가',
+    report: '새 식당 제보',
+    mapHint: '먼저 지도에서 위치를 클릭하면 좌표가 자동 입력됩니다.'
+  },
+  en: {
+    title: 'Solo Dining Map | ManyTool',
+    desc: 'Map-based solo-friendly restaurant explorer and report page',
+    pageTitle: 'Solo-Friendly Restaurant Map',
+    search: 'Search region/restaurant',
+    list: 'Reports',
+    add: 'Add Report',
+    report: 'Report New Place',
+    mapHint: 'Pick a location on the map first to auto-fill coordinates.'
+  },
+  ja: {
+    title: 'ひとりご飯マップ | ManyTool',
+    desc: '地図ベースの一人で入りやすい飲食店の投稿ページ',
+    pageTitle: 'ひとりご飯 共有マップ',
+    search: '地域/店舗検索',
+    list: '投稿一覧',
+    add: '投稿追加',
+    report: '新規投稿',
+    mapHint: '先に地図をタップすると座標が自動入力されます。'
+  }
+}[locale];
+---
+
+<Layout title={t.title} description={t.desc}>
+  <Header />
+
+  <main class="bg-amber-50 text-slate-900">
+    <section class="mx-auto max-w-6xl px-4 pb-4 pt-4">
+        <div class="mb-4 flex items-center justify-between rounded-2xl border border-amber-200 bg-white px-4 py-3">
+        <div class="flex items-center gap-3">
+          <div class="rounded-lg bg-amber-500 px-2 py-1 text-white">🍽️</div>
+          <h1 class="text-lg font-bold tracking-tight md:text-xl">{t.pageTitle}</h1>
+        </div>
+        <p id="selected-region" class="rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-700">전체</p>
+      </div>
+
+      <div class="grid gap-4 lg:grid-cols-[360px_1fr]">
+        <aside class="order-2 rounded-2xl border border-slate-200 bg-white lg:order-1">
+          <div class="border-b border-slate-100 p-4">
+            <input id="vendor-search" class="w-full rounded-xl border border-slate-200 bg-slate-100 px-4 py-2.5 text-sm" placeholder={t.search} type="text" />
+          </div>
+
+          <div class="border-b border-slate-100 p-4">
+            <div class="mb-3 flex items-center justify-between">
+              <h2 class="text-lg font-bold">{t.list}</h2>
+              <button id="region-all" class="text-sm font-semibold text-amber-600">전체</button>
+            </div>
+            <div class="flex gap-2 overflow-x-auto pb-1 text-xs">
+              <button class="rounded-full bg-amber-500 px-3 py-1.5 font-semibold text-white">All</button>
+              <button class="rounded-full bg-slate-100 px-3 py-1.5">한식</button>
+              <button class="rounded-full bg-slate-100 px-3 py-1.5">중식</button>
+              <button class="rounded-full bg-slate-100 px-3 py-1.5">일식</button>
+              <button class="rounded-full bg-slate-100 px-3 py-1.5">분식</button>
+            </div>
+          </div>
+
+          <div id="vendor-list" class="max-h-[420px] space-y-3 overflow-y-auto p-4 lg:max-h-[520px]"></div>
+
+          <div class="border-t border-slate-100 bg-slate-50 p-4">
+            <h3 class="text-sm font-bold">{t.add}</h3>
+            <input id="spot-name" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="식당명" type="text" />
+            <input id="spot-region" class="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" placeholder="지역(지도/버튼 선택)" type="text" readonly />
+            <input id="spot-flavor" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="대표 메뉴 (예: 국밥/덮밥)" type="text" />
+            <input id="spot-detail" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="상세 위치 (예: OO역 2번 출구 근처)" type="text" />
+            <input id="spot-latlng" class="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-xs text-slate-500" placeholder="지도 클릭 시 좌표 자동 입력" type="text" readonly />
+            <p class="mt-2 text-xs text-slate-500">{t.mapHint}</p>
+            <button id="spot-add" class="mt-3 w-full rounded-xl bg-amber-500 py-2.5 font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300" disabled>{t.report}</button>
+          </div>
+        </aside>
+
+        <section class="order-1 rounded-2xl border border-slate-200 bg-white p-3 lg:order-2">
+          <div id="solo-dining-map" class="h-[340px] w-full rounded-xl border border-slate-200 sm:h-[420px] md:h-[620px]"></div>
+
+          <div class="mt-3 flex flex-wrap gap-2">
+            <button data-region="서울" class="map-region">서울</button>
+            <button data-region="경기" class="map-region">경기</button>
+            <button data-region="인천" class="map-region">인천</button>
+            <button data-region="강원" class="map-region">강원</button>
+            <button data-region="충남" class="map-region">충남</button>
+            <button data-region="충북" class="map-region">충북</button>
+            <button data-region="대전" class="map-region">대전</button>
+            <button data-region="전북" class="map-region">전북</button>
+            <button data-region="광주" class="map-region">광주</button>
+            <button data-region="전남" class="map-region">전남</button>
+            <button data-region="경북" class="map-region">경북</button>
+            <button data-region="대구" class="map-region">대구</button>
+            <button data-region="경남" class="map-region">경남</button>
+            <button data-region="울산" class="map-region">울산</button>
+            <button data-region="부산" class="map-region">부산</button>
+            <button data-region="제주" class="map-region">제주</button>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="mx-auto max-w-5xl px-4 pb-8 pt-2">
+      <AdSense slotName="본문 중간" />
+      <Recommend />
+    </section>
+  </main>
+  <Footer />
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+
+  <script is:inline>
+    const KEY = 'manytool_solo_dining_v1';
+    const AUTO_REMOVE_THRESHOLD = 100;
+    const REGION_COORD = {
+      서울: { lat: 37.5665, lng: 126.978, zoom: 11 },
+      경기: { lat: 37.4138, lng: 127.5183, zoom: 9 },
+      인천: { lat: 37.4563, lng: 126.7052, zoom: 11 },
+      강원: { lat: 37.8228, lng: 128.1555, zoom: 9 },
+      충남: { lat: 36.5184, lng: 126.8, zoom: 9 },
+      충북: { lat: 36.8, lng: 127.7, zoom: 9 },
+      대전: { lat: 36.3504, lng: 127.3845, zoom: 11 },
+      전북: { lat: 35.7175, lng: 127.153, zoom: 9 },
+      광주: { lat: 35.1595, lng: 126.8526, zoom: 11 },
+      전남: { lat: 34.8161, lng: 126.463, zoom: 9 },
+      경북: { lat: 36.4919, lng: 128.8889, zoom: 9 },
+      대구: { lat: 35.8714, lng: 128.6014, zoom: 11 },
+      경남: { lat: 35.4606, lng: 128.2132, zoom: 9 },
+      울산: { lat: 35.5384, lng: 129.3114, zoom: 11 },
+      부산: { lat: 35.1796, lng: 129.0756, zoom: 11 },
+      제주: { lat: 33.4996, lng: 126.5312, zoom: 10 }
+    };
+
+    const seed = [
+      { id: 's1', name: '강남 혼밥식당', region: '서울', flavor: '국밥, 덮밥', up: 7, down: 1, comments: ['1인 테이블 많음'] },
+      { id: 's2', name: '서면 혼밥라멘', region: '부산', flavor: '라멘', up: 5, down: 0, comments: ['혼자 방문 편함'] },
+      { id: 's3', name: '동성로 혼밥카레', region: '대구', flavor: '카레, 돈까스', up: 4, down: 1, comments: [] }
+    ];
+
+    const load = () => {
+      const raw = localStorage.getItem(KEY);
+      if (!raw) {
+        localStorage.setItem(KEY, JSON.stringify(seed));
+        return [...seed];
+      }
+      try { return JSON.parse(raw); }
+      catch {
+        localStorage.setItem(KEY, JSON.stringify(seed));
+        return [...seed];
+      }
+    };
+    const save = (data) => localStorage.setItem(KEY, JSON.stringify(data));
+
+    const searchEl = document.getElementById('vendor-search');
+    const selectedRegionEl = document.getElementById('selected-region');
+    const regionInputEl = document.getElementById('spot-region');
+    const listEl = document.getElementById('vendor-list');
+    const addBtn = document.getElementById('spot-add');
+    const nameEl = document.getElementById('spot-name');
+    const flavorEl = document.getElementById('spot-flavor');
+    const detailEl = document.getElementById('spot-detail');
+    const latlngEl = document.getElementById('spot-latlng');
+
+    let vendors = load();
+    let selectedRegion = '전체';
+    let selectedLat = null;
+    let selectedLng = null;
+    let map;
+    let markersLayer;
+
+    const updateAddButtonState = () => {
+      if (!(addBtn instanceof HTMLButtonElement)) return;
+      addBtn.disabled = !(typeof selectedLat === 'number' && typeof selectedLng === 'number');
+    };
+
+    const score = (v) => v.up - v.down;
+    const shouldAutoRemove = (v) => (v.down - v.up) >= AUTO_REMOVE_THRESHOLD;
+    vendors = vendors.filter((v) => !shouldAutoRemove(v));
+
+    const filteredVendors = () => {
+      const q = searchEl instanceof HTMLInputElement ? searchEl.value.trim().toLowerCase() : '';
+      return vendors
+        .filter((v) => selectedRegion === '전체' || v.region === selectedRegion)
+        .filter((v) => q === '' || `${v.name} ${v.region} ${v.flavor}`.toLowerCase().includes(q))
+        .sort((a, b) => score(b) - score(a));
+    };
+
+    const renderList = (items) => {
+      if (!listEl) return;
+      if (items.length === 0) {
+        listEl.innerHTML = '<p class="rounded-xl bg-slate-100 px-3 py-3 text-sm text-slate-600">조건에 맞는 제보가 없습니다.</p>';
+        return;
+      }
+
+      listEl.innerHTML = items.map((v) => `
+        <article class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <h3 class="font-bold">${v.name}</h3>
+              <p class="text-xs text-slate-500">${v.region} · ${v.flavor}${v.detail ? ` · ${v.detail}` : ''}</p>
+            </div>
+            <p class="text-xs font-semibold text-amber-600">신뢰 ${score(v)}</p>
+          </div>
+          <div class="mt-2 flex gap-2">
+            <button data-act="up" data-id="${v.id}" class="rounded-md border border-slate-300 px-2 py-1 text-xs">추천 ${v.up}</button>
+            <button data-act="down" data-id="${v.id}" class="rounded-md border border-slate-300 px-2 py-1 text-xs">비추천 ${v.down}</button>
+          </div>
+          <div class="mt-2 rounded-md bg-white p-2">
+            <ul class="space-y-1 text-xs text-slate-600">
+              ${v.comments.slice(-2).map((c) => `<li>- ${c}</li>`).join('') || '<li>- 댓글 없음</li>'}
+            </ul>
+            <div class="mt-2 flex gap-2">
+              <input data-input="comment" data-id="${v.id}" class="flex-1 rounded border border-slate-300 px-2 py-1 text-xs" placeholder="정확/부정확 댓글" />
+              <button data-act="comment" data-id="${v.id}" class="rounded bg-slate-900 px-2 py-1 text-xs text-white">등록</button>
+            </div>
+          </div>
+        </article>`).join('');
+    };
+
+    const initMap = () => {
+      if (typeof window === 'undefined' || !window.L || map) return;
+      map = window.L.map('solo-dining-map').setView([36.5, 127.8], 7);
+      window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+      markersLayer = window.L.layerGroup().addTo(map);
+    };
+
+    const renderMap = (items) => {
+      if (!map || !markersLayer || !window.L) return;
+      markersLayer.clearLayers();
+
+      items.forEach((v) => {
+        const coord = (typeof v.lat === 'number' && typeof v.lng === 'number')
+          ? { lat: v.lat, lng: v.lng }
+          : REGION_COORD[v.region];
+        if (!coord) return;
+        window.L
+          .marker([coord.lat, coord.lng])
+          .bindPopup(`<strong>${v.name}</strong><br/>${v.region} · ${v.flavor}${v.detail ? `<br/>${v.detail}` : ''}`)
+          .addTo(markersLayer);
+      });
+
+      if (selectedRegion !== '전체' && REGION_COORD[selectedRegion]) {
+        const c = REGION_COORD[selectedRegion];
+        map.setView([c.lat, c.lng], c.zoom);
+      }
+
+      if (typeof selectedLat === 'number' && typeof selectedLng === 'number') {
+        window.L
+          .circleMarker([selectedLat, selectedLng], {
+            radius: 8,
+            color: '#f59e0b',
+            weight: 2,
+            fillColor: '#f59e0b',
+            fillOpacity: 0.35
+          })
+          .bindPopup('선택된 제보 위치')
+          .addTo(markersLayer);
+      }
+    };
+
+    const render = () => {
+      const items = filteredVendors();
+      renderList(items);
+      renderMap(items);
+    };
+
+    const setRegion = (region) => {
+      selectedRegion = region;
+      if (selectedRegionEl) selectedRegionEl.textContent = region;
+      if (regionInputEl instanceof HTMLInputElement) regionInputEl.value = region === '전체' ? '' : region;
+      render();
+    };
+
+    const nearestRegion = (lat, lng) => {
+      const entries = Object.entries(REGION_COORD);
+      let best = '서울';
+      let bestDist = Number.POSITIVE_INFINITY;
+      entries.forEach(([name, c]) => {
+        const d = (lat - c.lat) ** 2 + (lng - c.lng) ** 2;
+        if (d < bestDist) {
+          bestDist = d;
+          best = name;
+        }
+      });
+      return best;
+    };
+
+    document.querySelectorAll('[data-region]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        if (!(btn instanceof HTMLButtonElement)) return;
+        const region = btn.dataset.region;
+        if (region) setRegion(region);
+      });
+    });
+    document.getElementById('region-all')?.addEventListener('click', () => setRegion('전체'));
+
+    listEl?.addEventListener('click', (e) => {
+      const target = e.target;
+      if (!(target instanceof HTMLElement)) return;
+      const act = target.dataset.act;
+      const id = target.dataset.id;
+      if (!act || !id) return;
+
+      const item = vendors.find((v) => v.id === id);
+      if (!item) return;
+
+      if (act === 'up') item.up += 1;
+      if (act === 'down') item.down += 1;
+      if (act === 'comment') {
+        const input = listEl.querySelector(`input[data-input="comment"][data-id="${id}"]`);
+        if (input instanceof HTMLInputElement) {
+          const text = input.value.trim();
+          if (text) {
+            item.comments.push(text);
+            input.value = '';
+          }
+        }
+      }
+
+      if (shouldAutoRemove(item)) {
+        vendors = vendors.filter((v) => v.id !== id);
+      }
+
+      save(vendors);
+      render();
+    });
+
+    addBtn?.addEventListener('click', () => {
+      const name = nameEl instanceof HTMLInputElement ? nameEl.value.trim() : '';
+      const region = regionInputEl instanceof HTMLInputElement ? regionInputEl.value.trim() : '';
+      const flavor = flavorEl instanceof HTMLInputElement ? flavorEl.value.trim() : '';
+      const detail = detailEl instanceof HTMLInputElement ? detailEl.value.trim() : '';
+      if (!name || !region) return;
+      if (!(typeof selectedLat === 'number' && typeof selectedLng === 'number')) return;
+
+      vendors.push({
+        id: `v-${Date.now()}`,
+        name,
+        region,
+        flavor: flavor || '한식',
+        detail,
+        lat: typeof selectedLat === 'number' ? selectedLat : undefined,
+        lng: typeof selectedLng === 'number' ? selectedLng : undefined,
+        up: 0,
+        down: 0,
+        comments: []
+      });
+
+      if (nameEl instanceof HTMLInputElement) nameEl.value = '';
+      if (flavorEl instanceof HTMLInputElement) flavorEl.value = '';
+      if (detailEl instanceof HTMLInputElement) detailEl.value = '';
+      if (latlngEl instanceof HTMLInputElement) latlngEl.value = '';
+      selectedLat = null;
+      selectedLng = null;
+      updateAddButtonState();
+      save(vendors);
+      render();
+    });
+
+    searchEl?.addEventListener('input', render);
+
+    const boot = () => {
+      initMap();
+      map?.on('click', (e) => {
+        const { lat, lng } = e.latlng;
+        selectedLat = Number(lat.toFixed(6));
+        selectedLng = Number(lng.toFixed(6));
+        const region = nearestRegion(selectedLat, selectedLng);
+        setRegion(region);
+        if (latlngEl instanceof HTMLInputElement) latlngEl.value = `${selectedLat}, ${selectedLng}`;
+        updateAddButtonState();
+      });
+      setRegion('전체');
+      updateAddButtonState();
+    };
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', boot);
+    } else {
+      boot();
+    }
+  </script>
+
+  <style>
+    .map-region {
+      border: 1px solid #cbd5e1;
+      border-radius: 9999px;
+      background: #ffffff;
+      font-size: 0.75rem;
+      line-height: 1;
+      padding: 0.35rem 0.65rem;
+    }
+  </style>
+</Layout>
