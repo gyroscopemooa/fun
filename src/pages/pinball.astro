@@ -195,8 +195,10 @@ const t = {
 
     const W = canvas.width;
     const H = canvas.height;
+    const VIEW_H = H;
+    const WORLD_H = 2200;
     const WALL = 16;
-    const DROP_Y = 88;
+    const DROP_Y = 120;
     const SLOT_H = 74;
     const PEG_R_BASE = 4;
     const BALL_R = 8;
@@ -210,9 +212,9 @@ const t = {
     const colorPool = ['#22d3ee', '#a3e635', '#f97316', '#f43f5e', '#60a5fa', '#c084fc', '#34d399', '#facc15'];
 
     const pegs = [];
-    for (let row = 0; row < 16; row += 1) {
-      const count = 7 + (row % 5);
-      const y = 136 + row * 42;
+    for (let row = 0; row < 40; row += 1) {
+      const count = 7 + (row % 6);
+      const y = 180 + row * 46;
       const usable = W - 2 * (WALL + 54);
       const step = usable / (count - 1);
       for (let i = 0; i < count; i += 1) {
@@ -220,23 +222,27 @@ const t = {
         const jitter = Math.sin((row + 1) * (i + 2)) * 8.5;
         const x = WALL + 54 + i * step + offset + jitter;
         const r = PEG_R_BASE + ((row + i) % 3);
-        const avoidDropLane = row < 3 && Math.abs(x - W / 2) < 82;
+        const avoidDropLane = row < 4 && Math.abs(x - W / 2) < 92;
         if (x > WALL + 34 && x < W - WALL - 34 && !avoidDropLane) pegs.push({ x, y, r });
       }
     }
 
     const bumpers = [
-      { x: W * 0.22, y: H * 0.34, baseX: W * 0.22, baseY: H * 0.34, amp: 26, speed: 0.0008, phase: 0.2, r: 18, bounce: 0.96 },
-      { x: W * 0.76, y: H * 0.38, baseX: W * 0.76, baseY: H * 0.38, amp: 24, speed: 0.001, phase: 1.1, r: 16, bounce: 0.94 },
-      { x: W * 0.36, y: H * 0.55, baseX: W * 0.36, baseY: H * 0.55, amp: 22, speed: 0.0012, phase: 2.0, r: 20, bounce: 0.98 },
-      { x: W * 0.67, y: H * 0.61, baseX: W * 0.67, baseY: H * 0.61, amp: 20, speed: 0.0009, phase: 2.8, r: 14, bounce: 0.92 }
+      { x: W * 0.22, y: WORLD_H * 0.26, baseX: W * 0.22, baseY: WORLD_H * 0.26, amp: 26, speed: 0.0008, phase: 0.2, r: 18, bounce: 0.96 },
+      { x: W * 0.76, y: WORLD_H * 0.33, baseX: W * 0.76, baseY: WORLD_H * 0.33, amp: 24, speed: 0.001, phase: 1.1, r: 16, bounce: 0.94 },
+      { x: W * 0.36, y: WORLD_H * 0.49, baseX: W * 0.36, baseY: WORLD_H * 0.49, amp: 22, speed: 0.0012, phase: 2.0, r: 20, bounce: 0.98 },
+      { x: W * 0.67, y: WORLD_H * 0.58, baseX: W * 0.67, baseY: WORLD_H * 0.58, amp: 20, speed: 0.0009, phase: 2.8, r: 14, bounce: 0.92 },
+      { x: W * 0.24, y: WORLD_H * 0.72, baseX: W * 0.24, baseY: WORLD_H * 0.72, amp: 18, speed: 0.001, phase: 0.7, r: 17, bounce: 0.95 },
+      { x: W * 0.71, y: WORLD_H * 0.79, baseX: W * 0.71, baseY: WORLD_H * 0.79, amp: 20, speed: 0.00095, phase: 2.4, r: 18, bounce: 0.95 }
     ];
 
     const rails = [
-      { x1: W * 0.18, y1: H * 0.23, x2: W * 0.34, y2: H * 0.38, thickness: 4, bounce: 0.88 },
-      { x1: W * 0.82, y1: H * 0.3, x2: W * 0.65, y2: H * 0.46, thickness: 4, bounce: 0.88 },
-      { x1: W * 0.27, y1: H * 0.62, x2: W * 0.12, y2: H * 0.76, thickness: 4, bounce: 0.9 },
-      { x1: W * 0.73, y1: H * 0.67, x2: W * 0.88, y2: H * 0.8, thickness: 4, bounce: 0.9 }
+      { x1: W * 0.18, y1: WORLD_H * 0.16, x2: W * 0.34, y2: WORLD_H * 0.26, thickness: 4, bounce: 0.88 },
+      { x1: W * 0.82, y1: WORLD_H * 0.2, x2: W * 0.65, y2: WORLD_H * 0.3, thickness: 4, bounce: 0.88 },
+      { x1: W * 0.27, y1: WORLD_H * 0.45, x2: W * 0.12, y2: WORLD_H * 0.57, thickness: 4, bounce: 0.9 },
+      { x1: W * 0.73, y1: WORLD_H * 0.5, x2: W * 0.88, y2: WORLD_H * 0.64, thickness: 4, bounce: 0.9 },
+      { x1: W * 0.2, y1: WORLD_H * 0.69, x2: W * 0.39, y2: WORLD_H * 0.78, thickness: 4, bounce: 0.89 },
+      { x1: W * 0.8, y1: WORLD_H * 0.74, x2: W * 0.6, y2: WORLD_H * 0.86, thickness: 4, bounce: 0.89 }
     ];
 
     let participants = [
@@ -251,6 +257,7 @@ const t = {
     let running = false;
     let rafId = 0;
     let lastDrop = 0;
+    let cameraY = 0;
 
     const fmt = (n) => Number(n).toFixed(n >= 10 ? 0 : 1).replace('.0', '');
 
@@ -519,7 +526,7 @@ const t = {
         bumpers.forEach((b) => resolvePegCollision(ball, b));
         rails.forEach((rail) => resolveRailCollision(ball, rail));
 
-        if (ball.y >= H - SLOT_H - ball.r) {
+        if (ball.y >= WORLD_H - SLOT_H - ball.r) {
           settleBall(ball);
         }
       });
@@ -536,18 +543,34 @@ const t = {
         running = false;
         setStatus(t.modeFinished);
       }
+
+      const focusY = balls.length > 0
+        ? Math.max(...balls.map((b) => b.y))
+        : running
+          ? cameraY + 2
+          : finishOrder.length > 0
+            ? WORLD_H - SLOT_H - VIEW_H * 0.55
+            : DROP_Y;
+      const targetCam = Math.max(0, Math.min(WORLD_H - VIEW_H, focusY - VIEW_H * 0.4));
+      cameraY += (targetCam - cameraY) * 0.08;
     };
 
     const drawBoard = () => {
+      ctx.save();
+      ctx.translate(0, -cameraY);
       const grad = ctx.createLinearGradient(0, 0, 0, H);
       grad.addColorStop(0, '#020617');
       grad.addColorStop(1, '#0b1120');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = '#020617';
+      ctx.fillRect(0, 0, W, WORLD_H);
+      for (let y = 0; y < WORLD_H; y += VIEW_H) {
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, y, W, VIEW_H);
+      }
 
       ctx.strokeStyle = '#1e293b';
       ctx.lineWidth = 1;
-      for (let y = 0; y < H - SLOT_H; y += 44) {
+      for (let y = 0; y < WORLD_H - SLOT_H; y += 44) {
         ctx.beginPath();
         ctx.moveTo(WALL, y + 0.5);
         ctx.lineTo(W - WALL, y + 0.5);
@@ -557,7 +580,7 @@ const t = {
       for (let x = WALL; x < W - WALL; x += 56) {
         ctx.beginPath();
         ctx.moveTo(x + 0.5, WALL);
-        ctx.lineTo(x + 0.5, H - SLOT_H);
+        ctx.lineTo(x + 0.5, WORLD_H - SLOT_H);
         ctx.stroke();
       }
 
@@ -604,15 +627,15 @@ const t = {
       ctx.shadowBlur = 0;
 
       ctx.fillStyle = '#0f172a';
-      ctx.fillRect(WALL, H - SLOT_H, W - WALL * 2, SLOT_H);
+      ctx.fillRect(WALL, WORLD_H - SLOT_H, W - WALL * 2, SLOT_H);
 
       for (let i = 0; i <= SLOT_MULT.length; i += 1) {
         const x = WALL + i * slotWidth;
         ctx.strokeStyle = '#1e3a8a';
         ctx.lineWidth = 1.3;
         ctx.beginPath();
-        ctx.moveTo(x, H - SLOT_H);
-        ctx.lineTo(x, H);
+        ctx.moveTo(x, WORLD_H - SLOT_H);
+        ctx.lineTo(x, WORLD_H);
         ctx.stroke();
       }
 
@@ -621,7 +644,7 @@ const t = {
         ctx.fillStyle = m >= 10 ? '#fde047' : m >= 5 ? '#7dd3fc' : '#93c5fd';
         ctx.font = `bold ${m >= 10 ? 28 : 16}px sans-serif`;
         ctx.textAlign = 'center';
-        ctx.fillText(`${fmt(m)}x`, x, H - 18);
+        ctx.fillText(`${fmt(m)}x`, x, WORLD_H - 18);
       });
 
       balls.forEach((ball) => {
@@ -636,7 +659,16 @@ const t = {
 
       ctx.strokeStyle = '#0ea5e9';
       ctx.lineWidth = 3;
-      ctx.strokeRect(WALL, WALL, W - WALL * 2, H - WALL * 2);
+      ctx.strokeRect(WALL, WALL, W - WALL * 2, WORLD_H - WALL * 2);
+      ctx.restore();
+
+      ctx.fillStyle = 'rgba(15,23,42,0.78)';
+      ctx.fillRect(W - 22, 10, 12, VIEW_H - 20);
+      const camRatio = cameraY / Math.max(1, WORLD_H - VIEW_H);
+      const camH = Math.max(40, (VIEW_H / WORLD_H) * (VIEW_H - 20));
+      const camY = 10 + camRatio * ((VIEW_H - 20) - camH);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(W - 22, camY, 12, camH);
     };
 
     const tick = (ts) => {
