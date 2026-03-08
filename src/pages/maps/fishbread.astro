@@ -558,7 +558,9 @@ const seoKeywords = locale === 'ko'
         });
         if (error) {
           const msg = `${error.message || ''}`.toLowerCase();
-          if (msg.includes('submit_fishbread_vote') || msg.includes('function')) {
+          if (msg.includes('up_count') && msg.includes('ambiguous')) {
+            alert('투표 SQL 함수가 구버전입니다. Supabase SQL Editor에서 sql/fishbread_vote_patch.sql 을 다시 전체 실행해 주세요.');
+          } else if (msg.includes('submit_fishbread_vote') || msg.includes('function')) {
             alert('투표 기능 SQL이 누락되었습니다. sql/fishbread_vote_patch.sql 을 Supabase SQL Editor에서 실행해 주세요.');
           } else {
             alert(`투표 처리 실패: ${error.message}`);
