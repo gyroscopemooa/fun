@@ -28,6 +28,7 @@ const t = {
     shuffle: '셔플',
     stop: '중지',
     reset: '리셋',
+    speed: '배속',
     result: '실시간 결과',
     queuePreview: '다음 투하',
     modeReady: 'ready',
@@ -52,6 +53,7 @@ const t = {
     shuffle: 'Shuffle',
     stop: 'Stop',
     reset: 'Reset',
+    speed: 'Speed',
     result: 'Live Result',
     queuePreview: 'Next Drops',
     modeReady: 'ready',
@@ -76,6 +78,7 @@ const t = {
     shuffle: 'シャッフル',
     stop: '停止',
     reset: 'リセット',
+    speed: '速度',
     result: 'リアルタイム結果',
     queuePreview: '次の投下',
     modeReady: 'ready',
@@ -126,6 +129,15 @@ const t = {
             <button id="start-game" class="rounded-xl bg-emerald-500 py-2.5 text-sm font-bold text-white">{t.start}</button>
             <button id="shuffle-game" class="rounded-xl bg-sky-500 py-2.5 text-sm font-bold text-white">{t.shuffle}</button>
             <button id="stop-game" class="rounded-xl bg-slate-800 py-2.5 text-sm font-bold text-white">{t.stop}</button>
+            <div class="col-span-3 rounded-xl border border-slate-200 bg-slate-50 p-2">
+              <p class="mb-2 text-xs font-bold text-slate-600">{t.speed}</p>
+              <div id="speed-controls" class="grid grid-cols-4 gap-1.5 text-xs">
+                <button data-speed="0.5" class="rounded-md border border-slate-300 bg-white px-2 py-1.5 font-semibold">0.5x</button>
+                <button data-speed="1" class="rounded-md border border-slate-300 bg-white px-2 py-1.5 font-semibold">1x</button>
+                <button data-speed="1.5" class="rounded-md border border-slate-300 bg-white px-2 py-1.5 font-semibold">1.5x</button>
+                <button data-speed="2" class="rounded-md border border-slate-300 bg-white px-2 py-1.5 font-semibold">2x</button>
+              </div>
+            </div>
             <button id="reset-game" class="col-span-3 rounded-xl border border-slate-300 bg-white py-2.5 text-sm font-bold">{t.reset}</button>
           </div>
         </aside>
@@ -179,6 +191,7 @@ const t = {
     const stopBtn = document.getElementById('stop-game');
     const shuffleBtn = document.getElementById('shuffle-game');
     const resetBtn = document.getElementById('reset-game');
+    const speedControlsEl = document.getElementById('speed-controls');
     const playerNameEl = document.getElementById('player-name');
     const playerBallsEl = document.getElementById('player-balls');
     const finishListEl = document.getElementById('finish-list');
@@ -202,9 +215,10 @@ const t = {
     const SLOT_H = 74;
     const PEG_R_BASE = 4;
     const BALL_R = 8;
-    const GRAVITY = 0.19;
+    const GRAVITY = 0.145;
     const AIR = 0.999;
     const BOUNCE = 0.78;
+    const DROP_INTERVAL_BASE = 520;
 
     const SLOT_MULT = [1.2, 1.8, 2.5, 5, 10, 5, 2.5, 1.8, 1.2];
     const slotWidth = (W - WALL * 2) / SLOT_MULT.length;
@@ -214,13 +228,14 @@ const t = {
     const pegs = [];
     for (let row = 0; row < 40; row += 1) {
       const count = 7 + (row % 6);
-      const y = 180 + row * 46;
+      const y = 180 + row * 46 + Math.sin(row * 0.48) * 10;
       const usable = W - 2 * (WALL + 54);
       const step = usable / (count - 1);
       for (let i = 0; i < count; i += 1) {
         const offset = row % 2 ? step / 2 : 0;
         const jitter = Math.sin((row + 1) * (i + 2)) * 8.5;
-        const x = WALL + 54 + i * step + offset + jitter;
+        const flow = Math.sin((y / WORLD_H) * Math.PI * 4.2) * 86;
+        const x = WALL + 54 + i * step + offset + jitter + flow;
         const r = PEG_R_BASE + ((row + i) % 3);
         const avoidDropLane = row < 4 && Math.abs(x - W / 2) < 92;
         if (x > WALL + 34 && x < W - WALL - 34 && !avoidDropLane) pegs.push({ x, y, r });
@@ -245,6 +260,13 @@ const t = {
       { x1: W * 0.8, y1: WORLD_H * 0.74, x2: W * 0.6, y2: WORLD_H * 0.86, thickness: 4, bounce: 0.89 }
     ];
 
+    const curveRails = [
+      { x1: W * 0.12, y1: WORLD_H * 0.24, cx: W * 0.5, cy: WORLD_H * 0.3, x2: W * 0.88, y2: WORLD_H * 0.24, thickness: 5, bounce: 0.9 },
+      { x1: W * 0.84, y1: WORLD_H * 0.42, cx: W * 0.4, cy: WORLD_H * 0.5, x2: W * 0.16, y2: WORLD_H * 0.42, thickness: 5, bounce: 0.9 },
+      { x1: W * 0.2, y1: WORLD_H * 0.62, cx: W * 0.62, cy: WORLD_H * 0.68, x2: W * 0.82, y2: WORLD_H * 0.61, thickness: 5, bounce: 0.9 },
+      { x1: W * 0.82, y1: WORLD_H * 0.81, cx: W * 0.42, cy: WORLD_H * 0.88, x2: W * 0.18, y2: WORLD_H * 0.8, thickness: 5, bounce: 0.9 }
+    ];
+
     let participants = [
       { id: 'p1', name: 'Jake', balls: 3, color: colorPool[0] },
       { id: 'p2', name: 'Sarah', balls: 2, color: colorPool[5] },
@@ -258,6 +280,7 @@ const t = {
     let rafId = 0;
     let lastDrop = 0;
     let cameraY = 0;
+    let timeScale = 0.75;
 
     const fmt = (n) => Number(n).toFixed(n >= 10 ? 0 : 1).replace('.0', '');
 
@@ -430,17 +453,17 @@ const t = {
       ball.vy *= 0.985;
     };
 
-    const resolveRailCollision = (ball, rail) => {
-      const vx = rail.x2 - rail.x1;
-      const vy = rail.y2 - rail.y1;
+    const resolveSegmentCollision = (ball, x1, y1, x2, y2, thickness, bounce) => {
+      const vx = x2 - x1;
+      const vy = y2 - y1;
       const segLen2 = vx * vx + vy * vy;
       if (segLen2 === 0) return;
-      const t = Math.max(0, Math.min(1, ((ball.x - rail.x1) * vx + (ball.y - rail.y1) * vy) / segLen2));
-      const cx = rail.x1 + t * vx;
-      const cy = rail.y1 + t * vy;
+      const t = Math.max(0, Math.min(1, ((ball.x - x1) * vx + (ball.y - y1) * vy) / segLen2));
+      const cx = x1 + t * vx;
+      const cy = y1 + t * vy;
       const dx = ball.x - cx;
       const dy = ball.y - cy;
-      const minDist = ball.r + rail.thickness;
+      const minDist = ball.r + thickness;
       const dist2 = dx * dx + dy * dy;
       if (dist2 > minDist * minDist || dist2 === 0) return;
 
@@ -452,8 +475,27 @@ const t = {
       ball.y += ny * overlap;
 
       const dot = ball.vx * nx + ball.vy * ny;
-      ball.vx -= (1 + rail.bounce) * dot * nx;
-      ball.vy -= (1 + rail.bounce) * dot * ny;
+      ball.vx -= (1 + bounce) * dot * nx;
+      ball.vy -= (1 + bounce) * dot * ny;
+    };
+
+    const resolveRailCollision = (ball, rail) => {
+      resolveSegmentCollision(ball, rail.x1, rail.y1, rail.x2, rail.y2, rail.thickness, rail.bounce);
+    };
+
+    const resolveCurveCollision = (ball, curve) => {
+      const segments = 18;
+      let px = curve.x1;
+      let py = curve.y1;
+      for (let i = 1; i <= segments; i += 1) {
+        const t = i / segments;
+        const nt = 1 - t;
+        const x = nt * nt * curve.x1 + 2 * nt * t * curve.cx + t * t * curve.x2;
+        const y = nt * nt * curve.y1 + 2 * nt * t * curve.cy + t * t * curve.y2;
+        resolveSegmentCollision(ball, px, py, x, y, curve.thickness, curve.bounce);
+        px = x;
+        py = y;
+      }
     };
 
     const settleBall = (ball) => {
@@ -497,7 +539,7 @@ const t = {
         b.x = b.baseX + Math.sin(ts * b.speed + b.phase) * b.amp;
       });
 
-      if (running && dropQueue.length > 0 && ts - lastDrop > 360) {
+      if (running && dropQueue.length > 0 && ts - lastDrop > DROP_INTERVAL_BASE / timeScale) {
         const item = dropQueue.shift();
         if (item) spawnBall(item);
         lastDrop = ts;
@@ -507,11 +549,11 @@ const t = {
       balls.forEach((ball) => {
         if (ball.done) return;
 
-        ball.vy += GRAVITY;
-        ball.vx *= AIR;
-        ball.vy *= AIR;
-        ball.x += ball.vx;
-        ball.y += ball.vy;
+        ball.vy += GRAVITY * timeScale;
+        ball.vx *= Math.pow(AIR, timeScale);
+        ball.vy *= Math.pow(AIR, timeScale);
+        ball.x += ball.vx * timeScale;
+        ball.y += ball.vy * timeScale;
 
         if (ball.x < WALL + ball.r) {
           ball.x = WALL + ball.r;
@@ -525,6 +567,7 @@ const t = {
         pegs.forEach((peg) => resolvePegCollision(ball, peg));
         bumpers.forEach((b) => resolvePegCollision(ball, b));
         rails.forEach((rail) => resolveRailCollision(ball, rail));
+        curveRails.forEach((curve) => resolveCurveCollision(ball, curve));
 
         if (ball.y >= WORLD_H - SLOT_H - ball.r) {
           settleBall(ball);
@@ -552,7 +595,7 @@ const t = {
             ? WORLD_H - SLOT_H - VIEW_H * 0.55
             : DROP_Y;
       const targetCam = Math.max(0, Math.min(WORLD_H - VIEW_H, focusY - VIEW_H * 0.4));
-      cameraY += (targetCam - cameraY) * 0.08;
+      cameraY += (targetCam - cameraY) * Math.max(0.04, 0.08 * timeScale);
     };
 
     const drawBoard = () => {
@@ -622,6 +665,17 @@ const t = {
         ctx.beginPath();
         ctx.moveTo(rail.x1, rail.y1);
         ctx.lineTo(rail.x2, rail.y2);
+        ctx.stroke();
+      });
+
+      curveRails.forEach((curve) => {
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = curve.thickness;
+        ctx.shadowColor = '#38bdf8';
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        ctx.moveTo(curve.x1, curve.y1);
+        ctx.quadraticCurveTo(curve.cx, curve.cy, curve.x2, curve.y2);
         ctx.stroke();
       });
       ctx.shadowBlur = 0;
@@ -698,11 +752,24 @@ const t = {
     shuffleBtn?.addEventListener('click', shuffleGame);
     stopBtn?.addEventListener('click', stopGame);
     resetBtn?.addEventListener('click', resetGame);
+    speedControlsEl?.addEventListener('click', (e) => {
+      const target = e.target;
+      if (!(target instanceof HTMLButtonElement)) return;
+      const speed = Number(target.dataset.speed);
+      if (!Number.isFinite(speed) || speed <= 0) return;
+      timeScale = speed;
+      speedControlsEl.querySelectorAll('button').forEach((btn) => {
+        btn.classList.toggle('bg-sky-500', btn === target);
+        btn.classList.toggle('text-white', btn === target);
+        btn.classList.toggle('border-sky-500', btn === target);
+      });
+    });
 
     renderSlotInfo();
     renderParticipants();
     renderFinish();
     renderQueuePreview();
+    speedControlsEl?.querySelector('button[data-speed="0.5"]')?.dispatchEvent(new Event('click', { bubbles: true }));
     drawBoard();
     rafId = window.requestAnimationFrame(tick);
 
