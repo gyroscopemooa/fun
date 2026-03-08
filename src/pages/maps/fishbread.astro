@@ -247,6 +247,7 @@ const seoKeywords = locale === 'ko'
     const supabasePublic = supabaseSdkReady
       ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
           auth: {
+            storageKey: 'manytool_fishbread_public_auth_v1',
             persistSession: false,
             autoRefreshToken: false,
             detectSessionInUrl: false
