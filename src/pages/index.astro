@@ -36,7 +36,12 @@ const t = {
     faqQ2: 'Q. 지도 정보가 다를 수도 있나요?',
     faqA2: 'A. 제보 기반 정보가 포함될 수 있어, 방문 전 최신 운영 여부 확인을 권장합니다.',
     faqQ3: 'Q. 정책 페이지는 어디에서 확인하나요?',
-    faqA3: 'A. 페이지 하단 푸터(개인정보/약관/운영원칙/면책고지)에서 확인할 수 있습니다.'
+    faqA3: 'A. 페이지 하단 푸터(개인정보/약관/운영원칙/면책고지)에서 확인할 수 있습니다.',
+    trendingTitle: '실시간 인기 키워드',
+    trendingDesc: 'Google Trends 기반 (KR)',
+    trendingLoading: '불러오는 중...',
+    trendingError: '인기 키워드를 불러오지 못했습니다.',
+    trendingUpdated: '업데이트'
   },
   en: {
     tabs: ['All', 'Games', 'Tools', 'Art', 'Etc'],
@@ -53,7 +58,12 @@ const t = {
     faqQ2: 'Q. Can map information be outdated?',
     faqA2: 'A. Some spots are user-submitted, so please verify before visiting.',
     faqQ3: 'Q. Where are policy pages?',
-    faqA3: 'A. Check the footer links for Privacy, Terms, Editorial, and Disclaimer.'
+    faqA3: 'A. Check the footer links for Privacy, Terms, Editorial, and Disclaimer.',
+    trendingTitle: 'Trending Now',
+    trendingDesc: 'Based on Google Trends (KR)',
+    trendingLoading: 'Loading...',
+    trendingError: 'Failed to load trends.',
+    trendingUpdated: 'Updated'
   },
   ja: {
     tabs: ['全体', 'ゲーム', 'ツール', 'アート', 'その他'],
@@ -70,7 +80,12 @@ const t = {
     faqQ2: 'Q. 地図情報が異なる場合はありますか？',
     faqA2: 'A. ユーザー投稿情報を含むため、訪問前の確認をおすすめします。',
     faqQ3: 'Q. ポリシーページはどこですか？',
-    faqA3: 'A. フッターのプライバシー/利用規約/運営方針/免責事項をご確認ください。'
+    faqA3: 'A. フッターのプライバシー/利用規約/運営方針/免責事項をご確認ください。',
+    trendingTitle: 'リアルタイム人気キーワード',
+    trendingDesc: 'Google Trends (KR) ベース',
+    trendingLoading: '読み込み中...',
+    trendingError: 'キーワードを読み込めませんでした。',
+    trendingUpdated: '更新'
   }
 }[locale];
 
@@ -214,63 +229,77 @@ const faqJsonLd = {
       </header>
 
       <section class="px-4 py-5 lg:px-10">
-        <div class="max-w-md">
-          <input
-            id="tool-search"
-            class="w-full rounded-full border border-sky-100 bg-white px-4 py-3 text-sm outline-none focus:border-sky-400"
-            placeholder={t.searchPlaceholder}
-            type="text"
-          />
-        </div>
-
-        <div class="mt-5">
-          <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{t.heroTitle}</h1>
-          <p class="mt-1 text-slate-500">{t.heroDesc}</p>
-        </div>
-
-        <div class="mt-4 flex gap-2 overflow-x-auto pb-2">
-          {t.tabs.map((tab, idx) => (
-            <button
-              class:list={[
-                'whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium',
-                idx === 0
-                  ? 'bg-sky-500 text-white'
-                  : 'border border-sky-100 bg-white text-slate-600'
-              ]}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <section class="space-y-4 px-4 pb-4 lg:px-10">
-        {rows.map((row, idx) => (
-          <div class="flex items-center gap-2" data-slider data-row={idx} data-row-wrap>
-            <button class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-sky-100 bg-white text-lg text-sky-500" data-nav="prev" aria-label="이전 카드">‹</button>
-            <div class="flex-1 overflow-hidden">
-              <div class="flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" data-track>
-                {[0, 1, 2].flatMap((dup) =>
-                  row.map((card) => (
-                  <a
-                    href={card.href}
-                    data-card
-                    data-dup={dup}
-                    data-search={`${card.title} ${card.desc}`.toLowerCase()}
-                    class="min-w-[72vw] snap-start rounded-xl border border-sky-100 bg-white p-4 transition hover:shadow-sm sm:min-w-[210px] lg:min-w-[230px]"
-                  >
-                    <div class:list={['flex h-10 w-10 items-center justify-center rounded-lg text-base', card.iconClass]}>{card.icon}</div>
-                    <h2 class="mt-3 text-base font-bold tracking-tight text-slate-900">{card.title}</h2>
-                    <p class="mt-1 text-xs leading-relaxed text-slate-500">{card.desc}</p>
-                  </a>
-                )))}
-              </div>
+        <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
+          <div>
+            <div class="max-w-md">
+              <input
+                id="tool-search"
+                class="w-full rounded-full border border-sky-100 bg-white px-4 py-3 text-sm outline-none focus:border-sky-400"
+                placeholder={t.searchPlaceholder}
+                type="text"
+              />
             </div>
-            <button class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-sky-100 bg-white text-lg text-sky-500" data-nav="next" aria-label="다음 카드">›</button>
+
+            <div class="mt-5">
+              <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{t.heroTitle}</h1>
+              <p class="mt-1 text-slate-500">{t.heroDesc}</p>
+            </div>
+
+            <div class="mt-4 flex gap-2 overflow-x-auto pb-2">
+              {t.tabs.map((tab, idx) => (
+                <button
+                  class:list={[
+                    'whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium',
+                    idx === 0
+                      ? 'bg-sky-500 text-white'
+                      : 'border border-sky-100 bg-white text-slate-600'
+                  ]}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+
+            <div class="space-y-4 pb-4">
+              {rows.map((row, idx) => (
+                <div class="flex items-center gap-2" data-slider data-row={idx} data-row-wrap>
+                  <button class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-sky-100 bg-white text-lg text-sky-500" data-nav="prev" aria-label="이전 카드">‹</button>
+                  <div class="flex-1 overflow-hidden">
+                    <div class="flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" data-track>
+                      {[0, 1, 2].flatMap((dup) =>
+                        row.map((card) => (
+                        <a
+                          href={card.href}
+                          data-card
+                          data-dup={dup}
+                          data-search={`${card.title} ${card.desc}`.toLowerCase()}
+                          class="min-w-[72vw] snap-start rounded-xl border border-sky-100 bg-white p-4 transition hover:shadow-sm sm:min-w-[210px] lg:min-w-[230px]"
+                        >
+                          <div class:list={['flex h-10 w-10 items-center justify-center rounded-lg text-base', card.iconClass]}>{card.icon}</div>
+                          <h2 class="mt-3 text-base font-bold tracking-tight text-slate-900">{card.title}</h2>
+                          <p class="mt-1 text-xs leading-relaxed text-slate-500">{card.desc}</p>
+                        </a>
+                      )))}
+                    </div>
+                  </div>
+                  <button class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-sky-100 bg-white text-lg text-sky-500" data-nav="next" aria-label="다음 카드">›</button>
+                </div>
+              ))}
+            </div>
+            <p id="search-empty" class="hidden pb-2 text-sm text-slate-500">{t.noResult}</p>
           </div>
-        ))}
+
+          <aside class="xl:sticky xl:top-4 xl:h-fit">
+            <article class="rounded-xl border border-slate-200 bg-white p-4">
+              <h2 class="text-base font-bold tracking-tight text-slate-900">{t.trendingTitle}</h2>
+              <p class="mt-1 text-xs text-slate-500">{t.trendingDesc}</p>
+              <p id="trending-status" class="mt-3 text-xs text-slate-500">{t.trendingLoading}</p>
+              <ol id="trending-list" class="mt-2 space-y-2 text-sm"></ol>
+              <p id="trending-updated" class="mt-3 text-[11px] text-slate-400"></p>
+            </article>
+          </aside>
+        </div>
       </section>
-      <p id="search-empty" class="hidden px-4 pb-4 text-sm text-slate-500 lg:px-10">{t.noResult}</p>
 
       <section class="px-4 pb-2 lg:px-10">
         <article class="rounded-xl border border-slate-200 bg-white p-5">
@@ -322,6 +351,19 @@ const faqJsonLd = {
     const sliderRows = document.querySelectorAll('[data-slider]');
     const searchInput = document.getElementById('tool-search');
     const emptyEl = document.getElementById('search-empty');
+    const trendingListEl = document.getElementById('trending-list');
+    const trendingStatusEl = document.getElementById('trending-status');
+    const trendingUpdatedEl = document.getElementById('trending-updated');
+    const uiText = {
+      loading: { ko: '불러오는 중...', en: 'Loading...', ja: '読み込み中...' },
+      error: { ko: '인기 키워드를 불러오지 못했습니다.', en: 'Failed to load trends.', ja: 'キーワードを読み込めませんでした。' },
+      updated: { ko: '업데이트', en: 'Updated', ja: '更新' }
+    };
+    const locale = document.documentElement.lang?.startsWith('ja')
+      ? 'ja'
+      : document.documentElement.lang?.startsWith('en')
+        ? 'en'
+        : 'ko';
 
     const dayKey = () => {
       const now = new Date();
@@ -464,6 +506,47 @@ const faqJsonLd = {
     }
     searchInput?.addEventListener('input', applySearch);
     applySearch();
+
+    const renderTrends = (items) => {
+      if (!(trendingListEl instanceof HTMLElement)) return;
+      trendingListEl.innerHTML = '';
+      items.forEach((item) => {
+        const li = document.createElement('li');
+        const link = document.createElement('a');
+        const rank = document.createElement('span');
+        rank.className = 'inline-flex h-5 w-5 items-center justify-center rounded-full bg-sky-100 text-[11px] font-bold text-sky-700';
+        rank.textContent = String(item.rank);
+        link.className = 'inline-flex items-center gap-2 text-slate-700 hover:text-sky-700';
+        link.href = `https://www.google.com/search?q=${encodeURIComponent(item.title)}`;
+        link.target = '_blank';
+        link.rel = 'nofollow noopener noreferrer';
+        link.append(rank, document.createTextNode(item.title));
+        li.append(link);
+        trendingListEl.append(li);
+      });
+    };
+
+    const loadTrends = async () => {
+      if (!(trendingStatusEl instanceof HTMLElement) || !(trendingUpdatedEl instanceof HTMLElement)) return;
+      trendingStatusEl.textContent = uiText.loading[locale];
+      try {
+        const hl = locale === 'ja' ? 'ja' : locale === 'en' ? 'en-US' : 'ko';
+        const res = await fetch(`/api/trending?geo=KR&hl=${encodeURIComponent(hl)}&limit=10`, { credentials: 'same-origin' });
+        if (!res.ok) throw new Error(`status ${res.status}`);
+        const data = await res.json();
+        if (!Array.isArray(data.items) || data.items.length === 0) throw new Error('empty');
+        renderTrends(data.items);
+        trendingStatusEl.textContent = '';
+        const d = new Date(data.updatedAt || Date.now());
+        if (!Number.isNaN(d.getTime())) {
+          trendingUpdatedEl.textContent = `${uiText.updated[locale]}: ${d.toLocaleString()}`;
+        }
+      } catch {
+        trendingStatusEl.textContent = uiText.error[locale];
+      }
+    };
+
+    loadTrends();
   </script>
 
   <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)}></script>
