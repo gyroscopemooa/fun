@@ -54,6 +54,15 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
             <option value="80">80</option>
           </select>
         </label>
+        <label class="text-sm font-semibold text-slate-700">
+          기간
+          <select id="ops-period" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-3 text-sm">
+            <option value="1">최근 1시간</option>
+            <option value="24" selected>최근 24시간</option>
+            <option value="168">최근 7일</option>
+            <option value="0">전체</option>
+          </select>
+        </label>
         <label class="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
           <input id="ops-flagged" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-sky-600" />
           문제 있는 생성만 보기
@@ -144,6 +153,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     const statusSelect = document.getElementById('ops-status');
     const toolSelect = document.getElementById('ops-tool');
     const limitSelect = document.getElementById('ops-limit');
+    const periodSelect = document.getElementById('ops-period');
     const flaggedCheckbox = document.getElementById('ops-flagged');
     let currentPayload = null;
 
@@ -352,10 +362,12 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       const status = statusSelect instanceof HTMLSelectElement ? statusSelect.value : '';
       const toolType = toolSelect instanceof HTMLSelectElement ? toolSelect.value : '';
       const limit = limitSelect instanceof HTMLSelectElement ? limitSelect.value : '20';
+      const sinceHours = periodSelect instanceof HTMLSelectElement ? periodSelect.value : '24';
       const flagged = flaggedCheckbox instanceof HTMLInputElement ? flaggedCheckbox.checked : false;
       if (status) params.set('status', status);
       if (toolType) params.set('toolType', toolType);
       if (limit) params.set('limit', limit);
+      if (sinceHours && sinceHours !== '0') params.set('sinceHours', sinceHours);
       if (flagged) params.set('flagged', 'true');
       return params;
     };
@@ -364,9 +376,10 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       try {
         setStatus('최근 생성 작업을 불러오는 중입니다...');
         const params = buildQuery();
+        const sinceHours = periodSelect instanceof HTMLSelectElement ? periodSelect.value : '24';
         const [recentResponse, alertResponse] = await Promise.all([
           fetch(`${API_BASE}/jobs/recent?${params.toString()}`),
-          fetch(`${API_BASE}/jobs/alerts`)
+          fetch(`${API_BASE}/jobs/alerts${sinceHours && sinceHours !== '0' ? `?sinceHours=${encodeURIComponent(sinceHours)}` : ''}`)
         ]);
         const payload = await recentResponse.json();
         const alerts = await alertResponse.json();
@@ -377,7 +390,8 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         renderList(payload.items ?? []);
         renderTrends(payload.items ?? []);
         renderAlerts(alerts);
-        setStatus(`최근 작업 ${Array.isArray(payload.items) ? payload.items.length : 0}건을 불러왔습니다. 경고 ${alerts?.totalFlagged ?? 0}건`);
+        const periodLabel = periodSelect instanceof HTMLSelectElement ? periodSelect.options[periodSelect.selectedIndex]?.text ?? '' : '';
+        setStatus(`${periodLabel || '선택 기간'} 기준 최근 작업 ${Array.isArray(payload.items) ? payload.items.length : 0}건, 경고 ${alerts?.totalFlagged ?? 0}건`);
       } catch (error) {
         setStatus(error instanceof Error ? error.message : 'ops load failed');
       }

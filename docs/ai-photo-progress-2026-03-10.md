@@ -45,6 +45,7 @@
 ## Debug / Admin State
 - `/tools/ai-photo-debug?jobId=...` exists.
 - `/tools/ai-photo-ops` exists for recent job monitoring.
+- `/tools/ai-photo-admin` exists as the admin entry point.
 - Debug page shows:
   - original vs recommended slider
   - candidate compare switching
@@ -58,8 +59,17 @@
   - recent jobs
   - failed / low-quality / low-identity flags
   - provider / crop / pose / suit summaries
+  - period filtering (`1h / 24h / 7d / all`)
+  - tool/provider trend cards
   - direct links to original / recommended / debug page
   - JSON export for the current filtered view
+- Job snapshots are persisted to disk and recovered after server restart.
+- AI pages now include:
+  - admin links
+  - debug links
+  - pre-generate score summary
+  - live alignment overlay
+  - retake coaching CTA
 
 ## Important Remaining Gaps
 - External AI provider keys are still needed for real `remove.bg` / `PhotoRoom` calls.
@@ -69,10 +79,10 @@
 - Pose correction and relighting are still rule-based.
 
 ## Recommended Next Steps
-1. Add server-side persistence for job summaries/debug snapshots beyond in-memory lifetime.
+1. Add operator-facing diff views for recommended vs rejected variants over time.
 2. When keys are available, enable external background removal and validate cache behavior.
-3. Add stronger operator-facing reporting for failed/low-score generations over time.
-4. Add a dedicated admin entry point linking debug and ops pages from the AI tools.
+3. Add stronger period-based aggregate reporting with exportable summaries.
+4. Add more robust suit/template asset management and versioning.
 
 ## Last Known Good Verification
-- `npm run build` passed after the latest guidance and progress-save updates.
+- `npm run build` passed after admin hub, ops filters, and persisted snapshot updates.

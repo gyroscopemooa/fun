@@ -200,6 +200,12 @@ const loadPersistedRecentJobs = async () => {
   }
 };
 
+const applySinceHoursFilter = (items, sinceHours) => {
+  if (!Number.isFinite(sinceHours) || sinceHours <= 0) return items;
+  const cutoff = Date.now() - (sinceHours * 60 * 60 * 1000);
+  return items.filter((item) => new Date(item.createdAt ?? 0).getTime() >= cutoff);
+};
+
 const createPolarCheckout = async ({ order, productId, clientSessionId = null }) => {
   const accessToken = process.env.POLAR_ACCESS_TOKEN;
   if (!accessToken) {
@@ -496,6 +502,7 @@ app.get('/jobs/recent', async (req, res) => {
   const statusFilter = typeof req.query.status === 'string' ? req.query.status.trim().toLowerCase() : '';
   const flaggedOnly = String(req.query.flagged ?? '').toLowerCase() === 'true';
   const toolFilter = typeof req.query.toolType === 'string' ? req.query.toolType.trim().toLowerCase() : '';
+  const sinceHours = Number(req.query.sinceHours ?? 0) || 0;
 
   const memoryJobs = Array.from(db.jobs.values());
   const persistedJobs = await loadPersistedRecentJobs();
@@ -507,6 +514,8 @@ app.get('/jobs/recent', async (req, res) => {
   let items = Array.from(deduped.values())
     .sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())
     .map(toJobSummary);
+
+  items = applySinceHoursFilter(items, sinceHours);
 
   if (statusFilter) {
     items = items.filter((item) => String(item.status).toLowerCase() === statusFilter);
@@ -534,12 +543,14 @@ app.get('/jobs/recent', async (req, res) => {
       limit,
       status: statusFilter || null,
       flagged: flaggedOnly,
-      toolType: toolFilter || null
+      toolType: toolFilter || null,
+      sinceHours: sinceHours > 0 ? sinceHours : null
     }
   });
 });
 
-app.get('/jobs/alerts', async (_req, res) => {
+app.get('/jobs/alerts', async (req, res) => {
+  const sinceHours = Number(req.query.sinceHours ?? 0) || 0;
   const memoryJobs = Array.from(db.jobs.values());
   const persistedJobs = await loadPersistedRecentJobs();
   const deduped = new Map();
@@ -551,7 +562,9 @@ app.get('/jobs/alerts', async (_req, res) => {
     .sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())
     .map(toJobSummary);
 
-  const flagged = summaries.filter((item) => Array.isArray(item.flags) && item.flags.length > 0);
+  const filteredSummaries = applySinceHoursFilter(summaries, sinceHours);
+
+  const flagged = filteredSummaries.filter((item) => Array.isArray(item.flags) && item.flags.length > 0);
   const toolBreakdown = {};
   const providerBreakdown = {};
 
@@ -572,11 +585,12 @@ app.get('/jobs/alerts', async (_req, res) => {
   });
 
   return res.json({
-    totalJobs: summaries.length,
+    totalJobs: filteredSummaries.length,
     totalFlagged: flagged.length,
     latestFlagged: flagged.slice(0, 12),
     toolBreakdown,
-    providerBreakdown
+    providerBreakdown,
+    sinceHours: sinceHours > 0 ? sinceHours : null
   });
 });
 
