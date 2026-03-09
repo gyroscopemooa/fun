@@ -51,6 +51,10 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
             초기화
           </button>
         </div>
+        <label class="mt-2 inline-flex items-center gap-2 text-xs text-slate-600">
+          <input id="camera-mirror-fix" type="checkbox" class="h-4 w-4" checked />
+          카메라 좌우반전 보정(헷갈리면 ON 유지)
+        </label>
 
         <div class="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-3">
           <video id="camera" class="hidden h-64 w-full rounded-lg bg-black object-cover" autoplay playsinline></video>
@@ -203,6 +207,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     const fileInput = document.getElementById('file-input');
     const cameraStartBtn = document.getElementById('camera-start');
     const cameraCaptureBtn = document.getElementById('camera-capture');
+    const cameraMirrorFixEl = document.getElementById('camera-mirror-fix');
     const cameraEl = document.getElementById('camera');
     const resetBtn = document.getElementById('reset-all');
     const sourcePreview = document.getElementById('source-preview');
@@ -749,7 +754,15 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         canvas.height = cameraEl.videoHeight || 960;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
+        const applyMirrorFix = cameraMirrorFixEl instanceof HTMLInputElement ? cameraMirrorFixEl.checked : true;
+        if (applyMirrorFix) {
+          ctx.translate(canvas.width, 0);
+          ctx.scale(-1, 1);
+        }
         ctx.drawImage(cameraEl, 0, 0, canvas.width, canvas.height);
+        if (applyMirrorFix) {
+          ctx.setTransform(1, 0, 0, 1, 0, 0);
+        }
         const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
         const blob = dataURLToBlob(dataUrl);
         const file = new File([blob], `camera-${Date.now()}.jpg`, { type: 'image/jpeg' });
