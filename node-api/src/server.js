@@ -34,10 +34,25 @@ app.get('/health', (_req, res) => {
 });
 
 app.get('/config', (_req, res) => {
+  const removeBgReady = Boolean(process.env.REMOVE_BG_API_KEY);
+  const photoroomReady = Boolean(process.env.PHOTOROOM_API_KEY && process.env.PHOTOROOM_REMOVE_BG_URL);
+  const polarReady = Boolean(
+    process.env.POLAR_ACCESS_TOKEN
+    && process.env.POLAR_PRODUCT_BASE
+    && process.env.POLAR_PRODUCT_ADD2
+    && process.env.POLAR_PRODUCT_ADD3
+    && process.env.POLAR_PRODUCT_ADD7
+  );
+
   res.json({
     imageProvider: getResolvedImageProvider(),
     configuredImageProvider: getImageProvider(),
-    paymentMode
+    paymentMode,
+    readiness: {
+      removeBgReady,
+      photoroomReady,
+      polarReady
+    }
   });
 });
 

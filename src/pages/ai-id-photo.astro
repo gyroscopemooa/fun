@@ -617,7 +617,10 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         ]);
         if (!healthRes.ok || !configRes.ok) throw new Error('status check failed');
         const config = await configRes.json();
-        setApiStatus(`API 연결됨 · provider=${config.imageProvider} · payment=${config.paymentMode}`);
+        const configuredProvider = config.configuredImageProvider ?? 'unknown';
+        const resolvedProvider = config.imageProvider ?? 'unknown';
+        const removeBgReady = Boolean(config?.readiness?.removeBgReady);
+        setApiStatus(`API 연결됨 · provider=${resolvedProvider} (configured=${configuredProvider}) · payment=${config.paymentMode} · remove.bg key=${removeBgReady ? 'OK' : 'MISSING'}`);
       } catch {
         setApiStatus('API 미연결 · 로컬 fallback 모드');
       }
