@@ -437,13 +437,6 @@ const faqJsonLd = {
     const applySearch = () => {
       if (!searchInput) return;
       const keyword = searchInput.value.trim().toLowerCase();
-      const url = new URL(window.location.href);
-      if (keyword) {
-        url.searchParams.set('q', keyword);
-      } else {
-        url.searchParams.delete('q');
-      }
-      window.history.replaceState({}, '', url.toString());
       let visibleTotal = 0;
 
       sliderRows.forEach((rowEl) => {
@@ -467,10 +460,6 @@ const faqJsonLd = {
       }
     };
 
-    const initialQ = new URL(window.location.href).searchParams.get('q');
-    if (searchInput && initialQ) {
-      searchInput.value = initialQ;
-    }
     searchInput?.addEventListener('input', applySearch);
     applySearch();
 
