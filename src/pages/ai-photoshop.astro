@@ -231,6 +231,8 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     let isGenerating = false;
     let basePaid = false;
     let baseOrderId = null;
+    let apiOnline = false;
+    let paymentMode = 'mock';
 
     const setStatus = (text) => {
       if (statusEl) statusEl.textContent = text;
@@ -681,6 +683,8 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         ]);
         if (!healthRes.ok || !configRes.ok) throw new Error('status check failed');
         const config = await configRes.json();
+        apiOnline = true;
+        paymentMode = config?.paymentMode ?? 'mock';
         const configuredProvider = config.configuredImageProvider ?? 'unknown';
         const resolvedProvider = config.imageProvider ?? 'unknown';
         const removeBgReady = Boolean(config?.readiness?.removeBgReady);
@@ -689,6 +693,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         const providerBilling = resolvedProvider === 'local_sharp' ? 'free' : 'paid';
         setApiStatus(`API 연결됨 · provider=${resolvedProvider}/${providerBilling} (configured=${configuredProvider}) · externalAI=${externalAi} · payment=${config.paymentMode} · remove.bg=${removeBgReady ? 'OK' : 'MISSING'} · photoroom=${photoroomReady ? 'OK' : 'MISSING'}`);
       } catch {
+        apiOnline = false;
         setApiStatus('API 미연결 · 로컬 fallback 모드');
       }
     };
@@ -737,7 +742,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     }
 
     if (cameraCaptureBtn instanceof HTMLButtonElement) {
-      cameraCaptureBtn.addEventListener('click', () => {
+      cameraCaptureBtn.addEventListener('click', async () => {
         if (!(cameraEl instanceof HTMLVideoElement)) return;
         const canvas = document.createElement('canvas');
         canvas.width = cameraEl.videoWidth || 720;
@@ -750,7 +755,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         const file = new File([blob], `camera-${Date.now()}.jpg`, { type: 'image/jpeg' });
         setSource(dataUrl, file);
         stopCamera();
-        const hint = getQualityHint(canvas.width || 0, canvas.height || 0);
+        const hint = await inspectImageFile(file);
         setStatus(hint ? `${hint} 계속 진행합니다.` : '촬영 완료.');
       });
     }
@@ -767,6 +772,11 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           return;
         }
         if (isGenerating) return;
+        if (!apiOnline) {
+          setStatus(`API 미연결 상태입니다. 결제 확인 없이 +${count}장 로컬 추가 생성을 진행합니다.`);
+          await generateCandidates(count, true);
+          return;
+        }
         try {
           setStatus('추가 생성 결제를 확인하고 있습니다...');
           const checkout = await requestAddonCheckout(count);
@@ -788,9 +798,19 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         const selected = candidates.filter((item) => item.selected);
         if (selected.length !== 2) return;
         if (isGenerating) return;
+        if (!apiOnline) {
+          try {
+            setStatus('API 미연결 상태입니다. 결제 확인 없이 다운로드를 시작합니다.');
+            await Promise.all(selected.map((item, idx) => downloadCandidate(item, idx + 1, 'manytool-id-photo')));
+            setStatus('다운로드를 시작했습니다.');
+          } catch {
+            setStatus('다운로드에 실패했습니다. 다시 시도해주세요.');
+          }
+          return;
+        }
         if (!basePaid) {
           try {
-            setStatus('기본 결제를 확인하고 있습니다...');
+            setStatus(paymentMode === 'mock' ? '기본 결제(mock) 상태를 확인하고 있습니다...' : '기본 결제를 확인하고 있습니다...');
             const checkout = await requestBaseCheckout();
             if (!checkout.paid) {
               if (moveToCheckoutIfPending(checkout, '결제 페이지로 이동합니다. 결제 후 돌아오면 다운로드가 가능합니다.', true)) return;
