@@ -67,6 +67,7 @@
   - current-filter debug jump link
   - representative debug links from tool/provider drill-down groups
   - hour-slot mini trend cards for failure / warning / fallback hotspots
+  - mini trend mode tabs for risk / failed / flagged / fallback
   - inline representative preview panel when clicking tool/provider drill-down cards
   - representative preview panel now shows retry delta before/after quality score
   - ops summary copy/download

@@ -115,6 +115,12 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     <section class="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
       <h2 class="text-xl font-black text-slate-900">시간대별 mini trend</h2>
       <p class="mt-1 text-sm text-slate-600">최근 작업 기준으로 실패, 경고, fallback이 몰린 시간대를 빠르게 봅니다.</p>
+      <div class="mt-4 flex flex-wrap gap-2">
+        <button type="button" class="ops-mini-trend-tab rounded-full border border-slate-300 bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:border-slate-900" data-mini-trend-tab="risk">risk</button>
+        <button type="button" class="ops-mini-trend-tab rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-900" data-mini-trend-tab="failed">failed</button>
+        <button type="button" class="ops-mini-trend-tab rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-900" data-mini-trend-tab="flagged">flagged</button>
+        <button type="button" class="ops-mini-trend-tab rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-900" data-mini-trend-tab="fallback">fallback</button>
+      </div>
       <div id="ops-mini-trend" class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4"></div>
     </section>
 
@@ -234,6 +240,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     const downloadSummaryBtn = document.getElementById('ops-download-summary');
     const downloadJsonBtn = document.getElementById('ops-download-json');
     const presetButtons = Array.from(document.querySelectorAll('.ops-preset'));
+    const miniTrendTabs = Array.from(document.querySelectorAll('.ops-mini-trend-tab'));
 
     const filters = {
       status: document.getElementById('ops-status'),
@@ -247,6 +254,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
 
     let latestRecentPayload = null;
     let latestAlertsPayload = null;
+    let miniTrendMode = 'risk';
 
     const setStatus = (text) => {
       if (statusTextEl instanceof HTMLElement) statusTextEl.textContent = text;
@@ -499,7 +507,23 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     const renderMiniTrend = (payload) => {
       if (!(miniTrendEl instanceof HTMLElement)) return;
       const items = Array.isArray(payload?.items) ? payload.items : [];
-      const trendItems = summarizeMiniTrend(items);
+      const trendItems = summarizeMiniTrend(items).sort((a, b) => {
+        if (miniTrendMode === 'failed') return b.failed - a.failed || b.total - a.total;
+        if (miniTrendMode === 'flagged') return b.flagged - a.flagged || b.total - a.total;
+        if (miniTrendMode === 'fallback') return b.fallback - a.fallback || b.total - a.total;
+        const riskA = a.failed * 4 + a.flagged * 2 + a.fallback;
+        const riskB = b.failed * 4 + b.flagged * 2 + b.fallback;
+        return riskB - riskA || b.total - a.total;
+      }).slice(0, 4);
+      miniTrendTabs.forEach((button) => {
+        const active = button.getAttribute('data-mini-trend-tab') === miniTrendMode;
+        button.classList.toggle('bg-slate-900', active);
+        button.classList.toggle('text-white', active);
+        button.classList.toggle('border-slate-900', active);
+        button.classList.toggle('bg-white', !active);
+        button.classList.toggle('text-slate-700', !active);
+        button.classList.toggle('border-slate-300', !active);
+      });
       miniTrendEl.innerHTML = trendItems.length
         ? trendItems.map((item) => {
             const severity = item.failed > 0 ? 'rose' : item.flagged > 1 ? 'amber' : item.fallback > 0 ? 'sky' : 'slate';
@@ -939,6 +963,12 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       button.addEventListener('click', () => {
         const preset = button.getAttribute('data-preset') ?? 'all';
         applyPreset(preset);
+      });
+    });
+    miniTrendTabs.forEach((button) => {
+      button.addEventListener('click', () => {
+        miniTrendMode = button.getAttribute('data-mini-trend-tab') ?? 'risk';
+        renderMiniTrend(latestRecentPayload);
       });
     });
     document.addEventListener('click', (event) => {
