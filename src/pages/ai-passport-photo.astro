@@ -274,6 +274,13 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     const MAX_UPLOAD_BYTES = 12 * 1024 * 1024;
     const MIN_WIDTH = 480;
     const MIN_HEIGHT = 640;
+    const MEDIAPIPE_TASKS_VERSION = '0.10.14';
+    const MEDIAPIPE_WASM_BASE = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MEDIAPIPE_TASKS_VERSION}/wasm`;
+    const MEDIAPIPE_FACE_MODEL = 'https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite';
+
+    let mediaPipeDetector = null;
+    let mediaPipeDetectorLoading = null;
+    let mediaPipeUnavailable = false;
 
     const validateSelectedFile = (file, inputEl) => {
       if (!String(file.type).startsWith('image/')) {
@@ -303,11 +310,69 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       return '';
     };
 
+    const getMediaPipeDetector = async () => {
+      if (mediaPipeDetector) return mediaPipeDetector;
+      if (mediaPipeUnavailable) return null;
+      if (mediaPipeDetectorLoading) return mediaPipeDetectorLoading;
+
+      mediaPipeDetectorLoading = (async () => {
+        try {
+          const vision = await import(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MEDIAPIPE_TASKS_VERSION}`);
+          const filesetResolver = await vision.FilesetResolver.forVisionTasks(MEDIAPIPE_WASM_BASE);
+          mediaPipeDetector = await vision.FaceDetector.createFromOptions(filesetResolver, {
+            baseOptions: { modelAssetPath: MEDIAPIPE_FACE_MODEL },
+            runningMode: 'IMAGE',
+            minDetectionConfidence: 0.5
+          });
+          return mediaPipeDetector;
+        } catch {
+          mediaPipeUnavailable = true;
+          return null;
+        } finally {
+          mediaPipeDetectorLoading = null;
+        }
+      })();
+
+      return mediaPipeDetectorLoading;
+    };
+
+    const getFaceQualityHint = async (img, width, height) => {
+      const detector = await getMediaPipeDetector();
+      if (!detector) return '';
+
+      try {
+        const result = detector.detect(img);
+        const detections = Array.isArray(result?.detections) ? result.detections : [];
+        if (detections.length === 0) return '얼굴을 인식하지 못했습니다. 정면 사진을 권장합니다.';
+        if (detections.length > 1) return '여러 얼굴이 감지되었습니다. 1인 사진을 권장합니다.';
+
+        const box = detections[0]?.boundingBox;
+        if (!box) return '';
+
+        const faceRatio = Number(box.width || 0) / Math.max(1, width);
+        if (faceRatio < 0.18) return '얼굴이 작게 보여 품질이 떨어질 수 있습니다. 얼굴이 더 크게 나온 사진을 권장합니다.';
+        if (faceRatio > 0.78) return '얼굴이 너무 가까워 규격 정렬이 어려울 수 있습니다. 약간 떨어져 촬영해 주세요.';
+
+        const centerX = (Number(box.originX || 0) + Number(box.width || 0) / 2) / Math.max(1, width);
+        if (centerX < 0.2 || centerX > 0.8) return '얼굴이 화면 중앙에서 벗어나 있습니다. 중앙 정렬 사진을 권장합니다.';
+        return '';
+      } catch {
+        return '';
+      }
+    };
+
     const inspectImageFile = async (file) => {
       const objectUrl = URL.createObjectURL(file);
       try {
         const img = await loadImageFromUrl(objectUrl);
-        return getQualityHint(img.naturalWidth || 0, img.naturalHeight || 0);
+        const width = img.naturalWidth || 0;
+        const height = img.naturalHeight || 0;
+        const hints = [];
+        const qualityHint = getQualityHint(width, height);
+        if (qualityHint) hints.push(qualityHint);
+        const faceHint = await getFaceQualityHint(img, width, height);
+        if (faceHint) hints.push(faceHint);
+        return hints.join(' ');
       } finally {
         URL.revokeObjectURL(objectUrl);
       }
