@@ -247,6 +247,48 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       });
     };
 
+    const MAX_UPLOAD_BYTES = 12 * 1024 * 1024;
+    const MIN_WIDTH = 480;
+    const MIN_HEIGHT = 640;
+
+    const validateSelectedFile = (file, inputEl) => {
+      if (!String(file.type).startsWith('image/')) {
+        setStatus('이미지 파일만 업로드할 수 있습니다.');
+        if (inputEl) inputEl.value = '';
+        return false;
+      }
+      if (file.size > MAX_UPLOAD_BYTES) {
+        setStatus('이미지 용량은 12MB 이하만 가능합니다.');
+        if (inputEl) inputEl.value = '';
+        return false;
+      }
+      return true;
+    };
+
+    const loadImageFromUrl = (url) => new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('image load failed'));
+      img.src = url;
+    });
+
+    const getQualityHint = (width, height) => {
+      if (width < MIN_WIDTH || height < MIN_HEIGHT) {
+        return `해상도(${width}x${height})가 낮아 품질이 떨어질 수 있습니다.`;
+      }
+      return '';
+    };
+
+    const inspectImageFile = async (file) => {
+      const objectUrl = URL.createObjectURL(file);
+      try {
+        const img = await loadImageFromUrl(objectUrl);
+        return getQualityHint(img.naturalWidth || 0, img.naturalHeight || 0);
+      } finally {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+
     const setSource = (dataUrl, file = null) => {
       sourceDataUrl = dataUrl;
       sourceFile = file;
@@ -501,26 +543,18 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     loadApiStatus();
 
     if (fileInput instanceof HTMLInputElement) {
-      fileInput.addEventListener('change', (e) => {
+      fileInput.addEventListener('change', async (e) => {
         const input = e.target;
         const file = input.files && input.files[0];
         if (!file) return;
-        if (!String(file.type).startsWith('image/')) {
-          setStatus('이미지 파일만 업로드할 수 있습니다.');
-          input.value = '';
-          return;
-        }
-        if (file.size > 12 * 1024 * 1024) {
-          setStatus('이미지 용량은 12MB 이하만 가능합니다.');
-          input.value = '';
-          return;
-        }
+        if (!validateSelectedFile(file, input)) return;
         stopCamera();
         const reader = new FileReader();
-        reader.onload = () => {
+        reader.onload = async () => {
           if (typeof reader.result === 'string') {
             setSource(reader.result, file);
-            setStatus('사진 업로드 완료.');
+            const hint = await inspectImageFile(file);
+            setStatus(hint ? `${hint} 계속 진행합니다.` : '사진 업로드 완료.');
           }
         };
         reader.readAsDataURL(file);
@@ -561,7 +595,8 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         const file = new File([blob], `camera-${Date.now()}.jpg`, { type: 'image/jpeg' });
         setSource(dataUrl, file);
         stopCamera();
-        setStatus('촬영 완료.');
+        const hint = getQualityHint(canvas.width || 0, canvas.height || 0);
+        setStatus(hint ? `${hint} 계속 진행합니다.` : '촬영 완료.');
       });
     }
 
