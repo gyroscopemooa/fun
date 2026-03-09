@@ -572,6 +572,17 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         drilldownPreviewResultEl.src = item.recommendedImageUrl ?? '';
       }
       if (drilldownPreviewMetaEl instanceof HTMLElement) {
+        const retryDelta = typeof item.qualityScoreBeforeRetry === 'number' && typeof item.qualityScore === 'number'
+          ? item.qualityScore - item.qualityScoreBeforeRetry
+          : null;
+        const retryToneClass = retryDelta !== null && retryDelta > 0
+          ? 'text-emerald-700'
+          : retryDelta !== null && retryDelta < 0
+            ? 'text-rose-700'
+            : 'text-slate-900';
+        const retrySummary = retryDelta === null
+          ? 'no retry data'
+          : `${item.finalQualityRetryTriggered ? 'retry used' : 'retry skipped'} / ${retryDelta > 0 ? '+' : ''}${formatNumber(retryDelta)}`;
         drilldownPreviewMetaEl.innerHTML = `
           <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">job</p>
@@ -584,6 +595,11 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">quality / identity</p>
             <p class="mt-1 text-sm font-bold text-slate-900">${formatNumber(item.qualityScore)} / ${formatNumber(item.identityScore)}</p>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">retry delta</p>
+            <p class="mt-1 text-sm font-bold ${retryToneClass}">${retrySummary}</p>
+            <p class="mt-1 text-xs text-slate-500">before ${formatNumber(item.qualityScoreBeforeRetry)} -> after ${formatNumber(item.qualityScore)}</p>
           </div>
           <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">flags</p>
