@@ -147,6 +147,21 @@ const toJobSummary = (job) => {
   if (Array.isArray(report?.identityRejectedVariants) && report.identityRejectedVariants.length) flags.push('identity_reject');
   if (qualityScore > 0 && qualityScore < 84) flags.push('low_quality');
   if (identityScore > 0 && identityScore < Number(report?.identityThreshold ?? 78)) flags.push('low_identity');
+  const candidateBreakdown = Array.isArray(job?.candidates)
+    ? job.candidates.map((candidate) => ({
+      id: candidate.id,
+      variant: candidate.variant,
+      recommended: Boolean(candidate.recommended),
+      regenerated: Boolean(candidate.regenerated),
+      score: typeof candidate.score === 'number' ? candidate.score : null,
+      identityScore: typeof candidate.identityScore === 'number' ? candidate.identityScore : null,
+      qualityScore,
+      imageUrl: candidate.imageUrl ?? null,
+      rejected: Array.isArray(report?.identityRejectedVariants)
+        ? report.identityRejectedVariants.includes(candidate.variant)
+        : false
+    }))
+    : [];
 
   return {
     id: job?.id ?? null,
@@ -169,6 +184,8 @@ const toJobSummary = (job) => {
     recommendedCandidateId: recommendedCandidate?.id ?? null,
     recommendedVariant: report?.recommendedVariant ?? recommendedCandidate?.variant ?? null,
     recommendedImageUrl: recommendedCandidate?.imageUrl ?? null,
+    candidateBreakdown,
+    rejectedVariants: Array.isArray(report?.identityRejectedVariants) ? report.identityRejectedVariants : [],
     originalUrl,
     candidateCount: Array.isArray(job?.candidates) ? job.candidates.length : 0,
     generatedVariants: Array.isArray(report?.generatedVariants) ? report.generatedVariants : [],

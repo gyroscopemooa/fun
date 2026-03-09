@@ -262,6 +262,35 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
                   <p class="mt-1">${escapeHtml(item.qualitySummary ?? '요약 없음')}</p>
                   ${item.suitSelectionSummary ? `<p class="mt-2 text-xs text-slate-500">정장 선택: ${escapeHtml(item.suitSelectionSummary)}</p>` : ''}
                 </div>
+                <div class="rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-700">
+                  <div class="flex items-center justify-between gap-3">
+                    <p class="font-semibold text-slate-900">후보 추적</p>
+                    <span class="text-xs text-slate-500">추천 / 생성 / 제외</span>
+                  </div>
+                  <div class="mt-2 flex flex-wrap gap-2">
+                    ${Array.isArray(item.candidateBreakdown) && item.candidateBreakdown.length
+                      ? item.candidateBreakdown.map((candidate) => `
+                          <span class="rounded-full px-2 py-1 text-[11px] font-semibold ${
+                            candidate.recommended
+                              ? 'bg-sky-100 text-sky-700'
+                              : candidate.regenerated
+                                ? 'bg-amber-100 text-amber-800'
+                                : 'bg-slate-100 text-slate-700'
+                          }">
+                            ${candidate.recommended ? '추천' : candidate.regenerated ? '재생성' : '후보'} ${escapeHtml(candidate.variant)}
+                            ${typeof candidate.score === 'number' ? ` ${escapeHtml(formatNumber(candidate.score))}` : ''}
+                          </span>
+                        `).join('')
+                      : '<span class="text-xs text-slate-500">생성된 후보 정보가 없습니다.</span>'}
+                    ${Array.isArray(item.rejectedVariants) && item.rejectedVariants.length
+                      ? item.rejectedVariants.map((variant) => `
+                          <span class="rounded-full bg-rose-100 px-2 py-1 text-[11px] font-semibold text-rose-700">
+                            제외 ${escapeHtml(variant)}
+                          </span>
+                        `).join('')
+                      : ''}
+                  </div>
+                </div>
                 <div class="flex flex-wrap gap-2">
                   <a href="/tools/ai-photo-debug?jobId=${encodeURIComponent(item.id)}" class="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800">디버그 열기</a>
                   ${item.originalUrl ? `<a href="${item.originalUrl}" target="_blank" rel="noreferrer" class="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-white">원본 보기</a>` : ''}
