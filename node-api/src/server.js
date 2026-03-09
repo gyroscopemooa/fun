@@ -6,7 +6,7 @@ import cors from 'cors';
 import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from './store.js';
-import { generateCandidatesWithProvider, getImageProvider } from './providers/providerRouter.js';
+import { generateCandidatesWithProvider, getImageProvider, getResolvedImageProvider } from './providers/providerRouter.js';
 
 const app = express();
 const port = Number(process.env.PORT ?? 8787);
@@ -29,7 +29,8 @@ app.get('/health', (_req, res) => {
 
 app.get('/config', (_req, res) => {
   res.json({
-    imageProvider: getImageProvider(),
+    imageProvider: getResolvedImageProvider(),
+    configuredImageProvider: getImageProvider(),
     paymentMode: process.env.PAYMENT_MODE ?? 'mock'
   });
 });

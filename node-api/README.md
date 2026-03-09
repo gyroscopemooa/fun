@@ -21,9 +21,16 @@ npm run dev
 
 기본 포트: `8787` (`PORT` 환경변수로 변경 가능)
 
-`.env.example` 기준 주요 변수:
-- `IMAGE_PROVIDER=local_sharp` (현재 기본)
-- `PAYMENT_MODE=mock` (현재 기본)
+주요 환경변수:
+- `IMAGE_PROVIDER=auto` (기본)
+  - `auto`면 우선순위: `remove_bg` -> `photoroom` -> `local_sharp`
+  - API 키가 없거나 외부 API 실패 시 자동으로 `local_sharp` fallback
+- `PAYMENT_MODE=mock` (기본)
+- `REMOVE_BG_API_KEY=...` (선택)
+- `REMOVE_BG_URL=https://api.remove.bg/v1.0/removebg` (선택)
+- `PHOTOROOM_API_KEY=...` (선택)
+- `PHOTOROOM_REMOVE_BG_URL=...` (선택)
+- `PHOTOROOM_IMAGE_FIELD=image_file` (선택)
 
 ## Example Flow
 1. `POST /upload` -> `photoId` 획득
@@ -36,3 +43,4 @@ npm run dev
 - 운영 전에는 Supabase/Postgres/Storage 연결로 교체하세요.
 - `PAYMENT_MODE=mock` 기본값이며, 실결제(POLAR) 연동 시 checkout/webhook 로직을 교체하면 됩니다.
 - `IMAGE_PROVIDER`를 기준으로 이미지 처리 provider를 교체할 수 있습니다.
+- 운영 권장: `IMAGE_PROVIDER=auto` + 최소 1개 외부 API 키 등록.
