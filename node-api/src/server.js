@@ -176,6 +176,12 @@ app.post('/payment/webhook', (req, res) => {
   return res.json({ ok: true, orderId, status });
 });
 
+app.get('/order/:id', (req, res) => {
+  const order = db.orders.get(req.params.id);
+  if (!order) return res.status(404).json({ error: 'order not found' });
+  return res.json(order);
+});
+
 app.get('/download/:candidateId', (req, res) => {
   const candidateId = req.params.candidateId;
   for (const job of db.jobs.values()) {

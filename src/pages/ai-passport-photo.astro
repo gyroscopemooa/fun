@@ -229,6 +229,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     let candidates = [];
     let isGenerating = false;
     let basePaid = false;
+    let baseOrderId = null;
 
     const setStatus = (text) => {
       if (statusEl) statusEl.textContent = text;
@@ -261,9 +262,11 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         const payload = {
           candidates: serializableCandidates,
           basePaid,
+          baseOrderId,
+          savedAt: Date.now(),
           outfit: outfitEl instanceof HTMLSelectElement ? outfitEl.value : 'current'
         };
-        sessionStorage.setItem(PAGE_STATE_KEY, JSON.stringify(payload));
+        localStorage.setItem(PAGE_STATE_KEY, JSON.stringify(payload));
       } catch {}
     };
 
@@ -360,7 +363,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         compareHelpEl.textContent = '사진 업로드 후 후보 생성 시 비교가 활성화됩니다.';
       }
       try {
-        sessionStorage.removeItem(PAGE_STATE_KEY);
+        localStorage.removeItem(PAGE_STATE_KEY);
       } catch {}
       setStatus(message);
     };
@@ -402,9 +405,13 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
 
     const restorePageState = () => {
       try {
-        const raw = sessionStorage.getItem(PAGE_STATE_KEY);
+        const raw = localStorage.getItem(PAGE_STATE_KEY);
         if (!raw) return;
         const parsed = JSON.parse(raw);
+        if (parsed.savedAt && Date.now() - Number(parsed.savedAt) > 1000 * 60 * 60 * 24 * 3) {
+          localStorage.removeItem(PAGE_STATE_KEY);
+          return;
+        }
         if (outfitEl instanceof HTMLSelectElement && typeof parsed.outfit === 'string') {
           outfitEl.value = parsed.outfit;
         }
@@ -423,6 +430,18 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           setStatus('이전 후보 결과를 복원했습니다. 필요하면 다시 생성할 수 있습니다.');
         }
         basePaid = Boolean(parsed.basePaid);
+        baseOrderId = typeof parsed.baseOrderId === 'string' ? parsed.baseOrderId : null;
+      } catch {}
+    };
+
+    const verifyBaseOrder = async () => {
+      if (!baseOrderId) return;
+      try {
+        const res = await fetch(`${API_BASE}/order/${baseOrderId}`);
+        if (!res.ok) return;
+        const order = await res.json();
+        basePaid = String(order.status) === 'paid';
+        savePageState();
       } catch {}
     };
 
@@ -593,6 +612,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
 
     loadApiStatus();
     restorePageState();
+    verifyBaseOrder();
 
     if (fileInput instanceof HTMLInputElement) {
       fileInput.addEventListener('change', async (e) => {
@@ -693,6 +713,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
               return;
             }
             basePaid = true;
+            baseOrderId = checkout.orderId ?? null;
             savePageState();
             setStatus('기본 결제 완료. 다운로드를 시작합니다.');
           } catch {
