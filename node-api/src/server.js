@@ -12,6 +12,9 @@ import { generateCandidatesWithProvider, getImageProvider, getResolvedImageProvi
 const app = express();
 const port = Number(process.env.PORT ?? 8787);
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 12 * 1024 * 1024 } });
+const paymentMode = process.env.PAYMENT_MODE ?? 'mock';
+const polarServer = process.env.POLAR_SERVER === 'sandbox' ? 'https://sandbox-api.polar.sh' : 'https://api.polar.sh';
+const polarCheckoutUrl = `${polarServer}/v1/checkouts`;
 
 const thisFile = fileURLToPath(import.meta.url);
 const thisDir = path.dirname(thisFile);
@@ -34,9 +37,91 @@ app.get('/config', (_req, res) => {
   res.json({
     imageProvider: getResolvedImageProvider(),
     configuredImageProvider: getImageProvider(),
-    paymentMode: process.env.PAYMENT_MODE ?? 'mock'
+    paymentMode
   });
 });
+
+const getPolarProductIdByType = (productType) => {
+  const map = {
+    base: process.env.POLAR_PRODUCT_BASE,
+    add2: process.env.POLAR_PRODUCT_ADD2,
+    add3: process.env.POLAR_PRODUCT_ADD3,
+    add7: process.env.POLAR_PRODUCT_ADD7,
+    passport_addon: process.env.POLAR_PRODUCT_PASSPORT_ADDON,
+    headshot_addon: process.env.POLAR_PRODUCT_HEADSHOT_ADDON
+  };
+  return map[productType] ?? null;
+};
+
+const createPolarCheckout = async ({ order, productId, clientSessionId = null }) => {
+  const accessToken = process.env.POLAR_ACCESS_TOKEN;
+  if (!accessToken) {
+    throw new Error('POLAR_ACCESS_TOKEN is missing');
+  }
+  if (!productId) {
+    throw new Error(`Polar product id is missing for productType=${order.productType}`);
+  }
+  const successUrl = process.env.POLAR_SUCCESS_URL ?? process.env.PUBLIC_WEB_BASE_URL ?? null;
+  const returnUrl = process.env.POLAR_RETURN_URL ?? process.env.PUBLIC_WEB_BASE_URL ?? null;
+
+  const payload = {
+    products: [productId],
+    metadata: {
+      order_id: order.id,
+      product_type: order.productType
+    }
+  };
+  if (order.jobId) payload.metadata.job_id = order.jobId;
+  if (successUrl) payload.success_url = successUrl;
+  if (returnUrl) payload.return_url = returnUrl;
+  if (clientSessionId) payload.external_customer_id = clientSessionId;
+
+  const response = await fetch(polarCheckoutUrl, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const reason = await response.text();
+    throw new Error(`polar checkout create failed: ${response.status} ${reason}`);
+  }
+  const checkout = await response.json();
+  const checkoutId = checkout?.id ?? null;
+  const checkoutSessionUrl = checkout?.url ?? null;
+  if (!checkoutSessionUrl) {
+    throw new Error('polar checkout url is missing');
+  }
+  return { checkoutId, checkoutUrl: checkoutSessionUrl };
+};
+
+const resolveOrderIdFromWebhook = (payload) => (
+  payload?.orderId
+  ?? payload?.metadata?.order_id
+  ?? payload?.metadata?.orderId
+  ?? payload?.data?.metadata?.order_id
+  ?? payload?.data?.metadata?.orderId
+  ?? payload?.data?.checkout?.metadata?.order_id
+  ?? payload?.data?.checkout?.metadata?.orderId
+  ?? null
+);
+
+const resolvePaymentStatusFromWebhook = (payload) => {
+  const eventType = String(payload?.type ?? '').toLowerCase();
+  const rawStatus = String(payload?.status ?? payload?.data?.status ?? '').toLowerCase();
+  if (eventType.includes('order.paid') || eventType.includes('checkout.succeeded')) return 'paid';
+  if (eventType.includes('order.refunded')) return 'refunded';
+  if (eventType.includes('checkout.expired')) return 'expired';
+  if (eventType.includes('checkout.failed')) return 'failed';
+  if (rawStatus === 'succeeded' || rawStatus === 'paid' || rawStatus === 'confirmed') return 'paid';
+  if (rawStatus === 'refunded') return 'refunded';
+  if (rawStatus === 'failed') return 'failed';
+  if (rawStatus === 'expired') return 'expired';
+  return 'pending';
+};
 
 app.post('/upload', upload.single('image'), async (req, res) => {
   try {
@@ -125,13 +210,14 @@ app.get('/job/:id', (req, res) => {
   return res.json(job);
 });
 
-app.post('/checkout', (req, res) => {
+app.post('/checkout', async (req, res) => {
   const {
     productType = 'add2',
     amount = 0,
     currency = 'KRW',
     jobId = null,
-    provider = 'polar'
+    provider = 'polar',
+    clientSessionId = null
   } = req.body ?? {};
 
   if (!Number.isFinite(Number(amount)) || Number(amount) <= 0) {
@@ -139,43 +225,74 @@ app.post('/checkout', (req, res) => {
   }
 
   const orderId = uuidv4();
-  const paymentMode = process.env.PAYMENT_MODE ?? 'mock';
-  const status = paymentMode === 'mock' ? 'paid' : 'pending';
-
-  db.orders.set(orderId, {
+  const order = {
     id: orderId,
     productType,
     amount: Number(amount),
     currency,
     jobId,
     provider,
-    status,
-    createdAt: new Date().toISOString()
-  });
-
-  return res.status(201).json({
-    orderId,
-    status,
+    status: paymentMode === 'mock' ? 'paid' : 'pending',
     paymentMode,
-    paid: status === 'paid'
-  });
+    polarCheckoutId: null,
+    checkoutUrl: null,
+    createdAt: new Date().toISOString()
+  };
+  db.orders.set(orderId, order);
+
+  try {
+    if (paymentMode === 'polar') {
+      const productId = getPolarProductIdByType(productType);
+      const polarCheckout = await createPolarCheckout({ order, productId, clientSessionId });
+      order.polarCheckoutId = polarCheckout.checkoutId;
+      order.checkoutUrl = polarCheckout.checkoutUrl;
+      order.status = 'pending';
+      db.orders.set(orderId, order);
+    }
+
+    return res.status(201).json({
+      orderId: order.id,
+      status: order.status,
+      paymentMode,
+      paid: order.status === 'paid',
+      checkoutUrl: order.checkoutUrl
+    });
+  } catch (error) {
+    order.status = 'failed';
+    order.error = error.message;
+    db.orders.set(orderId, order);
+    return res.status(500).json({ error: error.message, orderId: order.id, status: order.status });
+  }
 });
 
 app.post('/payment/webhook', (req, res) => {
-  // TODO: replace with Polar signature verification + real DB updates.
-  const orderId = req.body?.orderId ?? uuidv4();
-  const status = req.body?.status ?? 'paid';
-  const jobId = req.body?.jobId ?? null;
+  const insecureToken = process.env.POLAR_WEBHOOK_INSECURE_TOKEN;
+  if (insecureToken) {
+    const received = req.get('x-manytool-webhook-token');
+    if (!received || received !== insecureToken) {
+      return res.status(401).json({ error: 'invalid webhook token' });
+    }
+  }
 
-  db.orders.set(orderId, {
-    id: orderId,
-    jobId,
-    provider: 'polar',
+  const payload = req.body ?? {};
+  const orderId = resolveOrderIdFromWebhook(payload);
+  if (!orderId) {
+    return res.status(400).json({ error: 'order_id is missing in webhook payload metadata' });
+  }
+
+  const current = db.orders.get(orderId);
+  if (!current) {
+    return res.status(404).json({ error: 'order not found' });
+  }
+
+  const status = resolvePaymentStatusFromWebhook(payload);
+  const next = {
+    ...current,
     status,
-    payload: req.body ?? {},
-    createdAt: new Date().toISOString()
-  });
-
+    paidAt: status === 'paid' ? new Date().toISOString() : current.paidAt ?? null,
+    payload
+  };
+  db.orders.set(orderId, next);
   return res.json({ ok: true, orderId, status });
 });
 

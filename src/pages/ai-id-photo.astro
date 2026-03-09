@@ -592,6 +592,17 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       return res.json();
     };
 
+    const moveToCheckoutIfPending = (checkout, pendingMessage, persistBaseOrder = false) => {
+      if (!checkout || !checkout.checkoutUrl || checkout.paid) return false;
+      if (persistBaseOrder) {
+        baseOrderId = checkout.orderId ?? baseOrderId;
+        savePageState();
+      }
+      setStatus(pendingMessage);
+      window.location.href = checkout.checkoutUrl;
+      return true;
+    };
+
     if (compareSliderEl instanceof HTMLInputElement && compareAfterWrapEl instanceof HTMLElement) {
       compareSliderEl.addEventListener('input', () => {
         compareAfterWrapEl.style.width = `${compareSliderEl.value}%`;
@@ -690,6 +701,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           setStatus('추가 생성 결제를 확인하고 있습니다...');
           const checkout = await requestAddonCheckout(count);
           if (!checkout.paid) {
+            if (moveToCheckoutIfPending(checkout, '결제 페이지로 이동합니다. 결제 후 돌아와 +추가 생성을 다시 눌러주세요.')) return;
             setStatus('결제가 완료되지 않아 추가 생성을 진행할 수 없습니다.');
             return;
           }
@@ -711,6 +723,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
             setStatus('기본 결제를 확인하고 있습니다...');
             const checkout = await requestBaseCheckout();
             if (!checkout.paid) {
+              if (moveToCheckoutIfPending(checkout, '결제 페이지로 이동합니다. 결제 후 돌아오면 다운로드가 가능합니다.', true)) return;
               setStatus('결제가 완료되지 않아 다운로드할 수 없습니다.');
               return;
             }
