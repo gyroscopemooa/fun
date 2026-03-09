@@ -96,6 +96,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           <a href="/online-passport-photo" class="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-center text-sm font-semibold text-sky-700">같은 사진으로 여권사진 만들기</a>
           <a href="/ai-photoshop" class="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-center text-sm font-semibold text-sky-700">같은 사진으로 프로필 버전 만들기</a>
         </div>
+        <p id="api-status" class="mt-2 text-xs text-slate-500">API 상태 확인 중...</p>
         <p id="status" class="mt-2 text-xs text-slate-500">Node API 연결 시 서버 기반 생성, 실패 시 로컬 생성으로 자동 전환됩니다.</p>
       </article>
     </section>
@@ -177,6 +178,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     const gridEl = document.getElementById('candidate-grid');
     const downloadBtn = document.getElementById('download-selected');
     const addButtons = Array.from(document.querySelectorAll('[data-add-count]'));
+    const apiStatusEl = document.getElementById('api-status');
     const statusEl = document.getElementById('status');
     const compareBeforeEl = document.getElementById('compare-before');
     const compareAfterEl = document.getElementById('compare-after');
@@ -196,6 +198,10 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
 
     const setStatus = (text) => {
       if (statusEl) statusEl.textContent = text;
+    };
+
+    const setApiStatus = (text) => {
+      if (apiStatusEl) apiStatusEl.textContent = text;
     };
 
     const setBusy = (busy) => {
@@ -415,6 +421,22 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         compareAfterWrapEl.style.width = `${compareSliderEl.value}%`;
       });
     }
+
+    const loadApiStatus = async () => {
+      try {
+        const [healthRes, configRes] = await Promise.all([
+          fetch(`${API_BASE}/health`),
+          fetch(`${API_BASE}/config`)
+        ]);
+        if (!healthRes.ok || !configRes.ok) throw new Error('status check failed');
+        const config = await configRes.json();
+        setApiStatus(`API 연결됨 · provider=${config.imageProvider} · payment=${config.paymentMode}`);
+      } catch {
+        setApiStatus('API 미연결 · 로컬 fallback 모드');
+      }
+    };
+
+    loadApiStatus();
 
     if (fileInput instanceof HTMLInputElement) {
       fileInput.addEventListener('change', (e) => {
