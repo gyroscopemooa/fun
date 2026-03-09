@@ -1,0 +1,24 @@
+# AI Provider 유/무료 구분 + 적용 순서
+
+## 1) Provider별 구분
+- remove.bg: 유료(API 과금형)
+- Photoroom API: 유료(API 과금형)
+- local_sharp(Node+Sharp): 무료(오픈소스) + 서버비
+- MediaPipe(Face Detector/Landmarker): 무료(오픈소스)
+- GFPGAN/CodeFormer: 무료(오픈소스 모델) + GPU/운영비
+
+## 2) 현재 구현 상태
+- 구현 완료: remove.bg, Photoroom, local_sharp fallback
+- 기획/후속: MediaPipe 품질체크, GFPGAN/CodeFormer 고급 보정
+
+## 3) 운영 권장 순서
+1. 기본 안정화: `EXTERNAL_AI_ENABLED=false` + `local_sharp`로 UI/흐름 검증
+2. 외부 API 1개 활성: remove.bg 1회 실테스트
+3. 멀티 벤더: Photoroom 키 추가 후 fallback/비용 비교
+4. 품질 고도화: MediaPipe(입력 품질체크) 적용
+5. 비용 최적화: GFPGAN/CodeFormer 또는 자체 모델 검토
+
+## 4) 안전 원칙
+- 외부 API는 `EXTERNAL_AI_ENABLED=true`일 때만 호출
+- `IMAGE_PROVIDER=auto`로 장애 시 local fallback
+- 벤더 lock-in 방지를 위해 provider adapter 구조 유지

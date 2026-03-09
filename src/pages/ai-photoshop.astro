@@ -619,8 +619,10 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         const configuredProvider = config.configuredImageProvider ?? 'unknown';
         const resolvedProvider = config.imageProvider ?? 'unknown';
         const removeBgReady = Boolean(config?.readiness?.removeBgReady);
+        const photoroomReady = Boolean(config?.readiness?.photoroomReady);
         const externalAi = config.externalAiEnabled ? 'ON' : 'OFF';
-        setApiStatus(`API 연결됨 · provider=${resolvedProvider} (configured=${configuredProvider}) · externalAI=${externalAi} · payment=${config.paymentMode} · remove.bg key=${removeBgReady ? 'OK' : 'MISSING'}`);
+        const providerBilling = resolvedProvider === 'local_sharp' ? 'free' : 'paid';
+        setApiStatus(`API 연결됨 · provider=${resolvedProvider}/${providerBilling} (configured=${configuredProvider}) · externalAI=${externalAi} · payment=${config.paymentMode} · remove.bg=${removeBgReady ? 'OK' : 'MISSING'} · photoroom=${photoroomReady ? 'OK' : 'MISSING'}`);
       } catch {
         setApiStatus('API 미연결 · 로컬 fallback 모드');
       }
@@ -775,4 +777,6 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     }
   </script>
 </Layout>
+
+
 
