@@ -87,6 +87,12 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
 
     <section id="ops-stats" class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4"></section>
 
+    <section class="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 class="text-xl font-black text-slate-900">운영 인사이트</h2>
+      <p class="mt-1 text-sm text-slate-600">가장 자주 터지는 문제와 품질 재시도 효과를 빠르게 요약합니다.</p>
+      <div id="ops-insights" class="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4"></div>
+    </section>
+
     <section class="mt-6 grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
       <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 class="text-xl font-black text-slate-900">툴별 추세</h2>
@@ -145,6 +151,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     const alertProvidersEl = document.getElementById('ops-alert-providers');
     const latestFlaggedEl = document.getElementById('ops-latest-flagged');
     const listEl = document.getElementById('ops-list');
+    const insightsEl = document.getElementById('ops-insights');
     const refreshBtn = document.getElementById('ops-refresh');
     const copySummaryBtn = document.getElementById('ops-copy-summary');
     const downloadSummaryBtn = document.getElementById('ops-download-summary');
@@ -239,6 +246,50 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       return 'rose';
     };
 
+    const summarizeInsights = (recentPayload, alertsPayload) => {
+      const items = Array.isArray(recentPayload?.items) ? recentPayload.items : [];
+      const alertItems = Array.isArray(alertsPayload?.items) ? alertsPayload.items : [];
+      const toolTrends = Array.isArray(recentPayload?.toolTrends) ? recentPayload.toolTrends : [];
+
+      const retryItems = items.filter((item) => typeof item.qualityScoreBeforeRetry === 'number' && typeof item.qualityScore === 'number');
+      const avgRetryGain = retryItems.length
+        ? retryItems.reduce((sum, item) => sum + (item.qualityScore - item.qualityScoreBeforeRetry), 0) / retryItems.length
+        : null;
+
+      const flagCounts = new Map();
+      for (const item of alertItems) {
+        for (const flag of item.flags ?? []) {
+          flagCounts.set(flag, (flagCounts.get(flag) ?? 0) + 1);
+        }
+      }
+      const topFlagEntry = [...flagCounts.entries()].sort((a, b) => b[1] - a[1])[0] ?? null;
+      const worstTool = [...toolTrends].sort((a, b) => b.failed - a.failed)[0] ?? null;
+      const fallbackCount = items.filter((item) => (item.flags ?? []).includes('provider_fallback')).length;
+
+      return [
+        {
+          label: '가장 많은 경고',
+          value: topFlagEntry ? `${topFlagEntry[0]} (${topFlagEntry[1]}건)` : '없음',
+          tone: topFlagEntry ? 'amber' : 'slate'
+        },
+        {
+          label: '실패가 가장 많은 툴',
+          value: worstTool ? `${worstTool.toolType} (${worstTool.failed}건)` : '없음',
+          tone: worstTool && worstTool.failed > 0 ? 'rose' : 'slate'
+        },
+        {
+          label: '평균 재시도 개선폭',
+          value: avgRetryGain === null ? '데이터 없음' : `+${formatNumber(avgRetryGain)}`,
+          tone: avgRetryGain !== null && avgRetryGain > 0 ? 'emerald' : 'slate'
+        },
+        {
+          label: 'fallback 비율',
+          value: items.length ? formatPercent((fallbackCount / items.length) * 100) : '0.0%',
+          tone: fallbackCount > 0 ? 'sky' : 'slate'
+        }
+      ];
+    };
+
     const renderStats = (payload, alertsPayload) => {
       if (!(statsEl instanceof HTMLElement)) return;
       const items = Array.isArray(payload?.items) ? payload.items : [];
@@ -306,6 +357,13 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
             `).join('')
           : '<p class="rounded-2xl border border-dashed border-amber-200 bg-white p-4 text-sm text-amber-900">최근 경고 작업이 없습니다.</p>';
       }
+    };
+
+    const renderInsights = (recentPayload, alertsPayload) => {
+      if (!(insightsEl instanceof HTMLElement)) return;
+      insightsEl.innerHTML = summarizeInsights(recentPayload, alertsPayload)
+        .map((item) => createMetricCard(item.label, item.value, item.tone))
+        .join('');
     };
 
     const variantChip = (item, type) => {
@@ -525,6 +583,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         latestRecentPayload = recentPayload;
         latestAlertsPayload = alertsPayload;
         renderStats(recentPayload, alertsPayload);
+        renderInsights(recentPayload, alertsPayload);
         renderTrends(recentPayload);
         renderAlerts(alertsPayload);
         renderList(recentPayload);
