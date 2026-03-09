@@ -136,11 +136,13 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         <h2 class="text-xl font-black text-slate-900">툴별 원인 drill-down</h2>
         <p class="mt-1 text-sm text-slate-600">어떤 툴에서 어떤 플래그가 반복되는지 바로 봅니다.</p>
         <div id="ops-tool-drilldown" class="mt-4 grid gap-3"></div>
+        <div id="ops-tool-debug-links" class="mt-4 flex flex-wrap gap-2"></div>
       </article>
       <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 class="text-xl font-black text-slate-900">provider별 원인 drill-down</h2>
         <p class="mt-1 text-sm text-slate-600">fallback, 저품질, 저동일성 같은 원인을 provider 기준으로 묶어 봅니다.</p>
         <div id="ops-provider-drilldown" class="mt-4 grid gap-3"></div>
+        <div id="ops-provider-debug-links" class="mt-4 flex flex-wrap gap-2"></div>
       </article>
     </section>
 
@@ -186,6 +188,8 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     const insightsEl = document.getElementById('ops-insights');
     const toolDrilldownEl = document.getElementById('ops-tool-drilldown');
     const providerDrilldownEl = document.getElementById('ops-provider-drilldown');
+    const toolDebugLinksEl = document.getElementById('ops-tool-debug-links');
+    const providerDebugLinksEl = document.getElementById('ops-provider-debug-links');
     const refreshBtn = document.getElementById('ops-refresh');
     const openDebugLink = document.getElementById('ops-open-debug');
     const copySummaryBtn = document.getElementById('ops-copy-summary');
@@ -432,6 +436,17 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         .join('');
     };
 
+    const getRepresentativeJobId = (type, key) => {
+      const recentItems = Array.isArray(latestRecentPayload?.items) ? latestRecentPayload.items : [];
+      const alertItems = Array.isArray(latestAlertsPayload?.items) ? latestAlertsPayload.items : [];
+      const combined = [...recentItems, ...alertItems];
+      const match = combined.find((item) => {
+        if (type === 'tool') return item.toolType === key;
+        return (item.provider ?? item.resolvedProvider) === key;
+      });
+      return match?.id ?? null;
+    };
+
     const renderDrilldown = (alertsPayload) => {
       const items = Array.isArray(alertsPayload?.items) ? alertsPayload.items : [];
       const toolGroups = groupFlags(items, (item) => item.toolType);
@@ -463,6 +478,27 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
 
       renderGroup(toolGroups, toolDrilldownEl, '표시할 툴별 경고 원인이 없습니다.');
       renderGroup(providerGroups, providerDrilldownEl, '표시할 provider별 경고 원인이 없습니다.');
+      if (toolDebugLinksEl instanceof HTMLElement) {
+        toolDebugLinksEl.innerHTML = toolGroups.length
+          ? toolGroups.map((group) => {
+              const jobId = getRepresentativeJobId('tool', group.key);
+              return jobId
+                ? `<a href="/tools/ai-photo-debug?jobId=${encodeURIComponent(jobId)}" class="rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-900 transition hover:bg-sky-100">${escapeHtml(group.key)} 대표 job 디버그</a>`
+                : '';
+            }).join('')
+          : '';
+      }
+
+      if (providerDebugLinksEl instanceof HTMLElement) {
+        providerDebugLinksEl.innerHTML = providerGroups.length
+          ? providerGroups.map((group) => {
+              const jobId = getRepresentativeJobId('provider', group.key);
+              return jobId
+                ? `<a href="/tools/ai-photo-debug?jobId=${encodeURIComponent(jobId)}" class="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">${escapeHtml(group.key)} 대표 job 디버그</a>`
+                : '';
+            }).join('')
+          : '';
+      }
     };
 
     const variantChip = (item, type) => {

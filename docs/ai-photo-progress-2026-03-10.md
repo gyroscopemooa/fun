@@ -65,6 +65,7 @@
   - quick presets (`all / flagged / fallback / failed`)
   - clickable drill-down cards that apply tool/provider filters
   - current-filter debug jump link
+  - representative debug links from tool/provider drill-down groups
   - ops summary copy/download
   - original vs recommended side-by-side compare
   - recommended/generated/rejected variant trace
