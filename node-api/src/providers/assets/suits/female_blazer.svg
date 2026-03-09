@@ -1,0 +1,37 @@
+<svg width="{{WIDTH}}" height="{{HEIGHT}}" viewBox="0 0 {{WIDTH}} {{HEIGHT}}" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="blazer-jacket" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="{{JACKET_COLOR_TOP}}" />
+      <stop offset="100%" stop-color="{{JACKET_COLOR_BOTTOM}}" />
+    </linearGradient>
+    <linearGradient id="blazer-lapel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="{{LAPEL_COLOR_TOP}}" />
+      <stop offset="100%" stop-color="{{LAPEL_COLOR_BOTTOM}}" />
+    </linearGradient>
+    <linearGradient id="blazer-shirt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="{{SHIRT_COLOR_TOP}}" />
+      <stop offset="100%" stop-color="{{SHIRT_COLOR_BOTTOM}}" />
+    </linearGradient>
+    <linearGradient id="blazer-accent" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="{{ACCENT_COLOR_TOP}}" />
+      <stop offset="100%" stop-color="{{ACCENT_COLOR_BOTTOM}}" />
+    </linearGradient>
+    <linearGradient id="blazer-shadow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="{{SHADOW_TOP}}" />
+      <stop offset="100%" stop-color="{{SHADOW_BOTTOM}}" />
+    </linearGradient>
+    <radialGradient id="blazer-shoulderGlow" cx="50%" cy="0%" r="85%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.12)" />
+      <stop offset="100%" stop-color="rgba(255,255,255,0)" />
+    </radialGradient>
+  </defs>
+  <path d="M {{SHOULDER_LEFT}} {{HEM_Y}} C {{LEFT_CURVE_A_X}} {{LEFT_CURVE_A_Y}}, {{LEFT_CURVE_B_X}} {{LEFT_CURVE_B_Y}}, {{LEFT_CURVE_C_X}} {{JACKET_TOP_Y}} L {{CENTER_LEFT_LAPEL_X}} {{CENTER_LAPEL_Y}} L {{LEFT_CENTER_HEM_X}} {{HEM_Y}} Z" fill="url(#blazer-jacket)"/>
+  <path d="M {{SHOULDER_RIGHT}} {{HEM_Y}} C {{RIGHT_CURVE_A_X}} {{RIGHT_CURVE_A_Y}}, {{RIGHT_CURVE_B_X}} {{RIGHT_CURVE_B_Y}}, {{RIGHT_CURVE_C_X}} {{JACKET_TOP_Y}} L {{CENTER_RIGHT_LAPEL_X}} {{CENTER_LAPEL_Y}} L {{RIGHT_CENTER_HEM_X}} {{HEM_Y}} Z" fill="url(#blazer-jacket)"/>
+  <path d="M {{CENTER_LEFT_LAPEL_X}} {{CENTER_LAPEL_Y}} Q {{CENTER_X}} {{SHIRT_CURVE_Y}}, {{CENTER_RIGHT_LAPEL_X}} {{CENTER_LAPEL_Y}} L {{SHIRT_HEM_RIGHT_X}} {{SHIRT_HEM_Y}} L {{SHIRT_HEM_LEFT_X}} {{SHIRT_HEM_Y}} Z" fill="url(#blazer-shirt)" opacity="0.98"/>
+  <path d="M {{LEFT_LAPEL_OUTER_X}} {{CENTER_LAPEL_Y}} L {{LEFT_LAPEL_INNER_X}} {{LEFT_LAPEL_INNER_Y}} L {{LEFT_LAPEL_HEM_X}} {{LEFT_LAPEL_HEM_Y}}" fill="url(#blazer-lapel)" opacity="0.96"/>
+  <path d="M {{RIGHT_LAPEL_OUTER_X}} {{CENTER_LAPEL_Y}} L {{RIGHT_LAPEL_INNER_X}} {{RIGHT_LAPEL_INNER_Y}} L {{RIGHT_LAPEL_HEM_X}} {{RIGHT_LAPEL_HEM_Y}}" fill="url(#blazer-lapel)" opacity="0.96"/>
+  <circle cx="{{CENTER_X}}" cy="{{BUTTON_TOP_Y}}" r="{{BUTTON_RADIUS}}" fill="url(#blazer-accent)" opacity="0.92"/>
+  <circle cx="{{CENTER_X}}" cy="{{BUTTON_BOTTOM_Y}}" r="{{BUTTON_RADIUS}}" fill="url(#blazer-accent)" opacity="0.92"/>
+  <ellipse cx="{{CENTER_X}}" cy="{{SHADOW_Y}}" rx="{{SHADOW_RX}}" ry="{{SHADOW_RY}}" fill="url(#blazer-shadow)"/>
+  <path d="M {{GLOW_START_X}} {{GLOW_Y}} Q {{CENTER_X}} {{GLOW_CONTROL_Y}}, {{GLOW_END_X}} {{GLOW_Y}}" stroke="url(#blazer-shoulderGlow)" stroke-width="{{GLOW_WIDTH}}" stroke-linecap="round"/>
+</svg>

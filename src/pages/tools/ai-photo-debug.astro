@@ -1,0 +1,342 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+
+const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
+---
+
+<Layout
+  title="AI 증명사진 디버그 뷰 | ManyTool"
+  description="생성된 AI 증명사진 job의 원본, 추천 후보, 점수, pipelineReport를 확인하는 디버그 페이지입니다."
+  keywords="AI 증명사진 디버그, pipeline report, manytool debug"
+  noindex={true}
+>
+  <Header />
+  <main class="mx-auto max-w-6xl px-4 py-8">
+    <section class="rounded-2xl border border-slate-200 bg-white p-6">
+      <p class="inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">Debug View</p>
+      <h1 class="mt-3 text-3xl font-black tracking-tight text-slate-900">AI 증명사진 파이프라인 디버그</h1>
+      <p class="mt-2 text-sm text-slate-600">`jobId` 기준으로 원본과 추천 후보를 비교하고, 후보 점수와 파이프라인 재시도 이력을 한 화면에서 확인합니다.</p>
+      <form id="debug-form" class="mt-5 flex flex-col gap-3 sm:flex-row">
+        <input id="job-id-input" name="jobId" class="min-w-0 flex-1 rounded-xl border border-slate-300 px-4 py-3 text-sm" placeholder="jobId를 입력하세요" />
+        <button class="rounded-xl bg-slate-900 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800" type="submit">불러오기</button>
+      </form>
+      <p id="debug-status" class="mt-3 text-xs text-slate-500">URL의 `?jobId=` 또는 입력창으로 생성 기록을 조회할 수 있습니다.</p>
+    </section>
+
+    <section id="debug-overview" class="mt-6 hidden grid gap-4 md:grid-cols-4">
+      <article class="rounded-2xl border border-slate-200 bg-white p-4">
+        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Tool</p>
+        <p id="overview-tool" class="mt-2 text-lg font-black text-slate-900">-</p>
+      </article>
+      <article class="rounded-2xl border border-slate-200 bg-white p-4">
+        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Provider</p>
+        <p id="overview-provider" class="mt-2 text-lg font-black text-slate-900">-</p>
+      </article>
+      <article class="rounded-2xl border border-slate-200 bg-white p-4">
+        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Quality</p>
+        <p id="overview-quality" class="mt-2 text-lg font-black text-slate-900">-</p>
+      </article>
+      <article class="rounded-2xl border border-slate-200 bg-white p-4">
+        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Identity</p>
+        <p id="overview-identity" class="mt-2 text-lg font-black text-slate-900">-</p>
+      </article>
+    </section>
+
+    <section id="debug-compare-wrap" class="mt-6 hidden rounded-2xl border border-slate-200 bg-white p-5">
+      <div class="flex items-center justify-between gap-3">
+        <div>
+          <h2 class="text-xl font-black text-slate-900">원본 / 추천 후보 비교</h2>
+          <p class="mt-1 text-sm text-slate-600">추천 후보가 원본에서 얼마나 정리되었는지 바로 비교합니다.</p>
+        </div>
+        <p id="debug-job-label" class="text-xs text-slate-500"></p>
+      </div>
+      <div class="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-3">
+        <div class="relative h-80 overflow-hidden rounded-lg bg-slate-100">
+          <img id="compare-before" alt="원본" class="h-full w-full object-cover" />
+          <div id="compare-after-wrap" class="absolute inset-y-0 left-0 w-1/2 overflow-hidden border-r-2 border-white">
+            <img id="compare-after" alt="추천 후보" class="h-full w-full object-cover" />
+          </div>
+          <div class="pointer-events-none absolute inset-x-0 bottom-2 text-center text-xs font-semibold text-white">드래그로 비교</div>
+        </div>
+        <input id="compare-slider" type="range" min="0" max="100" value="50" class="mt-3 w-full accent-sky-600" />
+      </div>
+    </section>
+
+    <section id="debug-feedback-wrap" class="mt-6 hidden rounded-2xl border border-emerald-100 bg-emerald-50 p-5">
+      <h2 class="text-lg font-black text-emerald-950">품질 피드백</h2>
+      <p id="debug-quality-summary" class="mt-2 text-sm font-semibold text-emerald-950"></p>
+      <ul id="debug-quality-feedback" class="mt-3 list-disc space-y-1 pl-5 text-sm text-emerald-900"></ul>
+    </section>
+
+    <section class="mt-6 grid gap-6 xl:grid-cols-[1.4fr_1fr]">
+      <article class="rounded-2xl border border-slate-200 bg-white p-5">
+        <h2 class="text-xl font-black text-slate-900">후보 결과</h2>
+        <div id="debug-candidates" class="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <p class="text-sm text-slate-500">불러온 결과가 여기에 표시됩니다.</p>
+        </div>
+      </article>
+
+      <article class="rounded-2xl border border-slate-200 bg-white p-5">
+        <h2 class="text-xl font-black text-slate-900">Pipeline Report</h2>
+        <div id="debug-report-meta" class="mt-4 grid gap-3 sm:grid-cols-2"></div>
+        <div id="debug-retries" class="mt-4 hidden rounded-xl border border-amber-100 bg-amber-50 p-4">
+          <h3 class="text-sm font-black text-amber-950">재시도 이력</h3>
+          <div id="debug-retry-list" class="mt-3 grid gap-2"></div>
+        </div>
+        <pre id="debug-report" class="mt-4 max-h-[720px] overflow-auto rounded-xl border border-slate-200 bg-slate-50 p-4 text-[11px] leading-5 text-slate-700"></pre>
+      </article>
+    </section>
+  </main>
+  <Footer />
+
+  <script define:vars={{ apiBase }} is:inline>
+    const API_BASE = apiBase;
+    const params = new URLSearchParams(window.location.search);
+    const formEl = document.getElementById('debug-form');
+    const inputEl = document.getElementById('job-id-input');
+    const statusEl = document.getElementById('debug-status');
+    const overviewEl = document.getElementById('debug-overview');
+    const compareWrapEl = document.getElementById('debug-compare-wrap');
+    const feedbackWrapEl = document.getElementById('debug-feedback-wrap');
+    const candidatesEl = document.getElementById('debug-candidates');
+    const reportEl = document.getElementById('debug-report');
+    const reportMetaEl = document.getElementById('debug-report-meta');
+    const retriesWrapEl = document.getElementById('debug-retries');
+    const retryListEl = document.getElementById('debug-retry-list');
+    const jobLabelEl = document.getElementById('debug-job-label');
+    const qualitySummaryEl = document.getElementById('debug-quality-summary');
+    const qualityFeedbackEl = document.getElementById('debug-quality-feedback');
+    const overviewToolEl = document.getElementById('overview-tool');
+    const overviewProviderEl = document.getElementById('overview-provider');
+    const overviewQualityEl = document.getElementById('overview-quality');
+    const overviewIdentityEl = document.getElementById('overview-identity');
+    const compareBeforeEl = document.getElementById('compare-before');
+    const compareAfterEl = document.getElementById('compare-after');
+    const compareAfterWrapEl = document.getElementById('compare-after-wrap');
+    const compareSliderEl = document.getElementById('compare-slider');
+
+    const setStatus = (text) => {
+      if (statusEl) statusEl.textContent = text;
+    };
+
+    const reportMetaPairs = (report) => ([
+      ['requestedProvider', report?.requestedProvider ?? 'n/a'],
+      ['resolvedProvider', report?.fallbackToLocalSharp ? 'local_sharp (fallback)' : (report?.resolvedProvider ?? 'n/a')],
+      ['backgroundProvider', report?.backgroundProvider ?? 'n/a'],
+      ['cropProfile', report?.cropProfile ?? 'n/a'],
+      ['poseProfile', report?.poseProfile ?? 'n/a'],
+      ['suitTemplate', report?.suitTemplate ?? 'n/a'],
+      ['qualityScore', report?.qualityScore ?? 0],
+      ['qualityScoreBeforeRetry', report?.qualityScoreBeforeRetry ?? 'n/a'],
+      ['identityScore', report?.identityScore ?? 0],
+      ['identityThreshold', report?.identityThreshold ?? 0],
+      ['finalQualityRetryTriggered', Boolean(report?.finalQualityRetryTriggered)],
+      ['finalQualityRetryProfile', report?.finalQualityRetryProfile ?? 'n/a'],
+      ['externalBackgroundCall', Boolean(report?.externalBackgroundCall)],
+      ['cache.aligned', Boolean(report?.cache?.aligned)],
+      ['cache.cutout', Boolean(report?.cache?.cutout)],
+      ['cache.flattened', Boolean(report?.cache?.flattened)],
+      ['generatedVariants', Array.isArray(report?.generatedVariants) ? report.generatedVariants.join(', ') : 'n/a'],
+      ['timings.detect', `${report?.timings?.detect ?? 0}ms`],
+      ['timings.align', `${report?.timings?.align ?? 0}ms`],
+      ['timings.pose', `${report?.timings?.pose ?? 0}ms`],
+      ['timings.cutout', `${report?.timings?.cutout ?? 0}ms`],
+      ['timings.flatten', `${report?.timings?.flatten ?? 0}ms`],
+      ['timings.relight', `${report?.timings?.relight ?? 0}ms`],
+      ['timings.finalRetry', `${report?.timings?.finalRetry ?? 0}ms`],
+      ['timings.variants', `${report?.timings?.variants ?? 0}ms`]
+    ]);
+
+    const renderMetaGrid = (report) => {
+      if (!(reportMetaEl instanceof HTMLElement)) return;
+      reportMetaEl.innerHTML = reportMetaPairs(report).map(([label, value]) => `
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">${label}</p>
+          <p class="mt-1 text-sm font-bold text-slate-900">${String(value)}</p>
+        </div>
+      `).join('');
+    };
+
+    const renderReport = (report) => {
+      if (!(reportEl instanceof HTMLElement)) return;
+      const lines = [
+        `toolType: ${report?.toolType ?? 'n/a'}`,
+        `outfitType: ${report?.outfitType ?? 'n/a'}`,
+        `qualitySummary: ${report?.qualitySummary ?? 'n/a'}`,
+        `qualityFeedback: ${JSON.stringify(report?.qualityFeedback ?? [])}`,
+        `variantScores: ${JSON.stringify(report?.variantScores ?? {})}`,
+        `variantIdentityScores: ${JSON.stringify(report?.variantIdentityScores ?? {})}`,
+        `recommendedVariant: ${report?.recommendedVariant ?? 'n/a'}`,
+        `finalQualityRetryAttempts: ${JSON.stringify(report?.finalQualityRetryAttempts ?? [])}`,
+        `identityRegeneratedVariants: ${JSON.stringify(report?.identityRegeneratedVariants ?? [])}`,
+        `identityRejectedVariants: ${JSON.stringify(report?.identityRejectedVariants ?? [])}`,
+        `identityFallbackKept: ${report?.identityFallbackKept ?? 'n/a'}`,
+        `poseAttempts: ${JSON.stringify(report?.poseAttempts ?? [])}`,
+        `poseMetrics: ${JSON.stringify(report?.poseMetrics ?? {})}`,
+        `relightMetrics: ${JSON.stringify(report?.relightMetrics ?? {})}`
+      ];
+      reportEl.textContent = lines.join('\n');
+    };
+
+    const renderRetryCards = (report) => {
+      if (!(retriesWrapEl instanceof HTMLElement) || !(retryListEl instanceof HTMLElement)) return;
+      const retries = Array.isArray(report?.finalQualityRetryAttempts) ? report.finalQualityRetryAttempts : [];
+      const poseAttempts = Array.isArray(report?.poseAttempts) ? report.poseAttempts : [];
+      const cards = [];
+
+      retries.forEach((item) => {
+        cards.push(`
+          <article class="rounded-xl border border-amber-200 bg-white p-3">
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">Final Retry</p>
+            <p class="mt-1 text-sm font-black text-slate-900">${item.profile}</p>
+            <p class="mt-1 text-xs text-slate-600">qualityScore ${item.qualityScore ?? 'n/a'}</p>
+            <p class="mt-1 text-xs text-slate-500">${Array.isArray(item.issues) && item.issues.length ? item.issues.join(', ') : 'issues 없음'}</p>
+          </article>
+        `);
+      });
+
+      poseAttempts.forEach((item, index) => {
+        cards.push(`
+          <article class="rounded-xl border border-slate-200 bg-white p-3">
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Pose Attempt ${index + 1}</p>
+            <p class="mt-1 text-sm font-black text-slate-900">${item.profile ?? 'unknown'}</p>
+            <p class="mt-1 text-xs text-slate-600">roll ${Number(item.roll ?? 0).toFixed(2)} / yawBias ${Number(item.yawBias ?? 0).toFixed(3)}</p>
+          </article>
+        `);
+      });
+
+      if (!cards.length) {
+        retriesWrapEl.classList.add('hidden');
+        retryListEl.innerHTML = '';
+        return;
+      }
+
+      retriesWrapEl.classList.remove('hidden');
+      retryListEl.innerHTML = cards.join('');
+    };
+
+    const renderOverview = (job) => {
+      const report = job?.pipelineReport ?? {};
+      if (overviewEl instanceof HTMLElement) overviewEl.classList.remove('hidden');
+      if (jobLabelEl instanceof HTMLElement) {
+        jobLabelEl.textContent = `jobId ${job?.id ?? '-'} · ${job?.status ?? 'unknown'}`;
+      }
+      if (overviewToolEl instanceof HTMLElement) overviewToolEl.textContent = report.toolType ?? job?.toolType ?? '-';
+      if (overviewProviderEl instanceof HTMLElement) overviewProviderEl.textContent = report.fallbackToLocalSharp ? 'local_sharp (fallback)' : (report.resolvedProvider ?? '-');
+      if (overviewQualityEl instanceof HTMLElement) overviewQualityEl.textContent = typeof report.qualityScore === 'number' ? report.qualityScore.toFixed(1) : '-';
+      if (overviewIdentityEl instanceof HTMLElement) overviewIdentityEl.textContent = typeof report.identityScore === 'number' ? report.identityScore.toFixed(1) : '-';
+    };
+
+    const renderFeedback = (report) => {
+      if (!(feedbackWrapEl instanceof HTMLElement)) return;
+      const summary = report?.qualitySummary;
+      if (!summary) {
+        feedbackWrapEl.classList.add('hidden');
+        return;
+      }
+      feedbackWrapEl.classList.remove('hidden');
+      if (qualitySummaryEl instanceof HTMLElement) qualitySummaryEl.textContent = summary;
+      if (qualityFeedbackEl instanceof HTMLElement) {
+        const feedback = Array.isArray(report?.qualityFeedback) ? report.qualityFeedback : [];
+        qualityFeedbackEl.innerHTML = feedback.map((item) => `<li>${item}</li>`).join('');
+      }
+    };
+
+    const renderCompare = (job) => {
+      const originalUrl = job?.originalUrl ? `${API_BASE}${job.originalUrl}` : null;
+      const candidates = Array.isArray(job?.candidates) ? job.candidates : [];
+      const recommended = candidates.find((item) => item.recommended) ?? candidates[0] ?? null;
+      if (!originalUrl || !recommended || !(compareWrapEl instanceof HTMLElement)) {
+        compareWrapEl?.classList.add('hidden');
+        return;
+      }
+      compareWrapEl.classList.remove('hidden');
+      if (compareBeforeEl instanceof HTMLImageElement) compareBeforeEl.src = originalUrl;
+      if (compareAfterEl instanceof HTMLImageElement) compareAfterEl.src = `${API_BASE}${recommended.imageUrl}`;
+      if (compareAfterWrapEl instanceof HTMLElement) compareAfterWrapEl.style.width = '50%';
+      if (compareSliderEl instanceof HTMLInputElement) compareSliderEl.value = '50';
+    };
+
+    const renderCandidates = (job) => {
+      if (!(candidatesEl instanceof HTMLElement)) return;
+      const report = job?.pipelineReport ?? {};
+      const qualityScore = typeof report.qualityScore === 'number' ? report.qualityScore : null;
+      const candidates = Array.isArray(job?.candidates) ? job.candidates : [];
+      if (!candidates.length) {
+        candidatesEl.innerHTML = '<p class="text-sm text-slate-500">후보가 없습니다.</p>';
+        return;
+      }
+      candidatesEl.innerHTML = candidates.map((item, index) => `
+        <article class="overflow-hidden rounded-2xl border ${item.recommended ? 'border-amber-300 ring-2 ring-amber-200' : 'border-slate-200'} bg-white shadow-sm">
+          <div class="relative">
+            <img src="${API_BASE}${item.imageUrl}" alt="candidate ${index + 1}" class="h-64 w-full object-cover" />
+            <div class="absolute left-3 top-3 flex items-center gap-2">
+              <span class="rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-black text-slate-900">${index + 1}번</span>
+              ${item.recommended ? '<span class="rounded-full bg-amber-300/95 px-2.5 py-1 text-[11px] font-black text-amber-950">추천</span>' : ''}
+            </div>
+          </div>
+          <div class="space-y-2 p-4">
+            <div class="flex flex-wrap gap-2 text-[11px] font-semibold">
+              <span class="rounded-full bg-slate-100 px-2 py-1 text-slate-700">추천 점수 ${typeof item.score === 'number' ? item.score.toFixed(1) : 'n/a'}</span>
+              <span class="rounded-full bg-slate-100 px-2 py-1 text-slate-700">동일성 ${typeof item.identityScore === 'number' ? item.identityScore.toFixed(1) : 'n/a'}</span>
+              <span class="rounded-full bg-slate-100 px-2 py-1 text-slate-700">규격 ${typeof qualityScore === 'number' ? qualityScore.toFixed(1) : 'n/a'}</span>
+              ${item.regenerated ? '<span class="rounded-full bg-amber-100 px-2 py-1 text-amber-800">안전 재생성</span>' : ''}
+            </div>
+            <a href="${API_BASE}/download/${item.id}" class="inline-flex rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">다운로드 경로 확인</a>
+          </div>
+        </article>
+      `).join('');
+    };
+
+    const loadJob = async (jobId) => {
+      if (!jobId) {
+        setStatus('jobId를 입력하세요.');
+        return;
+      }
+      setStatus('job 정보를 불러오는 중...');
+      try {
+        const response = await fetch(`${API_BASE}/job/${encodeURIComponent(jobId)}`);
+        if (!response.ok) {
+          throw new Error(response.status === 404 ? 'job not found' : `request failed (${response.status})`);
+        }
+        const job = await response.json();
+        if (inputEl instanceof HTMLInputElement) inputEl.value = jobId;
+        const nextUrl = new URL(window.location.href);
+        nextUrl.searchParams.set('jobId', jobId);
+        window.history.replaceState({}, '', nextUrl);
+        renderOverview(job);
+        renderCompare(job);
+        renderFeedback(job.pipelineReport ?? null);
+        renderMetaGrid(job.pipelineReport ?? null);
+        renderRetryCards(job.pipelineReport ?? null);
+        renderReport(job.pipelineReport ?? null);
+        renderCandidates(job);
+        setStatus('job 정보를 불러왔습니다.');
+      } catch (error) {
+        setStatus(`불러오기에 실패했습니다. ${error?.message ?? ''}`.trim());
+      }
+    };
+
+    if (compareSliderEl instanceof HTMLInputElement && compareAfterWrapEl instanceof HTMLElement) {
+      compareSliderEl.addEventListener('input', () => {
+        compareAfterWrapEl.style.width = `${compareSliderEl.value}%`;
+      });
+    }
+
+    if (formEl instanceof HTMLFormElement) {
+      formEl.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const jobId = inputEl instanceof HTMLInputElement ? inputEl.value.trim() : '';
+        loadJob(jobId);
+      });
+    }
+
+    const initialJobId = params.get('jobId')?.trim();
+    if (initialJobId) {
+      if (inputEl instanceof HTMLInputElement) inputEl.value = initialJobId;
+      loadJob(initialJobId);
+    }
+  </script>
+</Layout>

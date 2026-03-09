@@ -1,0 +1,38 @@
+<svg width="{{WIDTH}}" height="{{HEIGHT}}" viewBox="0 0 {{WIDTH}} {{HEIGHT}}" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="business-jacket" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="{{JACKET_COLOR_TOP}}" />
+      <stop offset="100%" stop-color="{{JACKET_COLOR_BOTTOM}}" />
+    </linearGradient>
+    <linearGradient id="business-lapel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="{{LAPEL_COLOR_TOP}}" />
+      <stop offset="100%" stop-color="{{LAPEL_COLOR_BOTTOM}}" />
+    </linearGradient>
+    <linearGradient id="business-shirt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="{{SHIRT_COLOR_TOP}}" />
+      <stop offset="100%" stop-color="{{SHIRT_COLOR_BOTTOM}}" />
+    </linearGradient>
+    <linearGradient id="business-accent" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="{{ACCENT_COLOR_TOP}}" />
+      <stop offset="100%" stop-color="{{ACCENT_COLOR_BOTTOM}}" />
+    </linearGradient>
+    <linearGradient id="business-shadow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="{{SHADOW_TOP}}" />
+      <stop offset="100%" stop-color="{{SHADOW_BOTTOM}}" />
+    </linearGradient>
+    <radialGradient id="business-shoulderGlow" cx="50%" cy="0%" r="85%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.12)" />
+      <stop offset="100%" stop-color="rgba(255,255,255,0)" />
+    </radialGradient>
+  </defs>
+  <path d="M {{SHOULDER_LEFT}} {{HEM_Y}} C {{LEFT_CURVE_A_X}} {{LEFT_CURVE_A_Y}}, {{LEFT_CURVE_B_X}} {{LEFT_CURVE_B_Y}}, {{LEFT_CURVE_C_X}} {{JACKET_TOP_Y}} L {{LEFT_LAPEL_X}} {{SHIRT_TOP_Y}} L {{LEFT_CENTER_HEM_X}} {{HEM_Y}} Z" fill="url(#business-jacket)"/>
+  <path d="M {{SHOULDER_RIGHT}} {{HEM_Y}} C {{RIGHT_CURVE_A_X}} {{RIGHT_CURVE_A_Y}}, {{RIGHT_CURVE_B_X}} {{RIGHT_CURVE_B_Y}}, {{RIGHT_CURVE_C_X}} {{JACKET_TOP_Y}} L {{RIGHT_LAPEL_X}} {{SHIRT_TOP_Y}} L {{RIGHT_CENTER_HEM_X}} {{HEM_Y}} Z" fill="url(#business-jacket)"/>
+  <path d="M {{LEFT_LAPEL_X}} {{SHIRT_TOP_Y}} L {{LEFT_COLLAR_X}} {{LEFT_COLLAR_Y}} L {{CENTER_X}} {{LAPEL_CENTER_Y}} L {{LEFT_CENTER_LINE_X}} {{CENTER_LINE_END_Y}} L {{LEFT_OUTER_LINE_X}} {{LEFT_OUTER_LINE_Y}} Z" fill="url(#business-lapel)"/>
+  <path d="M {{RIGHT_LAPEL_X}} {{SHIRT_TOP_Y}} L {{RIGHT_COLLAR_X}} {{RIGHT_COLLAR_Y}} L {{CENTER_X}} {{LAPEL_CENTER_Y}} L {{RIGHT_CENTER_LINE_X}} {{CENTER_LINE_END_Y}} L {{RIGHT_OUTER_LINE_X}} {{RIGHT_OUTER_LINE_Y}} Z" fill="url(#business-lapel)"/>
+  <path d="M {{SHIRT_LEFT_X}} {{SHIRT_TOP_Y}} Q {{CENTER_X}} {{SHIRT_CURVE_Y}}, {{SHIRT_RIGHT_X}} {{SHIRT_TOP_Y}} L {{SHIRT_HEM_RIGHT_X}} {{SHIRT_HEM_Y}} L {{SHIRT_HEM_LEFT_X}} {{SHIRT_HEM_Y}} Z" fill="url(#business-shirt)" opacity="0.98"/>
+  <path d="M {{TIE_LEFT_X}} {{TIE_TOP_Y}} L {{TIE_RIGHT_X}} {{TIE_TOP_Y}} L {{TIE_HEM_RIGHT_X}} {{TIE_HEM_Y}} L {{TIE_HEM_LEFT_X}} {{TIE_HEM_Y}} Z" fill="url(#business-accent)" opacity="{{ACCENT_OPACITY}}"/>
+  <path d="M {{TIE_KNOT_LEFT_X}} {{TIE_KNOT_Y}} L {{TIE_KNOT_RIGHT_X}} {{TIE_KNOT_Y}} L {{CENTER_X}} {{TIE_POINT_Y}} Z" fill="url(#business-accent)" opacity="{{ACCENT_OPACITY}}"/>
+  <path d="M {{CENTER_X}} {{SHIRT_TOP_Y}} L {{CENTER_X}} {{CENTER_LINE_END_Y}}" stroke="rgba(255,255,255,0.18)" stroke-width="{{CENTER_LINE_WIDTH}}"/>
+  <ellipse cx="{{CENTER_X}}" cy="{{SHADOW_Y}}" rx="{{SHADOW_RX}}" ry="{{SHADOW_RY}}" fill="url(#business-shadow)"/>
+  <path d="M {{GLOW_START_X}} {{GLOW_Y}} Q {{CENTER_X}} {{GLOW_CONTROL_Y}}, {{GLOW_END_X}} {{GLOW_Y}}" stroke="url(#business-shoulderGlow)" stroke-width="{{GLOW_WIDTH}}" stroke-linecap="round"/>
+</svg>

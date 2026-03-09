@@ -1,0 +1,217 @@
+현재 프로젝트의 AI 증명사진 기능 분석
+
+판단 요약
+- 현재 구현은 기획과 일치하지 않음
+- 현재 코드는 "지저분한 셀피 -> 취업 가능한 정장 증명사진" 파이프라인이 아니라, 원본 이미지를 단순 리사이즈/밝기보정/약간 다른 크롭으로 3장 변형하는 수준임
+
+근거 파일
+- C:\Users\jeonm\Documents\2.funny\funhub\node-api\src\server.js
+- C:\Users\jeonm\Documents\2.funny\funhub\node-api\src\providers\providerRouter.js
+- C:\Users\Users\jeonm\Documents\2.funny\funhub\node-api\src\providers\variantSharp.js
+- C:\Users\jeonm\Documents\2.funny\funhub\node-api\src\providers\localSharpProvider.js
+- C:\Users\jeonm\Documents\2.funny\funhub\node-api\src\providers\removeBgProvider.js
+- C:\Users\jeonm\Documents\2.funny\funhub\node-api\src\providers\photoRoomProvider.js
+- C:\Users\jeonm\Documents\2.funny\funhub\src\pages\ai-id-photo.astro
+
+1. 현재 코드 기준 실제 이미지 처리 파이프라인
+
+서버 기준 실제 생성 흐름
+1) 업로드된 이미지를 그대로 저장
+   - POST /upload
+2) 생성 요청이 오면 POST /generate 에서 provider 선택
+3) provider 선택 로직
+   - EXTERNAL_AI_ENABLED === 'true' 가 아니면 무조건 local_sharp
+   - 그 외에 remove_bg 또는 photoroom 가능
+4) 현재 .env 기준으로는 EXTERNAL_AI_ENABLED가 없고, REMOVE_BG_API_KEY / PHOTOROOM_API_KEY 도 비어 있음
+   - 따라서 실제로는 local_sharp 경로만 동작
+5) local_sharp 는 결국 variantSharp.js 만 호출
+6) variantSharp 가 하는 일
+   - 600x800으로 fit: 'cover' 리사이즈
+   - 흰 배경 flatten
+   - 기본본 1장
+   - 밝기/채도 조금 올린 1장
+   - 약간 다른 크롭 1장
+   - 총 3장 반환
+
+실제 파이프라인 요약
+- 업로드
+- 중심 기준 cover resize
+- 흰 배경 flatten
+- 밝기 살짝 변경
+- 크롭 위치만 조금 다른 3장 생성
+
+2. 사용 중인 AI 모델 / 라이브러리
+
+서버 생성에 실제 쓰이는 것
+- sharp
+- uuid
+- express
+- multer
+- cors
+
+외부 provider 구조는 있으나 현재 미활성
+- remove.bg API
+- Photoroom API
+
+프론트에서만 쓰이는 보조 모델
+- MediaPipe FaceDetector
+- 목적: 업로드 품질 힌트 표시
+- 생성 파이프라인에는 직접 사용되지 않음
+
+3. 현재 시스템이 원본 얼굴 동일성을 유지하는지
+
+판단
+- 대체로 유지함
+
+이유
+- 현재는 diffusion, face swap, image generation 같은 생성형 모델을 쓰지 않음
+- 원본을 그대로 잘라서 리사이즈하고 밝기만 조금 바꾸는 수준이라 눈/코/입/턱선이 새로 만들어지지 않음
+
+한계
+- 얼굴 기준 정밀 정렬이 없음
+- 얼굴이 작거나 비뚤어져 있으면 같은 얼굴은 유지해도 증명사진 품질은 크게 개선되지 않음
+
+정리
+- 동일성 유지: 대체로 O
+- 취업용 깔끔한 결과: X
+
+4. diffusion이나 image generation이 새 얼굴을 생성하는지
+
+판단
+- 현재 코드 기준으로는 아님
+
+확인 근거
+- package.json 에 diffusion / Stable Diffusion / ControlNet / ComfyUI 관련 의존성 없음
+- 서버 provider 는 sharp, remove.bg, Photoroom 만 사용
+- remove.bg, Photoroom 도 현재 구조상 배경 제거 후 다시 sharp 변형만 수행
+- 얼굴 생성, inpainting, face relighting diffusion, beauty generation 같은 로직 없음
+
+결론
+- 현재 구현은 새 얼굴을 생성하지 않음
+
+5. 현재 구현과 목표 파이프라인 비교
+
+기획 목표
+1) 얼굴 detection
+2) 원본 얼굴 동일성 유지
+3) 피부 보정 / 얼굴 리터칭
+4) 헤어 정리
+5) 정장 합성
+6) 배경 교체
+7) 증명사진 규격 크롭
+
+현재 구현 비교
+
+1) 얼굴 detection
+- 불일치
+- MediaPipe로 품질 힌트만 줌
+- 생성 파이프라인의 얼굴 크롭/정렬에는 쓰지 않음
+
+2) 원본 얼굴 동일성 유지
+- 부분 일치
+- 새 얼굴 생성은 안 하므로 원칙은 지킴
+- 하지만 동일성 검증도 없고, 얼굴 기준 정렬도 없음
+
+3) 피부 보정 / 얼굴 리터칭
+- 불일치
+- 피부 보정 없음
+- 밝기/채도 약간 조정만 있음
+
+4) 헤어 정리
+- 불일치
+- 전혀 없음
+
+5) 정장 합성
+- 불일치
+- UI에 정장 옵션은 있지만 실제 서버 생성 로직에는 반영되지 않음
+- 프론트 fallback 에서 contrast/saturation 만 조금 바뀜
+- 즉 정장 합성은 없음
+
+6) 배경 교체
+- 부분 불일치
+- 외부 AI가 활성화되면 remove.bg / Photoroom 으로 배경 제거는 가능하도록 구조는 있음
+- 하지만 현재 .env 기준으로 비활성
+- 그리고 배경 교체라기보다 제거 후 흰 배경 flatten 수준
+
+7) 증명사진 규격 크롭
+- 부분 불일치
+- 단순 fit: cover, 중심 크롭
+- 증명사진 규격의 얼굴 비율, 머리 여백, 눈 위치 같은 규칙 기반 크롭이 아님
+
+최종 판단
+- 현재 구현은 기획과 일치하지 않음
+
+문제가 되는 단계
+- 1. 얼굴 detection 기반 정렬 미구현
+- 3. 피부 보정 / 얼굴 리터칭 미구현
+- 4. 헤어 정리 미구현
+- 5. 정장 합성 미구현
+- 6. 배경 교체는 구조만 있고 현재 비활성
+- 7. 규격 크롭이 단순 중심 크롭 수준
+
+추가 문제
+- toolType, outfitType 은 job에 저장되지만 생성 파이프라인에 거의 반영되지 않음
+- .env 의 REMOVE_BG_URL 값이 URL이 아니라 키처럼 보이며 설정도 잘못된 상태
+- EXTERNAL_AI_ENABLED 가 빠져 있어 외부 AI 자체가 꺼져 있음
+
+수정 계획
+
+1) 서버 기준 전처리 파이프라인으로 얼굴 검출 이동
+- 프론트 힌트용이 아니라 서버 생성 단계에서 얼굴 bbox/landmark 사용
+- 얼굴 중심, 눈 위치, 머리 여백 기준으로 정렬
+- toolType 별 규격 룰 적용
+
+2) 배경 제거를 실제 활성화
+- EXTERNAL_AI_ENABLED=true
+- remove.bg 또는 Photoroom 정상 키/엔드포인트 설정
+- 배경 제거 후 흰 배경 합성
+
+3) 얼굴 동일성 보호 장치 추가
+- ArcFace / FaceNet 류 임베딩 비교
+- 입력/출력 얼굴 similarity threshold 강제
+- threshold 미달이면 후보 폐기
+
+4) 피부 보정은 생성형이 아니라 보수적 리터칭으로 제한
+- denoise
+- skin smoothing
+- tone normalization
+- under-eye / light correction
+- 단, 눈/코/입 구조 변경 금지
+
+5) 헤어 정리는 생성이 아니라 정리 수준으로 제한
+- stray hair suppression
+- edge cleanup
+- flyaway reduction
+- hairstyle change 는 금지 또는 별도 실험 기능으로 분리
+
+6) 정장 합성은 별도 비생성 방식으로 구현
+- 상반신 / body parsing
+- 목 / 어깨 기준 템플릿 합성
+- 얼굴 영역은 절대 재생성 금지
+
+7) 규격 크롭 고도화
+- 증명사진 / 여권사진 / 프로필사진별
+- 얼굴 비율
+- 머리 상단 여백
+- 눈 위치
+- 최종 캔버스 규격
+- 이 규칙을 서버에서 강제
+
+8) 현재 toolType, outfitType 를 실제 provider 파이프라인에 연결
+- id_photo
+- passport_photo
+- headshot
+- outfitType=suit
+- 각각이 다른 후처리 규칙을 타게 바꿔야 함
+
+실무 순서 제안
+1) 외부 배경 제거 활성화
+2) 얼굴 정렬 + 규격 크롭
+3) 비생성 리터칭
+4) 정장 합성
+5) 동일성 검증 추가
+6) 그 뒤에야 도메인 배포 검토
+
+최종 결론
+- 현재 시스템은 "지저분한 셀피 -> 취업 가능한 정장 증명사진" 파이프라인으로 동작하지 않음
+- 지금은 원본을 단순 변형하는 프로토타입에 가깝고, 기획 핵심 단계 대부분이 아직 미구현 상태임

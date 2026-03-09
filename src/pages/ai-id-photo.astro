@@ -8,23 +8,23 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
 
 <Layout
   title="AI 증명사진 생성기 | ManyTool"
-  description="셀카 업로드 또는 카메라 촬영으로 AI 증명사진 후보 3장을 만들고 2장을 선택해 다운로드하세요."
+  description="셀카 업로드 또는 카메라 촬영으로 AI 증명사진 후보 3장을 만들고 1장을 선택해 다운로드하세요."
   keywords="AI 증명사진, 증명사진 만들기, 온라인 증명사진, 셀카 증명사진, 3x4 증명사진"
 >
   <Header />
-  <main class="mx-auto max-w-5xl px-4 py-8">
+  <main class="mx-auto max-w-5xl px-4 py-8 pb-28 md:pb-8">
     <section class="rounded-2xl border border-slate-200 bg-white p-6">
       <p class="inline-flex rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">MVP 데모</p>
       <h1 class="mt-3 text-3xl font-black tracking-tight text-slate-900">AI 증명사진 생성기</h1>
-      <p class="mt-2 text-slate-600">사진 한 장으로 증명사진 후보 3장을 생성하고, 원하는 2장을 다운로드할 수 있습니다.</p>
+      <p class="mt-2 text-slate-600">사진 한 장으로 증명사진 후보 3장을 생성하고, 원하는 1장을 다운로드할 수 있습니다.</p>
       <div class="mt-4 grid gap-3 text-sm sm:grid-cols-3">
         <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
           <p class="font-bold text-slate-900">기본 상품</p>
-          <p class="mt-1 text-slate-600">9,900원 / 후보 3장 / 최종 2장 다운로드</p>
+          <p class="mt-1 text-slate-600">$9.90 / 후보 3장 / 최종 1장 다운로드</p>
         </div>
         <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
           <p class="font-bold text-slate-900">추가 생성</p>
-          <p class="mt-1 text-slate-600">+2(3,900) / +3(4,900) / +7(5,900)</p>
+          <p class="mt-1 text-slate-600">+2($3.90) / +3($4.90) / +7($5.90)</p>
         </div>
         <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
           <p class="font-bold text-slate-900">의상 옵션</p>
@@ -34,7 +34,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     </section>
 
     <section class="mt-6 grid gap-4 lg:grid-cols-2">
-      <article class="rounded-2xl border border-slate-200 bg-white p-5">
+      <article id="candidate-section" class="rounded-2xl border border-slate-200 bg-white p-5">
         <h2 class="text-xl font-bold text-slate-900">1) 사진 입력</h2>
         <div class="mt-3 flex flex-wrap gap-2">
           <label class="cursor-pointer rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white">
@@ -61,6 +61,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           <img id="source-preview" alt="원본 미리보기" class="hidden h-64 w-full rounded-lg object-contain" />
           <p id="source-empty" class="text-sm text-slate-500">아직 사진이 선택되지 않았습니다.</p>
         </div>
+        <div id="upload-guidance" class="mt-3 hidden rounded-xl border p-3 text-xs"></div>
 
         <div class="mt-4">
           <label class="text-sm font-semibold text-slate-700" for="outfit">의상 옵션</label>
@@ -70,18 +71,29 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           </select>
         </div>
 
-        <button id="generate" class="mt-4 w-full rounded-md bg-sky-600 px-4 py-2 text-sm font-bold text-white" disabled>
+        <button id="generate" class="mt-4 w-full rounded-xl bg-sky-600 px-4 py-3 text-sm font-bold text-white shadow-[0_10px_30px_rgba(2,132,199,0.28)] transition hover:-translate-y-0.5 hover:bg-sky-500 active:translate-y-0 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none" disabled>
           증명사진 만들기
         </button>
 
-        <section class="mt-4 rounded-lg border border-sky-100 bg-sky-50 p-4 text-sm text-slate-700">
-          <p class="font-bold text-slate-900">온라인 증명사진을 빠르게 제작</p>
-          <p class="mt-1">업로드 또는 촬영만으로 배경 정리, 규격 맞춤, 자연 보정이 적용된 후보를 바로 확인할 수 있습니다.</p>
+        <section class="mt-4 rounded-2xl border border-sky-100 bg-[linear-gradient(135deg,#eff6ff_0%,#f8fafc_55%,#fefce8_100%)] p-4 text-sm text-slate-700">
+          <p class="font-bold text-slate-900">개떡같이 찍어도 최대한 예쁘게 정리되는 방향으로 설계했습니다</p>
+          <p class="mt-1">셀카, 전신샷, 화면 캡처처럼 완벽하지 않은 사진도 얼굴 중심으로 다시 정렬해 자연스럽고 또렷한 후보를 먼저 보여줍니다.</p>
           <ul class="mt-2 list-disc space-y-1 pl-5">
             <li>모바일/PC 업로드 + 카메라 촬영 지원</li>
             <li>3x4 비율 기준 자동 정렬</li>
-            <li>후보 3장 비교 후 2장 선택 다운로드</li>
+            <li>후보 3장 비교 후 1장씩 다운로드</li>
           </ul>
+        </section>
+
+        <section class="mt-4 rounded-xl border border-rose-100 bg-rose-50 p-4">
+          <h3 class="text-sm font-bold text-slate-900">이런 사진도 먼저 시도해보세요</h3>
+          <div class="mt-2 flex flex-wrap gap-2 text-xs font-semibold">
+            <span class="rounded-full bg-white px-3 py-1 text-slate-700">정면 셀카</span>
+            <span class="rounded-full bg-white px-3 py-1 text-slate-700">전신 사진</span>
+            <span class="rounded-full bg-white px-3 py-1 text-slate-700">저해상도 사진</span>
+            <span class="rounded-full bg-white px-3 py-1 text-slate-700">스크린샷</span>
+          </div>
+          <p class="mt-2 text-xs text-slate-600">얼굴이 너무 가려졌거나 옆얼굴이면 품질이 떨어질 수 있습니다. 정면에 가깝고 얼굴이 또렷할수록 더 예쁘게 나옵니다.</p>
         </section>
 
         <section class="mt-4 rounded-lg border border-slate-200 bg-white p-4">
@@ -114,17 +126,18 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
 
       <article class="rounded-2xl border border-slate-200 bg-white p-5">
         <h2 class="text-xl font-bold text-slate-900">2) 후보 선택</h2>
-        <p class="mt-2 text-sm text-slate-600">후보 중 2장을 선택하면 다운로드가 활성화됩니다.</p>
-        <div id="candidate-grid" class="mt-4 grid gap-3 sm:grid-cols-3">
+        <p class="mt-2 text-sm text-slate-600">후보 중 1장을 선택하면 다운로드가 활성화됩니다. 생성 직후에는 가장 자연스러운 1번 후보를 먼저 골라드립니다.</p>
+        <p class="mt-1 text-xs text-slate-500">결제 전 미리보기에는 워터마크가 표시됩니다.</p>
+        <div id="candidate-grid" class="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           <p class="text-sm text-slate-500">생성 결과가 여기에 표시됩니다.</p>
         </div>
-        <button id="download-selected" class="mt-4 w-full rounded-md bg-emerald-600 px-4 py-2 text-sm font-bold text-white" disabled>
-          선택한 2장 다운로드
+        <button id="download-selected" class="mt-4 w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white shadow-[0_10px_30px_rgba(5,150,105,0.28)] transition hover:-translate-y-0.5 hover:bg-emerald-500 active:translate-y-0 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none" disabled>
+          선택한 1장 다운로드
         </button>
         <div class="mt-3 grid gap-2 sm:grid-cols-3">
-          <button data-add-count="2" class="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700">+2장 추가 생성 (3,900원)</button>
-          <button data-add-count="3" class="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700">+3장 추가 생성 (4,900원)</button>
-          <button data-add-count="7" class="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700">+7장 추가 생성 (5,900원)</button>
+          <button data-add-count="2" class="rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-400 hover:bg-slate-50 active:translate-y-0">+2장 추가 생성 ($3.90)</button>
+          <button data-add-count="3" class="rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-400 hover:bg-slate-50 active:translate-y-0">+3장 추가 생성 ($4.90)</button>
+          <button data-add-count="7" class="rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-400 hover:bg-slate-50 active:translate-y-0">+7장 추가 생성 ($5.90)</button>
         </div>
         <div class="mt-3 grid gap-2 sm:grid-cols-2">
           <a href="/online-passport-photo" class="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-center text-sm font-semibold text-sky-700">같은 사진으로 여권사진 만들기</a>
@@ -132,6 +145,9 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         </div>
         <p id="api-status" class="mt-2 text-xs text-slate-500">API 상태 확인 중...</p>
         <p id="status" class="mt-2 text-xs text-slate-500">Node API 연결 시 서버 기반 생성, 실패 시 로컬 생성으로 자동 전환됩니다.</p>
+        <div id="quality-feedback" class="mt-3 hidden rounded-xl border border-emerald-100 bg-emerald-50 p-3 text-xs text-emerald-900"></div>
+        <pre id="pipeline-report" class="mt-3 hidden whitespace-pre-wrap rounded-xl border border-slate-200 bg-slate-50 p-3 text-[11px] leading-5 text-slate-600"></pre>
+        <a id="job-debug-link" href="/tools/ai-photo-debug" target="_blank" rel="noreferrer" class="mt-3 hidden inline-flex rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">이번 생성 디버그 보기</a>
         <p class="mt-1 text-xs text-slate-400">결제/후보 상태는 같은 브라우저에서 최대 3일 동안 자동 복원됩니다.</p>
       </article>
     </section>
@@ -144,6 +160,9 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           <img id="compare-before" alt="원본" class="h-full w-full object-cover" />
           <div id="compare-after-wrap" class="absolute inset-y-0 left-0 w-1/2 overflow-hidden border-r-2 border-white">
             <img id="compare-after" alt="결과" class="h-full w-full object-cover" />
+            <div class="pointer-events-none absolute inset-0 flex items-center justify-center bg-[repeating-linear-gradient(-32deg,rgba(15,23,42,0.18)_0,rgba(15,23,42,0.18)_18px,transparent_18px,transparent_48px)]">
+              <span class="rotate-[-24deg] rounded-full border border-white/50 bg-slate-900/55 px-6 py-2 text-lg font-black tracking-[0.35em] text-white/95">MANYTOOL PREVIEW</span>
+            </div>
           </div>
           <div class="pointer-events-none absolute inset-x-0 bottom-2 text-center text-xs font-semibold text-white">드래그로 비교</div>
         </div>
@@ -160,7 +179,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           <li>얼굴 위치/각도 분석</li>
           <li>배경 정리 + 3x4 규격 정렬</li>
           <li>자연 보정 후보 3장 생성</li>
-          <li>2장 선택 후 다운로드</li>
+          <li>1장 선택 후 다운로드</li>
         </ol>
       </article>
 
@@ -180,8 +199,9 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       <article class="rounded-2xl border border-slate-200 bg-white p-5">
         <h2 class="text-xl font-bold text-slate-900">가격 안내</h2>
         <div class="mt-3 space-y-2 text-sm text-slate-700">
-          <p><span class="font-bold text-slate-900">기본:</span> 9,900원 (후보 3장 / 최종 2장)</p>
-          <p><span class="font-bold text-slate-900">추가:</span> +2장 3,900원 / +3장 4,900원 / +7장 5,900원</p>
+          <p><span class="font-bold text-slate-900">기본:</span> $9.90 (후보 3장 / 최종 1장)</p>
+          <p><span class="font-bold text-slate-900">추가:</span> +2장 $3.90 / +3장 $4.90 / +7장 $5.90</p>
+          <p><span class="font-bold text-slate-900">다운로드:</span> 추가 1장마다 기본 결제가 한 번 더 필요합니다.</p>
           <p><span class="font-bold text-slate-900">의상:</span> 현재 옷 / 정장(무료)</p>
         </div>
       </article>
@@ -202,6 +222,17 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       </article>
     </section>
   </main>
+  <div id="mobile-download-bar" class="fixed inset-x-0 bottom-0 z-40 hidden border-t border-slate-200 bg-white/95 p-4 shadow-[0_-12px_28px_rgba(15,23,42,0.16)] backdrop-blur md:hidden">
+    <div class="mx-auto flex max-w-5xl items-center gap-3">
+      <div class="min-w-0 flex-1">
+        <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">Quick Select</p>
+        <p id="mobile-selection-status" class="truncate text-sm font-bold text-slate-900">후보 1개를 선택해주세요.</p>
+      </div>
+      <button id="mobile-download-selected" class="rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white shadow-[0_10px_24px_rgba(5,150,105,0.28)] transition disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none" disabled>
+        1장 다운로드
+      </button>
+    </div>
+  </div>
   <Footer />
 
   <script define:vars={{ apiBase }} is:inline>
@@ -213,6 +244,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     const resetBtn = document.getElementById('reset-all');
     const sourcePreview = document.getElementById('source-preview');
     const sourceEmpty = document.getElementById('source-empty');
+    const uploadGuidanceEl = document.getElementById('upload-guidance');
     const generateBtn = document.getElementById('generate');
     const outfitEl = document.getElementById('outfit');
     const gridEl = document.getElementById('candidate-grid');
@@ -220,11 +252,18 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     const addButtons = Array.from(document.querySelectorAll('[data-add-count]'));
     const apiStatusEl = document.getElementById('api-status');
     const statusEl = document.getElementById('status');
+    const qualityFeedbackEl = document.getElementById('quality-feedback');
+    const pipelineReportEl = document.getElementById('pipeline-report');
+    const jobDebugLinkEl = document.getElementById('job-debug-link');
     const compareBeforeEl = document.getElementById('compare-before');
     const compareAfterEl = document.getElementById('compare-after');
     const compareAfterWrapEl = document.getElementById('compare-after-wrap');
     const compareSliderEl = document.getElementById('compare-slider');
     const compareHelpEl = document.getElementById('compare-help');
+    const candidateSectionEl = document.getElementById('candidate-section');
+    const mobileDownloadBarEl = document.getElementById('mobile-download-bar');
+    const mobileSelectionStatusEl = document.getElementById('mobile-selection-status');
+    const mobileDownloadBtn = document.getElementById('mobile-download-selected');
 
     const API_BASE = apiBase;
     const PAGE_STATE_KEY = 'manytool:ai-id-photo:v1';
@@ -232,13 +271,19 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     let stream = null;
     let sourceDataUrl = null;
     let sourceFile = null;
+    let sourceFaceHint = null;
     let cachedPhotoId = null;
     let candidates = [];
     let isGenerating = false;
     let basePaid = false;
     let baseOrderId = null;
+    let creditedBaseOrders = [];
     let apiOnline = false;
     let paymentMode = 'mock';
+    let paymentProducts = { base: false, add2: false, add3: false, add7: false };
+    let addonOrders = { add2: null, add3: null, add7: null };
+    let latestJobId = null;
+    let sourceUploadAssessment = { messages: [], blocking: false, faceHint: null };
 
     const setStatus = (text) => {
       if (statusEl) statusEl.textContent = text;
@@ -248,14 +293,158 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       if (apiStatusEl) apiStatusEl.textContent = text;
     };
 
+    const renderPipelineReport = (report) => {
+      if (!(pipelineReportEl instanceof HTMLElement)) return;
+      if (!report) {
+        pipelineReportEl.textContent = '';
+        pipelineReportEl.classList.add('hidden');
+        return;
+      }
+      const lines = [
+        `toolType: ${report.toolType ?? 'n/a'}`,
+        `requestedProvider: ${report.requestedProvider ?? 'n/a'}`,
+        `resolvedProvider: ${report.fallbackToLocalSharp ? 'local_sharp (fallback)' : (report.resolvedProvider ?? 'n/a')}`,
+        `fallbackToLocalSharp: ${Boolean(report.fallbackToLocalSharp)}`,
+        `backgroundProvider: ${report.backgroundProvider ?? 'n/a'}`,
+        `cropProfile: ${report.cropProfile ?? 'n/a'}`,
+        `poseProfile: ${report.poseProfile ?? 'n/a'}`,
+        `suitTemplate: ${report.suitTemplate ?? 'n/a'}`,
+        `qualityScore: ${report.qualityScore ?? 0}`,
+        `qualityScoreBeforeRetry: ${report.qualityScoreBeforeRetry ?? 'n/a'}`,
+        `identityScore: ${report.identityScore ?? 0}`,
+        `identityThreshold: ${report.identityThreshold ?? 0}`,
+        `finalQualityRetryTriggered: ${Boolean(report.finalQualityRetryTriggered)}`,
+        `finalQualityRetryProfile: ${report.finalQualityRetryProfile ?? 'n/a'}`,
+        `cache.aligned: ${Boolean(report.cache?.aligned)}`,
+        `cache.cutout: ${Boolean(report.cache?.cutout)}`,
+        `cache.flattened: ${Boolean(report.cache?.flattened)}`,
+        `externalBackgroundCall: ${Boolean(report.externalBackgroundCall)}`,
+        `generatedVariants: ${Array.isArray(report.generatedVariants) ? report.generatedVariants.join(', ') : 'n/a'}`,
+        `timings.detect: ${report.timings?.detect ?? 0}ms`,
+        `timings.align: ${report.timings?.align ?? 0}ms`,
+        `timings.pose: ${report.timings?.pose ?? 0}ms`,
+        `timings.cutout: ${report.timings?.cutout ?? 0}ms`,
+        `timings.flatten: ${report.timings?.flatten ?? 0}ms`,
+        `timings.relight: ${report.timings?.relight ?? 0}ms`,
+        `timings.finalRetry: ${report.timings?.finalRetry ?? 0}ms`,
+        `timings.variants: ${report.timings?.variants ?? 0}ms`,
+        `variantIdentityScores: ${report.variantIdentityScores ? JSON.stringify(report.variantIdentityScores) : '{}'}`,
+        `finalQualityRetryAttempts: ${Array.isArray(report.finalQualityRetryAttempts) ? JSON.stringify(report.finalQualityRetryAttempts) : '[]'}`,
+        `identityRegeneratedVariants: ${Array.isArray(report.identityRegeneratedVariants) ? report.identityRegeneratedVariants.join(', ') : 'n/a'}`,
+        `identityRejectedVariants: ${Array.isArray(report.identityRejectedVariants) ? report.identityRejectedVariants.join(', ') : 'n/a'}`,
+        `identityFallbackKept: ${report.identityFallbackKept ?? 'n/a'}`,
+        `poseAttempts: ${Array.isArray(report.poseAttempts) ? JSON.stringify(report.poseAttempts) : '[]'}`
+      ];
+      pipelineReportEl.textContent = lines.join('\n');
+      pipelineReportEl.classList.remove('hidden');
+    };
+
+    const renderJobDebugLink = (jobId) => {
+      latestJobId = typeof jobId === 'string' && jobId.trim() ? jobId.trim() : null;
+      if (!(jobDebugLinkEl instanceof HTMLAnchorElement)) return;
+      if (!latestJobId) {
+        jobDebugLinkEl.href = '/tools/ai-photo-debug';
+        jobDebugLinkEl.classList.add('hidden');
+        return;
+      }
+      jobDebugLinkEl.href = `/tools/ai-photo-debug?jobId=${encodeURIComponent(latestJobId)}`;
+      jobDebugLinkEl.classList.remove('hidden');
+    };
+
+    const renderQualityFeedback = (report) => {
+      if (!(qualityFeedbackEl instanceof HTMLElement)) return;
+      if (!report?.qualitySummary) {
+        qualityFeedbackEl.innerHTML = '';
+        qualityFeedbackEl.classList.add('hidden');
+        return;
+      }
+      const feedbackLines = Array.isArray(report.qualityFeedback) ? report.qualityFeedback : [];
+      qualityFeedbackEl.innerHTML = `
+        <p class="font-bold">${report.qualitySummary}</p>
+        <ul class="mt-2 list-disc space-y-1 pl-5">
+          ${feedbackLines.map((line) => `<li>${line}</li>`).join('')}
+        </ul>
+      `;
+      qualityFeedbackEl.classList.remove('hidden');
+    };
+
+    const scrollToCandidates = () => {
+      if (!(candidateSectionEl instanceof HTMLElement)) return;
+      candidateSectionEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    const syncMobileActionBar = () => {
+      if (!(mobileDownloadBarEl instanceof HTMLElement)) return;
+      const selectedCount = candidates.filter((item) => item.selected).length;
+      const hasCandidates = candidates.length > 0;
+      mobileDownloadBarEl.classList.toggle('hidden', !hasCandidates);
+      if (mobileSelectionStatusEl instanceof HTMLElement) {
+        mobileSelectionStatusEl.textContent = selectedCount === 1
+          ? '후보 1개 선택됨. 지금 바로 다운로드할 수 있습니다.'
+          : '후보 1개를 선택해주세요.';
+      }
+      if (mobileDownloadBtn instanceof HTMLButtonElement) {
+        mobileDownloadBtn.disabled = !hasCandidates || !(downloadBtn instanceof HTMLButtonElement) || downloadBtn.disabled;
+      }
+    };
+
+    const renderUploadGuidance = (assessment) => {
+      if (!(uploadGuidanceEl instanceof HTMLElement)) return;
+      const messages = Array.isArray(assessment?.messages) ? assessment.messages.filter(Boolean) : [];
+      if (!messages.length) {
+        uploadGuidanceEl.innerHTML = '';
+        uploadGuidanceEl.className = 'mt-3 hidden rounded-xl border p-3 text-xs';
+        return;
+      }
+      const blocking = Boolean(assessment?.blocking);
+      const tips = [];
+      if (messages.some((message) => message.includes('얼굴이 너무 작') || message.includes('얼굴이 작게'))) {
+        tips.push('얼굴을 화면에서 더 크게 채워주세요');
+      }
+      if (messages.some((message) => message.includes('가까워') || message.includes('턱선이 잘릴'))) {
+        tips.push('카메라와 거리를 조금만 벌려주세요');
+      }
+      if (messages.some((message) => message.includes('중앙'))) {
+        tips.push('코가 화면 가운데에 오도록 맞춰주세요');
+      }
+      if (messages.some((message) => message.includes('기울기') || message.includes('수평'))) {
+        tips.push('눈높이가 수평이 되게 고개를 바로 세워주세요');
+      }
+      if (messages.some((message) => message.includes('해상도'))) {
+        tips.push('캡처 대신 원본 사진이나 카메라 촬영을 권장합니다');
+      }
+      uploadGuidanceEl.className = blocking
+        ? 'mt-3 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-900'
+        : 'mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900';
+      uploadGuidanceEl.innerHTML = `
+        <p class="font-bold">${blocking ? '다시 촬영하는 편이 좋습니다.' : '이 사진은 결과가 흔들릴 수 있습니다.'}</p>
+        <ul class="mt-2 list-disc space-y-1 pl-4">${messages.map((message) => `<li>${message}</li>`).join('')}</ul>
+        ${tips.length ? `<div class="mt-3 flex flex-wrap gap-2">${tips.map((tip) => `<span class="rounded-full bg-white/80 px-3 py-1 font-semibold">${tip}</span>`).join('')}</div>` : ''}
+        <div class="mt-3 flex flex-wrap gap-2">
+          <button type="button" data-guidance-action="start-camera" class="rounded-lg border border-current/20 bg-white/80 px-3 py-2 text-[11px] font-bold">카메라 다시 열기</button>
+          <button type="button" data-guidance-action="upload-file" class="rounded-lg border border-current/20 bg-white/80 px-3 py-2 text-[11px] font-bold">다른 사진 업로드</button>
+        </div>
+      `;
+    };
+
+    const updateGenerateAvailability = () => {
+      if (generateBtn instanceof HTMLButtonElement) {
+        generateBtn.disabled = isGenerating || !sourceDataUrl || Boolean(sourceUploadAssessment?.blocking);
+      }
+    };
+
     const setBusy = (busy) => {
       isGenerating = busy;
-      if (generateBtn instanceof HTMLButtonElement) {
-        generateBtn.disabled = busy || !sourceDataUrl;
-      }
+      updateGenerateAvailability();
       addButtons.forEach((buttonEl) => {
         buttonEl.disabled = busy;
       });
+      syncMobileActionBar();
+    };
+
+    const isPolarProductReady = (productType) => {
+      if (paymentMode !== 'polar') return true;
+      return Boolean(paymentProducts?.[productType]);
     };
 
     const savePageState = () => {
@@ -266,12 +455,20 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
             id: item.id,
             url: item.url,
             selected: Boolean(item.selected),
-            downloadUrl: item.downloadUrl || null
+            downloadUrl: item.downloadUrl || null,
+            recommended: Boolean(item.recommended),
+            score: item.score ?? null,
+            identityScore: item.identityScore ?? null,
+            qualityScore: item.qualityScore ?? null,
+            regenerated: Boolean(item.regenerated)
           }));
         const payload = {
           candidates: serializableCandidates,
           basePaid,
           baseOrderId,
+          creditedBaseOrders,
+          addonOrders,
+          latestJobId,
           savedAt: Date.now(),
           outfit: outfitEl instanceof HTMLSelectElement ? outfitEl.value : 'current'
         };
@@ -312,10 +509,19 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     });
 
     const getQualityHint = (width, height) => {
-      if (width < MIN_WIDTH || height < MIN_HEIGHT) {
-        return `해상도(${width}x${height})가 낮아 품질이 떨어질 수 있습니다.`;
+      if (width < 360 || height < 480) {
+        return {
+          level: 'blocking',
+          message: `해상도(${width}x${height})가 너무 낮아 결과가 심하게 흐려질 수 있습니다. 다시 촬영해 주세요.`
+        };
       }
-      return '';
+      if (width < MIN_WIDTH || height < MIN_HEIGHT) {
+        return {
+          level: 'warning',
+          message: `해상도(${width}x${height})가 낮아 품질이 떨어질 수 있습니다.`
+        };
+      }
+      return null;
     };
 
     const getMediaPipeDetector = async () => {
@@ -346,26 +552,72 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
 
     const getFaceQualityHint = async (img, width, height) => {
       const detector = await getMediaPipeDetector();
-      if (!detector) return '';
+      if (!detector) return { messages: [], blocking: false, faceHint: null };
 
       try {
         const result = detector.detect(img);
         const detections = Array.isArray(result?.detections) ? result.detections : [];
-        if (detections.length === 0) return '얼굴을 인식하지 못했습니다. 정면 사진을 권장합니다.';
-        if (detections.length > 1) return '여러 얼굴이 감지되었습니다. 1인 사진을 권장합니다.';
+        if (detections.length === 0) return { messages: ['얼굴을 인식하지 못했습니다. 정면 사진으로 다시 촬영해 주세요.'], blocking: true, faceHint: null };
+        if (detections.length > 1) return { messages: ['여러 얼굴이 감지되었습니다. 1인 사진으로 다시 촬영해 주세요.'], blocking: true, faceHint: null };
 
-        const box = detections[0]?.boundingBox;
-        if (!box) return '';
+        const detection = detections[0];
+        const box = detection?.boundingBox;
+        if (!box) return { messages: [], blocking: false, faceHint: null };
+        const keypoints = Array.isArray(detection?.keypoints) ? detection.keypoints : [];
+
+        const faceHint = {
+          bbox: {
+            x: Number(box.originX || 0) / Math.max(1, img.naturalWidth),
+            y: Number(box.originY || 0) / Math.max(1, img.naturalHeight),
+            width: Number(box.width || 0) / Math.max(1, img.naturalWidth),
+            height: Number(box.height || 0) / Math.max(1, img.naturalHeight)
+          },
+          leftEye: keypoints[1] ? {
+            x: Number(keypoints[1].x || 0) / Math.max(1, img.naturalWidth),
+            y: Number(keypoints[1].y || 0) / Math.max(1, img.naturalHeight)
+          } : null,
+          rightEye: keypoints[0] ? {
+            x: Number(keypoints[0].x || 0) / Math.max(1, img.naturalWidth),
+            y: Number(keypoints[0].y || 0) / Math.max(1, img.naturalHeight)
+          } : null
+        };
+        const messages = [];
+        let blocking = false;
 
         const faceRatio = Number(box.width || 0) / Math.max(1, width);
-        if (faceRatio < 0.18) return '얼굴이 작게 보여 품질이 떨어질 수 있습니다. 얼굴이 더 크게 나온 사진을 권장합니다.';
-        if (faceRatio > 0.78) return '얼굴이 너무 가까워 규격 정렬이 어려울 수 있습니다. 약간 떨어져 촬영해 주세요.';
+        if (faceRatio < 0.14) {
+          blocking = true;
+          messages.push('얼굴이 너무 작습니다. 얼굴이 더 크게 나온 사진으로 다시 촬영해 주세요.');
+        } else if (faceRatio < 0.18) {
+          messages.push('얼굴이 작게 보여 품질이 떨어질 수 있습니다. 얼굴이 더 크게 나온 사진을 권장합니다.');
+        }
+        if (faceRatio > 0.82) {
+          blocking = true;
+          messages.push('얼굴이 너무 가까워 상단 여백과 턱선이 잘릴 수 있습니다. 약간 떨어져 촬영해 주세요.');
+        } else if (faceRatio > 0.78) {
+          messages.push('얼굴이 가까워 규격 정렬이 어려울 수 있습니다. 약간 떨어져 촬영해 주세요.');
+        }
 
         const centerX = (Number(box.originX || 0) + Number(box.width || 0) / 2) / Math.max(1, width);
-        if (centerX < 0.2 || centerX > 0.8) return '얼굴이 화면 중앙에서 벗어나 있습니다. 중앙 정렬 사진을 권장합니다.';
-        return '';
+        if (centerX < 0.14 || centerX > 0.86) {
+          blocking = true;
+          messages.push('얼굴이 화면 중앙에서 너무 많이 벗어났습니다. 정면으로 중앙에 맞춰 다시 촬영해 주세요.');
+        } else if (centerX < 0.2 || centerX > 0.8) {
+          messages.push('얼굴이 화면 중앙에서 벗어나 있습니다. 중앙 정렬 사진을 권장합니다.');
+        }
+
+        if (faceHint.leftEye && faceHint.rightEye) {
+          const eyeTilt = Math.abs(faceHint.leftEye.y - faceHint.rightEye.y);
+          if (eyeTilt > 0.06) {
+            blocking = true;
+            messages.push('고개 기울기가 큽니다. 얼굴을 수평에 가깝게 맞춰 다시 촬영해 주세요.');
+          } else if (eyeTilt > 0.03) {
+            messages.push('고개가 약간 기울어져 있습니다. 얼굴을 조금만 더 수평으로 맞추면 더 좋습니다.');
+          }
+        }
+        return { messages, blocking, faceHint };
       } catch {
-        return '';
+        return { messages: [], blocking: false, faceHint: null };
       }
     };
 
@@ -375,30 +627,50 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         const img = await loadImageFromUrl(objectUrl);
         const width = img.naturalWidth || 0;
         const height = img.naturalHeight || 0;
-        const hints = [];
+        const messages = [];
+        let blocking = false;
         const qualityHint = getQualityHint(width, height);
-        if (qualityHint) hints.push(qualityHint);
-        const faceHint = await getFaceQualityHint(img, width, height);
-        if (faceHint) hints.push(faceHint);
-        return hints.join(' ');
+        if (qualityHint?.message) {
+          messages.push(qualityHint.message);
+          blocking = qualityHint.level === 'blocking';
+        }
+        const faceAssessment = await getFaceQualityHint(img, width, height);
+        if (Array.isArray(faceAssessment.messages) && faceAssessment.messages.length) {
+          messages.push(...faceAssessment.messages);
+        }
+        return {
+          messages,
+          blocking: blocking || Boolean(faceAssessment.blocking),
+          faceHint: faceAssessment.faceHint ?? null
+        };
       } finally {
         URL.revokeObjectURL(objectUrl);
       }
     };
 
+    const detectFaceHintForFile = async (file) => (await inspectImageFile(file)).faceHint ?? null;
+
     const setSource = (dataUrl, file = null) => {
       sourceDataUrl = dataUrl;
       sourceFile = file;
+      sourceFaceHint = null;
+      sourceUploadAssessment = { messages: [], blocking: false, faceHint: null };
       cachedPhotoId = null;
       basePaid = false;
+      baseOrderId = null;
+      creditedBaseOrders = [];
       candidates = [];
+      renderPipelineReport(null);
+      renderJobDebugLink(null);
+      renderQualityFeedback(null);
+      renderUploadGuidance(null);
       renderCandidates();
       if (sourcePreview instanceof HTMLImageElement) {
         sourcePreview.src = dataUrl;
         sourcePreview.classList.remove('hidden');
       }
       if (sourceEmpty instanceof HTMLElement) sourceEmpty.classList.add('hidden');
-      if (generateBtn instanceof HTMLButtonElement) generateBtn.disabled = false;
+      updateGenerateAvailability();
       if (compareBeforeEl instanceof HTMLImageElement) compareBeforeEl.src = dataUrl;
       if (compareAfterEl instanceof HTMLImageElement) compareAfterEl.src = '';
       if (compareHelpEl instanceof HTMLElement) compareHelpEl.textContent = '후보 생성 후 결과 비교가 활성화됩니다.';
@@ -414,9 +686,18 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       stopCamera();
       sourceDataUrl = null;
       sourceFile = null;
+      sourceFaceHint = null;
+      sourceUploadAssessment = { messages: [], blocking: false, faceHint: null };
       cachedPhotoId = null;
       basePaid = false;
+      baseOrderId = null;
+      creditedBaseOrders = [];
+      addonOrders = { add2: null, add3: null, add7: null };
       candidates = [];
+      renderPipelineReport(null);
+      renderJobDebugLink(null);
+      renderQualityFeedback(null);
+      renderUploadGuidance(null);
       renderCandidates();
       if (sourcePreview instanceof HTMLImageElement) {
         sourcePreview.src = '';
@@ -424,7 +705,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       }
       if (sourceEmpty instanceof HTMLElement) sourceEmpty.classList.remove('hidden');
       if (fileInput instanceof HTMLInputElement) fileInput.value = '';
-      if (generateBtn instanceof HTMLButtonElement) generateBtn.disabled = true;
+      updateGenerateAvailability();
       if (downloadBtn instanceof HTMLButtonElement) downloadBtn.disabled = true;
       if (compareBeforeEl instanceof HTMLImageElement) compareBeforeEl.src = '';
       if (compareAfterEl instanceof HTMLImageElement) compareAfterEl.src = '';
@@ -445,8 +726,21 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     const stopCamera = () => {
       if (stream) stream.getTracks().forEach((track) => track.stop());
       stream = null;
-      if (cameraEl instanceof HTMLVideoElement) cameraEl.classList.add('hidden');
+      if (cameraEl instanceof HTMLVideoElement) {
+        cameraEl.classList.add('hidden');
+        cameraEl.style.transform = '';
+      }
       if (cameraCaptureBtn instanceof HTMLButtonElement) cameraCaptureBtn.disabled = true;
+    };
+
+    const ensureRecommendedSelection = () => {
+      if (!Array.isArray(candidates) || candidates.length === 0) return;
+      if (candidates.some((item) => item.selected)) return;
+      const recommendedIndex = candidates.findIndex((item) => item.recommended);
+      candidates = candidates.map((item, idx) => ({
+        ...item,
+        selected: idx === (recommendedIndex >= 0 ? recommendedIndex : 0)
+      }));
     };
 
     const renderCandidates = () => {
@@ -455,15 +749,36 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       candidates.forEach((item, idx) => {
         const card = document.createElement('button');
         card.type = 'button';
-        card.className = `overflow-hidden rounded-lg border p-1 text-left ${item.selected ? 'border-emerald-500 ring-2 ring-emerald-300' : 'border-slate-200'}`;
+        card.className = `overflow-hidden rounded-2xl border bg-white p-2 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${item.selected ? 'border-emerald-500 ring-2 ring-emerald-300' : 'border-slate-200'}`;
         card.innerHTML = `
-          <img src="${item.url}" alt="후보 ${idx + 1}" class="h-36 w-full rounded object-cover" />
-          <p class="mt-1 px-1 text-xs font-semibold text-slate-700">후보 ${idx + 1}</p>
+          <div class="relative">
+            <img src="${item.url}" alt="후보 ${idx + 1}" class="h-56 w-full rounded-xl object-cover sm:h-48" />
+            <div class="absolute left-3 top-3 flex items-center gap-2">
+              <span class="rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-black text-slate-900 shadow-sm">${idx + 1}번 후보</span>
+              ${item.recommended ? '<span class="rounded-full bg-amber-300/95 px-2.5 py-1 text-[11px] font-black text-amber-950 shadow-sm">추천</span>' : ''}
+            </div>
+            <div class="pointer-events-none absolute inset-0 flex items-center justify-center bg-[repeating-linear-gradient(-32deg,rgba(15,23,42,0.18)_0,rgba(15,23,42,0.18)_16px,transparent_16px,transparent_42px)]">
+              <span class="rotate-[-24deg] rounded-full border border-white/45 bg-slate-900/60 px-4 py-1.5 text-[10px] font-black tracking-[0.28em] text-white/95">MANYTOOL PREVIEW</span>
+            </div>
+          </div>
+          <div class="mt-2 flex items-center justify-between px-1">
+            <p class="text-sm font-bold text-slate-800">${item.recommended ? '점수 기준 추천 후보' : '분위기 다른 후보'}</p>
+            <span class="text-xs font-semibold ${item.selected ? 'text-emerald-600' : 'text-slate-400'}">${item.selected ? '선택됨' : '탭해서 선택'}</span>
+          </div>
+          <div class="mt-2 rounded-xl bg-slate-50 px-3 py-2 text-[11px] leading-5 text-slate-600">
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span><strong class="text-slate-900">추천 점수</strong> ${typeof item.score === 'number' ? item.score.toFixed(1) : 'n/a'}</span>
+              <span><strong class="text-slate-900">동일성</strong> ${typeof item.identityScore === 'number' ? item.identityScore.toFixed(1) : 'n/a'}</span>
+              <span><strong class="text-slate-900">규격</strong> ${typeof item.qualityScore === 'number' ? item.qualityScore.toFixed(1) : 'n/a'}</span>
+              ${item.regenerated ? '<span class="rounded-full bg-amber-100 px-2 py-0.5 font-semibold text-amber-800">안전 재생성</span>' : ''}
+            </div>
+          </div>
         `;
         card.addEventListener('click', () => {
           const selectedCount = candidates.filter((c) => c.selected).length;
-          if (!item.selected && selectedCount >= 2) {
-            setStatus('최대 2장까지 선택할 수 있습니다.');
+          if (!item.selected && selectedCount >= 1) {
+            window.alert('후보 이미지는 1개만 선택할 수 있습니다.');
+            setStatus('최대 1장까지 선택할 수 있습니다.');
             return;
           }
           item.selected = !item.selected;
@@ -472,8 +787,9 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         gridEl.append(card);
       });
       if (downloadBtn instanceof HTMLButtonElement) {
-        downloadBtn.disabled = candidates.filter((c) => c.selected).length !== 2;
+        downloadBtn.disabled = candidates.filter((c) => c.selected).length !== 1;
       }
+      syncMobileActionBar();
       savePageState();
     };
 
@@ -496,8 +812,14 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
               id: item.id || `restored_${Date.now()}`,
               url: item.url,
               selected: Boolean(item.selected),
-              downloadUrl: item.downloadUrl || null
+              downloadUrl: item.downloadUrl || null,
+              recommended: Boolean(item.recommended),
+              score: item.score ?? null,
+              identityScore: item.identityScore ?? null,
+              qualityScore: item.qualityScore ?? null,
+              regenerated: Boolean(item.regenerated)
             }));
+          ensureRecommendedSelection();
           renderCandidates();
           if (compareAfterEl instanceof HTMLImageElement) compareAfterEl.src = candidates[0].url;
           if (compareHelpEl instanceof HTMLElement) compareHelpEl.textContent = '이전 생성 결과를 복원했습니다.';
@@ -505,6 +827,16 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         }
         basePaid = Boolean(parsed.basePaid);
         baseOrderId = typeof parsed.baseOrderId === 'string' ? parsed.baseOrderId : null;
+        creditedBaseOrders = Array.isArray(parsed.creditedBaseOrders) ? parsed.creditedBaseOrders.filter((item) => typeof item === 'string') : [];
+        if (basePaid && baseOrderId && !creditedBaseOrders.includes(baseOrderId)) {
+          creditedBaseOrders.push(baseOrderId);
+        }
+        addonOrders = {
+          add2: typeof parsed?.addonOrders?.add2 === 'string' ? parsed.addonOrders.add2 : null,
+          add3: typeof parsed?.addonOrders?.add3 === 'string' ? parsed.addonOrders.add3 : null,
+          add7: typeof parsed?.addonOrders?.add7 === 'string' ? parsed.addonOrders.add7 : null
+        };
+        renderJobDebugLink(typeof parsed.latestJobId === 'string' ? parsed.latestJobId : null);
       } catch {}
     };
 
@@ -514,9 +846,29 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         const res = await fetch(`${API_BASE}/order/${baseOrderId}`);
         if (!res.ok) return;
         const order = await res.json();
-        basePaid = String(order.status) === 'paid';
+        if (String(order.status) === 'paid' && baseOrderId && !creditedBaseOrders.includes(baseOrderId)) {
+          creditedBaseOrders.push(baseOrderId);
+          basePaid = true;
+        }
         savePageState();
       } catch {}
+    };
+
+    const fetchOrder = async (orderId) => {
+      if (!orderId) return null;
+      const res = await fetch(`${API_BASE}/order/${orderId}`);
+      if (!res.ok) return null;
+      return res.json();
+    };
+
+    const requestRefund = async (orderId, reason = 'service_disruption') => {
+      if (!orderId || !apiOnline || paymentMode !== 'polar') return false;
+      const res = await fetch(`${API_BASE}/refund`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, reason })
+      });
+      return res.ok;
     };
 
     const centerCropTo34 = (img, shiftX = 0, shiftY = 0, filter = 'none') => {
@@ -560,7 +912,12 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           id: `candidate_${Date.now()}_${i + 1}`,
           url: centerCropTo34(img, shiftX, shiftY, filter),
           selected: false,
-          downloadUrl: null
+          downloadUrl: null,
+          recommended: i === 0,
+          score: null,
+          identityScore: null,
+          qualityScore: null,
+          regenerated: false
         });
       }
       candidates = [...candidates, ...variants];
@@ -569,9 +926,15 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     const uploadSourceIfNeeded = async () => {
       if (cachedPhotoId) return cachedPhotoId;
       if (!sourceFile) throw new Error('source file is missing');
+      if (!sourceFaceHint) {
+        sourceFaceHint = await detectFaceHintForFile(sourceFile);
+      }
       const form = new FormData();
       form.append('image', sourceFile);
       form.append('sourceType', 'upload');
+      if (sourceFaceHint) {
+        form.append('faceHint', JSON.stringify(sourceFaceHint));
+      }
       const uploadRes = await fetch(`${API_BASE}/upload`, { method: 'POST', body: form });
       if (!uploadRes.ok) throw new Error(`upload failed: ${uploadRes.status}`);
       const uploadData = await uploadRes.json();
@@ -585,6 +948,8 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       const outfit = outfitEl instanceof HTMLSelectElement ? outfitEl.value : 'current';
       const rounds = Math.ceil(count / 3);
       const generated = [];
+      let latestPipelineReport = null;
+      let latestResponseJobId = null;
 
       for (let i = 0; i < rounds; i += 1) {
         const genRes = await fetch(`${API_BASE}/generate`, {
@@ -599,15 +964,26 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         if (!genRes.ok) throw new Error(`generate failed: ${genRes.status}`);
         const genData = await genRes.json();
         if (!Array.isArray(genData.candidates)) throw new Error('invalid candidates');
+        latestPipelineReport = genData.pipelineReport ?? latestPipelineReport;
+        latestResponseJobId = typeof genData.jobId === 'string' ? genData.jobId : latestResponseJobId;
         generated.push(...genData.candidates);
       }
 
-      return generated.slice(0, count).map((item) => ({
-        id: item.id,
-        url: `${API_BASE}${item.imageUrl}`,
-        selected: false,
-        downloadUrl: `${API_BASE}/download/${item.id}`
-      }));
+      return {
+        jobId: latestResponseJobId,
+        candidates: generated.slice(0, count).map((item) => ({
+          id: item.id,
+          url: `${API_BASE}${item.imageUrl}`,
+          selected: false,
+          downloadUrl: `${API_BASE}/download/${item.id}`,
+          recommended: Boolean(item.recommended),
+          score: item.score ?? null,
+          identityScore: item.identityScore ?? null,
+          qualityScore: latestPipelineReport?.qualityScore ?? null,
+          regenerated: Boolean(item.regenerated)
+        })),
+        pipelineReport: latestPipelineReport
+      };
     };
 
     const generateCandidates = async (count = 3, append = false) => {
@@ -615,13 +991,25 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       setBusy(true);
       setStatus('후보를 생성하고 있습니다...');
       try {
-        const serverCandidates = await requestServerCandidates(count);
-        candidates = append ? [...candidates, ...serverCandidates] : serverCandidates;
-        setStatus(`Node API 생성 완료. 현재 ${candidates.length}장 후보가 준비되었습니다.`);
+        const generation = await requestServerCandidates(count);
+        candidates = append ? [...candidates, ...generation.candidates] : generation.candidates;
+        renderPipelineReport(generation.pipelineReport ?? null);
+        renderJobDebugLink(generation.jobId ?? null);
+        renderQualityFeedback(generation.pipelineReport ?? null);
+        if (!append) ensureRecommendedSelection();
+        setStatus(`Node API 생성 완료. 현재 ${candidates.length}장 후보가 준비되었습니다. ${generation.pipelineReport?.qualitySummary ?? ''}`.trim());
       } catch {
         if (!append) candidates = [];
-        await generateCandidatesLocalFallback(count);
-        setStatus(`Node API 연결 실패. 로컬 생성 모드로 전환되었습니다. 현재 ${candidates.length}장 후보가 준비되었습니다.`);
+        try {
+          await generateCandidatesLocalFallback(count);
+          renderPipelineReport(null);
+          renderJobDebugLink(null);
+          renderQualityFeedback(null);
+          if (!append) ensureRecommendedSelection();
+          setStatus(`Node API 연결 실패. 로컬 생성 모드로 전환되었습니다. 현재 ${candidates.length}장 후보가 준비되었습니다.`);
+        } catch (fallbackError) {
+          throw fallbackError;
+        }
       }
       finally {
         if (compareAfterEl instanceof HTMLImageElement) compareAfterEl.src = candidates[0]?.url ?? '';
@@ -629,13 +1017,19 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         if (compareSliderEl instanceof HTMLInputElement) compareSliderEl.disabled = false;
         renderCandidates();
         setBusy(false);
+        if (candidates.length > 0) {
+          window.setTimeout(scrollToCandidates, 120);
+        }
       }
     };
 
     const requestAddonCheckout = async (count) => {
-      const priceMap = { 2: 3900, 3: 4900, 7: 5900 };
+      const priceMap = { 2: 390, 3: 490, 7: 590 };
       const amount = priceMap[count];
       if (!amount) throw new Error('invalid addon count');
+      if (!isPolarProductReady(`add${count}`)) {
+        throw new Error(`Polar product is not configured for add${count}`);
+      }
 
       const res = await fetch(`${API_BASE}/checkout`, {
         method: 'POST',
@@ -643,7 +1037,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         body: JSON.stringify({
           productType: `add${count}`,
           amount,
-          currency: 'KRW'
+          currency: 'USD'
         })
       });
       if (!res.ok) throw new Error(`checkout failed: ${res.status}`);
@@ -651,13 +1045,16 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     };
 
     const requestBaseCheckout = async () => {
+      if (!isPolarProductReady('base')) {
+        throw new Error('Polar base product is not configured');
+      }
       const res = await fetch(`${API_BASE}/checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           productType: 'base',
-          amount: 9900,
-          currency: 'KRW'
+          amount: 990,
+          currency: 'USD'
         })
       });
       if (!res.ok) throw new Error(`checkout failed: ${res.status}`);
@@ -691,6 +1088,12 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         const config = await configRes.json();
         apiOnline = true;
         paymentMode = config?.paymentMode ?? 'mock';
+        paymentProducts = {
+          base: Boolean(config?.paymentProducts?.base),
+          add2: Boolean(config?.paymentProducts?.add2),
+          add3: Boolean(config?.paymentProducts?.add3),
+          add7: Boolean(config?.paymentProducts?.add7)
+        };
         const configuredProvider = config.configuredImageProvider ?? 'unknown';
         const resolvedProvider = config.imageProvider ?? 'unknown';
         const removeBgReady = Boolean(config?.readiness?.removeBgReady);
@@ -698,6 +1101,16 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         const externalAi = config.externalAiEnabled ? 'ON' : 'OFF';
         const providerBilling = resolvedProvider === 'local_sharp' ? 'free' : 'paid';
         setApiStatus(`API 연결됨 · provider=${resolvedProvider}/${providerBilling} (configured=${configuredProvider}) · externalAI=${externalAi} · payment=${config.paymentMode} · remove.bg=${removeBgReady ? 'OK' : 'MISSING'} · photoroom=${photoroomReady ? 'OK' : 'MISSING'}`);
+        if (paymentMode === 'polar' && !paymentProducts.base) {
+          setStatus('Polar 기본 상품 ID가 설정되지 않아 실결제를 시작할 수 없습니다.');
+        }
+        addButtons.forEach((buttonEl) => {
+          const count = Number(buttonEl.getAttribute('data-add-count') || '0');
+          if (paymentMode === 'polar' && count && !paymentProducts[`add${count}`]) {
+            buttonEl.disabled = true;
+            buttonEl.title = `Polar add${count} 상품 ID가 필요합니다.`;
+          }
+        });
       } catch {
         apiOnline = false;
         setApiStatus('API 미연결 · 로컬 fallback 모드');
@@ -719,8 +1132,16 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         reader.onload = async () => {
           if (typeof reader.result === 'string') {
             setSource(reader.result, file);
-            const hint = await inspectImageFile(file);
-            setStatus(hint ? `${hint} 계속 진행합니다.` : '사진 업로드 완료.');
+            const assessment = await inspectImageFile(file);
+            sourceUploadAssessment = assessment;
+            sourceFaceHint = assessment.faceHint ?? null;
+            renderUploadGuidance(assessment);
+            updateGenerateAvailability();
+            setStatus(
+              assessment.blocking
+                ? '사진 품질이 낮아 다시 촬영을 권장합니다.'
+                : (assessment.messages[0] ? `${assessment.messages[0]} 계속 진행합니다.` : '사진 업로드 완료.')
+            );
           }
         };
         reader.readAsDataURL(file);
@@ -731,6 +1152,20 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       resetBtn.addEventListener('click', () => resetAllState());
     }
 
+    if (uploadGuidanceEl instanceof HTMLElement) {
+      uploadGuidanceEl.addEventListener('click', (event) => {
+        const target = event.target instanceof HTMLElement ? event.target.closest('[data-guidance-action]') : null;
+        if (!(target instanceof HTMLElement)) return;
+        const action = target.getAttribute('data-guidance-action');
+        if (action === 'start-camera' && cameraStartBtn instanceof HTMLButtonElement) {
+          cameraStartBtn.click();
+        }
+        if (action === 'upload-file' && fileInput instanceof HTMLInputElement) {
+          fileInput.click();
+        }
+      });
+    }
+
     if (cameraStartBtn instanceof HTMLButtonElement) {
       cameraStartBtn.addEventListener('click', async () => {
         try {
@@ -738,6 +1173,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           if (cameraEl instanceof HTMLVideoElement) {
             cameraEl.srcObject = stream;
             cameraEl.classList.remove('hidden');
+            cameraEl.style.transform = 'scaleX(-1)';
           }
           if (cameraCaptureBtn instanceof HTMLButtonElement) cameraCaptureBtn.disabled = false;
           setStatus('카메라가 켜졌습니다. 촬영 버튼을 눌러주세요.');
@@ -769,8 +1205,19 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         const file = new File([blob], `camera-${Date.now()}.jpg`, { type: 'image/jpeg' });
         setSource(dataUrl, file);
         stopCamera();
-        const hint = await inspectImageFile(file);
-        setStatus(hint ? `${hint} 계속 진행합니다.` : '촬영 완료.');
+        const assessment = await inspectImageFile(file);
+        sourceUploadAssessment = assessment;
+        sourceFaceHint = assessment.faceHint ?? null;
+        renderUploadGuidance(assessment);
+        updateGenerateAvailability();
+        setStatus(
+          assessment.blocking
+            ? '사진 품질이 낮아 다시 촬영을 권장합니다.'
+            : (assessment.messages[0] ? `${assessment.messages[0]} 계속 진행합니다.` : '촬영 완료.')
+        );
+        window.setTimeout(() => {
+          generateBtn instanceof HTMLButtonElement && generateBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 120);
       });
     }
 
@@ -781,6 +1228,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     addButtons.forEach((buttonEl) => {
       buttonEl.addEventListener('click', async () => {
         const count = Number(buttonEl.getAttribute('data-add-count') || '0');
+        const productType = `add${count}`;
         if (!sourceDataUrl || !count) {
           setStatus('먼저 사진을 업로드하고 기본 후보를 생성해주세요.');
           return;
@@ -792,16 +1240,55 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           return;
         }
         try {
+          const existingOrderId = addonOrders[productType];
+          if (existingOrderId) {
+            const existingOrder = await fetchOrder(existingOrderId);
+            if (existingOrder?.status === 'paid') {
+              setStatus(`결제 완료(+${count}장). 추가 후보를 생성합니다...`);
+              try {
+                await generateCandidates(count, true);
+                addonOrders[productType] = null;
+                savePageState();
+                return;
+              } catch {
+                await requestRefund(existingOrderId, 'service_disruption');
+                addonOrders[productType] = null;
+                savePageState();
+                setStatus(`추가 생성 처리에 실패해 +${count}장 결제를 환불 요청했습니다.`);
+                return;
+              }
+            }
+            if (existingOrder?.status === 'pending' && existingOrder?.checkoutUrl) {
+              window.location.href = existingOrder.checkoutUrl;
+              return;
+            }
+            if (existingOrder?.status === 'refunded' || existingOrder?.status === 'failed' || existingOrder?.status === 'expired') {
+              addonOrders[productType] = null;
+              savePageState();
+            }
+          }
           setStatus('추가 생성 결제를 확인하고 있습니다...');
           const checkout = await requestAddonCheckout(count);
           if (!checkout.paid) {
+            addonOrders[productType] = checkout.orderId ?? null;
+            savePageState();
             if (moveToCheckoutIfPending(checkout, '결제 페이지로 이동합니다. 결제 후 돌아와 +추가 생성을 다시 눌러주세요.')) return;
             setStatus('결제가 완료되지 않아 추가 생성을 진행할 수 없습니다.');
             return;
           }
           setStatus(`결제 완료(+${count}장). 추가 후보를 생성합니다...`);
-          await generateCandidates(count, true);
-        } catch {
+          try {
+            await generateCandidates(count, true);
+          } catch {
+            await requestRefund(checkout.orderId, 'service_disruption');
+            setStatus(`추가 생성 처리에 실패해 +${count}장 결제를 환불 요청했습니다.`);
+            return;
+          }
+        } catch (error) {
+          if (error instanceof Error && error.message.includes('not configured')) {
+            setStatus('추가 생성용 Polar 상품 ID가 아직 설정되지 않았습니다.');
+            return;
+          }
           setStatus('추가 생성 결제 확인에 실패했습니다. 잠시 후 다시 시도해주세요.');
         }
       });
@@ -810,12 +1297,16 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     if (downloadBtn instanceof HTMLButtonElement) {
       downloadBtn.addEventListener('click', async () => {
         const selected = candidates.filter((item) => item.selected);
-        if (selected.length !== 2) return;
+        if (selected.length !== 1) {
+          window.alert('후보 이미지를 1개 선택해주세요.');
+          setStatus('후보 이미지를 1개 선택해주세요.');
+          return;
+        }
         if (isGenerating) return;
         if (!apiOnline) {
           try {
             setStatus('API 미연결 상태입니다. 결제 확인 없이 다운로드를 시작합니다.');
-            await Promise.all(selected.map((item, idx) => downloadCandidate(item, idx + 1, 'manytool-id-photo')));
+            await downloadCandidate(selected[0], 1, 'manytool-id-photo');
             setStatus('다운로드를 시작했습니다.');
           } catch {
             setStatus('다운로드에 실패했습니다. 다시 시도해주세요.');
@@ -833,20 +1324,42 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
             }
             basePaid = true;
             baseOrderId = checkout.orderId ?? null;
+            if (baseOrderId && !creditedBaseOrders.includes(baseOrderId)) {
+              creditedBaseOrders.push(baseOrderId);
+            }
             savePageState();
             setStatus('기본 결제 완료. 다운로드를 시작합니다.');
-          } catch {
+          } catch (error) {
+            if (error instanceof Error && error.message.includes('not configured')) {
+              setStatus('기본 결제용 Polar 상품 ID가 아직 설정되지 않았습니다.');
+              return;
+            }
             setStatus('결제 확인에 실패했습니다. 잠시 후 다시 시도해주세요.');
             return;
           }
         }
         try {
           setStatus('다운로드 파일을 준비 중입니다...');
-          await Promise.all(selected.map((item, idx) => downloadCandidate(item, idx + 1, 'manytool-id-photo')));
+          await downloadCandidate(selected[0], 1, 'manytool-id-photo');
+          basePaid = false;
+          candidates.forEach((item) => {
+            item.selected = false;
+          });
+          renderCandidates();
+          savePageState();
           setStatus('다운로드를 시작했습니다.');
         } catch {
+          await requestRefund(baseOrderId, 'service_disruption');
+          basePaid = false;
+          savePageState();
           setStatus('다운로드에 실패했습니다. 다시 시도해주세요.');
         }
+      });
+    }
+
+    if (mobileDownloadBtn instanceof HTMLButtonElement && downloadBtn instanceof HTMLButtonElement) {
+      mobileDownloadBtn.addEventListener('click', () => {
+        downloadBtn.click();
       });
     }
 

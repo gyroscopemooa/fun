@@ -1,0 +1,34 @@
+<svg width="{{WIDTH}}" height="{{HEIGHT}}" viewBox="0 0 {{WIDTH}} {{HEIGHT}}" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="casual-jacket" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="{{JACKET_COLOR_TOP}}" />
+      <stop offset="100%" stop-color="{{JACKET_COLOR_BOTTOM}}" />
+    </linearGradient>
+    <linearGradient id="casual-lapel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="{{LAPEL_COLOR_TOP}}" />
+      <stop offset="100%" stop-color="{{LAPEL_COLOR_BOTTOM}}" />
+    </linearGradient>
+    <linearGradient id="casual-shirt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="{{SHIRT_COLOR_TOP}}" />
+      <stop offset="100%" stop-color="{{SHIRT_COLOR_BOTTOM}}" />
+    </linearGradient>
+    <linearGradient id="casual-accent" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="{{ACCENT_COLOR_TOP}}" />
+      <stop offset="100%" stop-color="{{ACCENT_COLOR_BOTTOM}}" />
+    </linearGradient>
+    <linearGradient id="casual-shadow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="{{SHADOW_TOP}}" />
+      <stop offset="100%" stop-color="{{SHADOW_BOTTOM}}" />
+    </linearGradient>
+    <radialGradient id="casual-shoulderGlow" cx="50%" cy="0%" r="85%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.12)" />
+      <stop offset="100%" stop-color="rgba(255,255,255,0)" />
+    </radialGradient>
+  </defs>
+  <path d="M {{SHOULDER_LEFT}} {{HEM_Y}} C {{LEFT_CURVE_A_X}} {{LEFT_CURVE_A_Y}}, {{LEFT_CURVE_B_X}} {{LEFT_CURVE_B_Y}}, {{LEFT_CURVE_C_X}} {{JACKET_TOP_Y}} L {{CENTER_LEFT_COLLAR_X}} {{JACKET_TOP_Y}} L {{LEFT_CENTER_HEM_X}} {{HEM_Y}} Z" fill="url(#casual-jacket)"/>
+  <path d="M {{SHOULDER_RIGHT}} {{HEM_Y}} C {{RIGHT_CURVE_A_X}} {{RIGHT_CURVE_A_Y}}, {{RIGHT_CURVE_B_X}} {{RIGHT_CURVE_B_Y}}, {{RIGHT_CURVE_C_X}} {{JACKET_TOP_Y}} L {{CENTER_RIGHT_COLLAR_X}} {{JACKET_TOP_Y}} L {{RIGHT_CENTER_HEM_X}} {{HEM_Y}} Z" fill="url(#casual-jacket)"/>
+  <path d="M {{CENTER_LEFT_COLLAR_X}} {{JACKET_TOP_Y}} Q {{CENTER_X}} {{SHIRT_CURVE_Y}}, {{CENTER_RIGHT_COLLAR_X}} {{JACKET_TOP_Y}} L {{SHIRT_HEM_RIGHT_X}} {{SHIRT_HEM_Y}} L {{SHIRT_HEM_LEFT_X}} {{SHIRT_HEM_Y}} Z" fill="url(#casual-shirt)" opacity="0.98"/>
+  <rect x="{{ACCENT_X}}" y="{{ACCENT_Y}}" width="{{ACCENT_WIDTH}}" height="{{ACCENT_HEIGHT}}" rx="{{ACCENT_RX}}" fill="url(#casual-accent)" opacity="0.75"/>
+  <ellipse cx="{{CENTER_X}}" cy="{{SHADOW_Y}}" rx="{{SHADOW_RX}}" ry="{{SHADOW_RY}}" fill="url(#casual-shadow)"/>
+  <path d="M {{GLOW_START_X}} {{GLOW_Y}} Q {{CENTER_X}} {{GLOW_CONTROL_Y}}, {{GLOW_END_X}} {{GLOW_Y}}" stroke="url(#casual-shoulderGlow)" stroke-width="{{GLOW_WIDTH}}" stroke-linecap="round"/>
+</svg>
