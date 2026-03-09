@@ -2,42 +2,624 @@
 import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+
+const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
 ---
 
 <Layout
   title="AI 포토샵 | ManyTool"
-  description="배경 정리, 톤 보정, 규격 맞춤까지 빠르게 처리하는 AI 포토샵 랜딩 페이지입니다."
-  keywords="AI 포토샵, AI 사진 보정, 온라인 포토샵, 배경 제거 AI"
+  description="AI 포토샵으로 배경 정리, 톤 보정, 프로필 스타일 후보 3장을 만들고 2장을 선택해 다운로드하세요."
+  keywords="AI 포토샵, AI 사진보정, 온라인 포토샵, 프로필 사진 보정, 배경 제거"
 >
   <Header />
-  <main class="mx-auto max-w-4xl px-4 py-8">
-    <h1 class="text-3xl font-black tracking-tight text-slate-900">AI 포토샵</h1>
-    <p class="mt-2 text-slate-600">셀카/인물 사진을 빠르게 보정하고 증명사진/여권사진 용도로 연결하는 SEO 페이지입니다.</p>
-
-    <section class="mt-5 rounded-xl border border-slate-200 bg-white p-5">
-      <h2 class="text-xl font-bold">주요 기능</h2>
-      <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
-        <li>배경 제거 및 흰 배경 교체</li>
-        <li>밝기/톤 기본 보정</li>
-        <li>증명사진/여권사진 규격 연계</li>
-      </ul>
-    </section>
-
-    <section class="mt-5 rounded-xl border border-slate-200 bg-white p-5">
-      <h2 class="text-xl font-bold">관련 도구</h2>
-      <div class="mt-3 grid gap-3 sm:grid-cols-2">
-        <a href="/ai-id-photo" class="rounded-lg border border-sky-100 bg-sky-50 p-3 text-sm font-semibold text-sky-700">AI 증명사진 생성기</a>
-        <a href="/ai-passport-photo" class="rounded-lg border border-sky-100 bg-sky-50 p-3 text-sm font-semibold text-sky-700">AI 여권사진 생성기</a>
-        <a href="/online-id-photo" class="rounded-lg border border-sky-100 bg-sky-50 p-3 text-sm font-semibold text-sky-700">온라인 증명사진</a>
-        <a href="/online-passport-photo" class="rounded-lg border border-sky-100 bg-sky-50 p-3 text-sm font-semibold text-sky-700">온라인 여권사진</a>
+  <main class="mx-auto max-w-5xl px-4 py-8">
+    <section class="rounded-2xl border border-slate-200 bg-white p-6">
+      <p class="inline-flex rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">MVP 데모</p>
+      <h1 class="mt-3 text-3xl font-black tracking-tight text-slate-900">AI 포토샵</h1>
+      <p class="mt-2 text-slate-600">사진 한 장으로 보정/배경정리 후보 3장을 생성하고, 원하는 2장을 다운로드할 수 있습니다.</p>
+      <div class="mt-4 grid gap-3 text-sm sm:grid-cols-3">
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <p class="font-bold text-slate-900">기본 상품</p>
+          <p class="mt-1 text-slate-600">9,900원 / 후보 3장 / 최종 2장 다운로드</p>
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <p class="font-bold text-slate-900">추가 생성</p>
+          <p class="mt-1 text-slate-600">+2(3,900) / +3(4,900) / +7(5,900)</p>
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <p class="font-bold text-slate-900">의상 옵션</p>
+          <p class="mt-1 text-slate-600">현재 옷 / 정장(무료)</p>
+        </div>
       </div>
     </section>
 
-    <section class="mt-5 rounded-xl border border-slate-200 bg-white p-5">
-      <h2 class="text-xl font-bold">FAQ</h2>
-      <p class="mt-2 text-sm text-slate-700">Q. 설치가 필요한가요? A. 아니요. 브라우저에서 바로 사용합니다.</p>
-      <p class="mt-1 text-sm text-slate-700">Q. 모바일도 가능한가요? A. 네, 업로드/촬영 모두 지원 가능합니다.</p>
+    <section class="mt-6 grid gap-4 lg:grid-cols-2">
+      <article class="rounded-2xl border border-slate-200 bg-white p-5">
+        <h2 class="text-xl font-bold text-slate-900">1) 사진 입력</h2>
+        <div class="mt-3 flex flex-wrap gap-2">
+          <label class="cursor-pointer rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white">
+            사진 업로드
+            <input id="file-input" type="file" accept="image/*" class="hidden" />
+          </label>
+          <button id="camera-start" class="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">
+            카메라 시작
+          </button>
+          <button id="camera-capture" class="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700" disabled>
+            촬영
+          </button>
+          <button id="reset-all" class="rounded-md border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700">
+            초기화
+          </button>
+        </div>
+
+        <div class="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <video id="camera" class="hidden h-64 w-full rounded-lg bg-black object-cover" autoplay playsinline></video>
+          <img id="source-preview" alt="원본 미리보기" class="hidden h-64 w-full rounded-lg object-contain" />
+          <p id="source-empty" class="text-sm text-slate-500">아직 사진이 선택되지 않았습니다.</p>
+        </div>
+
+        <div class="mt-4">
+          <label class="text-sm font-semibold text-slate-700" for="outfit">의상 옵션</label>
+          <select id="outfit" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
+            <option value="current">현재 옷</option>
+            <option value="suit">정장</option>
+          </select>
+        </div>
+
+        <button id="generate" class="mt-4 w-full rounded-md bg-sky-600 px-4 py-2 text-sm font-bold text-white" disabled>
+          AI 포토샵 실행
+        </button>
+
+        <section class="mt-4 rounded-lg border border-sky-100 bg-sky-50 p-4 text-sm text-slate-700">
+          <p class="font-bold text-slate-900">온라인 AI 포토샵을 빠르게 실행</p>
+          <p class="mt-1">업로드 또는 촬영만으로 배경 정리, 톤 보정, 자연스러운 프로필 스타일 후보를 바로 확인할 수 있습니다.</p>
+          <ul class="mt-2 list-disc space-y-1 pl-5">
+            <li>모바일/PC 업로드 + 카메라 촬영 지원</li>
+            <li>프로필 기준 자동 보정</li>
+            <li>후보 3장 비교 후 2장 선택 다운로드</li>
+          </ul>
+        </section>
+      </article>
+
+      <article class="rounded-2xl border border-slate-200 bg-white p-5">
+        <h2 class="text-xl font-bold text-slate-900">2) 후보 선택</h2>
+        <p class="mt-2 text-sm text-slate-600">후보 중 2장을 선택하면 다운로드가 활성화됩니다.</p>
+        <div id="candidate-grid" class="mt-4 grid gap-3 sm:grid-cols-3">
+          <p class="text-sm text-slate-500">생성 결과가 여기에 표시됩니다.</p>
+        </div>
+        <button id="download-selected" class="mt-4 w-full rounded-md bg-emerald-600 px-4 py-2 text-sm font-bold text-white" disabled>
+          선택한 2장 다운로드
+        </button>
+        <div class="mt-3 grid gap-2 sm:grid-cols-3">
+          <button data-add-count="2" class="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700">+2장 추가 생성 (3,900원)</button>
+          <button data-add-count="3" class="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700">+3장 추가 생성 (4,900원)</button>
+          <button data-add-count="7" class="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700">+7장 추가 생성 (5,900원)</button>
+        </div>
+        <div class="mt-3 grid gap-2 sm:grid-cols-2">
+          <a href="/ai-passport-photo" class="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-center text-sm font-semibold text-sky-700">같은 사진으로 AI 여권사진 만들기</a>
+          <a href="/ai-id-photo" class="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-center text-sm font-semibold text-sky-700">같은 사진으로 AI 증명사진 만들기</a>
+        </div>
+        <p id="api-status" class="mt-2 text-xs text-slate-500">API 상태 확인 중...</p>
+        <p id="status" class="mt-2 text-xs text-slate-500">Node API 연결 시 서버 기반 생성, 실패 시 로컬 생성으로 자동 전환됩니다.</p>
+      </article>
+    </section>
+
+    <section class="mt-8 rounded-2xl border border-slate-200 bg-white p-5">
+      <h2 class="text-2xl font-black tracking-tight text-slate-900">Before / After 비교</h2>
+      <p class="mt-2 text-sm text-slate-600">슬라이더로 원본과 생성 결과 차이를 확인하세요.</p>
+      <div class="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-3">
+        <div class="relative h-72 overflow-hidden rounded-lg bg-slate-100">
+          <img id="compare-before" alt="원본" class="h-full w-full object-cover" />
+          <div id="compare-after-wrap" class="absolute inset-y-0 left-0 w-1/2 overflow-hidden border-r-2 border-white">
+            <img id="compare-after" alt="결과" class="h-full w-full object-cover" />
+          </div>
+          <div class="pointer-events-none absolute inset-x-0 bottom-2 text-center text-xs font-semibold text-white">드래그로 비교</div>
+        </div>
+        <input id="compare-slider" type="range" min="0" max="100" value="50" class="mt-3 w-full accent-sky-600" disabled />
+        <p id="compare-help" class="mt-2 text-xs text-slate-500">사진 업로드 후 후보 생성 시 비교가 활성화됩니다.</p>
+      </div>
+    </section>
+
+    <section class="mt-6 grid gap-4 lg:grid-cols-2">
+      <article class="rounded-2xl border border-slate-200 bg-white p-5">
+        <h2 class="text-xl font-bold text-slate-900">처리 단계</h2>
+        <ol class="mt-3 list-decimal space-y-1 pl-5 text-sm text-slate-700">
+          <li>사진 업로드 또는 카메라 촬영</li>
+          <li>얼굴 위치/각도 분석</li>
+          <li>배경 정리 + 톤/명암 보정</li>
+          <li>보정 후보 3장 생성</li>
+          <li>2장 선택 후 다운로드</li>
+        </ol>
+      </article>
+
+      <article class="rounded-2xl border border-slate-200 bg-white p-5">
+        <h2 class="text-xl font-bold text-slate-900">촬영 가이드</h2>
+        <ul class="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-700">
+          <li>정면 얼굴, 수평 맞춤</li>
+          <li>얼굴 중앙 배치</li>
+          <li>밝은 조명 환경 권장</li>
+          <li>모자/마스크/선글라스 제거</li>
+          <li>얼굴선을 가리는 머리카락 최소화</li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="mt-6 grid gap-4 lg:grid-cols-2">
+      <article class="rounded-2xl border border-slate-200 bg-white p-5">
+        <h2 class="text-xl font-bold text-slate-900">가격 안내</h2>
+        <div class="mt-3 space-y-2 text-sm text-slate-700">
+          <p><span class="font-bold text-slate-900">기본:</span> 9,900원 (후보 3장 / 최종 2장)</p>
+          <p><span class="font-bold text-slate-900">추가:</span> +2장 3,900원 / +3장 4,900원 / +7장 5,900원</p>
+          <p><span class="font-bold text-slate-900">의상:</span> 현재 옷 / 정장(무료)</p>
+        </div>
+      </article>
+
+      <article class="rounded-2xl border border-slate-200 bg-white p-5">
+        <h2 class="text-xl font-bold text-slate-900">FAQ</h2>
+        <div class="mt-3 space-y-2 text-sm text-slate-700">
+          <p><span class="font-semibold text-slate-900">Q.</span> 모바일에서도 가능한가요? <span class="font-semibold text-slate-900">A.</span> 네, 업로드/촬영 모두 지원합니다.</p>
+          <p><span class="font-semibold text-slate-900">Q.</span> 증명사진/여권사진도 만들 수 있나요? <span class="font-semibold text-slate-900">A.</span> 아래 연동 페이지로 바로 이동할 수 있습니다.</p>
+        </div>
+        <div class="mt-3 grid gap-2 text-sm font-semibold sm:grid-cols-2">
+          <a href="/web-id-photo" class="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-sky-700">웹 증명사진</a>
+          <a href="/free-id-photo" class="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-sky-700">무료 증명사진</a>
+          <a href="/ai-passport-photo" class="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-sky-700">AI 여권사진</a>
+          <a href="/free-passport-photo" class="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-sky-700">무료 여권사진</a>
+          <a href="/ai-id-photo" class="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-sky-700">AI 증명사진</a>
+        </div>
+      </article>
     </section>
   </main>
   <Footer />
+
+  <script define:vars={{ apiBase }} is:inline>
+    const fileInput = document.getElementById('file-input');
+    const cameraStartBtn = document.getElementById('camera-start');
+    const cameraCaptureBtn = document.getElementById('camera-capture');
+    const cameraEl = document.getElementById('camera');
+    const resetBtn = document.getElementById('reset-all');
+    const sourcePreview = document.getElementById('source-preview');
+    const sourceEmpty = document.getElementById('source-empty');
+    const generateBtn = document.getElementById('generate');
+    const outfitEl = document.getElementById('outfit');
+    const gridEl = document.getElementById('candidate-grid');
+    const downloadBtn = document.getElementById('download-selected');
+    const addButtons = Array.from(document.querySelectorAll('[data-add-count]'));
+    const apiStatusEl = document.getElementById('api-status');
+    const statusEl = document.getElementById('status');
+    const compareBeforeEl = document.getElementById('compare-before');
+    const compareAfterEl = document.getElementById('compare-after');
+    const compareAfterWrapEl = document.getElementById('compare-after-wrap');
+    const compareSliderEl = document.getElementById('compare-slider');
+    const compareHelpEl = document.getElementById('compare-help');
+
+    const API_BASE = apiBase;
+
+    let stream = null;
+    let sourceDataUrl = null;
+    let sourceFile = null;
+    let cachedPhotoId = null;
+    let candidates = [];
+    let isGenerating = false;
+    let basePaid = false;
+
+    const setStatus = (text) => {
+      if (statusEl) statusEl.textContent = text;
+    };
+
+    const setApiStatus = (text) => {
+      if (apiStatusEl) apiStatusEl.textContent = text;
+    };
+
+    const setBusy = (busy) => {
+      isGenerating = busy;
+      if (generateBtn instanceof HTMLButtonElement) {
+        generateBtn.disabled = busy || !sourceDataUrl;
+      }
+      addButtons.forEach((buttonEl) => {
+        buttonEl.disabled = busy;
+      });
+    };
+
+    const setSource = (dataUrl, file = null) => {
+      sourceDataUrl = dataUrl;
+      sourceFile = file;
+      cachedPhotoId = null;
+      basePaid = false;
+      candidates = [];
+      renderCandidates();
+      if (sourcePreview instanceof HTMLImageElement) {
+        sourcePreview.src = dataUrl;
+        sourcePreview.classList.remove('hidden');
+      }
+      if (sourceEmpty instanceof HTMLElement) sourceEmpty.classList.add('hidden');
+      if (generateBtn instanceof HTMLButtonElement) generateBtn.disabled = false;
+      if (compareBeforeEl instanceof HTMLImageElement) compareBeforeEl.src = dataUrl;
+      if (compareAfterEl instanceof HTMLImageElement) compareAfterEl.src = '';
+      if (compareHelpEl instanceof HTMLElement) compareHelpEl.textContent = '후보 생성 후 결과 비교가 활성화됩니다.';
+      if (compareSliderEl instanceof HTMLInputElement) {
+        compareSliderEl.value = '50';
+        compareSliderEl.disabled = true;
+      }
+      if (compareAfterWrapEl instanceof HTMLElement) compareAfterWrapEl.style.width = '50%';
+    };
+
+    const resetAllState = (message = '초기화되었습니다.') => {
+      stopCamera();
+      sourceDataUrl = null;
+      sourceFile = null;
+      cachedPhotoId = null;
+      basePaid = false;
+      candidates = [];
+      renderCandidates();
+      if (sourcePreview instanceof HTMLImageElement) {
+        sourcePreview.src = '';
+        sourcePreview.classList.add('hidden');
+      }
+      if (sourceEmpty instanceof HTMLElement) sourceEmpty.classList.remove('hidden');
+      if (fileInput instanceof HTMLInputElement) fileInput.value = '';
+      if (generateBtn instanceof HTMLButtonElement) generateBtn.disabled = true;
+      if (downloadBtn instanceof HTMLButtonElement) downloadBtn.disabled = true;
+      if (compareBeforeEl instanceof HTMLImageElement) compareBeforeEl.src = '';
+      if (compareAfterEl instanceof HTMLImageElement) compareAfterEl.src = '';
+      if (compareAfterWrapEl instanceof HTMLElement) compareAfterWrapEl.style.width = '50%';
+      if (compareSliderEl instanceof HTMLInputElement) {
+        compareSliderEl.value = '50';
+        compareSliderEl.disabled = true;
+      }
+      if (compareHelpEl instanceof HTMLElement) {
+        compareHelpEl.textContent = '사진 업로드 후 후보 생성 시 비교가 활성화됩니다.';
+      }
+      setStatus(message);
+    };
+
+    const stopCamera = () => {
+      if (stream) stream.getTracks().forEach((track) => track.stop());
+      stream = null;
+      if (cameraEl instanceof HTMLVideoElement) cameraEl.classList.add('hidden');
+      if (cameraCaptureBtn instanceof HTMLButtonElement) cameraCaptureBtn.disabled = true;
+    };
+
+    const renderCandidates = () => {
+      if (!(gridEl instanceof HTMLElement)) return;
+      gridEl.innerHTML = '';
+      candidates.forEach((item, idx) => {
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = `overflow-hidden rounded-lg border p-1 text-left ${item.selected ? 'border-emerald-500 ring-2 ring-emerald-300' : 'border-slate-200'}`;
+        card.innerHTML = `
+          <img src="${item.url}" alt="후보 ${idx + 1}" class="h-36 w-full rounded object-cover" />
+          <p class="mt-1 px-1 text-xs font-semibold text-slate-700">후보 ${idx + 1}</p>
+        `;
+        card.addEventListener('click', () => {
+          const selectedCount = candidates.filter((c) => c.selected).length;
+          if (!item.selected && selectedCount >= 2) {
+            setStatus('최대 2장까지 선택할 수 있습니다.');
+            return;
+          }
+          item.selected = !item.selected;
+          renderCandidates();
+        });
+        gridEl.append(card);
+      });
+      if (downloadBtn instanceof HTMLButtonElement) {
+        downloadBtn.disabled = candidates.filter((c) => c.selected).length !== 2;
+      }
+    };
+
+    const centerCropTo34 = (img, shiftX = 0, shiftY = 0, filter = 'none') => {
+      const ratio = 3 / 4;
+      const srcW = img.naturalWidth || img.width;
+      const srcH = img.naturalHeight || img.height;
+      let cropW = srcW;
+      let cropH = Math.round(cropW / ratio);
+      if (cropH > srcH) {
+        cropH = srcH;
+        cropW = Math.round(cropH * ratio);
+      }
+      const baseX = Math.floor((srcW - cropW) / 2);
+      const baseY = Math.floor((srcH - cropH) / 2);
+      const x = Math.max(0, Math.min(srcW - cropW, baseX + shiftX));
+      const y = Math.max(0, Math.min(srcH - cropH, baseY + shiftY));
+      const canvas = document.createElement('canvas');
+      canvas.width = 600;
+      canvas.height = 800;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return '';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.filter = filter;
+      ctx.drawImage(img, x, y, cropW, cropH, 0, 0, canvas.width, canvas.height);
+      return canvas.toDataURL('image/jpeg', 0.92);
+    };
+
+    const generateCandidatesLocalFallback = async (count = 3) => {
+      const img = new Image();
+      img.src = sourceDataUrl;
+      await img.decode();
+      const outfit = outfitEl instanceof HTMLSelectElement ? outfitEl.value : 'current';
+      const suitFilter = outfit === 'suit' ? 'contrast(1.03) saturate(0.97)' : 'none';
+      const variants = [];
+      for (let i = 0; i < count; i += 1) {
+        const shiftX = (i % 3) * 6;
+        const shiftY = (i % 2) * -6;
+        const filter = i % 2 === 0 ? suitFilter : `${suitFilter} brightness(1.08)`;
+        variants.push({
+          id: `candidate_${Date.now()}_${i + 1}`,
+          url: centerCropTo34(img, shiftX, shiftY, filter),
+          selected: false,
+          downloadUrl: null
+        });
+      }
+      candidates = [...candidates, ...variants];
+    };
+
+    const uploadSourceIfNeeded = async () => {
+      if (cachedPhotoId) return cachedPhotoId;
+      if (!sourceFile) throw new Error('source file is missing');
+      const form = new FormData();
+      form.append('image', sourceFile);
+      form.append('sourceType', 'upload');
+      const uploadRes = await fetch(`${API_BASE}/upload`, { method: 'POST', body: form });
+      if (!uploadRes.ok) throw new Error(`upload failed: ${uploadRes.status}`);
+      const uploadData = await uploadRes.json();
+      if (!uploadData.photoId) throw new Error('photoId missing');
+      cachedPhotoId = uploadData.photoId;
+      return cachedPhotoId;
+    };
+
+    const requestServerCandidates = async (count = 3) => {
+      const photoId = await uploadSourceIfNeeded();
+      const outfit = outfitEl instanceof HTMLSelectElement ? outfitEl.value : 'current';
+      const rounds = Math.ceil(count / 3);
+      const generated = [];
+
+      for (let i = 0; i < rounds; i += 1) {
+        const genRes = await fetch(`${API_BASE}/generate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            photoId,
+            toolType: 'headshot',
+            outfitType: outfit
+          })
+        });
+        if (!genRes.ok) throw new Error(`generate failed: ${genRes.status}`);
+        const genData = await genRes.json();
+        if (!Array.isArray(genData.candidates)) throw new Error('invalid candidates');
+        generated.push(...genData.candidates);
+      }
+
+      return generated.slice(0, count).map((item) => ({
+        id: item.id,
+        url: `${API_BASE}${item.imageUrl}`,
+        selected: false,
+        downloadUrl: `${API_BASE}/download/${item.id}`
+      }));
+    };
+
+    const generateCandidates = async (count = 3, append = false) => {
+      if (!sourceDataUrl || isGenerating) return;
+      setBusy(true);
+      setStatus('후보를 생성하고 있습니다...');
+      try {
+        const serverCandidates = await requestServerCandidates(count);
+        candidates = append ? [...candidates, ...serverCandidates] : serverCandidates;
+        setStatus(`Node API 생성 완료. 현재 ${candidates.length}장 후보가 준비되었습니다.`);
+      } catch {
+        if (!append) candidates = [];
+        await generateCandidatesLocalFallback(count);
+        setStatus(`Node API 연결 실패. 로컬 생성 모드로 전환되었습니다. 현재 ${candidates.length}장 후보가 준비되었습니다.`);
+      }
+      finally {
+        if (compareAfterEl instanceof HTMLImageElement) compareAfterEl.src = candidates[0]?.url ?? '';
+        if (compareHelpEl instanceof HTMLElement) compareHelpEl.textContent = '슬라이더를 움직여 전/후 변화를 비교하세요.';
+        if (compareSliderEl instanceof HTMLInputElement) compareSliderEl.disabled = false;
+        renderCandidates();
+        setBusy(false);
+      }
+    };
+
+    const requestAddonCheckout = async (count) => {
+      const priceMap = { 2: 3900, 3: 4900, 7: 5900 };
+      const amount = priceMap[count];
+      if (!amount) throw new Error('invalid addon count');
+
+      const res = await fetch(`${API_BASE}/checkout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productType: `add${count}`,
+          amount,
+          currency: 'KRW'
+        })
+      });
+      if (!res.ok) throw new Error(`checkout failed: ${res.status}`);
+      return res.json();
+    };
+
+    const requestBaseCheckout = async () => {
+      const res = await fetch(`${API_BASE}/checkout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productType: 'base',
+          amount: 9900,
+          currency: 'KRW'
+        })
+      });
+      if (!res.ok) throw new Error(`checkout failed: ${res.status}`);
+      return res.json();
+    };
+
+    if (compareSliderEl instanceof HTMLInputElement && compareAfterWrapEl instanceof HTMLElement) {
+      compareSliderEl.addEventListener('input', () => {
+        compareAfterWrapEl.style.width = `${compareSliderEl.value}%`;
+      });
+    }
+
+    const loadApiStatus = async () => {
+      try {
+        const [healthRes, configRes] = await Promise.all([
+          fetch(`${API_BASE}/health`),
+          fetch(`${API_BASE}/config`)
+        ]);
+        if (!healthRes.ok || !configRes.ok) throw new Error('status check failed');
+        const config = await configRes.json();
+        setApiStatus(`API 연결됨 · provider=${config.imageProvider} · payment=${config.paymentMode}`);
+      } catch {
+        setApiStatus('API 미연결 · 로컬 fallback 모드');
+      }
+    };
+
+    loadApiStatus();
+
+    if (fileInput instanceof HTMLInputElement) {
+      fileInput.addEventListener('change', (e) => {
+        const input = e.target;
+        const file = input.files && input.files[0];
+        if (!file) return;
+        if (!String(file.type).startsWith('image/')) {
+          setStatus('이미지 파일만 업로드할 수 있습니다.');
+          input.value = '';
+          return;
+        }
+        if (file.size > 12 * 1024 * 1024) {
+          setStatus('이미지 용량은 12MB 이하만 가능합니다.');
+          input.value = '';
+          return;
+        }
+        stopCamera();
+        const reader = new FileReader();
+        reader.onload = () => {
+          if (typeof reader.result === 'string') {
+            setSource(reader.result, file);
+            setStatus('사진 업로드 완료.');
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    if (resetBtn instanceof HTMLButtonElement) {
+      resetBtn.addEventListener('click', () => resetAllState());
+    }
+
+    if (cameraStartBtn instanceof HTMLButtonElement) {
+      cameraStartBtn.addEventListener('click', async () => {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+          if (cameraEl instanceof HTMLVideoElement) {
+            cameraEl.srcObject = stream;
+            cameraEl.classList.remove('hidden');
+          }
+          if (cameraCaptureBtn instanceof HTMLButtonElement) cameraCaptureBtn.disabled = false;
+          setStatus('카메라가 켜졌습니다. 촬영 버튼을 눌러주세요.');
+        } catch {
+          setStatus('카메라 접근 실패. 업로드를 사용해주세요.');
+        }
+      });
+    }
+
+    if (cameraCaptureBtn instanceof HTMLButtonElement) {
+      cameraCaptureBtn.addEventListener('click', () => {
+        if (!(cameraEl instanceof HTMLVideoElement)) return;
+        const canvas = document.createElement('canvas');
+        canvas.width = cameraEl.videoWidth || 720;
+        canvas.height = cameraEl.videoHeight || 960;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        ctx.drawImage(cameraEl, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+        const blob = dataURLToBlob(dataUrl);
+        const file = new File([blob], `camera-${Date.now()}.jpg`, { type: 'image/jpeg' });
+        setSource(dataUrl, file);
+        stopCamera();
+        setStatus('촬영 완료.');
+      });
+    }
+
+    if (generateBtn instanceof HTMLButtonElement) {
+      generateBtn.addEventListener('click', () => generateCandidates(3, false));
+    }
+
+    addButtons.forEach((buttonEl) => {
+      buttonEl.addEventListener('click', async () => {
+        const count = Number(buttonEl.getAttribute('data-add-count') || '0');
+        if (!sourceDataUrl || !count) {
+          setStatus('먼저 사진을 업로드하고 기본 후보를 생성해주세요.');
+          return;
+        }
+        if (isGenerating) return;
+        try {
+          setStatus('추가 생성 결제를 확인하고 있습니다...');
+          const checkout = await requestAddonCheckout(count);
+          if (!checkout.paid) {
+            setStatus('결제가 완료되지 않아 추가 생성을 진행할 수 없습니다.');
+            return;
+          }
+          setStatus(`결제 완료(+${count}장). 추가 후보를 생성합니다...`);
+          await generateCandidates(count, true);
+        } catch {
+          setStatus('추가 생성 결제 확인에 실패했습니다. 잠시 후 다시 시도해주세요.');
+        }
+      });
+    });
+
+    if (downloadBtn instanceof HTMLButtonElement) {
+      downloadBtn.addEventListener('click', async () => {
+        const selected = candidates.filter((item) => item.selected);
+        if (selected.length !== 2) return;
+        if (isGenerating) return;
+        if (!basePaid) {
+          try {
+            setStatus('기본 결제를 확인하고 있습니다...');
+            const checkout = await requestBaseCheckout();
+            if (!checkout.paid) {
+              setStatus('결제가 완료되지 않아 다운로드할 수 없습니다.');
+              return;
+            }
+            basePaid = true;
+            setStatus('기본 결제 완료. 다운로드를 시작합니다.');
+          } catch {
+            setStatus('결제 확인에 실패했습니다. 잠시 후 다시 시도해주세요.');
+            return;
+          }
+        }
+        try {
+          setStatus('다운로드 파일을 준비 중입니다...');
+          await Promise.all(selected.map((item, idx) => downloadCandidate(item, idx + 1, 'manytool-id-photo')));
+          setStatus('다운로드를 시작했습니다.');
+        } catch {
+          setStatus('다운로드에 실패했습니다. 다시 시도해주세요.');
+        }
+      });
+    }
+
+    async function downloadCandidate(item, order, namePrefix) {
+      const fileUrl = item.downloadUrl || item.url;
+      const res = await fetch(fileUrl);
+      if (!res.ok) throw new Error(`download failed: ${res.status}`);
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = `${namePrefix}-${order}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+    }
+
+    function dataURLToBlob(dataUrl) {
+      const parts = dataUrl.split(',');
+      const mime = parts[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+      const binary = atob(parts[1]);
+      const len = binary.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i += 1) bytes[i] = binary.charCodeAt(i);
+      return new Blob([bytes], { type: mime });
+    }
+  </script>
 </Layout>
+
