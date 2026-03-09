@@ -82,6 +82,13 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         </label>
       </div>
 
+      <div class="mt-4 flex flex-wrap gap-2">
+        <button data-preset="all" type="button" class="ops-preset rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">전체 보기</button>
+        <button data-preset="flagged" type="button" class="ops-preset rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900 transition hover:bg-amber-100">경고만</button>
+        <button data-preset="fallback" type="button" class="ops-preset rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-900 transition hover:bg-sky-100">fallback만</button>
+        <button data-preset="failed" type="button" class="ops-preset rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-900 transition hover:bg-rose-100">실패만</button>
+      </div>
+
       <p id="ops-status-text" class="mt-4 text-sm text-slate-500">최근 운영 데이터를 불러오는 중입니다.</p>
     </section>
 
@@ -156,6 +163,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     const copySummaryBtn = document.getElementById('ops-copy-summary');
     const downloadSummaryBtn = document.getElementById('ops-download-summary');
     const downloadJsonBtn = document.getElementById('ops-download-json');
+    const presetButtons = Array.from(document.querySelectorAll('.ops-preset'));
 
     const filters = {
       status: document.getElementById('ops-status'),
@@ -569,6 +577,23 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       return params;
     };
 
+    const applyPreset = (preset) => {
+      if (filters.status instanceof HTMLSelectElement) filters.status.value = 'all';
+      if (filters.flagged instanceof HTMLSelectElement) filters.flagged.value = 'false';
+      if (filters.fallbackOnly instanceof HTMLSelectElement) filters.fallbackOnly.value = 'false';
+
+      if (preset === 'flagged' && filters.flagged instanceof HTMLSelectElement) {
+        filters.flagged.value = 'true';
+      }
+      if (preset === 'fallback' && filters.fallbackOnly instanceof HTMLSelectElement) {
+        filters.fallbackOnly.value = 'true';
+      }
+      if (preset === 'failed' && filters.status instanceof HTMLSelectElement) {
+        filters.status.value = 'failed';
+      }
+      loadOps();
+    };
+
     const loadOps = async () => {
       setStatus('운영 데이터를 불러오는 중입니다.');
       const query = buildQuery();
@@ -595,6 +620,12 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
 
     refreshBtn?.addEventListener('click', () => loadOps());
     Object.values(filters).forEach((element) => element?.addEventListener('change', () => loadOps()));
+    presetButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const preset = button.getAttribute('data-preset') ?? 'all';
+        applyPreset(preset);
+      });
+    });
 
     copySummaryBtn?.addEventListener('click', async () => {
       const summary = buildOpsSummary();
