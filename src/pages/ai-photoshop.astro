@@ -7,15 +7,15 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
 ---
 
 <Layout
-  title="AI 포토샵 | ManyTool"
-  description="AI 포토샵으로 배경 정리, 톤 보정, 프로필 스타일 후보 3장을 만들고 2장을 선택해 다운로드하세요."
-  keywords="AI 포토샵, AI 사진보정, 온라인 포토샵, 프로필 사진 보정, 배경 제거"
+  title="AI 프로필사진 실행기 | ManyTool"
+  description="AI 프로필사진(Headshot) 실행 페이지입니다. 배경 정리와 톤 보정이 적용된 후보 3장을 만들고 2장을 선택해 다운로드하세요."
+  keywords="AI 프로필사진, AI headshot, 프로필 사진 보정, LinkedIn headshot, 배경 제거"
 >
   <Header />
   <main class="mx-auto max-w-5xl px-4 py-8">
     <section class="rounded-2xl border border-slate-200 bg-white p-6">
       <p class="inline-flex rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">MVP 데모</p>
-      <h1 class="mt-3 text-3xl font-black tracking-tight text-slate-900">AI 포토샵</h1>
+      <h1 class="mt-3 text-3xl font-black tracking-tight text-slate-900">AI 프로필사진 실행기</h1>
       <p class="mt-2 text-slate-600">사진 한 장으로 보정/배경정리 후보 3장을 생성하고, 원하는 2장을 다운로드할 수 있습니다.</p>
       <div class="mt-4 grid gap-3 text-sm sm:grid-cols-3">
         <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
@@ -67,11 +67,11 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         </div>
 
         <button id="generate" class="mt-4 w-full rounded-md bg-sky-600 px-4 py-2 text-sm font-bold text-white" disabled>
-          AI 포토샵 실행
+          AI 프로필사진 실행
         </button>
 
         <section class="mt-4 rounded-lg border border-sky-100 bg-sky-50 p-4 text-sm text-slate-700">
-          <p class="font-bold text-slate-900">온라인 AI 포토샵을 빠르게 실행</p>
+          <p class="font-bold text-slate-900">온라인 AI 프로필사진을 빠르게 실행</p>
           <p class="mt-1">업로드 또는 촬영만으로 배경 정리, 톤 보정, 자연스러운 프로필 스타일 후보를 바로 확인할 수 있습니다.</p>
           <ul class="mt-2 list-disc space-y-1 pl-5">
             <li>모바일/PC 업로드 + 카메라 촬영 지원</li>
