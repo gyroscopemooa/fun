@@ -22,9 +22,12 @@ const thisDir = path.dirname(thisFile);
 const rootDir = path.resolve(thisDir, '..', 'node-api-storage');
 const originalDir = path.join(rootDir, 'originals');
 const generatedDir = path.join(rootDir, 'generated');
+const reportsDir = path.join(rootDir, 'reports');
+const jobSnapshotDir = path.join(reportsDir, 'jobs');
 
 await fs.mkdir(originalDir, { recursive: true });
 await fs.mkdir(generatedDir, { recursive: true });
+await fs.mkdir(jobSnapshotDir, { recursive: true });
 
 app.use(cors());
 app.use(express.json({
@@ -92,11 +95,45 @@ const getPolarProductIdByType = (productType) => {
   return map[productType] ?? null;
 };
 
+const getJobPayload = (job) => {
+  const photo = job?.photoId ? db.photos.get(job.photoId) : null;
+  const originalUrl = job?.originalUrl ?? (photo?.originalPath
+    ? `/files/originals/${path.basename(photo.originalPath)}`
+    : null);
+  const recommendedCandidate = Array.isArray(job?.candidates)
+    ? (job.candidates.find((item) => item.recommended) ?? job.candidates[0] ?? null)
+    : null;
+
+  return {
+    ...job,
+    pipelineReport: job?.pipelineReport ?? null,
+    originalUrl,
+    recommendedCandidateId: recommendedCandidate?.id ?? null
+  };
+};
+
+const getJobSnapshotPath = (jobId) => path.join(jobSnapshotDir, `${jobId}.json`);
+
+const persistJobSnapshot = async (job) => {
+  if (!job?.id) return;
+  const payload = getJobPayload(job);
+  await fs.writeFile(getJobSnapshotPath(job.id), JSON.stringify(payload, null, 2), 'utf-8');
+};
+
+const loadPersistedJob = async (jobId) => {
+  try {
+    const raw = await fs.readFile(getJobSnapshotPath(jobId), 'utf-8');
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+};
+
 const toJobSummary = (job) => {
   const photo = job?.photoId ? db.photos.get(job.photoId) : null;
-  const originalUrl = photo?.originalPath
+  const originalUrl = job?.originalUrl ?? (photo?.originalPath
     ? `/files/originals/${path.basename(photo.originalPath)}`
-    : null;
+    : null);
   const recommendedCandidate = Array.isArray(job?.candidates)
     ? (job.candidates.find((item) => item.recommended) ?? job.candidates[0] ?? null)
     : null;
@@ -140,6 +177,27 @@ const toJobSummary = (job) => {
     flags,
     pipelineReport: report
   };
+};
+
+const loadPersistedRecentJobs = async () => {
+  try {
+    const files = await fs.readdir(jobSnapshotDir);
+    const items = await Promise.all(
+      files
+        .filter((file) => file.endsWith('.json'))
+        .map(async (file) => {
+          try {
+            const raw = await fs.readFile(path.join(jobSnapshotDir, file), 'utf-8');
+            return JSON.parse(raw);
+          } catch {
+            return null;
+          }
+        })
+    );
+    return items.filter(Boolean);
+  } catch {
+    return [];
+  }
 };
 
 const createPolarCheckout = async ({ order, productId, clientSessionId = null }) => {
@@ -409,6 +467,8 @@ app.post('/generate', async (req, res) => {
     job.candidates = candidates;
     job.pipelineReport = generation?.pipelineReport ?? null;
     job.completedAt = new Date().toISOString();
+    job.originalUrl = `/files/originals/${path.basename(photo.originalPath)}`;
+    await persistJobSnapshot(job);
 
     return res.status(201).json({
       jobId,
@@ -419,35 +479,32 @@ app.post('/generate', async (req, res) => {
   } catch (error) {
     job.status = 'failed';
     job.error = error.message;
+    job.originalUrl = `/files/originals/${path.basename(photo.originalPath)}`;
+    await persistJobSnapshot(job);
     return res.status(500).json({ error: `generate failed: ${error.message}`, jobId });
   }
 });
 
-app.get('/job/:id', (req, res) => {
-  const job = db.jobs.get(req.params.id);
+app.get('/job/:id', async (req, res) => {
+  const job = db.jobs.get(req.params.id) ?? await loadPersistedJob(req.params.id);
   if (!job) return res.status(404).json({ error: 'job not found' });
-  const photo = job.photoId ? db.photos.get(job.photoId) : null;
-  const originalUrl = photo?.originalPath
-    ? `/files/originals/${path.basename(photo.originalPath)}`
-    : null;
-  const recommendedCandidate = Array.isArray(job.candidates)
-    ? (job.candidates.find((item) => item.recommended) ?? job.candidates[0] ?? null)
-    : null;
-  return res.json({
-    ...job,
-    pipelineReport: job.pipelineReport ?? null,
-    originalUrl,
-    recommendedCandidateId: recommendedCandidate?.id ?? null
-  });
+  return res.json(getJobPayload(job));
 });
 
-app.get('/jobs/recent', (req, res) => {
+app.get('/jobs/recent', async (req, res) => {
   const limit = Math.max(1, Math.min(100, Number(req.query.limit ?? 20) || 20));
   const statusFilter = typeof req.query.status === 'string' ? req.query.status.trim().toLowerCase() : '';
   const flaggedOnly = String(req.query.flagged ?? '').toLowerCase() === 'true';
   const toolFilter = typeof req.query.toolType === 'string' ? req.query.toolType.trim().toLowerCase() : '';
 
-  let items = Array.from(db.jobs.values())
+  const memoryJobs = Array.from(db.jobs.values());
+  const persistedJobs = await loadPersistedRecentJobs();
+  const deduped = new Map();
+  [...persistedJobs, ...memoryJobs].forEach((item) => {
+    if (item?.id) deduped.set(item.id, item);
+  });
+
+  let items = Array.from(deduped.values())
     .sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())
     .map(toJobSummary);
 
