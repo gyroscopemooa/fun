@@ -67,6 +67,7 @@
   - current-filter debug jump link
   - representative debug links from tool/provider drill-down groups
   - hour-slot mini trend cards for failure / warning / fallback hotspots
+  - inline representative preview panel when clicking tool/provider drill-down cards
   - ops summary copy/download
   - original vs recommended side-by-side compare
   - recommended/generated/rejected variant trace
