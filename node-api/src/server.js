@@ -195,6 +195,9 @@ const toJobSummary = (job) => {
     suitTemplate: report?.suitTemplate ?? null,
     suitSelectionSummary: report?.suitSelectionSummary ?? null,
     qualityScore,
+    qualityScoreBeforeRetry: typeof report?.qualityScoreBeforeRetry === 'number' ? report.qualityScoreBeforeRetry : null,
+    finalQualityRetryTriggered: Boolean(report?.finalQualityRetryTriggered),
+    finalQualityRetryProfile: report?.finalQualityRetryProfile ?? null,
     qualitySummary: report?.qualitySummary ?? null,
     identityScore,
     identityThreshold: report?.identityThreshold ?? 78,
@@ -537,6 +540,7 @@ app.get('/jobs/recent', async (req, res) => {
   const limit = Math.max(1, Math.min(100, Number(req.query.limit ?? 20) || 20));
   const statusFilter = typeof req.query.status === 'string' ? req.query.status.trim().toLowerCase() : '';
   const flaggedOnly = String(req.query.flagged ?? '').toLowerCase() === 'true';
+  const fallbackOnly = String(req.query.fallbackOnly ?? '').toLowerCase() === 'true';
   const toolFilter = typeof req.query.toolType === 'string' ? req.query.toolType.trim().toLowerCase() : '';
   const sinceHours = Number(req.query.sinceHours ?? 0) || 0;
 
@@ -562,6 +566,9 @@ app.get('/jobs/recent', async (req, res) => {
   if (flaggedOnly) {
     items = items.filter((item) => Array.isArray(item.flags) && item.flags.length > 0);
   }
+  if (fallbackOnly) {
+    items = items.filter((item) => Array.isArray(item.flags) && item.flags.includes('provider_fallback'));
+  }
 
   const sliced = items.slice(0, limit);
   const stats = {
@@ -579,6 +586,7 @@ app.get('/jobs/recent', async (req, res) => {
       limit,
       status: statusFilter || null,
       flagged: flaggedOnly,
+      fallbackOnly,
       toolType: toolFilter || null,
       sinceHours: sinceHours > 0 ? sinceHours : null
     }
@@ -587,6 +595,7 @@ app.get('/jobs/recent', async (req, res) => {
 
 app.get('/jobs/alerts', async (req, res) => {
   const sinceHours = Number(req.query.sinceHours ?? 0) || 0;
+  const fallbackOnly = String(req.query.fallbackOnly ?? '').toLowerCase() === 'true';
   const memoryJobs = Array.from(db.jobs.values());
   const persistedJobs = await loadPersistedRecentJobs();
   const deduped = new Map();
@@ -600,7 +609,11 @@ app.get('/jobs/alerts', async (req, res) => {
 
   const filteredSummaries = applySinceHoursFilter(summaries, sinceHours);
 
-  const flagged = filteredSummaries.filter((item) => Array.isArray(item.flags) && item.flags.length > 0);
+  const flagged = filteredSummaries.filter((item) => {
+    if (!Array.isArray(item.flags) || !item.flags.length) return false;
+    if (fallbackOnly) return item.flags.includes('provider_fallback');
+    return true;
+  });
   const toolBreakdown = {};
   const providerBreakdown = {};
 
@@ -626,7 +639,8 @@ app.get('/jobs/alerts', async (req, res) => {
     latestFlagged: flagged.slice(0, 12),
     toolBreakdown,
     providerBreakdown,
-    sinceHours: sinceHours > 0 ? sinceHours : null
+    sinceHours: sinceHours > 0 ? sinceHours : null,
+    fallbackOnly
   });
 });
 

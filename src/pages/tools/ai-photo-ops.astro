@@ -7,559 +7,555 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
 ---
 
 <Layout
-  title="AI 증명사진 운영 요약 | ManyTool"
-  description="최근 생성 작업, 저점수 경고, provider fallback, 디버그 진입 링크를 한 화면에서 확인하는 운영 페이지입니다."
-  keywords="AI 증명사진 운영, job summary, manytool ops"
+  title="AI 사진 운영 요약 | ManyTool"
+  description="AI 증명사진 최근 작업, 경고, 추세, fallback, 품질 재시도 결과를 한 화면에서 확인하는 운영 페이지"
   noindex={true}
 >
   <Header />
   <main class="mx-auto max-w-7xl px-4 py-8">
-    <section class="rounded-2xl border border-slate-200 bg-white p-6">
+    <section class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
       <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p class="inline-flex rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">Ops View</p>
-          <h1 class="mt-3 text-3xl font-black tracking-tight text-slate-900">AI 증명사진 운영 요약</h1>
-          <p class="mt-2 text-sm text-slate-600">최근 생성 작업, 저점수 후보, provider fallback, 품질 재시도 여부를 빠르게 확인합니다.</p>
+          <p class="inline-flex rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">Ops Summary</p>
+          <h1 class="mt-3 text-3xl font-black tracking-tight text-slate-900">AI 사진 운영 요약</h1>
+          <p class="mt-2 text-sm text-slate-600">
+            최근 생성 결과, 저품질 경고, provider fallback, 품질 재시도 전후 점수를 한 화면에서 확인합니다.
+          </p>
         </div>
         <div class="flex flex-wrap gap-2">
-          <button id="ops-refresh" type="button" class="rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800">새로고침</button>
-          <button id="ops-copy-summary" type="button" class="rounded-xl border border-slate-300 px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50">요약 복사</button>
-          <button id="ops-download-summary" type="button" class="rounded-xl border border-slate-300 px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50">요약 저장</button>
-          <button id="ops-download-json" type="button" class="rounded-xl border border-slate-300 px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50">JSON 저장</button>
+          <button id="ops-refresh" type="button" class="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800">새로고침</button>
+          <button id="ops-copy-summary" type="button" class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">요약 복사</button>
+          <button id="ops-download-summary" type="button" class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">요약 저장</button>
+          <button id="ops-download-json" type="button" class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">JSON 저장</button>
         </div>
       </div>
-      <form id="ops-filter-form" class="mt-5 grid gap-3 md:grid-cols-4">
-        <label class="text-sm font-semibold text-slate-700">
-          상태
-          <select id="ops-status" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-3 text-sm">
-            <option value="">전체</option>
-            <option value="done">done</option>
+
+      <div class="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-6">
+        <label class="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+          <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">상태</p>
+          <select id="ops-status" class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm">
+            <option value="all">전체</option>
+            <option value="completed">completed</option>
             <option value="failed">failed</option>
-            <option value="processing">processing</option>
           </select>
         </label>
-        <label class="text-sm font-semibold text-slate-700">
-          툴
-          <select id="ops-tool" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-3 text-sm">
-            <option value="">전체</option>
+        <label class="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+          <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">툴</p>
+          <select id="ops-tool" class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm">
+            <option value="all">전체</option>
             <option value="id_photo">id_photo</option>
             <option value="passport_photo">passport_photo</option>
             <option value="headshot">headshot</option>
           </select>
         </label>
-        <label class="text-sm font-semibold text-slate-700">
-          개수
-          <select id="ops-limit" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-3 text-sm">
-            <option value="12">12</option>
-            <option value="20" selected>20</option>
+        <label class="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+          <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">개수</p>
+          <select id="ops-limit" class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm">
+            <option value="8">8</option>
+            <option value="12" selected>12</option>
+            <option value="20">20</option>
             <option value="40">40</option>
-            <option value="80">80</option>
           </select>
         </label>
-        <label class="text-sm font-semibold text-slate-700">
-          기간
-          <select id="ops-period" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-3 text-sm">
+        <label class="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+          <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">기간</p>
+          <select id="ops-period" class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm">
             <option value="1">최근 1시간</option>
             <option value="24" selected>최근 24시간</option>
             <option value="168">최근 7일</option>
             <option value="0">전체</option>
           </select>
         </label>
-        <label class="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
-          <input id="ops-flagged" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-sky-600" />
-          문제 있는 생성만 보기
+        <label class="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+          <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">경고만</p>
+          <select id="ops-flagged" class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm">
+            <option value="false" selected>전체 포함</option>
+            <option value="true">경고만 보기</option>
+          </select>
         </label>
-      </form>
-      <p id="ops-status-text" class="mt-4 text-xs text-slate-500">최근 생성 작업을 불러올 준비가 되었습니다.</p>
+        <label class="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+          <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">fallback만</p>
+          <select id="ops-fallback-only" class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm">
+            <option value="false" selected>전체 포함</option>
+            <option value="true">fallback만 보기</option>
+          </select>
+        </label>
+      </div>
+
+      <p id="ops-status-text" class="mt-4 text-sm text-slate-500">최근 운영 데이터를 불러오는 중입니다.</p>
     </section>
 
-    <section id="ops-stats" class="mt-6 hidden grid gap-4 md:grid-cols-5"></section>
+    <section id="ops-stats" class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4"></section>
 
-    <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-5">
-      <div class="flex items-center justify-between gap-3">
-        <div>
-          <h2 class="text-xl font-black text-slate-900">현재 필터 기준 추세</h2>
-          <p class="mt-1 text-sm text-slate-600">지금 보고 있는 목록 안에서 툴별 상태 분포를 봅니다.</p>
-        </div>
-      </div>
-      <div id="ops-trends" class="mt-4 grid gap-3 md:grid-cols-3">
-        <p class="text-sm text-slate-500">추세를 계산하는 중입니다.</p>
-      </div>
-    </section>
-
-    <section class="mt-6 grid gap-6 xl:grid-cols-[1.1fr_1fr]">
-      <article class="rounded-2xl border border-slate-200 bg-white p-5">
-        <div class="flex items-center justify-between gap-3">
-          <div>
-            <h2 class="text-xl font-black text-slate-900">경고 요약</h2>
-            <p class="mt-1 text-sm text-slate-600">실패, 저품질, 저동일성 발생이 많은 툴을 우선 확인합니다.</p>
-          </div>
-        </div>
-        <div id="ops-alert-tools" class="mt-4 grid gap-3 md:grid-cols-3">
-          <p class="text-sm text-slate-500">경고 요약을 불러오는 중입니다.</p>
-        </div>
+    <section class="mt-6 grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+      <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="text-xl font-black text-slate-900">툴별 추세</h2>
+        <p class="mt-1 text-sm text-slate-600">현재 필터 기준으로 어떤 툴이 계속 문제인지 빠르게 봅니다.</p>
+        <div id="ops-trends" class="mt-4 grid gap-3"></div>
       </article>
 
-      <article class="rounded-2xl border border-slate-200 bg-white p-5">
-        <div class="flex items-center justify-between gap-3">
-          <div>
-            <h2 class="text-xl font-black text-slate-900">Provider 경향</h2>
-            <p class="mt-1 text-sm text-slate-600">fallback과 저품질 경향을 provider 기준으로 봅니다.</p>
-          </div>
-        </div>
-        <div id="ops-alert-providers" class="mt-4 grid gap-3">
-          <p class="text-sm text-slate-500">Provider 경향을 불러오는 중입니다.</p>
+      <div class="grid gap-6">
+        <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 class="text-xl font-black text-slate-900">경고 툴 집계</h2>
+          <div id="ops-alert-tools" class="mt-4 grid gap-3"></div>
+        </article>
+        <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 class="text-xl font-black text-slate-900">경고 provider 집계</h2>
+          <div id="ops-alert-providers" class="mt-4 grid gap-3"></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="mt-6 grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+      <article class="rounded-3xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
+        <h2 class="text-xl font-black text-amber-950">최근 경고 작업</h2>
+        <p class="mt-1 text-sm text-amber-900">저품질, 저동일성, fallback, 실패 작업만 모아서 봅니다.</p>
+        <div id="ops-latest-flagged" class="mt-4 grid gap-3"></div>
+      </article>
+
+      <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="text-xl font-black text-slate-900">관리 링크</h2>
+        <p class="mt-1 text-sm text-slate-600">운영과 디버그 화면으로 바로 이동합니다.</p>
+        <div class="mt-4 grid gap-3 md:grid-cols-2">
+          <a href="/tools/ai-photo-admin" class="rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:border-slate-300 hover:bg-white">
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Admin</p>
+            <p class="mt-2 text-base font-black text-slate-900">관리자 허브</p>
+          </a>
+          <a href="/tools/ai-photo-debug" class="rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:border-slate-300 hover:bg-white">
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Debug</p>
+            <p class="mt-2 text-base font-black text-slate-900">단일 job 디버그</p>
+          </a>
         </div>
       </article>
     </section>
 
-    <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-5">
-      <div class="flex items-center justify-between gap-3">
-        <div>
-          <h2 class="text-xl font-black text-slate-900">최신 경고 작업</h2>
-          <p class="mt-1 text-sm text-slate-600">문제 있는 작업만 빠르게 골라 디버그로 들어갈 수 있습니다.</p>
-        </div>
-      </div>
-      <div id="ops-latest-flagged" class="mt-4 grid gap-3">
-        <p class="text-sm text-slate-500">경고 작업을 불러오는 중입니다.</p>
-      </div>
-    </section>
-
-    <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-5">
-      <div class="flex items-center justify-between gap-3">
-        <div>
-          <h2 class="text-xl font-black text-slate-900">최근 생성 작업</h2>
-          <p class="mt-1 text-sm text-slate-600">추천 점수, 동일성, 규격 점수와 경고 플래그를 한 번에 확인합니다.</p>
-        </div>
-        <a href="/tools/ai-photo-debug" class="text-sm font-semibold text-sky-700 hover:text-sky-800">단일 job 디버그 보기</a>
-      </div>
-      <div id="ops-list" class="mt-4 grid gap-4 xl:grid-cols-2">
-        <p class="text-sm text-slate-500">아직 불러온 작업이 없습니다.</p>
-      </div>
+    <section class="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 class="text-xl font-black text-slate-900">최근 작업</h2>
+      <p class="mt-1 text-sm text-slate-600">원본/추천 결과, 품질 재시도 전후, 후보 결정 흐름을 함께 봅니다.</p>
+      <div id="ops-list" class="mt-4 grid gap-4"></div>
     </section>
   </main>
   <Footer />
-
   <script define:vars={{ apiBase }} is:inline>
     const API_BASE = apiBase;
     const statusTextEl = document.getElementById('ops-status-text');
     const statsEl = document.getElementById('ops-stats');
-    const listEl = document.getElementById('ops-list');
+    const trendsEl = document.getElementById('ops-trends');
     const alertToolsEl = document.getElementById('ops-alert-tools');
     const alertProvidersEl = document.getElementById('ops-alert-providers');
     const latestFlaggedEl = document.getElementById('ops-latest-flagged');
-    const trendsEl = document.getElementById('ops-trends');
+    const listEl = document.getElementById('ops-list');
     const refreshBtn = document.getElementById('ops-refresh');
     const copySummaryBtn = document.getElementById('ops-copy-summary');
     const downloadSummaryBtn = document.getElementById('ops-download-summary');
-    const downloadBtn = document.getElementById('ops-download-json');
-    const filterForm = document.getElementById('ops-filter-form');
-    const statusSelect = document.getElementById('ops-status');
-    const toolSelect = document.getElementById('ops-tool');
-    const limitSelect = document.getElementById('ops-limit');
-    const periodSelect = document.getElementById('ops-period');
-    const flaggedCheckbox = document.getElementById('ops-flagged');
-    let currentPayload = null;
+    const downloadJsonBtn = document.getElementById('ops-download-json');
 
-    const setStatus = (text) => {
-      if (statusTextEl) statusTextEl.textContent = text;
+    const filters = {
+      status: document.getElementById('ops-status'),
+      tool: document.getElementById('ops-tool'),
+      limit: document.getElementById('ops-limit'),
+      period: document.getElementById('ops-period'),
+      flagged: document.getElementById('ops-flagged'),
+      fallbackOnly: document.getElementById('ops-fallback-only')
     };
 
-    const formatNumber = (value) => typeof value === 'number' && Number.isFinite(value) ? value.toFixed(1) : 'n/a';
+    let latestRecentPayload = null;
+    let latestAlertsPayload = null;
+
+    const setStatus = (text) => {
+      if (statusTextEl instanceof HTMLElement) statusTextEl.textContent = text;
+    };
+
+    const formatNumber = (value, digits = 1) => {
+      if (typeof value !== 'number' || Number.isNaN(value)) return '-';
+      return value.toFixed(digits);
+    };
+
+    const formatPercent = (value) => `${formatNumber(value, 1)}%`;
+
     const formatDate = (value) => {
       if (!value) return '-';
-      const date = new Date(value);
-      if (Number.isNaN(date.getTime())) return '-';
-      return date.toLocaleString('ko-KR');
+      const parsed = new Date(value);
+      if (Number.isNaN(parsed.getTime())) return String(value);
+      return parsed.toLocaleString('ko-KR');
     };
 
     const escapeHtml = (value) => String(value ?? '')
       .replaceAll('&', '&amp;')
       .replaceAll('<', '&lt;')
       .replaceAll('>', '&gt;')
-      .replaceAll('"', '&quot;');
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
 
-    const renderStats = (stats) => {
-      if (!(statsEl instanceof HTMLElement)) return;
-      const entries = [
-        ['총 작업', stats?.total ?? 0],
-        ['실패', stats?.failed ?? 0],
-        ['저품질', stats?.lowQuality ?? 0],
-        ['저동일성', stats?.lowIdentity ?? 0],
-        ['Fallback', stats?.providerFallback ?? 0]
-      ];
-      statsEl.classList.remove('hidden');
-      statsEl.innerHTML = entries.map(([label, value]) => `
-        <article class="rounded-2xl border border-slate-200 bg-white p-4">
-          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">${label}</p>
-          <p class="mt-2 text-2xl font-black text-slate-900">${value}</p>
+    const createMetricCard = (label, value, tone = 'slate') => `
+      <article class="rounded-2xl border border-${tone}-200 bg-${tone}-50 p-4">
+        <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-${tone}-500">${label}</p>
+        <p class="mt-2 text-2xl font-black text-${tone}-950">${escapeHtml(value)}</p>
+      </article>
+    `;
+
+    const createTrendCard = (item) => `
+      <article class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">${escapeHtml(item.toolType)}</p>
+            <p class="mt-1 text-lg font-black text-slate-900">${escapeHtml(item.total)}건</p>
+          </div>
+          <span class="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600">실패 ${escapeHtml(item.failed)}</span>
+        </div>
+        <div class="mt-3 grid gap-2 sm:grid-cols-2">
+          <div class="rounded-xl bg-white px-3 py-2">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">평균 규격 점수</p>
+            <p class="mt-1 text-sm font-bold text-slate-900">${formatNumber(item.avgQualityScore)}</p>
+          </div>
+          <div class="rounded-xl bg-white px-3 py-2">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">평균 동일성 점수</p>
+            <p class="mt-1 text-sm font-bold text-slate-900">${formatNumber(item.avgIdentityScore)}</p>
+          </div>
+        </div>
+      </article>
+    `;
+
+    const createAlertRow = (label, count, total, tone = 'amber') => {
+      const percent = total > 0 ? (count / total) * 100 : 0;
+      return `
+        <article class="rounded-2xl border border-${tone}-200 bg-${tone}-50 p-4">
+          <div class="flex items-center justify-between gap-3">
+            <p class="text-sm font-bold text-${tone}-950">${escapeHtml(label)}</p>
+            <span class="text-sm font-black text-${tone}-950">${escapeHtml(count)}건</span>
+          </div>
+          <div class="mt-3 h-2 overflow-hidden rounded-full bg-white/80">
+            <div class="h-full rounded-full bg-${tone}-500" style="width:${Math.max(6, percent)}%"></div>
+          </div>
+          <p class="mt-2 text-xs text-${tone}-900">전체 경고 중 ${formatPercent(percent)}</p>
         </article>
-      `).join('');
+      `;
     };
 
-    const renderList = (items) => {
-      if (!(listEl instanceof HTMLElement)) return;
-      if (!Array.isArray(items) || !items.length) {
-        listEl.innerHTML = '<p class="text-sm text-slate-500">조건에 맞는 작업이 없습니다.</p>';
-        return;
-      }
-
-      listEl.innerHTML = items.map((item) => {
-        const flags = Array.isArray(item.flags) ? item.flags : [];
-        const flagBadges = flags.length
-          ? flags.map((flag) => `<span class="rounded-full bg-rose-100 px-2 py-1 text-[11px] font-semibold text-rose-700">${escapeHtml(flag)}</span>`).join('')
-          : '<span class="rounded-full bg-emerald-100 px-2 py-1 text-[11px] font-semibold text-emerald-700">정상</span>';
-
-        return `
-          <article class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <div class="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">${escapeHtml(item.toolType ?? 'unknown')}</p>
-                <h3 class="mt-1 text-lg font-black text-slate-900">${escapeHtml(item.id)}</h3>
-                <p class="mt-1 text-xs text-slate-500">${formatDate(item.createdAt)}</p>
-              </div>
-              <div class="flex flex-wrap gap-2">
-                <span class="rounded-full bg-slate-900 px-2 py-1 text-[11px] font-semibold text-white">${escapeHtml(item.status)}</span>
-                ${flagBadges}
-              </div>
-            </div>
-            <div class="mt-4 grid gap-4 sm:grid-cols-[180px_1fr]">
-              <div class="grid gap-2">
-                <div class="overflow-hidden rounded-xl border border-slate-200 bg-white">
-                  ${item.originalUrl ? `<img src="${item.originalUrl}" alt="original" class="aspect-[3/4] w-full object-cover" />` : '<div class="aspect-[3/4] w-full bg-slate-100"></div>'}
-                </div>
-                <div class="overflow-hidden rounded-xl border border-sky-200 bg-white ring-1 ring-sky-100">
-                  ${item.recommendedImageUrl ? `<img src="${item.recommendedImageUrl}" alt="recommended" class="aspect-[3/4] w-full object-cover" />` : '<div class="aspect-[3/4] w-full bg-slate-100"></div>'}
-                </div>
-                <div class="grid grid-cols-2 gap-2 text-[11px] font-semibold text-slate-500">
-                  <span class="rounded-lg bg-slate-100 px-2 py-1 text-center">원본</span>
-                  <span class="rounded-lg bg-sky-100 px-2 py-1 text-center text-sky-700">추천</span>
-                </div>
-              </div>
-              <div class="space-y-3">
-                <div class="grid gap-2 sm:grid-cols-3">
-                  <div class="rounded-xl border border-slate-200 bg-white p-3">
-                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">추천 점수</p>
-                    <p class="mt-1 text-lg font-black text-slate-900">${formatNumber(item.score)}</p>
-                  </div>
-                  <div class="rounded-xl border border-slate-200 bg-white p-3">
-                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">동일성</p>
-                    <p class="mt-1 text-lg font-black text-slate-900">${formatNumber(item.identityScore)}</p>
-                  </div>
-                  <div class="rounded-xl border border-slate-200 bg-white p-3">
-                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">규격 점수</p>
-                    <p class="mt-1 text-lg font-black text-slate-900">${formatNumber(item.qualityScore)}</p>
-                  </div>
-                </div>
-                <div class="grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
-                  <p><span class="font-semibold text-slate-900">Provider:</span> ${escapeHtml(item.resolvedProvider ?? 'n/a')}</p>
-                  <p><span class="font-semibold text-slate-900">Crop:</span> ${escapeHtml(item.cropProfile ?? 'n/a')}</p>
-                  <p><span class="font-semibold text-slate-900">Pose:</span> ${escapeHtml(item.poseProfile ?? 'n/a')}</p>
-                  <p><span class="font-semibold text-slate-900">Suit:</span> ${escapeHtml(item.suitTemplate ?? 'n/a')}</p>
-                </div>
-                <div class="rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-700">
-                  <p class="font-semibold text-slate-900">요약</p>
-                  <p class="mt-1">${escapeHtml(item.qualitySummary ?? '요약 없음')}</p>
-                  ${item.suitSelectionSummary ? `<p class="mt-2 text-xs text-slate-500">정장 선택: ${escapeHtml(item.suitSelectionSummary)}</p>` : ''}
-                </div>
-                <div class="rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-700">
-                  <div class="flex items-center justify-between gap-3">
-                    <p class="font-semibold text-slate-900">후보 추적</p>
-                    <span class="text-xs text-slate-500">추천 / 생성 / 제외</span>
-                  </div>
-                  <div class="mt-2 flex flex-wrap gap-2">
-                    ${Array.isArray(item.candidateBreakdown) && item.candidateBreakdown.length
-                      ? item.candidateBreakdown.map((candidate) => `
-                          <span class="rounded-full px-2 py-1 text-[11px] font-semibold ${
-                            candidate.recommended
-                              ? 'bg-sky-100 text-sky-700'
-                              : candidate.regenerated
-                                ? 'bg-amber-100 text-amber-800'
-                                : 'bg-slate-100 text-slate-700'
-                          }">
-                            ${candidate.recommended ? '추천' : candidate.regenerated ? '재생성' : '후보'} ${escapeHtml(candidate.variant)}
-                            ${typeof candidate.score === 'number' ? ` ${escapeHtml(formatNumber(candidate.score))}` : ''}
-                          </span>
-                        `).join('')
-                      : '<span class="text-xs text-slate-500">생성된 후보 정보가 없습니다.</span>'}
-                    ${Array.isArray(item.rejectedVariants) && item.rejectedVariants.length
-                      ? item.rejectedVariants.map((variant) => `
-                          <span class="rounded-full bg-rose-100 px-2 py-1 text-[11px] font-semibold text-rose-700">
-                            제외 ${escapeHtml(variant)}
-                          </span>
-                        `).join('')
-                      : ''}
-                  </div>
-                  ${(() => {
-                    const compareItems = [
-                      ...(Array.isArray(item.candidateBreakdown) ? item.candidateBreakdown.map((candidate) => ({
-                        label: `${candidate.recommended ? '추천' : candidate.regenerated ? '재생성' : '후보'} ${candidate.variant}`,
-                        score: candidate.score,
-                        tone: candidate.recommended ? 'sky' : 'slate'
-                      })) : []),
-                      ...(Array.isArray(item.rejectedVariantBreakdown) ? item.rejectedVariantBreakdown.map((candidate) => ({
-                        label: `제외 ${candidate.variant}`,
-                        score: candidate.score,
-                        tone: 'rose'
-                      })) : [])
-                    ].filter((candidate) => typeof candidate.score === 'number');
-                    const maxScore = compareItems.reduce((max, candidate) => Math.max(max, Number(candidate.score ?? 0)), 0) || 1;
-                    return compareItems.length ? `
-                      <div class="mt-3 space-y-2">
-                        ${compareItems.map((candidate) => `
-                          <div>
-                            <div class="mb-1 flex items-center justify-between gap-3 text-[11px] font-semibold">
-                              <span class="${candidate.tone === 'sky' ? 'text-sky-700' : candidate.tone === 'rose' ? 'text-rose-700' : 'text-slate-700'}">${escapeHtml(candidate.label)}</span>
-                              <span class="text-slate-500">${escapeHtml(formatNumber(candidate.score))}</span>
-                            </div>
-                            <div class="h-2 overflow-hidden rounded-full bg-slate-100">
-                              <div class="h-full rounded-full ${candidate.tone === 'sky' ? 'bg-sky-500' : candidate.tone === 'rose' ? 'bg-rose-400' : 'bg-slate-400'}" style="width:${Math.max(8, Math.round((Number(candidate.score ?? 0) / maxScore) * 100))}%"></div>
-                            </div>
-                          </div>
-                        `).join('')}
-                      </div>
-                    ` : '';
-                  })()}
-                </div>
-                <div class="flex flex-wrap gap-2">
-                  <a href="/tools/ai-photo-debug?jobId=${encodeURIComponent(item.id)}" class="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800">디버그 열기</a>
-                  ${item.originalUrl ? `<a href="${item.originalUrl}" target="_blank" rel="noreferrer" class="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-white">원본 보기</a>` : ''}
-                  ${item.recommendedImageUrl ? `<a href="${item.recommendedImageUrl}" target="_blank" rel="noreferrer" class="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-white">추천 후보 보기</a>` : ''}
-                </div>
-              </div>
-            </div>
-          </article>
-        `;
-      }).join('');
+    const scoreTone = (score) => {
+      if (score >= 90) return 'emerald';
+      if (score >= 80) return 'sky';
+      if (score >= 70) return 'amber';
+      return 'rose';
     };
 
-    const renderTrends = (items) => {
+    const renderStats = (payload, alertsPayload) => {
+      if (!(statsEl instanceof HTMLElement)) return;
+      const items = Array.isArray(payload?.items) ? payload.items : [];
+      const alertItems = Array.isArray(alertsPayload?.items) ? alertsPayload.items : [];
+      const failed = items.filter((item) => item.status === 'failed').length;
+      const fallback = items.filter((item) => Array.isArray(item.flags) && item.flags.includes('provider_fallback')).length;
+      const avgQuality = items.length ? items.reduce((sum, item) => sum + (typeof item.qualityScore === 'number' ? item.qualityScore : 0), 0) / items.length : 0;
+      const avgIdentity = items.length ? items.reduce((sum, item) => sum + (typeof item.identityScore === 'number' ? item.identityScore : 0), 0) / items.length : 0;
+
+      statsEl.innerHTML = [
+        createMetricCard('총 작업', items.length, 'slate'),
+        createMetricCard('실패 작업', failed, failed ? 'rose' : 'slate'),
+        createMetricCard('경고 작업', alertItems.length, alertItems.length ? 'amber' : 'slate'),
+        createMetricCard('fallback 작업', fallback, fallback ? 'sky' : 'slate'),
+        createMetricCard('평균 규격 점수', formatNumber(avgQuality), scoreTone(avgQuality)),
+        createMetricCard('평균 동일성 점수', formatNumber(avgIdentity), scoreTone(avgIdentity)),
+        createMetricCard('필터 기간', payload?.filters?.sinceHours ? `${payload.filters.sinceHours}시간` : '전체', 'slate'),
+        createMetricCard('경고/전체 비율', items.length ? formatPercent((alertItems.length / items.length) * 100) : '0.0%', 'amber')
+      ].join('');
+    };
+
+    const renderTrends = (payload) => {
       if (!(trendsEl instanceof HTMLElement)) return;
-      const toolMap = new Map();
-      (Array.isArray(items) ? items : []).forEach((item) => {
-        const key = item.toolType ?? 'unknown';
-        const current = toolMap.get(key) ?? { total: 0, failed: 0, flagged: 0, avgQuality: 0, avgIdentity: 0 };
-        current.total += 1;
-        if (item.status === 'failed') current.failed += 1;
-        if (Array.isArray(item.flags) && item.flags.length) current.flagged += 1;
-        current.avgQuality += Number(item.qualityScore ?? 0);
-        current.avgIdentity += Number(item.identityScore ?? 0);
-        toolMap.set(key, current);
-      });
-      const cards = Array.from(toolMap.entries()).map(([tool, item]) => {
-        const avgQuality = item.total ? (item.avgQuality / item.total) : 0;
-        const avgIdentity = item.total ? (item.avgIdentity / item.total) : 0;
-        return `
-          <article class="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">${escapeHtml(tool)}</p>
-            <p class="mt-2 text-2xl font-black text-slate-900">${item.total}</p>
-            <div class="mt-3 space-y-1 text-sm text-slate-600">
-              <p>실패 ${item.failed}</p>
-              <p>경고 ${item.flagged}</p>
-              <p>평균 규격 ${formatNumber(avgQuality)}</p>
-              <p>평균 동일성 ${formatNumber(avgIdentity)}</p>
-            </div>
-          </article>
-        `;
-      });
-      trendsEl.innerHTML = cards.length ? cards.join('') : '<p class="text-sm text-slate-500">현재 필터 기준 데이터가 없습니다.</p>';
+      const items = Array.isArray(payload?.toolTrends) ? payload.toolTrends : [];
+      trendsEl.innerHTML = items.length
+        ? items.map(createTrendCard).join('')
+        : '<p class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-500">표시할 추세 데이터가 없습니다.</p>';
     };
 
     const renderAlerts = (payload) => {
+      const items = Array.isArray(payload?.items) ? payload.items : [];
+      const toolCounts = payload?.byTool ?? {};
+      const providerCounts = payload?.byProvider ?? {};
+
       if (alertToolsEl instanceof HTMLElement) {
-        const tools = Object.entries(payload?.toolBreakdown ?? {});
-        alertToolsEl.innerHTML = tools.length
-          ? tools.map(([tool, item]) => `
-              <article class="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">${escapeHtml(tool)}</p>
-                <p class="mt-2 text-2xl font-black text-slate-900">${item.total}</p>
-                <div class="mt-3 space-y-1 text-sm text-slate-600">
-                  <p>실패 ${item.failed}</p>
-                  <p>저품질 ${item.lowQuality}</p>
-                  <p>저동일성 ${item.lowIdentity}</p>
-                </div>
-              </article>
-            `).join('')
-          : '<p class="text-sm text-slate-500">현재 경고 작업이 없습니다.</p>';
+        const entries = Object.entries(toolCounts);
+        alertToolsEl.innerHTML = entries.length
+          ? entries.map(([label, count]) => createAlertRow(label, count, items.length, 'amber')).join('')
+          : '<p class="rounded-2xl border border-dashed border-amber-200 bg-white p-4 text-sm text-amber-900">경고 작업이 없습니다.</p>';
       }
 
       if (alertProvidersEl instanceof HTMLElement) {
-        const providers = Object.entries(payload?.providerBreakdown ?? {});
-        alertProvidersEl.innerHTML = providers.length
-          ? providers.map(([provider, item]) => `
-              <article class="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <div class="flex items-center justify-between gap-3">
-                  <p class="text-sm font-black text-slate-900">${escapeHtml(provider)}</p>
-                  <span class="rounded-full bg-slate-900 px-2 py-1 text-[11px] font-semibold text-white">${item.total}</span>
-                </div>
-                <div class="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold">
-                  <span class="rounded-full bg-amber-100 px-2 py-1 text-amber-800">fallback ${item.fallback}</span>
-                  <span class="rounded-full bg-rose-100 px-2 py-1 text-rose-700">저품질 ${item.lowQuality}</span>
-                </div>
-              </article>
-            `).join('')
-          : '<p class="text-sm text-slate-500">현재 provider 경고가 없습니다.</p>';
+        const entries = Object.entries(providerCounts);
+        alertProvidersEl.innerHTML = entries.length
+          ? entries.map(([label, count]) => createAlertRow(label, count, items.length, 'rose')).join('')
+          : '<p class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">provider 경고 데이터가 없습니다.</p>';
       }
 
       if (latestFlaggedEl instanceof HTMLElement) {
-        const items = Array.isArray(payload?.latestFlagged) ? payload.latestFlagged : [];
         latestFlaggedEl.innerHTML = items.length
-          ? items.map((item) => `
-              <article class="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <div class="flex flex-wrap items-start justify-between gap-3">
+          ? items.slice(0, 6).map((item) => `
+              <article class="rounded-2xl border border-amber-200 bg-white p-4">
+                <div class="flex items-start justify-between gap-3">
                   <div>
-                    <p class="text-sm font-black text-slate-900">${escapeHtml(item.id)}</p>
-                    <p class="mt-1 text-xs text-slate-500">${formatDate(item.createdAt)} · ${escapeHtml(item.toolType ?? 'unknown')}</p>
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">${escapeHtml(item.toolType)}</p>
+                    <p class="mt-1 text-sm font-black text-slate-900">${escapeHtml(item.id)}</p>
                   </div>
-                  <div class="flex flex-wrap gap-2">
-                    ${(item.flags ?? []).map((flag) => `<span class="rounded-full bg-rose-100 px-2 py-1 text-[11px] font-semibold text-rose-700">${escapeHtml(flag)}</span>`).join('')}
-                  </div>
+                  <a href="/tools/ai-photo-debug?jobId=${encodeURIComponent(item.id)}" class="rounded-lg bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-900 transition hover:bg-amber-200">디버그</a>
                 </div>
-                <div class="mt-3 grid gap-2 text-sm text-slate-700 sm:grid-cols-3">
-                  <p>추천 ${formatNumber(item.score)}</p>
-                  <p>동일성 ${formatNumber(item.identityScore)}</p>
-                  <p>규격 ${formatNumber(item.qualityScore)}</p>
-                </div>
+                <p class="mt-2 text-xs text-slate-500">${formatDate(item.createdAt)}</p>
                 <div class="mt-3 flex flex-wrap gap-2">
-                  <a href="/tools/ai-photo-debug?jobId=${encodeURIComponent(item.id)}" class="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800">디버그 열기</a>
+                  ${(item.flags ?? []).map((flag) => `<span class="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-900">${escapeHtml(flag)}</span>`).join('')}
                 </div>
               </article>
             `).join('')
-          : '<p class="text-sm text-slate-500">현재 경고 작업이 없습니다.</p>';
+          : '<p class="rounded-2xl border border-dashed border-amber-200 bg-white p-4 text-sm text-amber-900">최근 경고 작업이 없습니다.</p>';
       }
     };
 
-    const buildOpsSummary = () => {
-      if (!currentPayload) return null;
-      const recent = currentPayload.recent ?? {};
-      const alerts = currentPayload.alerts ?? {};
-      const items = Array.isArray(recent.items) ? recent.items : [];
-      const toolTrend = Object.entries((items || []).reduce((acc, item) => {
-        const key = item.toolType ?? 'unknown';
-        const current = acc[key] ?? { total: 0, flagged: 0, failed: 0, qualityTotal: 0, identityTotal: 0 };
-        current.total += 1;
-        if (item.status === 'failed') current.failed += 1;
-        if (Array.isArray(item.flags) && item.flags.length) current.flagged += 1;
-        current.qualityTotal += Number(item.qualityScore ?? 0);
-        current.identityTotal += Number(item.identityScore ?? 0);
-        acc[key] = current;
-        return acc;
-      }, {})).map(([tool, value]) => ({
-        tool,
-        total: value.total,
-        failed: value.failed,
-        flagged: value.flagged,
-        avgQuality: value.total ? Number((value.qualityTotal / value.total).toFixed(1)) : null,
-        avgIdentity: value.total ? Number((value.identityTotal / value.total).toFixed(1)) : null
-      }));
-
-      return {
-        generatedAt: new Date().toISOString(),
-        filters: recent.filters ?? {},
-        counts: {
-          recentJobs: items.length,
-          flaggedJobs: alerts.totalFlagged ?? 0
-        },
-        stats: recent.stats ?? {},
-        toolBreakdown: alerts.toolBreakdown ?? {},
-        providerBreakdown: alerts.providerBreakdown ?? {},
-        toolTrend
-      };
+    const variantChip = (item, type) => {
+      const tone = type === 'rejected' ? 'rose' : type === 'recommended' ? 'emerald' : type === 'regenerated' ? 'amber' : 'sky';
+      const label = type === 'rejected' ? '제외' : type === 'recommended' ? '추천' : item.regenerated ? '재생성' : '후보';
+      return `
+        <span class="rounded-full bg-${tone}-50 px-2.5 py-1 text-[11px] font-semibold text-${tone}-900">
+          ${escapeHtml(label)} ${escapeHtml(item.variantId ?? item.id ?? '-')} · ${formatNumber(item.score ?? item.estimatedScore ?? 0)}
+        </span>
+      `;
     };
 
-    const downloadJson = (payload, filename) => {
-      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const scoreBar = (item, type) => {
+      const score = Math.max(0, Math.min(100, Number(item.score ?? item.estimatedScore ?? 0)));
+      const tone = type === 'rejected' ? 'rose' : type === 'recommended' ? 'emerald' : item.regenerated ? 'amber' : 'sky';
+      const label = type === 'rejected' ? '제외' : type === 'recommended' ? '추천' : item.regenerated ? '재생성' : '후보';
+      return `
+        <div class="rounded-xl border border-slate-200 bg-white p-3">
+          <div class="flex items-center justify-between gap-3">
+            <p class="text-xs font-semibold text-slate-600">${escapeHtml(label)} · ${escapeHtml(item.variantId ?? item.id ?? '-')}</p>
+            <p class="text-sm font-black text-slate-900">${formatNumber(score)}</p>
+          </div>
+          <div class="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
+            <div class="h-full rounded-full bg-${tone}-500" style="width:${Math.max(4, score)}%"></div>
+          </div>
+          <div class="mt-2 flex flex-wrap gap-2 text-[11px] text-slate-500">
+            <span>동일성 ${formatNumber(item.identityScore ?? 0)}</span>
+            <span>규격 ${formatNumber(item.qualityScore ?? 0)}</span>
+          </div>
+        </div>
+      `;
+    };
+
+    const renderList = (payload) => {
+      if (!(listEl instanceof HTMLElement)) return;
+      const items = Array.isArray(payload?.items) ? payload.items : [];
+      listEl.innerHTML = items.length
+        ? items.map((item) => {
+            const recommended = Array.isArray(item.candidateBreakdown)
+              ? item.candidateBreakdown.find((candidate) => candidate.recommended)
+              : null;
+            const candidateBars = [
+              ...(item.candidateBreakdown ?? []).map((candidate) => scoreBar(candidate, candidate.recommended ? 'recommended' : candidate.regenerated ? 'regenerated' : 'candidate')),
+              ...(item.rejectedVariantBreakdown ?? []).map((candidate) => scoreBar(candidate, 'rejected'))
+            ].join('');
+
+            return `
+              <article class="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">${escapeHtml(item.toolType)} · ${escapeHtml(item.provider)}</p>
+                    <h3 class="mt-1 text-lg font-black text-slate-900">${escapeHtml(item.id)}</h3>
+                    <p class="mt-1 text-sm text-slate-500">${formatDate(item.createdAt)}</p>
+                  </div>
+                  <div class="flex flex-wrap gap-2">
+                    <a href="/tools/ai-photo-debug?jobId=${encodeURIComponent(item.id)}" class="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800">디버그</a>
+                    ${(item.flags ?? []).map((flag) => `<span class="rounded-full bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm">${escapeHtml(flag)}</span>`).join('')}
+                  </div>
+                </div>
+
+                <div class="mt-4 grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
+                  <div class="grid gap-4">
+                    <div class="grid gap-4 sm:grid-cols-2">
+                      <div class="rounded-2xl border border-slate-200 bg-white p-3">
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">원본</p>
+                        <div class="mt-2 overflow-hidden rounded-xl bg-slate-100">
+                          ${item.originalUrl ? `<img src="${escapeHtml(item.originalUrl)}" alt="원본" class="h-64 w-full object-cover" loading="lazy" />` : '<div class="flex h-64 items-center justify-center text-sm text-slate-400">원본 없음</div>'}
+                        </div>
+                      </div>
+                      <div class="rounded-2xl border border-slate-200 bg-white p-3">
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">추천 후보</p>
+                        <div class="mt-2 overflow-hidden rounded-xl bg-slate-100">
+                          ${item.recommendedImageUrl ? `<img src="${escapeHtml(item.recommendedImageUrl)}" alt="추천 후보" class="h-64 w-full object-cover" loading="lazy" />` : '<div class="flex h-64 items-center justify-center text-sm text-slate-400">추천 후보 없음</div>'}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="grid gap-3 md:grid-cols-4">
+                      <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">규격 점수</p>
+                        <p class="mt-2 text-xl font-black text-slate-900">${formatNumber(item.qualityScore)}</p>
+                      </div>
+                      <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">동일성 점수</p>
+                        <p class="mt-2 text-xl font-black text-slate-900">${formatNumber(item.identityScore)}</p>
+                      </div>
+                      <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">crop profile</p>
+                        <p class="mt-2 text-sm font-bold text-slate-900">${escapeHtml(item.cropProfile ?? '-')}</p>
+                      </div>
+                      <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">pose / suit</p>
+                        <p class="mt-2 text-sm font-bold text-slate-900">${escapeHtml(item.poseProfile ?? '-')} / ${escapeHtml(item.suitTemplate ?? '-')}</p>
+                      </div>
+                    </div>
+
+                    ${(item.finalQualityRetryTriggered || typeof item.qualityScoreBeforeRetry === 'number') ? `
+                      <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                        <div class="flex items-center justify-between gap-3">
+                          <div>
+                            <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-700">품질 재시도</p>
+                            <p class="mt-1 text-sm font-bold text-amber-950">${item.finalQualityRetryTriggered ? '최종 재프레이밍이 실행되었습니다.' : '재시도는 실행되지 않았습니다.'}</p>
+                          </div>
+                          <span class="rounded-full bg-white px-3 py-1 text-xs font-semibold text-amber-900">${escapeHtml(item.finalQualityRetryProfile ?? 'n/a')}</span>
+                        </div>
+                        <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                          <div class="rounded-xl bg-white p-3">
+                            <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">재시도 전</p>
+                            <p class="mt-1 text-lg font-black text-slate-900">${formatNumber(item.qualityScoreBeforeRetry)}</p>
+                          </div>
+                          <div class="rounded-xl bg-white p-3">
+                            <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">현재 점수</p>
+                            <p class="mt-1 text-lg font-black text-slate-900">${formatNumber(item.qualityScore)}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ` : ''}
+                  </div>
+
+                  <div class="grid gap-4">
+                    <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                      <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">품질 요약</p>
+                      <p class="mt-2 text-sm font-bold text-slate-900">${escapeHtml(item.qualitySummary ?? '요약 없음')}</p>
+                    </div>
+
+                    <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                      <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">후보 추적</p>
+                      <div class="mt-3 flex flex-wrap gap-2">
+                        ${recommended ? variantChip(recommended, 'recommended') : ''}
+                        ${(item.candidateBreakdown ?? []).filter((candidate) => !candidate.recommended).map((candidate) => variantChip(candidate, candidate.regenerated ? 'regenerated' : 'candidate')).join('')}
+                        ${(item.rejectedVariantBreakdown ?? []).map((candidate) => variantChip(candidate, 'rejected')).join('')}
+                      </div>
+                    </div>
+
+                    <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                      <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">점수 비교</p>
+                      <div class="mt-3 grid gap-3">
+                        ${candidateBars || '<p class="text-sm text-slate-500">후보 점수 데이터가 없습니다.</p>'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            `;
+          }).join('')
+        : '<p class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-500">표시할 작업이 없습니다.</p>';
+    };
+
+    const buildOpsSummary = () => {
+      const recent = latestRecentPayload;
+      const alerts = latestAlertsPayload;
+      const items = Array.isArray(recent?.items) ? recent.items : [];
+      const alertItems = Array.isArray(alerts?.items) ? alerts.items : [];
+      const lines = [
+        'AI 사진 운영 요약',
+        `생성 시각: ${new Date().toLocaleString('ko-KR')}`,
+        `필터: status=${recent?.filters?.status ?? 'all'}, tool=${recent?.filters?.toolType ?? 'all'}, limit=${recent?.filters?.limit ?? '-'}, period=${recent?.filters?.sinceHours ?? 'all'}h, flagged=${recent?.filters?.flaggedOnly ?? false}, fallbackOnly=${recent?.filters?.fallbackOnly ?? false}`,
+        `총 작업: ${items.length}`,
+        `경고 작업: ${alertItems.length}`
+      ];
+
+      (recent?.toolTrends ?? []).forEach((item) => {
+        lines.push(`- ${item.toolType}: total=${item.total}, failed=${item.failed}, avgQuality=${formatNumber(item.avgQualityScore)}, avgIdentity=${formatNumber(item.avgIdentityScore)}`);
+      });
+
+      alertItems.slice(0, 10).forEach((item) => {
+        lines.push(`- alert ${item.id}: ${item.toolType} / ${item.provider} / flags=${(item.flags ?? []).join(', ')}`);
+      });
+
+      return lines.join('\n');
+    };
+
+    const downloadText = (name, text) => {
+      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      link.click();
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = name;
+      anchor.click();
       URL.revokeObjectURL(url);
+    };
+
+    const downloadJson = () => {
+      const text = JSON.stringify({ recent: latestRecentPayload, alerts: latestAlertsPayload }, null, 2);
+      downloadText(`ai-photo-ops-${Date.now()}.json`, text);
     };
 
     const buildQuery = () => {
       const params = new URLSearchParams();
-      const status = statusSelect instanceof HTMLSelectElement ? statusSelect.value : '';
-      const toolType = toolSelect instanceof HTMLSelectElement ? toolSelect.value : '';
-      const limit = limitSelect instanceof HTMLSelectElement ? limitSelect.value : '20';
-      const sinceHours = periodSelect instanceof HTMLSelectElement ? periodSelect.value : '24';
-      const flagged = flaggedCheckbox instanceof HTMLInputElement ? flaggedCheckbox.checked : false;
-      if (status) params.set('status', status);
-      if (toolType) params.set('toolType', toolType);
-      if (limit) params.set('limit', limit);
-      if (sinceHours && sinceHours !== '0') params.set('sinceHours', sinceHours);
-      if (flagged) params.set('flagged', 'true');
+      const status = filters.status instanceof HTMLSelectElement ? filters.status.value : 'all';
+      const toolType = filters.tool instanceof HTMLSelectElement ? filters.tool.value : 'all';
+      const limit = filters.limit instanceof HTMLSelectElement ? filters.limit.value : '12';
+      const period = filters.period instanceof HTMLSelectElement ? filters.period.value : '24';
+      const flaggedOnly = filters.flagged instanceof HTMLSelectElement ? filters.flagged.value === 'true' : false;
+      const fallbackOnly = filters.fallbackOnly instanceof HTMLSelectElement ? filters.fallbackOnly.value === 'true' : false;
+
+      params.set('status', status);
+      params.set('toolType', toolType);
+      params.set('limit', limit);
+      if (period !== '0') params.set('sinceHours', period);
+      if (flaggedOnly) params.set('flaggedOnly', 'true');
+      if (fallbackOnly) params.set('fallbackOnly', 'true');
       return params;
     };
 
     const loadOps = async () => {
+      setStatus('운영 데이터를 불러오는 중입니다.');
+      const query = buildQuery();
       try {
-        setStatus('최근 생성 작업을 불러오는 중입니다...');
-        const params = buildQuery();
-        const sinceHours = periodSelect instanceof HTMLSelectElement ? periodSelect.value : '24';
-        const [recentResponse, alertResponse] = await Promise.all([
-          fetch(`${API_BASE}/jobs/recent?${params.toString()}`),
-          fetch(`${API_BASE}/jobs/alerts${sinceHours && sinceHours !== '0' ? `?sinceHours=${encodeURIComponent(sinceHours)}` : ''}`)
+        const [recentRes, alertsRes] = await Promise.all([
+          fetch(`${API_BASE}/jobs/recent?${query.toString()}`),
+          fetch(`${API_BASE}/jobs/alerts?${query.toString()}`)
         ]);
-        const payload = await recentResponse.json();
-        const alerts = await alertResponse.json();
-        if (!recentResponse.ok) throw new Error(payload?.error ?? 'ops load failed');
-        if (!alertResponse.ok) throw new Error(alerts?.error ?? 'alert load failed');
-        currentPayload = { recent: payload, alerts };
-        renderStats(payload.stats ?? {});
-        renderList(payload.items ?? []);
-        renderTrends(payload.items ?? []);
-        renderAlerts(alerts);
-        const periodLabel = periodSelect instanceof HTMLSelectElement ? periodSelect.options[periodSelect.selectedIndex]?.text ?? '' : '';
-        setStatus(`${periodLabel || '선택 기간'} 기준 최근 작업 ${Array.isArray(payload.items) ? payload.items.length : 0}건, 경고 ${alerts?.totalFlagged ?? 0}건`);
+        if (!recentRes.ok || !alertsRes.ok) throw new Error('운영 데이터를 불러오지 못했습니다.');
+        const recentPayload = await recentRes.json();
+        const alertsPayload = await alertsRes.json();
+        latestRecentPayload = recentPayload;
+        latestAlertsPayload = alertsPayload;
+        renderStats(recentPayload, alertsPayload);
+        renderTrends(recentPayload);
+        renderAlerts(alertsPayload);
+        renderList(recentPayload);
+        setStatus(`최근 ${Array.isArray(recentPayload.items) ? recentPayload.items.length : 0}건, 경고 ${Array.isArray(alertsPayload.items) ? alertsPayload.items.length : 0}건을 불러왔습니다.`);
       } catch (error) {
-        setStatus(error instanceof Error ? error.message : 'ops load failed');
+        setStatus(error instanceof Error ? error.message : '운영 데이터를 불러오지 못했습니다.');
       }
     };
 
-    if (filterForm instanceof HTMLFormElement) {
-      filterForm.addEventListener('submit', (event) => {
-        event.preventDefault();
-        loadOps();
-      });
-      filterForm.addEventListener('change', () => {
-        loadOps();
-      });
-    }
+    refreshBtn?.addEventListener('click', () => loadOps());
+    Object.values(filters).forEach((element) => element?.addEventListener('change', () => loadOps()));
 
-    if (refreshBtn instanceof HTMLButtonElement) {
-      refreshBtn.addEventListener('click', () => {
-        loadOps();
-      });
-    }
+    copySummaryBtn?.addEventListener('click', async () => {
+      const summary = buildOpsSummary();
+      try {
+        await navigator.clipboard.writeText(summary);
+        setStatus('운영 요약을 클립보드에 복사했습니다.');
+      } catch {
+        setStatus('클립보드 복사에 실패했습니다.');
+      }
+    });
 
-    if (downloadBtn instanceof HTMLButtonElement) {
-      downloadBtn.addEventListener('click', () => {
-        if (!currentPayload) return;
-        downloadJson(currentPayload, `manytool-ai-photo-ops-${Date.now()}.json`);
-      });
-    }
+    downloadSummaryBtn?.addEventListener('click', () => {
+      downloadText(`ai-photo-ops-summary-${Date.now()}.txt`, buildOpsSummary());
+      setStatus('운영 요약을 텍스트 파일로 저장했습니다.');
+    });
 
-    if (copySummaryBtn instanceof HTMLButtonElement) {
-      copySummaryBtn.addEventListener('click', async () => {
-        const summary = buildOpsSummary();
-        if (!summary) return;
-        try {
-          await navigator.clipboard.writeText(JSON.stringify(summary, null, 2));
-          setStatus('운영 요약을 클립보드에 복사했습니다.');
-        } catch {
-          setStatus('요약 복사에 실패했습니다.');
-        }
-      });
-    }
-
-    if (downloadSummaryBtn instanceof HTMLButtonElement) {
-      downloadSummaryBtn.addEventListener('click', () => {
-        const summary = buildOpsSummary();
-        if (!summary) return;
-        downloadJson(summary, `manytool-ai-photo-ops-summary-${Date.now()}.json`);
-      });
-    }
+    downloadJsonBtn?.addEventListener('click', () => {
+      downloadJson();
+      setStatus('운영 JSON을 저장했습니다.');
+    });
 
     loadOps();
   </script>
