@@ -44,11 +44,25 @@ const localeDescSuffix = locale === 'ko'
     ? ' | English version of this page.'
     : ' | 日本語ページです。';
 const normalizedPathLabel = pathNoLocale === '/' ? 'main' : pathNoLocale.replace(/\//g, ' ').trim();
-const resolvedTitle = `${localeTitlePrefix}${title}`;
+const baseTitle = `${localeTitlePrefix}${title}`;
+const resolvedTitle = locale === 'ko' && !baseTitle.includes('무료')
+  ? `무료 ${baseTitle}`
+  : baseTitle;
 const resolvedDescription = `${description}${localeDescSuffix}${locale === 'ko' ? '' : ` (path: ${normalizedPathLabel})`}`;
 const defaultKeywords = '온라인 도구, 웹툴, 테스트 사이트, MBTI 테스트, 이름 궁합, 랜덤 테스트';
-const resolvedKeywords = keywords ?? defaultKeywords;
+const keywordsBase = keywords ?? defaultKeywords;
+const resolvedKeywords = locale === 'ko' && !keywordsBase.includes('무료')
+  ? `무료, ${keywordsBase}`
+  : keywordsBase;
 const segments = pathNoLocale.split('/').filter(Boolean);
+const topSlug = segments[segments.length - 1] ?? '';
+const freeLabelMap: Record<string, string> = {
+  'today-fortune': '무료 오늘의 운세',
+  'name-meaning': '무료 이름풀이',
+  'name-compatibility': '무료 이름궁합',
+  'love-compatibility': '무료 연애궁합'
+};
+const freeBodyLabel = locale === 'ko' ? freeLabelMap[topSlug] : undefined;
 const labelMap: Record<string, string> = {
   about: '소개',
   contact: '문의',
@@ -254,6 +268,13 @@ const breadcrumbJsonLd = {
           ))}
         </ol>
       </nav>
+    )}
+    {freeBodyLabel && (
+      <div class="mx-auto max-w-5xl px-4 pt-3">
+        <p class="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+          {freeBodyLabel}
+        </p>
+      </div>
     )}
     <AdSense slotName="글로벌 본문 상단" />
     <slot />

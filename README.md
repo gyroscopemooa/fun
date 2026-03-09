@@ -1,46 +1,57 @@
-# Astro Starter Kit: Basics
+﻿# funhub (manytool)
 
-```sh
-npm create astro@latest -- --template basics
+Astro 기반 SEO 허브 + AI 툴 MVP 프로젝트입니다.
+
+## 로컬 실행
+
+```bash
+npm install
+npm run dev
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+- 기본 웹 주소: `http://127.0.0.1:4321`
 
-## 🚀 Project Structure
+## 빌드
 
-Inside of your Astro project, you'll see the following folders and files:
-
-```text
-/
-├── public/
-│   └── favicon.svg
-├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
-│   │   └── Welcome.astro
-│   ├── layouts
-│   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
-└── package.json
+```bash
+npm run build
+npm run preview
 ```
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
+## AI 증명사진(Node API 연동)
 
-## 🧞 Commands
+`/ai-id-photo` 페이지는 Node API가 켜져 있으면 서버 파이프라인을 사용하고,
+연결 실패 시 브라우저 로컬 생성 모드로 자동 fallback 됩니다.
 
-All commands are run from the root of the project, from a terminal:
+### 1) Node API 실행
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+```bash
+cd node-api
+npm install
+npm run dev
+```
 
-## 👀 Want to learn more?
+- 기본 API 주소: `http://127.0.0.1:8787`
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+### 2) Astro에서 API 주소 지정(선택)
+
+프로젝트 루트에 `.env` 파일을 만들고 아래 값을 설정합니다.
+
+```env
+PUBLIC_NODE_API_BASE=http://127.0.0.1:8787
+```
+
+## 주요 페이지
+
+- `/ai-id-photo`
+- `/ai-photoshop`
+- `/online-id-photo`
+- `/online-passport-photo`
+
+## 기술 스택
+
+- Astro
+- React islands (필요 구간 확장 예정)
+- Node.js API (`node-api`)
+- Supabase (확장 예정)
+- Polar (결제 연동 예정)
