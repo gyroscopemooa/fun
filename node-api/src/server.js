@@ -539,6 +539,47 @@ app.get('/jobs/recent', async (req, res) => {
   });
 });
 
+app.get('/jobs/alerts', async (_req, res) => {
+  const memoryJobs = Array.from(db.jobs.values());
+  const persistedJobs = await loadPersistedRecentJobs();
+  const deduped = new Map();
+  [...persistedJobs, ...memoryJobs].forEach((item) => {
+    if (item?.id) deduped.set(item.id, item);
+  });
+
+  const summaries = Array.from(deduped.values())
+    .sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())
+    .map(toJobSummary);
+
+  const flagged = summaries.filter((item) => Array.isArray(item.flags) && item.flags.length > 0);
+  const toolBreakdown = {};
+  const providerBreakdown = {};
+
+  flagged.forEach((item) => {
+    const tool = item.toolType ?? 'unknown';
+    const provider = item.resolvedProvider ?? 'unknown';
+    toolBreakdown[tool] ??= { total: 0, failed: 0, lowQuality: 0, lowIdentity: 0 };
+    providerBreakdown[provider] ??= { total: 0, fallback: 0, lowQuality: 0 };
+    toolBreakdown[tool].total += 1;
+    providerBreakdown[provider].total += 1;
+    if (item.flags.includes('failed')) toolBreakdown[tool].failed += 1;
+    if (item.flags.includes('low_quality')) {
+      toolBreakdown[tool].lowQuality += 1;
+      providerBreakdown[provider].lowQuality += 1;
+    }
+    if (item.flags.includes('low_identity')) toolBreakdown[tool].lowIdentity += 1;
+    if (item.flags.includes('provider_fallback')) providerBreakdown[provider].fallback += 1;
+  });
+
+  return res.json({
+    totalJobs: summaries.length,
+    totalFlagged: flagged.length,
+    latestFlagged: flagged.slice(0, 12),
+    toolBreakdown,
+    providerBreakdown
+  });
+});
+
 app.post('/checkout', async (req, res) => {
   const {
     productType = 'add2',
