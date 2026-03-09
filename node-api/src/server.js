@@ -92,6 +92,56 @@ const getPolarProductIdByType = (productType) => {
   return map[productType] ?? null;
 };
 
+const toJobSummary = (job) => {
+  const photo = job?.photoId ? db.photos.get(job.photoId) : null;
+  const originalUrl = photo?.originalPath
+    ? `/files/originals/${path.basename(photo.originalPath)}`
+    : null;
+  const recommendedCandidate = Array.isArray(job?.candidates)
+    ? (job.candidates.find((item) => item.recommended) ?? job.candidates[0] ?? null)
+    : null;
+  const report = job?.pipelineReport ?? {};
+  const qualityScore = Number(report?.qualityScore ?? recommendedCandidate?.qualityScore ?? 0);
+  const identityScore = Number(report?.identityScore ?? recommendedCandidate?.identityScore ?? 0);
+  const flags = [];
+  if (job?.status === 'failed') flags.push('failed');
+  if (report?.finalQualityRetryTriggered) flags.push('quality_retry');
+  if (report?.fallbackToLocalSharp) flags.push('provider_fallback');
+  if (Array.isArray(report?.identityRejectedVariants) && report.identityRejectedVariants.length) flags.push('identity_reject');
+  if (qualityScore > 0 && qualityScore < 84) flags.push('low_quality');
+  if (identityScore > 0 && identityScore < Number(report?.identityThreshold ?? 78)) flags.push('low_identity');
+
+  return {
+    id: job?.id ?? null,
+    status: job?.status ?? 'unknown',
+    createdAt: job?.createdAt ?? null,
+    completedAt: job?.completedAt ?? null,
+    toolType: report?.toolType ?? job?.toolType ?? null,
+    outfitType: report?.outfitType ?? job?.outfitType ?? null,
+    requestedProvider: report?.requestedProvider ?? null,
+    resolvedProvider: report?.resolvedProvider ?? null,
+    cropProfile: report?.cropProfile ?? null,
+    poseProfile: report?.poseProfile ?? null,
+    suitTemplate: report?.suitTemplate ?? null,
+    suitSelectionSummary: report?.suitSelectionSummary ?? null,
+    qualityScore,
+    qualitySummary: report?.qualitySummary ?? null,
+    identityScore,
+    identityThreshold: report?.identityThreshold ?? 78,
+    score: typeof recommendedCandidate?.score === 'number' ? recommendedCandidate.score : null,
+    recommendedCandidateId: recommendedCandidate?.id ?? null,
+    recommendedVariant: report?.recommendedVariant ?? recommendedCandidate?.variant ?? null,
+    recommendedImageUrl: recommendedCandidate?.imageUrl ?? null,
+    originalUrl,
+    candidateCount: Array.isArray(job?.candidates) ? job.candidates.length : 0,
+    generatedVariants: Array.isArray(report?.generatedVariants) ? report.generatedVariants : [],
+    cache: report?.cache ?? {},
+    timings: report?.timings ?? {},
+    flags,
+    pipelineReport: report
+  };
+};
+
 const createPolarCheckout = async ({ order, productId, clientSessionId = null }) => {
   const accessToken = process.env.POLAR_ACCESS_TOKEN;
   if (!accessToken) {
@@ -388,6 +438,47 @@ app.get('/job/:id', (req, res) => {
     pipelineReport: job.pipelineReport ?? null,
     originalUrl,
     recommendedCandidateId: recommendedCandidate?.id ?? null
+  });
+});
+
+app.get('/jobs/recent', (req, res) => {
+  const limit = Math.max(1, Math.min(100, Number(req.query.limit ?? 20) || 20));
+  const statusFilter = typeof req.query.status === 'string' ? req.query.status.trim().toLowerCase() : '';
+  const flaggedOnly = String(req.query.flagged ?? '').toLowerCase() === 'true';
+  const toolFilter = typeof req.query.toolType === 'string' ? req.query.toolType.trim().toLowerCase() : '';
+
+  let items = Array.from(db.jobs.values())
+    .sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())
+    .map(toJobSummary);
+
+  if (statusFilter) {
+    items = items.filter((item) => String(item.status).toLowerCase() === statusFilter);
+  }
+  if (toolFilter) {
+    items = items.filter((item) => String(item.toolType ?? '').toLowerCase() === toolFilter);
+  }
+  if (flaggedOnly) {
+    items = items.filter((item) => Array.isArray(item.flags) && item.flags.length > 0);
+  }
+
+  const sliced = items.slice(0, limit);
+  const stats = {
+    total: items.length,
+    failed: items.filter((item) => item.status === 'failed').length,
+    lowQuality: items.filter((item) => item.flags.includes('low_quality')).length,
+    lowIdentity: items.filter((item) => item.flags.includes('low_identity')).length,
+    providerFallback: items.filter((item) => item.flags.includes('provider_fallback')).length
+  };
+
+  return res.json({
+    items: sliced,
+    stats,
+    filters: {
+      limit,
+      status: statusFilter || null,
+      flagged: flaggedOnly,
+      toolType: toolFilter || null
+    }
   });
 });
 
