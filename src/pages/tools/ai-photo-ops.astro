@@ -149,12 +149,18 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         <p class="mt-1 text-sm text-slate-600">어떤 툴에서 어떤 플래그가 반복되는지 바로 봅니다.</p>
         <div id="ops-tool-drilldown" class="mt-4 grid gap-3"></div>
         <div id="ops-tool-debug-links" class="mt-4 flex flex-wrap gap-2"></div>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <button id="ops-download-tool-drilldown" type="button" class="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">tool drill-down 저장</button>
+        </div>
       </article>
       <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 class="text-xl font-black text-slate-900">provider별 원인 drill-down</h2>
         <p class="mt-1 text-sm text-slate-600">fallback, 저품질, 저동일성 같은 원인을 provider 기준으로 묶어 봅니다.</p>
         <div id="ops-provider-drilldown" class="mt-4 grid gap-3"></div>
         <div id="ops-provider-debug-links" class="mt-4 flex flex-wrap gap-2"></div>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <button id="ops-download-provider-drilldown" type="button" class="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">provider drill-down 저장</button>
+        </div>
       </article>
     </section>
 
@@ -228,6 +234,8 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     const providerDrilldownEl = document.getElementById('ops-provider-drilldown');
     const toolDebugLinksEl = document.getElementById('ops-tool-debug-links');
     const providerDebugLinksEl = document.getElementById('ops-provider-debug-links');
+    const downloadToolDrilldownBtn = document.getElementById('ops-download-tool-drilldown');
+    const downloadProviderDrilldownBtn = document.getElementById('ops-download-provider-drilldown');
     const drilldownPreviewEl = document.getElementById('ops-drilldown-preview');
     const drilldownPreviewLabelEl = document.getElementById('ops-drilldown-preview-label');
     const drilldownPreviewLinkEl = document.getElementById('ops-drilldown-preview-link');
@@ -344,6 +352,28 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           flags: [...bucket.flags.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5)
         }))
         .sort((a, b) => b.total - a.total);
+    };
+
+    const buildDrilldownExport = (type) => {
+      const alertItems = Array.isArray(latestAlertsPayload?.items) ? latestAlertsPayload.items : [];
+      const groups = groupFlags(alertItems, (item) => (
+        type === 'tool'
+          ? item.toolType
+          : (item.provider ?? item.resolvedProvider)
+      ));
+      if (!groups.length) return '';
+      return [
+        `AI photo ops ${type} drill-down`,
+        `generatedAt: ${new Date().toISOString()}`,
+        `filters: status=${filters.status instanceof HTMLSelectElement ? filters.status.value : 'all'}, tool=${filters.tool instanceof HTMLSelectElement ? filters.tool.value : 'all'}, provider=${filters.provider instanceof HTMLSelectElement ? filters.provider.value : 'all'}, flagged=${filters.flagged instanceof HTMLSelectElement ? filters.flagged.value : 'true'}, fallbackOnly=${filters.fallbackOnly instanceof HTMLSelectElement ? filters.fallbackOnly.value : 'false'}`,
+        '',
+        ...groups.map((group) => {
+          const flags = group.flags.length
+            ? group.flags.map(([flag, count]) => `${flag}:${count}`).join(', ')
+            : 'none';
+          return `${group.key}\ttotal=${group.total}\tflags=${flags}`;
+        })
+      ].join('\n');
     };
 
     const applyDirectFilter = ({ toolType = 'all', provider = 'all', fallbackOnly = false, flaggedOnly = true, status = 'all' }) => {
@@ -1023,6 +1053,26 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     downloadJsonBtn?.addEventListener('click', () => {
       downloadJson();
       setStatus('운영 JSON을 저장했습니다.');
+    });
+
+    downloadToolDrilldownBtn?.addEventListener('click', () => {
+      const text = buildDrilldownExport('tool');
+      if (!text) {
+        setStatus('tool drill-down으로 저장할 경고 데이터가 없습니다.');
+        return;
+      }
+      downloadText(`ai-photo-tool-drilldown-${Date.now()}.txt`, text);
+      setStatus('tool drill-down 요약을 저장했습니다.');
+    });
+
+    downloadProviderDrilldownBtn?.addEventListener('click', () => {
+      const text = buildDrilldownExport('provider');
+      if (!text) {
+        setStatus('provider drill-down으로 저장할 경고 데이터가 없습니다.');
+        return;
+      }
+      downloadText(`ai-photo-provider-drilldown-${Date.now()}.txt`, text);
+      setStatus('provider drill-down 요약을 저장했습니다.');
     });
 
     loadOps();

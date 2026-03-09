@@ -71,6 +71,7 @@
   - inline representative preview panel when clicking tool/provider drill-down cards
   - representative preview panel now shows retry delta before/after quality score
   - representative preview panel now shows recommended vs rejected variant chips
+  - tool/provider drill-down summaries can now be exported as text files
   - ops summary copy/download
   - original vs recommended side-by-side compare
   - recommended/generated/rejected variant trace
