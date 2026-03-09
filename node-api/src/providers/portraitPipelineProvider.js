@@ -127,6 +127,9 @@ export async function generatePortraitPipeline({
     cacheKey,
     cropProfile: 'default',
     suitTemplate: outfitType === 'suit' ? 'pending' : 'current',
+    suitSelectionReason: outfitType === 'suit' ? 'pending' : 'current outfit selected',
+    suitSelectionSummary: outfitType === 'suit' ? 'pending' : 'current outfit kept',
+    suitSelectionInputs: null,
     qualityScore: 0,
     qualityScoreBeforeRetry: null,
     qualitySummary: '',
@@ -352,6 +355,7 @@ export async function generatePortraitPipeline({
       return {
         buffer: suited.buffer,
         template: suited.template,
+        suitSelection: suited.selection ?? null,
         identityScore
       };
     };
@@ -370,6 +374,9 @@ export async function generatePortraitPipeline({
     }
 
     pipelineReport.suitTemplate = variantResult.template;
+    pipelineReport.suitSelectionReason = variantResult.suitSelection?.reason ?? pipelineReport.suitSelectionReason;
+    pipelineReport.suitSelectionSummary = variantResult.suitSelection?.summary ?? pipelineReport.suitSelectionSummary;
+    pipelineReport.suitSelectionInputs = variantResult.suitSelection?.inputs ?? pipelineReport.suitSelectionInputs;
     pipelineReport.variantIdentityScores[profile.name] = variantResult.identityScore;
 
     if (variantResult.identityScore < MIN_IDENTITY_SCORE) {

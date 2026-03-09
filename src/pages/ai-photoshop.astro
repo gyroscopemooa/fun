@@ -56,10 +56,27 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           카메라 좌우반전 보정(헷갈리면 ON 유지)
         </label>
 
-        <div class="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-3">
+        <div class="relative mt-4 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-3">
           <video id="camera" class="hidden h-64 w-full rounded-lg bg-black object-cover" autoplay playsinline></video>
           <img id="source-preview" alt="원본 미리보기" class="hidden h-64 w-full rounded-lg object-contain" />
           <p id="source-empty" class="text-sm text-slate-500">아직 사진이 선택되지 않았습니다.</p>
+          <div class="pointer-events-none absolute inset-3 hidden items-center justify-center" data-guide-overlay>
+            <div class="relative h-full w-full rounded-lg">
+              <div class="absolute left-1/2 top-[9%] h-[70%] w-[62%] -translate-x-1/2 rounded-[36px] border-2 border-white/95 shadow-[0_0_0_9999px_rgba(15,23,42,0.26)]"></div>
+              <div class="absolute left-1/2 top-[24%] h-[8%] w-[42%] -translate-x-1/2 rounded-full border border-dashed border-white/80"></div>
+              <div class="absolute left-1/2 top-[9%] h-[70%] -translate-x-1/2 border-l border-dashed border-white/45"></div>
+              <div class="absolute left-1/2 top-[29%] w-[62%] -translate-x-1/2 border-t border-dashed border-white/45"></div>
+              <div data-live-face-box class="absolute hidden rounded-[26px] border-2 border-emerald-300/95 bg-emerald-400/10 shadow-[0_0_0_1px_rgba(255,255,255,0.18)_inset]"></div>
+              <div data-live-face-centerline class="absolute hidden border-l-2 border-dashed border-emerald-200/80"></div>
+              <div data-live-eye-line class="absolute hidden border-t-2 border-dashed border-emerald-200/80"></div>
+              <div class="absolute inset-x-0 top-3 flex justify-center">
+                <span data-live-face-status class="hidden rounded-full bg-slate-900/78 px-3 py-1 text-[10px] font-bold tracking-[0.18em] text-white shadow-sm"></span>
+              </div>
+              <div class="absolute inset-x-0 bottom-3 flex justify-center">
+                <span class="rounded-full bg-slate-900/70 px-3 py-1 text-[10px] font-bold tracking-[0.22em] text-white">어깨까지 보이게 프레임 안에 맞춰주세요</span>
+              </div>
+            </div>
+          </div>
         </div>
         <div id="upload-guidance" class="mt-3 hidden rounded-xl border p-3 text-xs"></div>
 
@@ -74,6 +91,8 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         <button id="generate" class="mt-4 w-full rounded-xl bg-sky-600 px-4 py-3 text-sm font-bold text-white shadow-[0_10px_30px_rgba(2,132,199,0.28)] transition hover:-translate-y-0.5 hover:bg-sky-500 active:translate-y-0 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none" disabled>
           AI 프로필사진 실행
         </button>
+        <div id="blocking-cta" class="mt-3 hidden rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900"></div>
+        <div id="generate-ready" class="mt-3 hidden rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-900"></div>
 
         <section class="mt-4 rounded-2xl border border-sky-100 bg-[linear-gradient(135deg,#eff6ff_0%,#f8fafc_55%,#fefce8_100%)] p-4 text-sm text-slate-700">
           <p class="font-bold text-slate-900">대충 찍은 사진도 프로필용으로 더 또렷하고 예쁘게 정리하는 흐름입니다</p>
@@ -243,7 +262,15 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     const sourcePreview = document.getElementById('source-preview');
     const sourceEmpty = document.getElementById('source-empty');
     const uploadGuidanceEl = document.getElementById('upload-guidance');
+    const guideOverlayEl = document.querySelector('[data-guide-overlay]');
+    const liveFaceBoxEl = document.querySelector('[data-live-face-box]');
+    const liveFaceStatusEl = document.querySelector('[data-live-face-status]');
+    const liveFaceCenterlineEl = document.querySelector('[data-live-face-centerline]');
+    const liveEyeLineEl = document.querySelector('[data-live-eye-line]');
+    const liveFaceCoachingEl = document.querySelector('[data-live-face-coaching]');
     const generateBtn = document.getElementById('generate');
+    const blockingCtaEl = document.getElementById('blocking-cta');
+    const readyToGenerateEl = document.getElementById('generate-ready');
     const outfitEl = document.getElementById('outfit');
     const gridEl = document.getElementById('candidate-grid');
     const downloadBtn = document.getElementById('download-selected');
@@ -307,6 +334,8 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         `cropProfile: ${report.cropProfile ?? 'n/a'}`,
         `poseProfile: ${report.poseProfile ?? 'n/a'}`,
         `suitTemplate: ${report.suitTemplate ?? 'n/a'}`,
+        `suitSelectionReason: ${report.suitSelectionReason ?? 'n/a'}`,
+        `suitSelectionSummary: ${report.suitSelectionSummary ?? 'n/a'}`,
         `qualityScore: ${report.qualityScore ?? 0}`,
         `qualityScoreBeforeRetry: ${report.qualityScoreBeforeRetry ?? 'n/a'}`,
         `identityScore: ${report.identityScore ?? 0}`,
@@ -392,6 +421,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       if (!messages.length) {
         uploadGuidanceEl.innerHTML = '';
         uploadGuidanceEl.className = 'mt-3 hidden rounded-xl border p-3 text-xs';
+        renderReadyToGenerate(assessment);
         return;
       }
       const blocking = Boolean(assessment?.blocking);
@@ -418,16 +448,166 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         <p class="font-bold">${blocking ? '다시 촬영하는 편이 좋습니다.' : '이 사진은 결과가 흔들릴 수 있습니다.'}</p>
         <ul class="mt-2 list-disc space-y-1 pl-4">${messages.map((message) => `<li>${message}</li>`).join('')}</ul>
         ${tips.length ? `<div class="mt-3 flex flex-wrap gap-2">${tips.map((tip) => `<span class="rounded-full bg-white/80 px-3 py-1 font-semibold">${tip}</span>`).join('')}</div>` : ''}
+        ${blocking ? '<p class="mt-3 rounded-lg bg-white/80 px-3 py-2 text-[11px] font-bold">프로필사진은 어깨선과 수평이 중요합니다. 다시 맞춰 찍으면 결과가 훨씬 안정적입니다.</p>' : ''}
         <div class="mt-3 flex flex-wrap gap-2">
           <button type="button" data-guidance-action="start-camera" class="rounded-lg border border-current/20 bg-white/80 px-3 py-2 text-[11px] font-bold">카메라 다시 열기</button>
           <button type="button" data-guidance-action="upload-file" class="rounded-lg border border-current/20 bg-white/80 px-3 py-2 text-[11px] font-bold">다른 사진 업로드</button>
         </div>
       `;
+      renderBlockingCta({ blocking });
+      renderReadyToGenerate(null);
+    };
+
+    const renderReadyToGenerate = (assessment) => {
+      if (!(readyToGenerateEl instanceof HTMLElement)) return;
+      const hasStableFace = Boolean(assessment?.faceHint?.bbox);
+      const hasMessages = Array.isArray(assessment?.messages) && assessment.messages.length > 0;
+      const blocking = Boolean(assessment?.blocking);
+      if (!hasStableFace || hasMessages || blocking) {
+        readyToGenerateEl.classList.add('hidden');
+        readyToGenerateEl.innerHTML = '';
+        return;
+      }
+      readyToGenerateEl.classList.remove('hidden');
+      readyToGenerateEl.innerHTML = `
+        <p class="font-bold">프로필사진 생성에 적합한 구도입니다.</p>
+        <p class="mt-2">얼굴과 어깨선이 비교적 안정적입니다. 지금 생성하면 추천 후보가 나올 확률이 높습니다.</p>
+      `;
+    };
+
+    const updateGuideOverlay = () => {
+      if (!(guideOverlayEl instanceof HTMLElement)) return;
+      const shouldShow = Boolean(sourceDataUrl || stream);
+      guideOverlayEl.classList.toggle('hidden', !shouldShow);
+      guideOverlayEl.classList.toggle('flex', shouldShow);
+      renderLiveFaceOverlay();
+    };
+
+    const buildLiveFaceStatus = (assessment) => {
+      if (assessment?.blocking) {
+        return { tone: 'rose', label: '다시 맞춰주세요' };
+      }
+      if (Array.isArray(assessment?.messages) && assessment.messages.length) {
+        return { tone: 'amber', label: '조금만 더 맞춰주세요' };
+      }
+      if (assessment?.faceHint?.bbox) {
+        return { tone: 'emerald', label: '정렬이 안정적입니다' };
+      }
+      return { tone: 'sky', label: '얼굴을 찾는 중' };
+    };
+
+    const buildLiveFaceCoaching = (faceHint) => {
+      if (!faceHint?.bbox) return '얼굴이 보이게 카메라를 맞춰주세요';
+      const centerX = Number(faceHint.bbox.x ?? 0) + Number(faceHint.bbox.width ?? 0) / 2;
+      const centerY = Number(faceHint.bbox.y ?? 0) + Number(faceHint.bbox.height ?? 0) / 2;
+      const tips = [];
+      if (centerX < 0.45) tips.push('얼굴을 조금 오른쪽으로');
+      else if (centerX > 0.55) tips.push('얼굴을 조금 왼쪽으로');
+      if (centerY < 0.44) tips.push('카메라를 조금 아래로');
+      else if (centerY > 0.57) tips.push('카메라를 조금 위로');
+      if (faceHint.leftEye && faceHint.rightEye) {
+        const eyeTilt = Number(faceHint.leftEye.y ?? 0) - Number(faceHint.rightEye.y ?? 0);
+        if (Math.abs(eyeTilt) > 0.018) tips.push(eyeTilt > 0 ? '고개를 오른쪽으로 살짝' : '고개를 왼쪽으로 살짝');
+      }
+      return tips.length ? tips[0] : '어깨선과 수평이 가장 안정적입니다';
+    };
+
+    const renderLiveFaceOverlay = () => {
+      if (!(liveFaceBoxEl instanceof HTMLElement) || !(liveFaceStatusEl instanceof HTMLElement)) return;
+      const activeFaceHint = stream ? livePreviewFaceHint : (sourceFaceHint ?? sourceUploadAssessment?.faceHint ?? null);
+      const activeStatus = stream
+        ? (livePreviewFaceStatus ?? { tone: 'sky', label: '얼굴을 찾는 중' })
+        : buildLiveFaceStatus(sourceUploadAssessment);
+
+      if (activeFaceHint?.bbox) {
+        const { x, y, width, height } = activeFaceHint.bbox;
+        const mirroredLeft = stream ? (1 - x - width) : x;
+        const left = Math.max(0, Math.min(1, mirroredLeft));
+        const top = Math.max(0, Math.min(1, y));
+        const safeWidth = Math.max(0.08, Math.min(1, width));
+        const safeHeight = Math.max(0.12, Math.min(1, height));
+        const centerX = left + safeWidth / 2;
+        const eyeLineY = activeFaceHint.leftEye && activeFaceHint.rightEye
+          ? ((Number(activeFaceHint.leftEye.y) + Number(activeFaceHint.rightEye.y)) / 2)
+          : top + safeHeight * 0.34;
+        liveFaceBoxEl.style.left = `${left * 100}%`;
+        liveFaceBoxEl.style.top = `${top * 100}%`;
+        liveFaceBoxEl.style.width = `${safeWidth * 100}%`;
+        liveFaceBoxEl.style.height = `${safeHeight * 100}%`;
+        liveFaceBoxEl.classList.remove('hidden');
+        if (liveFaceCenterlineEl instanceof HTMLElement) {
+          liveFaceCenterlineEl.style.left = `${centerX * 100}%`;
+          liveFaceCenterlineEl.style.top = `${top * 100}%`;
+          liveFaceCenterlineEl.style.height = `${safeHeight * 100}%`;
+          liveFaceCenterlineEl.classList.remove('hidden');
+        }
+        if (liveEyeLineEl instanceof HTMLElement) {
+          liveEyeLineEl.style.left = `${left * 100}%`;
+          liveEyeLineEl.style.top = `${Math.max(0, Math.min(1, eyeLineY)) * 100}%`;
+          liveEyeLineEl.style.width = `${safeWidth * 100}%`;
+          liveEyeLineEl.classList.remove('hidden');
+        }
+      } else {
+        liveFaceBoxEl.classList.add('hidden');
+        liveFaceCenterlineEl instanceof HTMLElement && liveFaceCenterlineEl.classList.add('hidden');
+        liveEyeLineEl instanceof HTMLElement && liveEyeLineEl.classList.add('hidden');
+      }
+
+      if (activeStatus?.label) {
+        const toneClasses = {
+          emerald: 'bg-emerald-500/88 text-white',
+          amber: 'bg-amber-400/92 text-slate-950',
+          rose: 'bg-rose-500/90 text-white',
+          sky: 'bg-sky-500/88 text-white',
+        };
+        liveFaceStatusEl.className = `rounded-full px-3 py-1 text-[10px] font-bold tracking-[0.18em] shadow-sm ${toneClasses[activeStatus.tone] ?? toneClasses.sky}`;
+        liveFaceStatusEl.textContent = activeStatus.label;
+        liveFaceStatusEl.classList.remove('hidden');
+      } else {
+        liveFaceStatusEl.classList.add('hidden');
+      }
+
+      if (liveFaceCoachingEl instanceof HTMLElement) {
+        const coaching = buildLiveFaceCoaching(activeFaceHint);
+        liveFaceCoachingEl.textContent = coaching;
+        liveFaceCoachingEl.classList.toggle('hidden', !activeFaceHint);
+      }
     };
 
     const updateGenerateAvailability = () => {
       if (generateBtn instanceof HTMLButtonElement) {
         generateBtn.disabled = isGenerating || !sourceDataUrl || Boolean(sourceUploadAssessment?.blocking);
+        generateBtn.classList.toggle('opacity-60', Boolean(sourceUploadAssessment?.blocking));
+      }
+    };
+
+    const renderBlockingCta = (assessment) => {
+      if (!(blockingCtaEl instanceof HTMLElement)) return;
+      if (!assessment?.blocking) {
+        blockingCtaEl.classList.add('hidden');
+        blockingCtaEl.innerHTML = '';
+        return;
+      }
+      blockingCtaEl.classList.remove('hidden');
+      blockingCtaEl.innerHTML = `
+        <p class="font-bold">프로필사진은 다시 맞춰 찍는 편이 결과가 훨씬 좋습니다.</p>
+        <p class="mt-1 text-[11px] text-amber-800">얼굴 중심, 눈높이 수평, 어깨선이 맞으면 headshot 점수와 추천 후보 안정성이 같이 올라갑니다.</p>
+        <div class="mt-3 flex flex-wrap gap-2">
+          <button type="button" data-guidance-action="start-camera" class="rounded-lg border border-amber-300 bg-white px-3 py-2 text-[11px] font-bold text-amber-900">카메라 다시 열기</button>
+          <button type="button" data-guidance-action="upload-file" class="rounded-lg border border-amber-300 bg-white px-3 py-2 text-[11px] font-bold text-amber-900">다른 사진 업로드</button>
+        </div>
+      `;
+    };
+
+    const handleGuidanceAction = (event) => {
+      const target = event.target instanceof HTMLElement ? event.target.closest('[data-guidance-action]') : null;
+      if (!(target instanceof HTMLElement)) return;
+      const action = target.getAttribute('data-guidance-action');
+      if (action === 'start-camera' && cameraStartBtn instanceof HTMLButtonElement) {
+        cameraStartBtn.click();
+      }
+      if (action === 'upload-file' && fileInput instanceof HTMLInputElement) {
+        fileInput.click();
       }
     };
 
@@ -484,6 +664,9 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     let mediaPipeDetector = null;
     let mediaPipeDetectorLoading = null;
     let mediaPipeUnavailable = false;
+    let livePreviewFaceHint = null;
+    let livePreviewFaceStatus = null;
+    let livePreviewAnalysisTimer = null;
 
     const validateSelectedFile = (file, inputEl) => {
       if (!String(file.type).startsWith('image/')) {
@@ -548,6 +731,68 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       return mediaPipeDetectorLoading;
     };
 
+    const buildFaceAssessmentFromDetections = (detections, width, height) => {
+      if (detections.length === 0) return { messages: ['얼굴을 인식하지 못했습니다. 정면 사진으로 다시 촬영해 주세요.'], blocking: true, faceHint: null };
+      if (detections.length > 1) return { messages: ['여러 얼굴이 감지되었습니다. 1인 사진으로 다시 촬영해 주세요.'], blocking: true, faceHint: null };
+
+      const detection = detections[0];
+      const box = detection?.boundingBox;
+      if (!box) return { messages: [], blocking: false, faceHint: null };
+      const keypoints = Array.isArray(detection?.keypoints) ? detection.keypoints : [];
+
+      const faceHint = {
+        bbox: {
+          x: Number(box.originX || 0) / Math.max(1, width),
+          y: Number(box.originY || 0) / Math.max(1, height),
+          width: Number(box.width || 0) / Math.max(1, width),
+          height: Number(box.height || 0) / Math.max(1, height)
+        },
+        leftEye: keypoints[1] ? {
+          x: Number(keypoints[1].x || 0) / Math.max(1, width),
+          y: Number(keypoints[1].y || 0) / Math.max(1, height)
+        } : null,
+        rightEye: keypoints[0] ? {
+          x: Number(keypoints[0].x || 0) / Math.max(1, width),
+          y: Number(keypoints[0].y || 0) / Math.max(1, height)
+        } : null
+      };
+      const messages = [];
+      let blocking = false;
+
+      const faceRatio = Number(box.width || 0) / Math.max(1, width);
+      if (faceRatio < 0.14) {
+        blocking = true;
+        messages.push('얼굴이 너무 작습니다. 얼굴이 더 크게 나온 사진으로 다시 촬영해 주세요.');
+      } else if (faceRatio < 0.18) {
+        messages.push('얼굴이 작게 보여 품질이 떨어질 수 있습니다. 얼굴이 더 크게 나온 사진을 권장합니다.');
+      }
+      if (faceRatio > 0.82) {
+        blocking = true;
+        messages.push('얼굴이 너무 가까워 상단 여백과 턱선이 잘릴 수 있습니다. 약간 떨어져 촬영해 주세요.');
+      } else if (faceRatio > 0.78) {
+        messages.push('얼굴이 가까워 규격 정렬이 어려울 수 있습니다. 약간 떨어져 촬영해 주세요.');
+      }
+
+      const centerX = (Number(box.originX || 0) + Number(box.width || 0) / 2) / Math.max(1, width);
+      if (centerX < 0.14 || centerX > 0.86) {
+        blocking = true;
+        messages.push('얼굴이 화면 중앙에서 너무 많이 벗어났습니다. 정면으로 중앙에 맞춰 다시 촬영해 주세요.');
+      } else if (centerX < 0.2 || centerX > 0.8) {
+        messages.push('얼굴이 화면 중앙에서 벗어나 있습니다. 중앙 정렬 사진을 권장합니다.');
+      }
+
+      if (faceHint.leftEye && faceHint.rightEye) {
+        const eyeTilt = Math.abs(faceHint.leftEye.y - faceHint.rightEye.y);
+        if (eyeTilt > 0.06) {
+          blocking = true;
+          messages.push('고개 기울기가 큽니다. 얼굴을 수평에 가깝게 맞춰 다시 촬영해 주세요.');
+        } else if (eyeTilt > 0.03) {
+          messages.push('고개가 약간 기울어져 있습니다. 얼굴을 조금만 더 수평으로 맞추면 더 좋습니다.');
+        }
+      }
+      return { messages, blocking, faceHint };
+    };
+
     const getFaceQualityHint = async (img, width, height) => {
       const detector = await getMediaPipeDetector();
       if (!detector) return { messages: [], blocking: false, faceHint: null };
@@ -555,65 +800,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       try {
         const result = detector.detect(img);
         const detections = Array.isArray(result?.detections) ? result.detections : [];
-        if (detections.length === 0) return { messages: ['얼굴을 인식하지 못했습니다. 정면 사진으로 다시 촬영해 주세요.'], blocking: true, faceHint: null };
-        if (detections.length > 1) return { messages: ['여러 얼굴이 감지되었습니다. 1인 사진으로 다시 촬영해 주세요.'], blocking: true, faceHint: null };
-
-        const detection = detections[0];
-        const box = detection?.boundingBox;
-        if (!box) return { messages: [], blocking: false, faceHint: null };
-        const keypoints = Array.isArray(detection?.keypoints) ? detection.keypoints : [];
-
-        const faceHint = {
-          bbox: {
-            x: Number(box.originX || 0) / Math.max(1, img.naturalWidth),
-            y: Number(box.originY || 0) / Math.max(1, img.naturalHeight),
-            width: Number(box.width || 0) / Math.max(1, img.naturalWidth),
-            height: Number(box.height || 0) / Math.max(1, img.naturalHeight)
-          },
-          leftEye: keypoints[1] ? {
-            x: Number(keypoints[1].x || 0) / Math.max(1, img.naturalWidth),
-            y: Number(keypoints[1].y || 0) / Math.max(1, img.naturalHeight)
-          } : null,
-          rightEye: keypoints[0] ? {
-            x: Number(keypoints[0].x || 0) / Math.max(1, img.naturalWidth),
-            y: Number(keypoints[0].y || 0) / Math.max(1, img.naturalHeight)
-          } : null
-        };
-        const messages = [];
-        let blocking = false;
-
-        const faceRatio = Number(box.width || 0) / Math.max(1, width);
-        if (faceRatio < 0.14) {
-          blocking = true;
-          messages.push('얼굴이 너무 작습니다. 얼굴이 더 크게 나온 사진으로 다시 촬영해 주세요.');
-        } else if (faceRatio < 0.18) {
-          messages.push('얼굴이 작게 보여 품질이 떨어질 수 있습니다. 얼굴이 더 크게 나온 사진을 권장합니다.');
-        }
-        if (faceRatio > 0.82) {
-          blocking = true;
-          messages.push('얼굴이 너무 가까워 상단 여백과 턱선이 잘릴 수 있습니다. 약간 떨어져 촬영해 주세요.');
-        } else if (faceRatio > 0.78) {
-          messages.push('얼굴이 가까워 규격 정렬이 어려울 수 있습니다. 약간 떨어져 촬영해 주세요.');
-        }
-
-        const centerX = (Number(box.originX || 0) + Number(box.width || 0) / 2) / Math.max(1, width);
-        if (centerX < 0.14 || centerX > 0.86) {
-          blocking = true;
-          messages.push('얼굴이 화면 중앙에서 너무 많이 벗어났습니다. 정면으로 중앙에 맞춰 다시 촬영해 주세요.');
-        } else if (centerX < 0.2 || centerX > 0.8) {
-          messages.push('얼굴이 화면 중앙에서 벗어나 있습니다. 중앙 정렬 사진을 권장합니다.');
-        }
-
-        if (faceHint.leftEye && faceHint.rightEye) {
-          const eyeTilt = Math.abs(faceHint.leftEye.y - faceHint.rightEye.y);
-          if (eyeTilt > 0.06) {
-            blocking = true;
-            messages.push('고개 기울기가 큽니다. 얼굴을 수평에 가깝게 맞춰 다시 촬영해 주세요.');
-          } else if (eyeTilt > 0.03) {
-            messages.push('고개가 약간 기울어져 있습니다. 얼굴을 조금만 더 수평으로 맞추면 더 좋습니다.');
-          }
-        }
-        return { messages, blocking, faceHint };
+        return buildFaceAssessmentFromDetections(detections, width, height);
       } catch {
         return { messages: [], blocking: false, faceHint: null };
       }
@@ -648,11 +835,50 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
 
     const detectFaceHintForFile = async (file) => (await inspectImageFile(file)).faceHint ?? null;
 
+    const stopLivePreviewAnalysis = () => {
+      if (livePreviewAnalysisTimer) window.clearInterval(livePreviewAnalysisTimer);
+      livePreviewAnalysisTimer = null;
+      livePreviewFaceHint = null;
+      livePreviewFaceStatus = null;
+      renderLiveFaceOverlay();
+    };
+
+    const analyzeLivePreviewFrame = async () => {
+      if (!stream || !(cameraEl instanceof HTMLVideoElement)) return;
+      if (cameraEl.readyState < 2) return;
+      const detector = await getMediaPipeDetector();
+      if (!detector) return;
+      try {
+        const result = detector.detect(cameraEl);
+        const detections = Array.isArray(result?.detections) ? result.detections : [];
+        const assessment = buildFaceAssessmentFromDetections(
+          detections,
+          cameraEl.videoWidth || cameraEl.clientWidth || 1,
+          cameraEl.videoHeight || cameraEl.clientHeight || 1
+        );
+        livePreviewFaceHint = assessment.faceHint ?? null;
+        livePreviewFaceStatus = buildLiveFaceStatus(assessment);
+        renderLiveFaceOverlay();
+      } catch {}
+    };
+
+    const startLivePreviewAnalysis = () => {
+      stopLivePreviewAnalysis();
+      livePreviewFaceStatus = { tone: 'sky', label: '얼굴을 찾는 중' };
+      renderLiveFaceOverlay();
+      livePreviewAnalysisTimer = window.setInterval(() => {
+        void analyzeLivePreviewFrame();
+      }, 450);
+      void analyzeLivePreviewFrame();
+    };
+
     const setSource = (dataUrl, file = null) => {
       sourceDataUrl = dataUrl;
       sourceFile = file;
       sourceFaceHint = null;
       sourceUploadAssessment = { messages: [], blocking: false, faceHint: null };
+      livePreviewFaceHint = null;
+      livePreviewFaceStatus = null;
       cachedPhotoId = null;
       basePaid = false;
       baseOrderId = null;
@@ -662,7 +888,10 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       renderJobDebugLink(null);
       renderQualityFeedback(null);
       renderUploadGuidance(null);
+      renderBlockingCta(null);
+      renderReadyToGenerate(null);
       renderCandidates();
+      updateGuideOverlay();
       if (sourcePreview instanceof HTMLImageElement) {
         sourcePreview.src = dataUrl;
         sourcePreview.classList.remove('hidden');
@@ -696,7 +925,10 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       renderJobDebugLink(null);
       renderQualityFeedback(null);
       renderUploadGuidance(null);
+      renderBlockingCta(null);
+      renderReadyToGenerate(null);
       renderCandidates();
+      updateGuideOverlay();
       if (sourcePreview instanceof HTMLImageElement) {
         sourcePreview.src = '';
         sourcePreview.classList.add('hidden');
@@ -722,6 +954,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     };
 
     const stopCamera = () => {
+      stopLivePreviewAnalysis();
       if (stream) stream.getTracks().forEach((track) => track.stop());
       stream = null;
       if (cameraEl instanceof HTMLVideoElement) {
@@ -729,6 +962,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         cameraEl.style.transform = '';
       }
       if (cameraCaptureBtn instanceof HTMLButtonElement) cameraCaptureBtn.disabled = true;
+      updateGuideOverlay();
     };
 
     const ensureRecommendedSelection = () => {
@@ -1134,6 +1368,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
             sourceUploadAssessment = assessment;
             sourceFaceHint = assessment.faceHint ?? null;
             renderUploadGuidance(assessment);
+            renderBlockingCta(assessment);
             updateGenerateAvailability();
             setStatus(
               assessment.blocking
@@ -1150,19 +1385,8 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       resetBtn.addEventListener('click', () => resetAllState());
     }
 
-    if (uploadGuidanceEl instanceof HTMLElement) {
-      uploadGuidanceEl.addEventListener('click', (event) => {
-        const target = event.target instanceof HTMLElement ? event.target.closest('[data-guidance-action]') : null;
-        if (!(target instanceof HTMLElement)) return;
-        const action = target.getAttribute('data-guidance-action');
-        if (action === 'start-camera' && cameraStartBtn instanceof HTMLButtonElement) {
-          cameraStartBtn.click();
-        }
-        if (action === 'upload-file' && fileInput instanceof HTMLInputElement) {
-          fileInput.click();
-        }
-      });
-    }
+    if (uploadGuidanceEl instanceof HTMLElement) uploadGuidanceEl.addEventListener('click', handleGuidanceAction);
+    if (blockingCtaEl instanceof HTMLElement) blockingCtaEl.addEventListener('click', handleGuidanceAction);
 
     if (cameraStartBtn instanceof HTMLButtonElement) {
       cameraStartBtn.addEventListener('click', async () => {
@@ -1174,6 +1398,8 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
             cameraEl.style.transform = 'scaleX(-1)';
           }
           if (cameraCaptureBtn instanceof HTMLButtonElement) cameraCaptureBtn.disabled = false;
+          updateGuideOverlay();
+          startLivePreviewAnalysis();
           setStatus('카메라가 켜졌습니다. 촬영 버튼을 눌러주세요.');
         } catch {
           setStatus('카메라 접근 실패. 업로드를 사용해주세요.');
@@ -1207,6 +1433,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         sourceUploadAssessment = assessment;
         sourceFaceHint = assessment.faceHint ?? null;
         renderUploadGuidance(assessment);
+        renderBlockingCta(assessment);
         updateGenerateAvailability();
         setStatus(
           assessment.blocking

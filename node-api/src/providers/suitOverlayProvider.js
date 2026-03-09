@@ -39,26 +39,69 @@ function getFaceMetrics(faceHint) {
   };
 }
 
+function buildSuitSelectionSummary({ gender, metrics, looksClose, portraitStyleHeadshot, stronglyCentered }) {
+  const parts = [
+    `gender=${gender}`,
+    `faceWidth=${metrics.faceWidthRatio.toFixed(2)}`,
+    `faceCenter=${metrics.faceCenterX.toFixed(2)}/${metrics.faceCenterY.toFixed(2)}`,
+  ];
+  if (looksClose) parts.push('close-frame');
+  if (portraitStyleHeadshot) parts.push('portrait-headshot');
+  if (stronglyCentered) parts.push('well-centered');
+  if (metrics.eyeTilt > 0.03) parts.push(`eye-tilt=${metrics.eyeTilt.toFixed(3)}`);
+  return parts.join(' · ');
+}
+
 function resolveSuitTemplate({ toolType, faceHint }) {
   const gender = estimateGender(faceHint);
   const metrics = getFaceMetrics(faceHint);
   const looksClose = metrics.faceWidthRatio >= 0.38 || metrics.faceHeightRatio >= 0.56;
   const portraitStyleHeadshot = toolType === 'headshot' && metrics.faceCenterY < 0.48;
   const stronglyCentered = Math.abs(metrics.faceCenterX - 0.5) < 0.08;
+  const summary = buildSuitSelectionSummary({ gender, metrics, looksClose, portraitStyleHeadshot, stronglyCentered });
 
   if (toolType === 'passport_photo') {
-    return gender === 'female' ? 'female_blazer' : 'business_suit';
+    return {
+      template: gender === 'female' ? 'female_blazer' : 'business_suit',
+      reason: gender === 'female'
+        ? 'passport_photo + female estimate prefers a formal blazer silhouette'
+        : 'passport_photo defaults to the most conservative business suit',
+      summary,
+      inputs: { gender, metrics, looksClose, portraitStyleHeadshot, stronglyCentered }
+    };
   }
   if (gender === 'female' && (looksClose || stronglyCentered)) {
-    return 'female_blazer';
+    return {
+      template: 'female_blazer',
+      reason: 'female estimate with close or centered framing prefers female_blazer',
+      summary,
+      inputs: { gender, metrics, looksClose, portraitStyleHeadshot, stronglyCentered }
+    };
   }
   if (toolType === 'headshot') {
-    return portraitStyleHeadshot ? 'business_suit' : 'casual_jacket';
+    return {
+      template: portraitStyleHeadshot ? 'business_suit' : 'casual_jacket',
+      reason: portraitStyleHeadshot
+        ? 'headshot with high face position switches to business_suit for a tighter portrait crop'
+        : 'headshot defaults to casual_jacket for a softer shoulder framing',
+      summary,
+      inputs: { gender, metrics, looksClose, portraitStyleHeadshot, stronglyCentered }
+    };
   }
   if (metrics.faceAspectRatio > 1.28 || metrics.eyeTilt > 0.035) {
-    return 'business_suit';
+    return {
+      template: 'business_suit',
+      reason: 'elongated face ratio or eye tilt uses business_suit to stabilize the neckline visually',
+      summary,
+      inputs: { gender, metrics, looksClose, portraitStyleHeadshot, stronglyCentered }
+    };
   }
-  return 'business_suit';
+  return {
+    template: 'business_suit',
+    reason: 'default formal fallback',
+    summary,
+    inputs: { gender, metrics, looksClose, portraitStyleHeadshot, stronglyCentered }
+  };
 }
 
 async function getSuitTemplateAsset(template) {
@@ -301,7 +344,8 @@ function buildFemaleBlazerTokens({ width, height, shading = 1 }) {
 }
 
 export async function renderSuitOverlay({ width, height, variant = 'clean', toolType = 'id_photo', faceHint = null, shading = 1 }) {
-  const template = resolveSuitTemplate({ toolType, faceHint });
+  const selection = resolveSuitTemplate({ toolType, faceHint });
+  const template = selection.template;
   const svgTemplate = await getSuitTemplateAsset(template);
   const tokens = template === 'female_blazer'
     ? buildFemaleBlazerTokens({ width, height, shading })
@@ -312,6 +356,7 @@ export async function renderSuitOverlay({ width, height, variant = 'clean', tool
 
   return {
     template,
+    selection,
     overlay: Buffer.from(overlaySvg)
   };
 }
