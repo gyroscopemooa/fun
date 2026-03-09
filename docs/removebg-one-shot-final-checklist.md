@@ -32,6 +32,12 @@ REMOVE_BG_URL=https://api.remove.bg/v1.0/removebg
 cd C:\Users\jeonm\Documents\2.funny\funhub\node-api
 npm run dev
 ```
+4. 별도 터미널에서 사전 점검 스크립트 실행
+
+```bash
+cd C:\Users\jeonm\Documents\2.funny\funhub
+powershell -ExecutionPolicy Bypass -File .\scripts\removebg-one-shot-check.ps1
+```
 
 ## 3) 최종 1회 실행 시나리오
 1. 브라우저에서 `http://127.0.0.1:8787/config` 확인
