@@ -93,6 +93,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         </button>
         <div id="blocking-cta" class="mt-3 hidden rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900"></div>
         <div id="generate-ready" class="mt-3 hidden rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-900"></div>
+        <div id="assessment-score" class="mt-3 hidden rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-800"></div>
 
         <section class="mt-4 rounded-2xl border border-sky-100 bg-[linear-gradient(135deg,#eff6ff_0%,#f8fafc_55%,#fefce8_100%)] p-4 text-sm text-slate-700">
           <p class="font-bold text-slate-900">대충 찍은 사진도 프로필용으로 더 또렷하고 예쁘게 정리하는 흐름입니다</p>
@@ -271,6 +272,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     const generateBtn = document.getElementById('generate');
     const blockingCtaEl = document.getElementById('blocking-cta');
     const readyToGenerateEl = document.getElementById('generate-ready');
+    const assessmentScoreEl = document.getElementById('assessment-score');
     const outfitEl = document.getElementById('outfit');
     const gridEl = document.getElementById('candidate-grid');
     const downloadBtn = document.getElementById('download-selected');
@@ -422,6 +424,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         uploadGuidanceEl.innerHTML = '';
         uploadGuidanceEl.className = 'mt-3 hidden rounded-xl border p-3 text-xs';
         renderReadyToGenerate(assessment);
+        renderAssessmentScore(assessment);
         return;
       }
       const blocking = Boolean(assessment?.blocking);
@@ -456,6 +459,69 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       `;
       renderBlockingCta({ blocking });
       renderReadyToGenerate(null);
+      renderAssessmentScore(assessment);
+    };
+
+    const clampScore = (value) => Math.max(0, Math.min(100, Math.round(value)));
+
+    const buildAssessmentScore = (assessment) => {
+      const faceHint = assessment?.faceHint;
+      if (!faceHint?.bbox) return null;
+      const centerX = Number(faceHint.bbox.x ?? 0) + Number(faceHint.bbox.width ?? 0) / 2;
+      const faceRatio = Number(faceHint.bbox.width ?? 0);
+      const centerPenalty = Math.abs(centerX - 0.5) * 165;
+      const sizePenalty = Math.abs(faceRatio - 0.22) * 180;
+      const eyeTilt = faceHint.leftEye && faceHint.rightEye
+        ? Math.abs(Number(faceHint.leftEye.y ?? 0) - Number(faceHint.rightEye.y ?? 0))
+        : 0;
+      const tiltPenalty = eyeTilt * 760;
+      const warningPenalty = (Array.isArray(assessment?.messages) ? assessment.messages.length : 0) * 5;
+      const hardPenalty = assessment?.blocking ? 14 : 0;
+      const alignment = clampScore(100 - centerPenalty - tiltPenalty);
+      const cropFit = clampScore(100 - centerPenalty * 0.45 - sizePenalty - tiltPenalty * 0.35 - hardPenalty);
+      const retakeNeed = clampScore(14 + warningPenalty + hardPenalty + centerPenalty * 0.26 + sizePenalty * 0.24 + tiltPenalty * 0.14);
+      return {
+        alignment,
+        cropFit,
+        retakeNeed,
+        summary: assessment?.blocking
+          ? '재촬영 권장'
+          : (cropFit >= 83 ? '프로필사진 생성에 적합' : '생성 가능하지만 어깨선/수평 보정 여지 있음')
+      };
+    };
+
+    const renderAssessmentScore = (assessment) => {
+      if (!(assessmentScoreEl instanceof HTMLElement)) return;
+      const score = buildAssessmentScore(assessment);
+      if (!score) {
+        assessmentScoreEl.classList.add('hidden');
+        assessmentScoreEl.innerHTML = '';
+        return;
+      }
+      assessmentScoreEl.classList.remove('hidden');
+      assessmentScoreEl.innerHTML = `
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <p class="font-bold text-slate-900">업로드 예상 품질: ${score.summary}</p>
+            <p class="mt-1 text-[11px] text-slate-500">프로필사진은 얼굴뿐 아니라 어깨선과 수평감도 결과에 영향을 줍니다.</p>
+          </div>
+          <span class="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-slate-700 shadow-sm">구도예상 ${score.cropFit}</span>
+        </div>
+        <div class="mt-3 grid grid-cols-3 gap-2 text-[11px] font-semibold">
+          <div class="rounded-lg bg-white px-3 py-2">
+            <p class="text-slate-400">정렬</p>
+            <p class="mt-1 text-base font-black text-slate-900">${score.alignment}</p>
+          </div>
+          <div class="rounded-lg bg-white px-3 py-2">
+            <p class="text-slate-400">구도예상</p>
+            <p class="mt-1 text-base font-black text-slate-900">${score.cropFit}</p>
+          </div>
+          <div class="rounded-lg bg-white px-3 py-2">
+            <p class="text-slate-400">재촬영필요도</p>
+            <p class="mt-1 text-base font-black ${score.retakeNeed >= 70 ? 'text-rose-600' : 'text-slate-900'}">${score.retakeNeed}</p>
+          </div>
+        </div>
+      `;
     };
 
     const renderReadyToGenerate = (assessment) => {
@@ -890,6 +956,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       renderUploadGuidance(null);
       renderBlockingCta(null);
       renderReadyToGenerate(null);
+      renderAssessmentScore(null);
       renderCandidates();
       updateGuideOverlay();
       if (sourcePreview instanceof HTMLImageElement) {
@@ -927,6 +994,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       renderUploadGuidance(null);
       renderBlockingCta(null);
       renderReadyToGenerate(null);
+      renderAssessmentScore(null);
       renderCandidates();
       updateGuideOverlay();
       if (sourcePreview instanceof HTMLImageElement) {
