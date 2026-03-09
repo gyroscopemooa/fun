@@ -586,14 +586,29 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
             return;
           }
         }
-        selected.forEach((item, idx) => {
-          const link = document.createElement('a');
-          link.href = item.downloadUrl || item.url;
-          link.download = `manytool-id-photo-${idx + 1}.jpg`;
-          link.click();
-        });
-        setStatus('다운로드를 시작했습니다.');
+        try {
+          setStatus('다운로드 파일을 준비 중입니다...');
+          await Promise.all(selected.map((item, idx) => downloadCandidate(item, idx + 1, 'manytool-id-photo')));
+          setStatus('다운로드를 시작했습니다.');
+        } catch {
+          setStatus('다운로드에 실패했습니다. 다시 시도해주세요.');
+        }
       });
+    }
+
+    async function downloadCandidate(item, order, namePrefix) {
+      const fileUrl = item.downloadUrl || item.url;
+      const res = await fetch(fileUrl);
+      if (!res.ok) throw new Error(`download failed: ${res.status}`);
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = `${namePrefix}-${order}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
     }
 
     function dataURLToBlob(dataUrl) {
