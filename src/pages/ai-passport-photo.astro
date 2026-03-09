@@ -220,6 +220,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     const compareHelpEl = document.getElementById('compare-help');
 
     const API_BASE = apiBase;
+    const PAGE_STATE_KEY = 'manytool:ai-passport-photo:v1';
 
     let stream = null;
     let sourceDataUrl = null;
@@ -245,6 +246,25 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       addButtons.forEach((buttonEl) => {
         buttonEl.disabled = busy;
       });
+    };
+
+    const savePageState = () => {
+      try {
+        const serializableCandidates = candidates
+          .filter((item) => typeof item.url === 'string' && !item.url.startsWith('data:'))
+          .map((item) => ({
+            id: item.id,
+            url: item.url,
+            selected: Boolean(item.selected),
+            downloadUrl: item.downloadUrl || null
+          }));
+        const payload = {
+          candidates: serializableCandidates,
+          basePaid,
+          outfit: outfitEl instanceof HTMLSelectElement ? outfitEl.value : 'current'
+        };
+        sessionStorage.setItem(PAGE_STATE_KEY, JSON.stringify(payload));
+      } catch {}
     };
 
     const MAX_UPLOAD_BYTES = 12 * 1024 * 1024;
@@ -310,6 +330,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         compareSliderEl.disabled = true;
       }
       if (compareAfterWrapEl instanceof HTMLElement) compareAfterWrapEl.style.width = '50%';
+      savePageState();
     };
 
     const resetAllState = (message = '초기화되었습니다.') => {
@@ -338,6 +359,9 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       if (compareHelpEl instanceof HTMLElement) {
         compareHelpEl.textContent = '사진 업로드 후 후보 생성 시 비교가 활성화됩니다.';
       }
+      try {
+        sessionStorage.removeItem(PAGE_STATE_KEY);
+      } catch {}
       setStatus(message);
     };
 
@@ -373,6 +397,33 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       if (downloadBtn instanceof HTMLButtonElement) {
         downloadBtn.disabled = candidates.filter((c) => c.selected).length !== 2;
       }
+      savePageState();
+    };
+
+    const restorePageState = () => {
+      try {
+        const raw = sessionStorage.getItem(PAGE_STATE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (outfitEl instanceof HTMLSelectElement && typeof parsed.outfit === 'string') {
+          outfitEl.value = parsed.outfit;
+        }
+        if (Array.isArray(parsed.candidates) && parsed.candidates.length > 0) {
+          candidates = parsed.candidates
+            .filter((item) => typeof item.url === 'string')
+            .map((item) => ({
+              id: item.id || `restored_${Date.now()}`,
+              url: item.url,
+              selected: Boolean(item.selected),
+              downloadUrl: item.downloadUrl || null
+            }));
+          renderCandidates();
+          if (compareAfterEl instanceof HTMLImageElement) compareAfterEl.src = candidates[0].url;
+          if (compareHelpEl instanceof HTMLElement) compareHelpEl.textContent = '이전 생성 결과를 복원했습니다.';
+          setStatus('이전 후보 결과를 복원했습니다. 필요하면 다시 생성할 수 있습니다.');
+        }
+        basePaid = Boolean(parsed.basePaid);
+      } catch {}
     };
 
     const centerCropTo34 = (img, shiftX = 0, shiftY = 0, filter = 'none') => {
@@ -541,6 +592,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     };
 
     loadApiStatus();
+    restorePageState();
 
     if (fileInput instanceof HTMLInputElement) {
       fileInput.addEventListener('change', async (e) => {
@@ -641,6 +693,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
               return;
             }
             basePaid = true;
+            savePageState();
             setStatus('기본 결제 완료. 다운로드를 시작합니다.');
           } catch {
             setStatus('결제 확인에 실패했습니다. 잠시 후 다시 시도해주세요.');
