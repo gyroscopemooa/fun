@@ -1,0 +1,38 @@
+﻿---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout
+  title="무료 증명사진 | ManyTool"
+  description="무료 증명사진 제작 가이드와 AI 증명사진 생성기로 이동 가능한 SEO 랜딩 페이지입니다."
+  keywords="무료 증명사진, 증명사진 무료, 웹 증명사진, 온라인 증명사진"
+>
+  <Header />
+  <main class="mx-auto max-w-4xl px-4 py-8">
+    <h1 class="text-3xl font-black tracking-tight text-slate-900">무료 증명사진</h1>
+    <p class="mt-2 text-slate-600">무료로 시작 가능한 증명사진 제작 흐름을 안내하고 실제 생성 페이지로 연결합니다.</p>
+
+    <section class="mt-5 rounded-xl border border-slate-200 bg-white p-5">
+      <h2 class="text-xl font-bold">무료 증명사진 시작 가이드</h2>
+      <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+        <li>모바일/PC 사진 업로드</li>
+        <li>배경 정리와 얼굴 정렬</li>
+        <li>후보 비교 후 다운로드</li>
+      </ul>
+      <a href="/ai-id-photo" class="mt-4 inline-flex rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white">AI 증명사진 시작하기</a>
+    </section>
+
+    <section class="mt-5 rounded-xl border border-slate-200 bg-white p-5">
+      <h2 class="text-xl font-bold">관련 페이지</h2>
+      <div class="mt-3 grid gap-2 sm:grid-cols-2">
+        <a href="/web-id-photo" class="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-700">웹 증명사진</a>
+        <a href="/online-id-photo" class="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-700">온라인 증명사진</a>
+        <a href="/ai-passport-photo" class="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-700">AI 여권사진</a>
+        <a href="/free-passport-photo" class="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-700">무료 여권사진</a>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>

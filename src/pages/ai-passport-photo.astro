@@ -7,16 +7,16 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
 ---
 
 <Layout
-  title="AI 증명사진 생성기 | ManyTool"
-  description="셀카 업로드 또는 카메라 촬영으로 AI 증명사진 후보 3장을 만들고 2장을 선택해 다운로드하세요."
-  keywords="AI 증명사진, 증명사진 만들기, 온라인 증명사진, 셀카 증명사진, 3x4 증명사진"
+  title="AI 여권사진 생성기 | ManyTool"
+  description="셀카 업로드 또는 카메라 촬영으로 AI 여권사진 후보 3장을 만들고 2장을 선택해 다운로드하세요."
+  keywords="AI 여권사진, 여권사진 만들기, 온라인 여권사진, 셀카 여권사진, passport photo maker"
 >
   <Header />
   <main class="mx-auto max-w-5xl px-4 py-8">
     <section class="rounded-2xl border border-slate-200 bg-white p-6">
       <p class="inline-flex rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">MVP 데모</p>
-      <h1 class="mt-3 text-3xl font-black tracking-tight text-slate-900">AI 증명사진 생성기</h1>
-      <p class="mt-2 text-slate-600">사진 한 장으로 증명사진 후보 3장을 생성하고, 원하는 2장을 다운로드할 수 있습니다.</p>
+      <h1 class="mt-3 text-3xl font-black tracking-tight text-slate-900">AI 여권사진 생성기</h1>
+      <p class="mt-2 text-slate-600">사진 한 장으로 여권사진 후보 3장을 생성하고, 원하는 2장을 다운로드할 수 있습니다.</p>
       <div class="mt-4 grid gap-3 text-sm sm:grid-cols-3">
         <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
           <p class="font-bold text-slate-900">기본 상품</p>
@@ -67,15 +67,15 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         </div>
 
         <button id="generate" class="mt-4 w-full rounded-md bg-sky-600 px-4 py-2 text-sm font-bold text-white" disabled>
-          증명사진 만들기
+          여권사진 만들기
         </button>
 
         <section class="mt-4 rounded-lg border border-sky-100 bg-sky-50 p-4 text-sm text-slate-700">
-          <p class="font-bold text-slate-900">온라인 증명사진을 빠르게 제작</p>
-          <p class="mt-1">업로드 또는 촬영만으로 배경 정리, 규격 맞춤, 자연 보정이 적용된 후보를 바로 확인할 수 있습니다.</p>
+          <p class="font-bold text-slate-900">온라인 여권사진을 빠르게 제작</p>
+          <p class="mt-1">업로드 또는 촬영만으로 배경 정리, 얼굴 비율 정렬, 자연 보정이 적용된 후보를 바로 확인할 수 있습니다.</p>
           <ul class="mt-2 list-disc space-y-1 pl-5">
             <li>모바일/PC 업로드 + 카메라 촬영 지원</li>
-            <li>3x4 비율 기준 자동 정렬</li>
+            <li>여권사진 기준 얼굴 비율 자동 정렬</li>
             <li>후보 3장 비교 후 2장 선택 다운로드</li>
           </ul>
         </section>
@@ -96,8 +96,8 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           <button data-add-count="7" class="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700">+7장 추가 생성 (5,900원)</button>
         </div>
         <div class="mt-3 grid gap-2 sm:grid-cols-2">
-          <a href="/online-passport-photo" class="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-center text-sm font-semibold text-sky-700">같은 사진으로 여권사진 만들기</a>
-          <a href="/ai-photoshop" class="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-center text-sm font-semibold text-sky-700">같은 사진으로 프로필 버전 만들기</a>
+          <a href="/ai-id-photo" class="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-center text-sm font-semibold text-sky-700">같은 사진으로 증명사진 만들기</a>
+          <a href="/ai-photoshop" class="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-center text-sm font-semibold text-sky-700">같은 사진으로 프로필 보정하기</a>
         </div>
         <p id="api-status" class="mt-2 text-xs text-slate-500">API 상태 확인 중...</p>
         <p id="status" class="mt-2 text-xs text-slate-500">Node API 연결 시 서버 기반 생성, 실패 시 로컬 생성으로 자동 전환됩니다.</p>
@@ -126,7 +126,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         <ol class="mt-3 list-decimal space-y-1 pl-5 text-sm text-slate-700">
           <li>사진 업로드 또는 카메라 촬영</li>
           <li>얼굴 위치/각도 분석</li>
-          <li>배경 정리 + 3x4 규격 정렬</li>
+          <li>배경 정리 + 여권 규격 정렬</li>
           <li>자연 보정 후보 3장 생성</li>
           <li>2장 선택 후 다운로드</li>
         </ol>
@@ -158,13 +158,13 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         <h2 class="text-xl font-bold text-slate-900">FAQ</h2>
         <div class="mt-3 space-y-2 text-sm text-slate-700">
           <p><span class="font-semibold text-slate-900">Q.</span> 모바일에서도 가능한가요? <span class="font-semibold text-slate-900">A.</span> 네, 업로드/촬영 모두 지원합니다.</p>
-          <p><span class="font-semibold text-slate-900">Q.</span> 여권사진도 만들 수 있나요? <span class="font-semibold text-slate-900">A.</span> 아래 페이지에서 바로 이동할 수 있습니다.</p>
+          <p><span class="font-semibold text-slate-900">Q.</span> 증명사진도 만들 수 있나요? <span class="font-semibold text-slate-900">A.</span> 아래 페이지에서 바로 이동할 수 있습니다.</p>
         </div>
         <div class="mt-3 grid gap-2 text-sm font-semibold sm:grid-cols-2">
-          <a href="/web-id-photo" class="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-sky-700">웹 증명사진</a>
-          <a href="/free-id-photo" class="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-sky-700">무료 증명사진</a>
+          <a href="/ai-id-photo" class="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-sky-700">AI 증명사진</a>
           <a href="/online-passport-photo" class="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-sky-700">온라인 여권사진</a>
           <a href="/free-passport-photo" class="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-sky-700">무료 여권사진</a>
+          <a href="/web-id-photo" class="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-sky-700">웹 증명사진</a>
           <a href="/ai-photoshop" class="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-sky-700">AI 포토샵</a>
         </div>
       </article>
@@ -380,7 +380,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             photoId,
-            toolType: 'id_photo',
+            toolType: 'passport_photo',
             outfitType: outfit
           })
         });
