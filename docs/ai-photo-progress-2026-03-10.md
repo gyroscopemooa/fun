@@ -70,6 +70,7 @@
   - mini trend mode tabs for risk / failed / flagged / fallback
   - inline representative preview panel when clicking tool/provider drill-down cards
   - representative preview panel now shows retry delta before/after quality score
+  - representative preview panel now shows recommended vs rejected variant chips
   - ops summary copy/download
   - original vs recommended side-by-side compare
   - recommended/generated/rejected variant trace

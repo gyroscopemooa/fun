@@ -599,6 +599,12 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         const retryDelta = typeof item.qualityScoreBeforeRetry === 'number' && typeof item.qualityScore === 'number'
           ? item.qualityScore - item.qualityScoreBeforeRetry
           : null;
+        const recommendedVariant = Array.isArray(item.candidateBreakdown)
+          ? item.candidateBreakdown.find((candidate) => candidate.recommended)
+          : null;
+        const rejectedVariants = Array.isArray(item.rejectedVariantBreakdown)
+          ? item.rejectedVariantBreakdown.slice(0, 2)
+          : [];
         const retryToneClass = retryDelta !== null && retryDelta > 0
           ? 'text-emerald-700'
           : retryDelta !== null && retryDelta < 0
@@ -628,6 +634,15 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">flags</p>
             <p class="mt-1 text-sm font-bold text-slate-900">${escapeHtml((item.flags ?? []).join(', ') || 'none')}</p>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 md:col-span-2 xl:col-span-1">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">recommended vs rejected</p>
+            <div class="mt-2 flex flex-wrap gap-2">
+              ${recommendedVariant ? `<span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-900">recommended ${escapeHtml(recommendedVariant.variant)} / ${formatNumber(recommendedVariant.score)}</span>` : '<span class="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-700">recommended none</span>'}
+              ${rejectedVariants.length
+                ? rejectedVariants.map((candidate) => `<span class="rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-900">rejected ${escapeHtml(candidate.variant)} / ${formatNumber(candidate.score)}</span>`).join('')
+                : '<span class="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-700">rejected none</span>'}
+            </div>
           </div>
         `;
       }
