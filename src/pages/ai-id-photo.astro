@@ -47,6 +47,9 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           <button id="camera-capture" class="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700" disabled>
             촬영
           </button>
+          <button id="reset-all" class="rounded-md border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700">
+            초기화
+          </button>
         </div>
 
         <div class="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-3">
@@ -171,6 +174,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     const cameraStartBtn = document.getElementById('camera-start');
     const cameraCaptureBtn = document.getElementById('camera-capture');
     const cameraEl = document.getElementById('camera');
+    const resetBtn = document.getElementById('reset-all');
     const sourcePreview = document.getElementById('source-preview');
     const sourceEmpty = document.getElementById('source-empty');
     const generateBtn = document.getElementById('generate');
@@ -235,6 +239,35 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         compareSliderEl.disabled = true;
       }
       if (compareAfterWrapEl instanceof HTMLElement) compareAfterWrapEl.style.width = '50%';
+    };
+
+    const resetAllState = (message = '초기화되었습니다.') => {
+      stopCamera();
+      sourceDataUrl = null;
+      sourceFile = null;
+      cachedPhotoId = null;
+      basePaid = false;
+      candidates = [];
+      renderCandidates();
+      if (sourcePreview instanceof HTMLImageElement) {
+        sourcePreview.src = '';
+        sourcePreview.classList.add('hidden');
+      }
+      if (sourceEmpty instanceof HTMLElement) sourceEmpty.classList.remove('hidden');
+      if (fileInput instanceof HTMLInputElement) fileInput.value = '';
+      if (generateBtn instanceof HTMLButtonElement) generateBtn.disabled = true;
+      if (downloadBtn instanceof HTMLButtonElement) downloadBtn.disabled = true;
+      if (compareBeforeEl instanceof HTMLImageElement) compareBeforeEl.src = '';
+      if (compareAfterEl instanceof HTMLImageElement) compareAfterEl.src = '';
+      if (compareAfterWrapEl instanceof HTMLElement) compareAfterWrapEl.style.width = '50%';
+      if (compareSliderEl instanceof HTMLInputElement) {
+        compareSliderEl.value = '50';
+        compareSliderEl.disabled = true;
+      }
+      if (compareHelpEl instanceof HTMLElement) {
+        compareHelpEl.textContent = '사진 업로드 후 후보 생성 시 비교가 활성화됩니다.';
+      }
+      setStatus(message);
     };
 
     const stopCamera = () => {
@@ -443,6 +476,16 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         const input = e.target;
         const file = input.files && input.files[0];
         if (!file) return;
+        if (!String(file.type).startsWith('image/')) {
+          setStatus('이미지 파일만 업로드할 수 있습니다.');
+          input.value = '';
+          return;
+        }
+        if (file.size > 12 * 1024 * 1024) {
+          setStatus('이미지 용량은 12MB 이하만 가능합니다.');
+          input.value = '';
+          return;
+        }
         stopCamera();
         const reader = new FileReader();
         reader.onload = () => {
@@ -453,6 +496,10 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         };
         reader.readAsDataURL(file);
       });
+    }
+
+    if (resetBtn instanceof HTMLButtonElement) {
+      resetBtn.addEventListener('click', () => resetAllState());
     }
 
     if (cameraStartBtn instanceof HTMLButtonElement) {
