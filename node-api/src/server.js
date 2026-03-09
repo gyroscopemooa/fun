@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import path from 'node:path';
 import fs from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
@@ -12,7 +13,9 @@ const app = express();
 const port = Number(process.env.PORT ?? 8787);
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 12 * 1024 * 1024 } });
 
-const rootDir = path.resolve(process.cwd(), 'node-api-storage');
+const thisFile = fileURLToPath(import.meta.url);
+const thisDir = path.dirname(thisFile);
+const rootDir = path.resolve(thisDir, '..', 'node-api-storage');
 const originalDir = path.join(rootDir, 'originals');
 const generatedDir = path.join(rootDir, 'generated');
 
