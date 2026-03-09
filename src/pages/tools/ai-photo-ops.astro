@@ -99,6 +99,9 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       </div>
 
       <p id="ops-status-text" class="mt-4 text-sm text-slate-500">최근 운영 데이터를 불러오는 중입니다.</p>
+      <div class="mt-3 flex flex-wrap gap-2">
+        <a id="ops-open-debug" href="/tools/ai-photo-debug" class="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">현재 필터 디버그</a>
+      </div>
     </section>
 
     <section id="ops-stats" class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4"></section>
@@ -184,6 +187,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     const toolDrilldownEl = document.getElementById('ops-tool-drilldown');
     const providerDrilldownEl = document.getElementById('ops-provider-drilldown');
     const refreshBtn = document.getElementById('ops-refresh');
+    const openDebugLink = document.getElementById('ops-open-debug');
     const copySummaryBtn = document.getElementById('ops-copy-summary');
     const downloadSummaryBtn = document.getElementById('ops-download-summary');
     const downloadJsonBtn = document.getElementById('ops-download-json');
@@ -666,6 +670,23 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       return params;
     };
 
+    const getPrimaryDebugUrl = () => {
+      const recentItems = Array.isArray(latestRecentPayload?.items) ? latestRecentPayload.items : [];
+      const alertItems = Array.isArray(latestAlertsPayload?.items) ? latestAlertsPayload.items : [];
+      const target = recentItems[0] ?? alertItems[0] ?? null;
+      return target?.id ? `/tools/ai-photo-debug?jobId=${encodeURIComponent(target.id)}` : '/tools/ai-photo-debug';
+    };
+
+    const syncDebugLink = () => {
+      if (!(openDebugLink instanceof HTMLAnchorElement)) return;
+      const href = getPrimaryDebugUrl();
+      const hasTarget = href !== '/tools/ai-photo-debug';
+      openDebugLink.href = href;
+      openDebugLink.classList.toggle('opacity-50', !hasTarget);
+      openDebugLink.classList.toggle('pointer-events-none', !hasTarget);
+      openDebugLink.setAttribute('aria-disabled', hasTarget ? 'false' : 'true');
+    };
+
     const applyPreset = (preset) => {
       if (filters.status instanceof HTMLSelectElement) filters.status.value = 'all';
       if (filters.flagged instanceof HTMLSelectElement) filters.flagged.value = 'false';
@@ -703,8 +724,12 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         renderAlerts(alertsPayload);
         renderDrilldown(alertsPayload);
         renderList(recentPayload);
+        syncDebugLink();
         setStatus(`최근 ${Array.isArray(recentPayload.items) ? recentPayload.items.length : 0}건, 경고 ${Array.isArray(alertsPayload.items) ? alertsPayload.items.length : 0}건을 불러왔습니다.`);
       } catch (error) {
+        latestRecentPayload = null;
+        latestAlertsPayload = null;
+        syncDebugLink();
         setStatus(error instanceof Error ? error.message : '운영 데이터를 불러오지 못했습니다.');
       }
     };

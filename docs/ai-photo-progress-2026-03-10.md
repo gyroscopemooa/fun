@@ -60,10 +60,18 @@
   - failed / low-quality / low-identity flags
   - provider / crop / pose / suit summaries
   - period filtering (`1h / 24h / 7d / all`)
+  - provider filtering (`all / local_sharp / remove_bg / photoroom`)
   - tool/provider trend cards
+  - quick presets (`all / flagged / fallback / failed`)
+  - clickable drill-down cards that apply tool/provider filters
+  - current-filter debug jump link
   - ops summary copy/download
   - original vs recommended side-by-side compare
   - recommended/generated/rejected variant trace
+  - recommended vs rejected score bars
+  - final retry before/after score cards
+  - tool/provider flag drill-down summaries
+  - insight cards for most common issues and fallback ratio
   - direct links to original / recommended / debug page
   - JSON export for the current filtered view
 - Job snapshots are persisted to disk and recovered after server restart.
@@ -82,10 +90,17 @@
 - Pose correction and relighting are still rule-based.
 
 ## Recommended Next Steps
-1. Add operator-facing diff views for recommended vs rejected variants over time.
+1. Add debug deep-linking from grouped ops summaries to a representative job in that group.
 2. When keys are available, enable external background removal and validate cache behavior.
-3. Add stronger period-based aggregate reporting with exportable summaries.
+3. Add stronger provider/tool aggregate reporting with exportable summaries.
 4. Add more robust suit/template asset management and versioning.
 
 ## Last Known Good Verification
-- `npm run build` passed after ops summary export and recommended/rejected variant tracking updates.
+- `npm run build` passed after ops provider filtering, drill-down filters, insight cards, retry score cards, and current-filter debug link updates.
+
+## Latest Commits
+- `8a17e5e` `feat: add ai photo ops fallback filter and retry insights`
+- `8d47c8b` `feat: add ai photo ops insight cards`
+- `85b75b1` `feat: add ai photo ops quick presets`
+- `c4c2d05` `feat: add ai photo ops drilldown summaries`
+- `7d74225` `feat: add clickable ai photo ops drilldown filters`
