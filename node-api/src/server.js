@@ -7,7 +7,7 @@ import cors from 'cors';
 import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from './store.js';
-import { generateCandidatesWithProvider, getImageProvider, getResolvedImageProvider } from './providers/providerRouter.js';
+import { generateCandidatesWithProvider, getImageProvider, getResolvedImageProvider, isExternalAiEnabled } from './providers/providerRouter.js';
 
 const app = express();
 const port = Number(process.env.PORT ?? 8787);
@@ -47,6 +47,7 @@ app.get('/config', (_req, res) => {
   res.json({
     imageProvider: getResolvedImageProvider(),
     configuredImageProvider: getImageProvider(),
+    externalAiEnabled: isExternalAiEnabled(),
     paymentMode,
     readiness: {
       removeBgReady,

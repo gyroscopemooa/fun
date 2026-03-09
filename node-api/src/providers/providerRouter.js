@@ -6,7 +6,13 @@ export function getImageProvider() {
   return process.env.IMAGE_PROVIDER ?? 'auto';
 }
 
+export function isExternalAiEnabled() {
+  return process.env.EXTERNAL_AI_ENABLED === 'true';
+}
+
 export function getResolvedImageProvider() {
+  if (!isExternalAiEnabled()) return 'local_sharp';
+
   const configured = getImageProvider();
   if (configured !== 'auto') return configured;
   if (process.env.REMOVE_BG_API_KEY) return 'remove_bg';

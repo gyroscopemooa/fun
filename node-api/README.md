@@ -23,6 +23,9 @@ npm run dev
 기본 포트: `8787` (`PORT` 환경변수로 변경 가능)
 
 주요 환경변수:
+- `EXTERNAL_AI_ENABLED=false` (기본)
+  - `false`: 외부 API 미호출, `local_sharp`만 사용 (개발/과금 방지)
+  - `true`: `IMAGE_PROVIDER` 규칙에 따라 외부 API 사용 가능
 - `IMAGE_PROVIDER=auto` (기본)
   - `auto`면 우선순위: `remove_bg` -> `photoroom` -> `local_sharp`
   - API 키가 없거나 외부 API 실패 시 자동으로 `local_sharp` fallback
@@ -53,4 +56,4 @@ npm run dev
 - `PAYMENT_MODE=polar`에서는 `checkoutUrl`을 프론트에서 열고, webhook으로 주문 상태를 `paid`로 갱신합니다.
 - 현재 webhook 보안은 `POLAR_WEBHOOK_INSECURE_TOKEN` 기반 임시 방식입니다. 운영 전 정식 서명 검증을 붙여야 합니다.
 - `IMAGE_PROVIDER`를 기준으로 이미지 처리 provider를 교체할 수 있습니다.
-- 운영 권장: `IMAGE_PROVIDER=auto` + 최소 1개 외부 API 키 등록.
+- 운영 권장: `EXTERNAL_AI_ENABLED=true` + `IMAGE_PROVIDER=auto` + 최소 1개 외부 API 키 등록.
