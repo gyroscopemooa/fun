@@ -61,6 +61,9 @@
   - provider / crop / pose / suit summaries
   - period filtering (`1h / 24h / 7d / all`)
   - tool/provider trend cards
+  - ops summary copy/download
+  - original vs recommended side-by-side compare
+  - recommended/generated/rejected variant trace
   - direct links to original / recommended / debug page
   - JSON export for the current filtered view
 - Job snapshots are persisted to disk and recovered after server restart.
@@ -85,4 +88,4 @@
 4. Add more robust suit/template asset management and versioning.
 
 ## Last Known Good Verification
-- `npm run build` passed after admin hub, ops filters, and persisted snapshot updates.
+- `npm run build` passed after ops summary export and recommended/rejected variant tracking updates.

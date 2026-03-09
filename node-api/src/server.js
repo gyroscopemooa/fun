@@ -162,6 +162,24 @@ const toJobSummary = (job) => {
         : false
     }))
     : [];
+  const rejectedVariantBreakdown = Array.isArray(report?.identityRejectedVariants)
+    ? report.identityRejectedVariants.map((variant) => {
+      const rejectedIdentityScore = Number(report?.variantIdentityScores?.[variant] ?? 0);
+      const regenerated = Array.isArray(report?.identityRegeneratedVariants)
+        ? report.identityRegeneratedVariants.includes(variant)
+        : false;
+      return {
+        variant,
+        rejected: true,
+        regenerated,
+        identityScore: rejectedIdentityScore || null,
+        qualityScore,
+        score: rejectedIdentityScore
+          ? Math.round(((rejectedIdentityScore * 0.65) + (qualityScore * 0.35) - (regenerated ? 1.5 : 0)) * 10) / 10
+          : null
+      };
+    })
+    : [];
 
   return {
     id: job?.id ?? null,
@@ -185,6 +203,7 @@ const toJobSummary = (job) => {
     recommendedVariant: report?.recommendedVariant ?? recommendedCandidate?.variant ?? null,
     recommendedImageUrl: recommendedCandidate?.imageUrl ?? null,
     candidateBreakdown,
+    rejectedVariantBreakdown,
     rejectedVariants: Array.isArray(report?.identityRejectedVariants) ? report.identityRejectedVariants : [],
     originalUrl,
     candidateCount: Array.isArray(job?.candidates) ? job.candidates.length : 0,
