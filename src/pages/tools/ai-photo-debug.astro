@@ -116,6 +116,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     const compareAfterEl = document.getElementById('compare-after');
     const compareAfterWrapEl = document.getElementById('compare-after-wrap');
     const compareSliderEl = document.getElementById('compare-slider');
+    let activeOriginalUrl = null;
 
     const setStatus = (text) => {
       if (statusEl) statusEl.textContent = text;
@@ -249,6 +250,16 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       }
     };
 
+    const setCompareImages = (originalUrl, candidateUrl) => {
+      if (!originalUrl || !candidateUrl) return;
+      activeOriginalUrl = originalUrl;
+      if (compareWrapEl instanceof HTMLElement) compareWrapEl.classList.remove('hidden');
+      if (compareBeforeEl instanceof HTMLImageElement) compareBeforeEl.src = originalUrl;
+      if (compareAfterEl instanceof HTMLImageElement) compareAfterEl.src = candidateUrl;
+      if (compareAfterWrapEl instanceof HTMLElement) compareAfterWrapEl.style.width = '50%';
+      if (compareSliderEl instanceof HTMLInputElement) compareSliderEl.value = '50';
+    };
+
     const renderCompare = (job) => {
       const originalUrl = job?.originalUrl ? `${API_BASE}${job.originalUrl}` : null;
       const candidates = Array.isArray(job?.candidates) ? job.candidates : [];
@@ -257,11 +268,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         compareWrapEl?.classList.add('hidden');
         return;
       }
-      compareWrapEl.classList.remove('hidden');
-      if (compareBeforeEl instanceof HTMLImageElement) compareBeforeEl.src = originalUrl;
-      if (compareAfterEl instanceof HTMLImageElement) compareAfterEl.src = `${API_BASE}${recommended.imageUrl}`;
-      if (compareAfterWrapEl instanceof HTMLElement) compareAfterWrapEl.style.width = '50%';
-      if (compareSliderEl instanceof HTMLInputElement) compareSliderEl.value = '50';
+      setCompareImages(originalUrl, `${API_BASE}${recommended.imageUrl}`);
     };
 
     const renderCandidates = (job) => {
@@ -269,6 +276,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       const report = job?.pipelineReport ?? {};
       const qualityScore = typeof report.qualityScore === 'number' ? report.qualityScore : null;
       const candidates = Array.isArray(job?.candidates) ? job.candidates : [];
+      const originalUrl = job?.originalUrl ? `${API_BASE}${job.originalUrl}` : null;
       if (!candidates.length) {
         candidatesEl.innerHTML = '<p class="text-sm text-slate-500">후보가 없습니다.</p>';
         return;
@@ -289,7 +297,22 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
               <span class="rounded-full bg-slate-100 px-2 py-1 text-slate-700">규격 ${typeof qualityScore === 'number' ? qualityScore.toFixed(1) : 'n/a'}</span>
               ${item.regenerated ? '<span class="rounded-full bg-amber-100 px-2 py-1 text-amber-800">안전 재생성</span>' : ''}
             </div>
-            <a href="${API_BASE}/download/${item.id}" class="inline-flex rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">다운로드 경로 확인</a>
+            ${originalUrl ? `
+              <div class="grid grid-cols-2 gap-2 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-2">
+                <div>
+                  <p class="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Before</p>
+                  <img src="${originalUrl}" alt="original preview" class="h-24 w-full rounded-lg object-cover" />
+                </div>
+                <div>
+                  <p class="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">After</p>
+                  <img src="${API_BASE}${item.imageUrl}" alt="candidate preview ${index + 1}" class="h-24 w-full rounded-lg object-cover" />
+                </div>
+              </div>
+            ` : ''}
+            <div class="flex flex-wrap gap-2">
+              <button type="button" data-candidate-compare="${API_BASE}${item.imageUrl}" class="inline-flex rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-semibold text-sky-700 hover:bg-sky-100">이 후보로 비교</button>
+              <a href="${API_BASE}/download/${item.id}" class="inline-flex rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">다운로드 경로 확인</a>
+            </div>
           </div>
         </article>
       `).join('');
@@ -335,6 +358,17 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         event.preventDefault();
         const jobId = inputEl instanceof HTMLInputElement ? inputEl.value.trim() : '';
         loadJob(jobId);
+      });
+    }
+
+    if (candidatesEl instanceof HTMLElement) {
+      candidatesEl.addEventListener('click', (event) => {
+        const target = event.target instanceof HTMLElement ? event.target.closest('[data-candidate-compare]') : null;
+        if (!(target instanceof HTMLElement) || !activeOriginalUrl) return;
+        const candidateUrl = target.getAttribute('data-candidate-compare');
+        if (!candidateUrl) return;
+        setCompareImages(activeOriginalUrl, candidateUrl);
+        compareWrapEl instanceof HTMLElement && compareWrapEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     }
 
