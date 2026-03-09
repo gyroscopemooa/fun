@@ -30,7 +30,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         </div>
       </div>
 
-      <div class="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-6">
+      <div class="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-7">
         <label class="rounded-2xl border border-slate-200 bg-slate-50 p-3">
           <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">상태</p>
           <select id="ops-status" class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm">
@@ -78,6 +78,15 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           <select id="ops-fallback-only" class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm">
             <option value="false" selected>전체 포함</option>
             <option value="true">fallback만 보기</option>
+          </select>
+        </label>
+        <label class="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+          <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">provider</p>
+          <select id="ops-provider" class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm">
+            <option value="all" selected>전체</option>
+            <option value="local_sharp">local_sharp</option>
+            <option value="remove_bg">remove_bg</option>
+            <option value="photoroom">photoroom</option>
           </select>
         </label>
       </div>
@@ -186,7 +195,8 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       limit: document.getElementById('ops-limit'),
       period: document.getElementById('ops-period'),
       flagged: document.getElementById('ops-flagged'),
-      fallbackOnly: document.getElementById('ops-fallback-only')
+      fallbackOnly: document.getElementById('ops-fallback-only'),
+      provider: document.getElementById('ops-provider')
     };
 
     let latestRecentPayload = null;
@@ -280,6 +290,15 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           flags: [...bucket.flags.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5)
         }))
         .sort((a, b) => b.total - a.total);
+    };
+
+    const applyDirectFilter = ({ toolType = 'all', provider = 'all', fallbackOnly = false, flaggedOnly = true, status = 'all' }) => {
+      if (filters.tool instanceof HTMLSelectElement) filters.tool.value = toolType;
+      if (filters.provider instanceof HTMLSelectElement) filters.provider.value = provider;
+      if (filters.fallbackOnly instanceof HTMLSelectElement) filters.fallbackOnly.value = fallbackOnly ? 'true' : 'false';
+      if (filters.flagged instanceof HTMLSelectElement) filters.flagged.value = flaggedOnly ? 'true' : 'false';
+      if (filters.status instanceof HTMLSelectElement) filters.status.value = status;
+      loadOps();
     };
 
     const scoreTone = (score) => {
@@ -418,7 +437,12 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         if (!(target instanceof HTMLElement)) return;
         target.innerHTML = groups.length
           ? groups.map((group) => `
-              <article class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <button
+                type="button"
+                class="ops-drilldown w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:border-slate-300 hover:bg-white"
+                data-group-key="${escapeHtml(group.key)}"
+                data-group-type="${target === toolDrilldownEl ? 'tool' : 'provider'}"
+              >
                 <div class="flex items-center justify-between gap-3">
                   <p class="text-sm font-black text-slate-900">${escapeHtml(group.key)}</p>
                   <span class="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">${group.total}건</span>
@@ -428,7 +452,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
                     ? group.flags.map(([flag, count]) => `<span class="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 shadow-sm">${escapeHtml(flag)} · ${count}</span>`).join('')
                     : '<span class="text-xs text-slate-500">플래그 없음</span>'}
                 </div>
-              </article>
+              </button>
             `).join('')
           : `<p class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">${emptyText}</p>`;
       };
@@ -626,14 +650,16 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       const params = new URLSearchParams();
       const status = filters.status instanceof HTMLSelectElement ? filters.status.value : 'all';
       const toolType = filters.tool instanceof HTMLSelectElement ? filters.tool.value : 'all';
+      const provider = filters.provider instanceof HTMLSelectElement ? filters.provider.value : 'all';
       const limit = filters.limit instanceof HTMLSelectElement ? filters.limit.value : '12';
       const period = filters.period instanceof HTMLSelectElement ? filters.period.value : '24';
       const flaggedOnly = filters.flagged instanceof HTMLSelectElement ? filters.flagged.value === 'true' : false;
       const fallbackOnly = filters.fallbackOnly instanceof HTMLSelectElement ? filters.fallbackOnly.value === 'true' : false;
 
-      params.set('status', status);
-      params.set('toolType', toolType);
       params.set('limit', limit);
+      if (status !== 'all') params.set('status', status);
+      if (toolType !== 'all') params.set('toolType', toolType);
+      if (provider !== 'all') params.set('provider', provider);
       if (period !== '0') params.set('sinceHours', period);
       if (flaggedOnly) params.set('flaggedOnly', 'true');
       if (fallbackOnly) params.set('fallbackOnly', 'true');
@@ -644,6 +670,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       if (filters.status instanceof HTMLSelectElement) filters.status.value = 'all';
       if (filters.flagged instanceof HTMLSelectElement) filters.flagged.value = 'false';
       if (filters.fallbackOnly instanceof HTMLSelectElement) filters.fallbackOnly.value = 'false';
+      if (filters.provider instanceof HTMLSelectElement) filters.provider.value = 'all';
 
       if (preset === 'flagged' && filters.flagged instanceof HTMLSelectElement) {
         filters.flagged.value = 'true';
@@ -688,6 +715,23 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       button.addEventListener('click', () => {
         const preset = button.getAttribute('data-preset') ?? 'all';
         applyPreset(preset);
+      });
+    });
+    document.addEventListener('click', (event) => {
+      const target = event.target instanceof HTMLElement ? event.target.closest('.ops-drilldown') : null;
+      if (!(target instanceof HTMLElement)) return;
+      const key = target.getAttribute('data-group-key') ?? 'all';
+      const type = target.getAttribute('data-group-type') ?? 'tool';
+      if (type === 'tool') {
+        applyDirectFilter({ toolType: key, provider: 'all', fallbackOnly: false, flaggedOnly: true, status: 'all' });
+        return;
+      }
+      applyDirectFilter({
+        toolType: 'all',
+        provider: key,
+        fallbackOnly: key === 'local_sharp',
+        flaggedOnly: true,
+        status: 'all'
       });
     });
 

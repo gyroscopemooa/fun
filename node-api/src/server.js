@@ -542,6 +542,7 @@ app.get('/jobs/recent', async (req, res) => {
   const flaggedOnly = String(req.query.flagged ?? '').toLowerCase() === 'true';
   const fallbackOnly = String(req.query.fallbackOnly ?? '').toLowerCase() === 'true';
   const toolFilter = typeof req.query.toolType === 'string' ? req.query.toolType.trim().toLowerCase() : '';
+  const providerFilter = typeof req.query.provider === 'string' ? req.query.provider.trim().toLowerCase() : '';
   const sinceHours = Number(req.query.sinceHours ?? 0) || 0;
 
   const memoryJobs = Array.from(db.jobs.values());
@@ -562,6 +563,9 @@ app.get('/jobs/recent', async (req, res) => {
   }
   if (toolFilter) {
     items = items.filter((item) => String(item.toolType ?? '').toLowerCase() === toolFilter);
+  }
+  if (providerFilter) {
+    items = items.filter((item) => String(item.provider ?? item.resolvedProvider ?? '').toLowerCase() === providerFilter);
   }
   if (flaggedOnly) {
     items = items.filter((item) => Array.isArray(item.flags) && item.flags.length > 0);
@@ -588,6 +592,7 @@ app.get('/jobs/recent', async (req, res) => {
       flagged: flaggedOnly,
       fallbackOnly,
       toolType: toolFilter || null,
+      provider: providerFilter || null,
       sinceHours: sinceHours > 0 ? sinceHours : null
     }
   });
@@ -596,6 +601,7 @@ app.get('/jobs/recent', async (req, res) => {
 app.get('/jobs/alerts', async (req, res) => {
   const sinceHours = Number(req.query.sinceHours ?? 0) || 0;
   const fallbackOnly = String(req.query.fallbackOnly ?? '').toLowerCase() === 'true';
+  const providerFilter = typeof req.query.provider === 'string' ? req.query.provider.trim().toLowerCase() : '';
   const memoryJobs = Array.from(db.jobs.values());
   const persistedJobs = await loadPersistedRecentJobs();
   const deduped = new Map();
@@ -611,6 +617,7 @@ app.get('/jobs/alerts', async (req, res) => {
 
   const flagged = filteredSummaries.filter((item) => {
     if (!Array.isArray(item.flags) || !item.flags.length) return false;
+    if (providerFilter && String(item.resolvedProvider ?? item.provider ?? '').toLowerCase() !== providerFilter) return false;
     if (fallbackOnly) return item.flags.includes('provider_fallback');
     return true;
   });
@@ -640,7 +647,8 @@ app.get('/jobs/alerts', async (req, res) => {
     toolBreakdown,
     providerBreakdown,
     sinceHours: sinceHours > 0 ? sinceHours : null,
-    fallbackOnly
+    fallbackOnly,
+    provider: providerFilter || null
   });
 });
 
