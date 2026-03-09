@@ -23,6 +23,8 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         </div>
         <div class="flex flex-wrap gap-2">
           <button id="ops-refresh" type="button" class="rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800">새로고침</button>
+          <button id="ops-copy-summary" type="button" class="rounded-xl border border-slate-300 px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50">요약 복사</button>
+          <button id="ops-download-summary" type="button" class="rounded-xl border border-slate-300 px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50">요약 저장</button>
           <button id="ops-download-json" type="button" class="rounded-xl border border-slate-300 px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50">JSON 저장</button>
         </div>
       </div>
@@ -148,6 +150,8 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     const latestFlaggedEl = document.getElementById('ops-latest-flagged');
     const trendsEl = document.getElementById('ops-trends');
     const refreshBtn = document.getElementById('ops-refresh');
+    const copySummaryBtn = document.getElementById('ops-copy-summary');
+    const downloadSummaryBtn = document.getElementById('ops-download-summary');
     const downloadBtn = document.getElementById('ops-download-json');
     const filterForm = document.getElementById('ops-filter-form');
     const statusSelect = document.getElementById('ops-status');
@@ -357,6 +361,54 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       }
     };
 
+    const buildOpsSummary = () => {
+      if (!currentPayload) return null;
+      const recent = currentPayload.recent ?? {};
+      const alerts = currentPayload.alerts ?? {};
+      const items = Array.isArray(recent.items) ? recent.items : [];
+      const toolTrend = Object.entries((items || []).reduce((acc, item) => {
+        const key = item.toolType ?? 'unknown';
+        const current = acc[key] ?? { total: 0, flagged: 0, failed: 0, qualityTotal: 0, identityTotal: 0 };
+        current.total += 1;
+        if (item.status === 'failed') current.failed += 1;
+        if (Array.isArray(item.flags) && item.flags.length) current.flagged += 1;
+        current.qualityTotal += Number(item.qualityScore ?? 0);
+        current.identityTotal += Number(item.identityScore ?? 0);
+        acc[key] = current;
+        return acc;
+      }, {})).map(([tool, value]) => ({
+        tool,
+        total: value.total,
+        failed: value.failed,
+        flagged: value.flagged,
+        avgQuality: value.total ? Number((value.qualityTotal / value.total).toFixed(1)) : null,
+        avgIdentity: value.total ? Number((value.identityTotal / value.total).toFixed(1)) : null
+      }));
+
+      return {
+        generatedAt: new Date().toISOString(),
+        filters: recent.filters ?? {},
+        counts: {
+          recentJobs: items.length,
+          flaggedJobs: alerts.totalFlagged ?? 0
+        },
+        stats: recent.stats ?? {},
+        toolBreakdown: alerts.toolBreakdown ?? {},
+        providerBreakdown: alerts.providerBreakdown ?? {},
+        toolTrend
+      };
+    };
+
+    const downloadJson = (payload, filename) => {
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(url);
+    };
+
     const buildQuery = () => {
       const params = new URLSearchParams();
       const status = statusSelect instanceof HTMLSelectElement ? statusSelect.value : '';
@@ -416,13 +468,28 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     if (downloadBtn instanceof HTMLButtonElement) {
       downloadBtn.addEventListener('click', () => {
         if (!currentPayload) return;
-        const blob = new Blob([JSON.stringify(currentPayload, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `manytool-ai-photo-ops-${Date.now()}.json`;
-        link.click();
-        URL.revokeObjectURL(url);
+        downloadJson(currentPayload, `manytool-ai-photo-ops-${Date.now()}.json`);
+      });
+    }
+
+    if (copySummaryBtn instanceof HTMLButtonElement) {
+      copySummaryBtn.addEventListener('click', async () => {
+        const summary = buildOpsSummary();
+        if (!summary) return;
+        try {
+          await navigator.clipboard.writeText(JSON.stringify(summary, null, 2));
+          setStatus('운영 요약을 클립보드에 복사했습니다.');
+        } catch {
+          setStatus('요약 복사에 실패했습니다.');
+        }
+      });
+    }
+
+    if (downloadSummaryBtn instanceof HTMLButtonElement) {
+      downloadSummaryBtn.addEventListener('click', () => {
+        const summary = buildOpsSummary();
+        if (!summary) return;
+        downloadJson(summary, `manytool-ai-photo-ops-summary-${Date.now()}.json`);
       });
     }
 
