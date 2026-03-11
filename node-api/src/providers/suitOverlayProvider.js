@@ -145,16 +145,16 @@ function buildBusinessSuitTokens({ width, height, variant, shading = 1, toolType
   const metrics = getFaceMetrics(faceHint);
   const faceWidthPx = metrics.faceWidthRatio > 0 ? metrics.faceWidthRatio * width : width * 0.28;
   const faceBottomY = metrics.faceHeightRatio > 0 ? (Number(faceHint?.bbox?.y ?? 0) + Number(faceHint?.bbox?.height ?? 0)) * height : height * 0.42;
-  const shoulderWidth = clamp(faceWidthPx * (toolType === 'headshot' ? 1.58 : 1.68), width * 0.52, width * 0.68);
+  const shoulderWidth = clamp(faceWidthPx * (toolType === 'headshot' ? 1.34 : 1.42), width * 0.44, width * 0.57);
   const shoulderLeft = (width - shoulderWidth) / 2;
   const shoulderRight = shoulderLeft + shoulderWidth;
-  const jacketTop = clamp(faceBottomY + height * (toolType === 'headshot' ? 0.055 : 0.07), height * 0.57, height * 0.65);
+  const jacketTop = clamp(faceBottomY + height * (toolType === 'headshot' ? 0.05 : 0.062), height * 0.54, height * 0.64);
   const shirtTop = jacketTop - height * 0.012;
   const centerX = width / 2;
-  const collarSpread = shoulderWidth * 0.082;
-  const lapelInset = shoulderWidth * 0.14;
+  const collarSpread = shoulderWidth * 0.055;
+  const lapelInset = shoulderWidth * 0.096;
   const hemY = height;
-  const tieWidth = width * 0.016;
+  const tieWidth = width * 0.0105;
   return {
     WIDTH: width,
     HEIGHT: height,
@@ -173,59 +173,59 @@ function buildBusinessSuitTokens({ width, height, variant, shading = 1, toolType
     HEM_Y: hemY,
     JACKET_TOP_Y: jacketTop,
     SHIRT_TOP_Y: shirtTop,
-    LEFT_CURVE_A_X: shoulderLeft + shoulderWidth * 0.02,
-    LEFT_CURVE_A_Y: height * 0.82,
-    LEFT_CURVE_B_X: shoulderLeft + shoulderWidth * 0.04,
-    LEFT_CURVE_B_Y: height * 0.74,
-    LEFT_CURVE_C_X: shoulderLeft + shoulderWidth * 0.11,
+    LEFT_CURVE_A_X: shoulderLeft + shoulderWidth * 0.035,
+    LEFT_CURVE_A_Y: height * 0.87,
+    LEFT_CURVE_B_X: shoulderLeft + shoulderWidth * 0.075,
+    LEFT_CURVE_B_Y: height * 0.77,
+    LEFT_CURVE_C_X: shoulderLeft + shoulderWidth * 0.17,
     LEFT_LAPEL_X: centerX - lapelInset,
-    LEFT_CENTER_HEM_X: centerX - shoulderWidth * 0.012,
-    RIGHT_CURVE_A_X: shoulderRight - shoulderWidth * 0.02,
-    RIGHT_CURVE_A_Y: height * 0.82,
-    RIGHT_CURVE_B_X: shoulderRight - shoulderWidth * 0.04,
-    RIGHT_CURVE_B_Y: height * 0.74,
-    RIGHT_CURVE_C_X: shoulderRight - shoulderWidth * 0.11,
+    LEFT_CENTER_HEM_X: centerX - shoulderWidth * 0.016,
+    RIGHT_CURVE_A_X: shoulderRight - shoulderWidth * 0.035,
+    RIGHT_CURVE_A_Y: height * 0.87,
+    RIGHT_CURVE_B_X: shoulderRight - shoulderWidth * 0.075,
+    RIGHT_CURVE_B_Y: height * 0.77,
+    RIGHT_CURVE_C_X: shoulderRight - shoulderWidth * 0.17,
     RIGHT_LAPEL_X: centerX + lapelInset,
-    RIGHT_CENTER_HEM_X: centerX + shoulderWidth * 0.012,
+    RIGHT_CENTER_HEM_X: centerX + shoulderWidth * 0.016,
     CENTER_X: centerX,
     LEFT_COLLAR_X: centerX - collarSpread * 0.24,
-    LEFT_COLLAR_Y: jacketTop + height * 0.03,
+    LEFT_COLLAR_Y: jacketTop + height * 0.015,
     RIGHT_COLLAR_X: centerX + collarSpread * 0.24,
-    RIGHT_COLLAR_Y: jacketTop + height * 0.03,
-    LAPEL_CENTER_Y: jacketTop + height * 0.065,
+    RIGHT_COLLAR_Y: jacketTop + height * 0.015,
+    LAPEL_CENTER_Y: jacketTop + height * 0.036,
     LEFT_CENTER_LINE_X: centerX - shoulderWidth * 0.01,
     RIGHT_CENTER_LINE_X: centerX + shoulderWidth * 0.01,
-    CENTER_LINE_END_Y: height * 0.86,
-    LEFT_OUTER_LINE_X: centerX - shoulderWidth * 0.05,
-    LEFT_OUTER_LINE_Y: height * 0.72,
-    RIGHT_OUTER_LINE_X: centerX + shoulderWidth * 0.05,
-    RIGHT_OUTER_LINE_Y: height * 0.72,
+    CENTER_LINE_END_Y: height * 0.73,
+    LEFT_OUTER_LINE_X: centerX - shoulderWidth * 0.034,
+    LEFT_OUTER_LINE_Y: height * 0.69,
+    RIGHT_OUTER_LINE_X: centerX + shoulderWidth * 0.034,
+    RIGHT_OUTER_LINE_Y: height * 0.69,
     SHIRT_LEFT_X: centerX - collarSpread,
     SHIRT_RIGHT_X: centerX + collarSpread,
-    SHIRT_CURVE_Y: jacketTop + height * 0.02,
-    SHIRT_HEM_RIGHT_X: centerX + shoulderWidth * 0.03,
-    SHIRT_HEM_LEFT_X: centerX - shoulderWidth * 0.03,
-    SHIRT_HEM_Y: height * 0.8,
+    SHIRT_CURVE_Y: jacketTop + height * 0.01,
+    SHIRT_HEM_RIGHT_X: centerX + shoulderWidth * 0.016,
+    SHIRT_HEM_LEFT_X: centerX - shoulderWidth * 0.016,
+    SHIRT_HEM_Y: height * 0.67,
     TIE_LEFT_X: centerX - tieWidth,
     TIE_RIGHT_X: centerX + tieWidth,
-    TIE_TOP_Y: jacketTop + height * 0.018,
-    TIE_HEM_RIGHT_X: centerX + tieWidth * 0.45,
-    TIE_HEM_LEFT_X: centerX - tieWidth * 0.45,
-    TIE_HEM_Y: height * 0.72,
-    TIE_KNOT_LEFT_X: centerX - tieWidth * 1.1,
-    TIE_KNOT_RIGHT_X: centerX + tieWidth * 1.1,
-    TIE_KNOT_Y: jacketTop + height * 0.008,
-    TIE_POINT_Y: jacketTop + height * 0.03,
+    TIE_TOP_Y: jacketTop + height * 0.009,
+    TIE_HEM_RIGHT_X: centerX + tieWidth * 0.34,
+    TIE_HEM_LEFT_X: centerX - tieWidth * 0.34,
+    TIE_HEM_Y: height * 0.635,
+    TIE_KNOT_LEFT_X: centerX - tieWidth * 0.95,
+    TIE_KNOT_RIGHT_X: centerX + tieWidth * 0.95,
+    TIE_KNOT_Y: jacketTop + height * 0.0015,
+    TIE_POINT_Y: jacketTop + height * 0.014,
     ACCENT_OPACITY: 0.9,
     CENTER_LINE_WIDTH: Math.max(1, width * 0.0018),
-    SHADOW_Y: jacketTop + height * 0.012,
-    SHADOW_RX: shoulderWidth * 0.18,
-    SHADOW_RY: height * 0.015,
-    GLOW_START_X: shoulderLeft + shoulderWidth * 0.12,
-    GLOW_END_X: shoulderRight - shoulderWidth * 0.12,
-    GLOW_Y: jacketTop + height * 0.014,
-    GLOW_CONTROL_Y: jacketTop + height * 0.014,
-    GLOW_WIDTH: height * 0.012
+    SHADOW_Y: jacketTop + height * 0.01,
+    SHADOW_RX: shoulderWidth * 0.15,
+    SHADOW_RY: height * 0.012,
+    GLOW_START_X: shoulderLeft + shoulderWidth * 0.16,
+    GLOW_END_X: shoulderRight - shoulderWidth * 0.16,
+    GLOW_Y: jacketTop + height * 0.012,
+    GLOW_CONTROL_Y: jacketTop + height * 0.008,
+    GLOW_WIDTH: height * 0.009
   };
 }
 

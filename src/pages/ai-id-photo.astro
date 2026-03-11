@@ -79,6 +79,25 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           </div>
         </div>
         <div id="upload-guidance" class="mt-3 hidden rounded-xl border p-3 text-xs"></div>
+        <div id="pc-adjust-panel" class="mt-3 hidden rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <p class="font-bold text-slate-900">PC 업로드 위치 조절</p>
+              <p class="mt-1 text-[11px] text-slate-500">얼굴이 치우치면 먼저 위치를 맞춘 뒤 생성하세요.</p>
+            </div>
+            <button id="pc-adjust-reset" type="button" class="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-700">초기화</button>
+          </div>
+          <div class="mt-3 grid gap-3 sm:grid-cols-2">
+            <label class="block">
+              <span class="text-[11px] font-semibold text-slate-600">좌우 이동</span>
+              <input id="pc-adjust-x" type="range" min="-120" max="120" value="0" class="mt-2 w-full accent-sky-600" />
+            </label>
+            <label class="block">
+              <span class="text-[11px] font-semibold text-slate-600">상하 이동</span>
+              <input id="pc-adjust-y" type="range" min="-160" max="160" value="0" class="mt-2 w-full accent-sky-600" />
+            </label>
+          </div>
+        </div>
 
         <div class="mt-4">
           <label class="text-sm font-semibold text-slate-700" for="outfit">의상 옵션</label>
@@ -280,6 +299,10 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     const sourcePreview = document.getElementById('source-preview');
     const sourceEmpty = document.getElementById('source-empty');
     const uploadGuidanceEl = document.getElementById('upload-guidance');
+    const pcAdjustPanelEl = document.getElementById('pc-adjust-panel');
+    const pcAdjustXEl = document.getElementById('pc-adjust-x');
+    const pcAdjustYEl = document.getElementById('pc-adjust-y');
+    const pcAdjustResetEl = document.getElementById('pc-adjust-reset');
     const guideOverlayEl = document.querySelector('[data-guide-overlay]');
     const liveFaceBoxEl = document.querySelector('[data-live-face-box]');
     const liveFaceStatusEl = document.querySelector('[data-live-face-status]');
@@ -319,7 +342,10 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     let stream = null;
     let sourceDataUrl = null;
     let sourceFile = null;
+    let sourceOriginalDataUrl = null;
+    let sourceOriginalFile = null;
     let sourceInputMode = 'upload';
+    let sourceAdjust = { x: 0, y: 0 };
     let sourceFaceHint = null;
     let cachedPhotoId = null;
     let candidates = [];
@@ -789,6 +815,14 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       syncMobileActionBar();
     };
 
+    const syncPcAdjustPanel = () => {
+      if (!(pcAdjustPanelEl instanceof HTMLElement)) return;
+      const visible = sourceInputMode === 'upload' && Boolean(sourceOriginalDataUrl);
+      pcAdjustPanelEl.classList.toggle('hidden', !visible);
+      if (pcAdjustXEl instanceof HTMLInputElement) pcAdjustXEl.value = String(sourceAdjust.x);
+      if (pcAdjustYEl instanceof HTMLInputElement) pcAdjustYEl.value = String(sourceAdjust.y);
+    };
+
     const isPolarProductReady = (productType) => {
       if (paymentMode !== 'polar') return true;
       return Boolean(paymentProducts?.[productType]);
@@ -1045,7 +1079,10 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     const setSource = (dataUrl, file = null) => {
       sourceDataUrl = dataUrl;
       sourceFile = file;
+      sourceOriginalDataUrl = dataUrl;
+      sourceOriginalFile = file;
       sourceInputMode = file?.name?.startsWith('camera-') ? 'camera' : 'upload';
+      sourceAdjust = { x: 0, y: 0 };
       sourceFaceHint = null;
       sourceUploadAssessment = { messages: [], blocking: false, faceHint: null };
       livePreviewFaceHint = null;
@@ -1065,6 +1102,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       renderAssessmentScore(null);
       renderCandidates();
       updateGuideOverlay();
+      syncPcAdjustPanel();
       if (sourcePreview instanceof HTMLImageElement) {
         sourcePreview.src = dataUrl;
         sourcePreview.classList.remove('hidden');
@@ -1086,6 +1124,9 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       stopCamera();
       sourceDataUrl = null;
       sourceFile = null;
+      sourceOriginalDataUrl = null;
+      sourceOriginalFile = null;
+      sourceAdjust = { x: 0, y: 0 };
       sourceFaceHint = null;
       sourceUploadAssessment = { messages: [], blocking: false, faceHint: null };
       cachedPhotoId = null;
@@ -1104,6 +1145,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       renderAssessmentScore(null);
       renderCandidates();
       updateGuideOverlay();
+      syncPcAdjustPanel();
       if (sourcePreview instanceof HTMLImageElement) {
         sourcePreview.src = '';
         sourcePreview.classList.add('hidden');
@@ -1304,6 +1346,59 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       ctx.filter = filter;
       ctx.drawImage(img, x, y, cropW, cropH, 0, 0, canvas.width, canvas.height);
       return canvas.toDataURL('image/jpeg', 0.92);
+    };
+
+    const buildAdjustedUploadAsset = async () => {
+      if (!sourceOriginalDataUrl || sourceInputMode !== 'upload') {
+        return { dataUrl: sourceDataUrl, file: sourceFile };
+      }
+      const img = await loadImageFromUrl(sourceOriginalDataUrl);
+      const adjustedDataUrl = centerCropTo34(img, sourceAdjust.x, sourceAdjust.y, 'none');
+      const blob = dataURLToBlob(adjustedDataUrl);
+      const originalName = sourceOriginalFile?.name ?? `upload-${Date.now()}.jpg`;
+      const fileName = originalName.replace(/\.[^.]+$/, '') + '-adjusted.jpg';
+      const adjustedFile = new File([blob], fileName, { type: 'image/jpeg' });
+      return { dataUrl: adjustedDataUrl, file: adjustedFile };
+    };
+
+    const applyPcUploadAdjustment = async (runAssessment = false) => {
+      if (sourceInputMode !== 'upload' || !sourceOriginalDataUrl) return;
+      const adjusted = await buildAdjustedUploadAsset();
+      sourceDataUrl = adjusted.dataUrl;
+      sourceFile = adjusted.file;
+      sourceFaceHint = null;
+      sourceUploadAssessment = { messages: [], blocking: false, faceHint: null };
+      cachedPhotoId = null;
+      candidates = [];
+      renderPipelineReport(null);
+      renderJobDebugLink(null);
+      renderQualityFeedback(null);
+      renderProviderResultBadge(null);
+      renderCandidates();
+      if (sourcePreview instanceof HTMLImageElement) {
+        sourcePreview.src = adjusted.dataUrl;
+        sourcePreview.classList.remove('hidden');
+      }
+      if (compareBeforeEl instanceof HTMLImageElement) compareBeforeEl.src = adjusted.dataUrl;
+      if (compareAfterEl instanceof HTMLImageElement) compareAfterEl.src = '';
+      if (compareHelpEl instanceof HTMLElement) compareHelpEl.textContent = '후보 생성 후 결과 비교가 활성화됩니다.';
+      if (compareSliderEl instanceof HTMLInputElement) {
+        compareSliderEl.value = '50';
+        compareSliderEl.disabled = true;
+      }
+      if (compareAfterWrapEl instanceof HTMLElement) compareAfterWrapEl.style.width = '50%';
+      if (runAssessment && adjusted.file) {
+        const assessment = await inspectImageFile(adjusted.file);
+        sourceUploadAssessment = assessment;
+        sourceFaceHint = assessment.faceHint ?? null;
+        renderUploadGuidance(assessment);
+        renderBlockingCta(assessment);
+      } else {
+        renderUploadGuidance(null);
+        renderBlockingCta(null);
+      }
+      updateGenerateAvailability();
+      savePageState();
     };
 
     const generateCandidatesLocalFallback = async (count = 3) => {
@@ -1573,7 +1668,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         reader.onload = async () => {
           if (typeof reader.result === 'string') {
             setSource(reader.result, file);
-            const assessment = await inspectImageFile(file);
+            const assessment = await inspectImageFile(sourceFile ?? file);
             sourceUploadAssessment = assessment;
             sourceFaceHint = assessment.faceHint ?? null;
             renderUploadGuidance(assessment);
@@ -1587,6 +1682,37 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           }
         };
         reader.readAsDataURL(file);
+      });
+    }
+
+    if (pcAdjustXEl instanceof HTMLInputElement) {
+      pcAdjustXEl.addEventListener('input', async () => {
+        sourceAdjust.x = Number(pcAdjustXEl.value || '0');
+        await applyPcUploadAdjustment(false);
+      });
+      pcAdjustXEl.addEventListener('change', async () => {
+        sourceAdjust.x = Number(pcAdjustXEl.value || '0');
+        await applyPcUploadAdjustment(true);
+      });
+    }
+
+    if (pcAdjustYEl instanceof HTMLInputElement) {
+      pcAdjustYEl.addEventListener('input', async () => {
+        sourceAdjust.y = Number(pcAdjustYEl.value || '0');
+        await applyPcUploadAdjustment(false);
+      });
+      pcAdjustYEl.addEventListener('change', async () => {
+        sourceAdjust.y = Number(pcAdjustYEl.value || '0');
+        await applyPcUploadAdjustment(true);
+      });
+    }
+
+    if (pcAdjustResetEl instanceof HTMLButtonElement) {
+      pcAdjustResetEl.addEventListener('click', async () => {
+        sourceAdjust = { x: 0, y: 0 };
+        syncPcAdjustPanel();
+        await applyPcUploadAdjustment(true);
+        setStatus('사진 위치를 기본값으로 되돌렸습니다.');
       });
     }
 
