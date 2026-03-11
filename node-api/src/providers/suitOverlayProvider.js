@@ -39,6 +39,28 @@ function getFaceMetrics(faceHint) {
   };
 }
 
+function buildFaceHintFromGeometry(geometry) {
+  if (!geometry) return null;
+  const faceWidthRatio = Number(geometry.faceWidthRatio ?? 0);
+  const faceCenterRatioX = Number(geometry.faceCenterRatioX ?? 0.5);
+  const eyeLineRatio = Number(geometry.eyeLineRatio ?? 0.38);
+  const sourceBox = geometry.sourceBox ?? null;
+  const sourceAspect = sourceBox?.width > 0 ? Number(sourceBox.height ?? 0) / Number(sourceBox.width) : 1.24;
+  const faceHeightRatio = clamp(faceWidthRatio * clamp(sourceAspect, 1.05, 1.45), 0.32, 0.62);
+  const bboxX = clamp(faceCenterRatioX - faceWidthRatio / 2, 0.08, 0.92 - faceWidthRatio);
+  const bboxY = clamp(eyeLineRatio - faceHeightRatio * 0.38, 0.06, 0.72 - faceHeightRatio);
+  return {
+    bbox: {
+      x: bboxX,
+      y: bboxY,
+      width: clamp(faceWidthRatio, 0.2, 0.58),
+      height: faceHeightRatio
+    },
+    leftEye: null,
+    rightEye: null
+  };
+}
+
 function buildSuitSelectionSummary({ gender, metrics, looksClose, portraitStyleHeadshot, stronglyCentered }) {
   const parts = [
     `gender=${gender}`,
@@ -119,29 +141,32 @@ function replaceTemplateTokens(template, tokens) {
   );
 }
 
-function buildBusinessSuitTokens({ width, height, variant, shading = 1, toolType }) {
-  const shoulderWidth = clamp(width * (toolType === 'headshot' ? 0.8 : 0.88), width * 0.7, width * 0.94);
+function buildBusinessSuitTokens({ width, height, variant, shading = 1, toolType, faceHint = null }) {
+  const metrics = getFaceMetrics(faceHint);
+  const faceWidthPx = metrics.faceWidthRatio > 0 ? metrics.faceWidthRatio * width : width * 0.28;
+  const faceBottomY = metrics.faceHeightRatio > 0 ? (Number(faceHint?.bbox?.y ?? 0) + Number(faceHint?.bbox?.height ?? 0)) * height : height * 0.42;
+  const shoulderWidth = clamp(faceWidthPx * (toolType === 'headshot' ? 1.58 : 1.68), width * 0.52, width * 0.68);
   const shoulderLeft = (width - shoulderWidth) / 2;
   const shoulderRight = shoulderLeft + shoulderWidth;
-  const jacketTop = clamp(height * (toolType === 'headshot' ? 0.61 : 0.56), height * 0.5, height * 0.68);
-  const shirtTop = jacketTop - height * 0.01;
+  const jacketTop = clamp(faceBottomY + height * (toolType === 'headshot' ? 0.055 : 0.07), height * 0.57, height * 0.65);
+  const shirtTop = jacketTop - height * 0.012;
   const centerX = width / 2;
-  const collarSpread = shoulderWidth * 0.13;
-  const lapelInset = shoulderWidth * 0.18;
+  const collarSpread = shoulderWidth * 0.082;
+  const lapelInset = shoulderWidth * 0.14;
   const hemY = height;
-  const tieWidth = width * 0.034;
+  const tieWidth = width * 0.016;
   return {
     WIDTH: width,
     HEIGHT: height,
-    JACKET_COLOR_TOP: variant === 'polished' ? '#0B1220' : '#162235',
-    JACKET_COLOR_BOTTOM: '#0A1020',
-    LAPEL_COLOR_TOP: '#1F2C42',
-    LAPEL_COLOR_BOTTOM: '#0B1324',
+    JACKET_COLOR_TOP: variant === 'polished' ? '#172338' : '#1E2B43',
+    JACKET_COLOR_BOTTOM: '#111A2B',
+    LAPEL_COLOR_TOP: '#24344C',
+    LAPEL_COLOR_BOTTOM: '#172233',
     SHIRT_COLOR_TOP: '#FFFFFF',
-    SHIRT_COLOR_BOTTOM: '#E5ECF5',
-    ACCENT_COLOR_TOP: '#243B5A',
-    ACCENT_COLOR_BOTTOM: '#0D1729',
-    SHADOW_TOP: `rgba(15,23,42,${0.26 + (shading - 1) * 0.08})`,
+    SHIRT_COLOR_BOTTOM: '#F1F5F9',
+    ACCENT_COLOR_TOP: variant === 'bright' ? '#315A8A' : '#213E63',
+    ACCENT_COLOR_BOTTOM: '#132744',
+    SHADOW_TOP: `rgba(15,23,42,${0.1 + (shading - 1) * 0.04})`,
     SHADOW_BOTTOM: 'rgba(15,23,42,0)',
     SHOULDER_LEFT: shoulderLeft,
     SHOULDER_RIGHT: shoulderRight,
@@ -149,58 +174,58 @@ function buildBusinessSuitTokens({ width, height, variant, shading = 1, toolType
     JACKET_TOP_Y: jacketTop,
     SHIRT_TOP_Y: shirtTop,
     LEFT_CURVE_A_X: shoulderLeft + shoulderWidth * 0.02,
-    LEFT_CURVE_A_Y: height * 0.78,
-    LEFT_CURVE_B_X: shoulderLeft + shoulderWidth * 0.06,
-    LEFT_CURVE_B_Y: height * 0.66,
-    LEFT_CURVE_C_X: shoulderLeft + shoulderWidth * 0.12,
+    LEFT_CURVE_A_Y: height * 0.82,
+    LEFT_CURVE_B_X: shoulderLeft + shoulderWidth * 0.04,
+    LEFT_CURVE_B_Y: height * 0.74,
+    LEFT_CURVE_C_X: shoulderLeft + shoulderWidth * 0.11,
     LEFT_LAPEL_X: centerX - lapelInset,
-    LEFT_CENTER_HEM_X: centerX - shoulderWidth * 0.03,
+    LEFT_CENTER_HEM_X: centerX - shoulderWidth * 0.012,
     RIGHT_CURVE_A_X: shoulderRight - shoulderWidth * 0.02,
-    RIGHT_CURVE_A_Y: height * 0.78,
-    RIGHT_CURVE_B_X: shoulderRight - shoulderWidth * 0.06,
-    RIGHT_CURVE_B_Y: height * 0.66,
-    RIGHT_CURVE_C_X: shoulderRight - shoulderWidth * 0.12,
+    RIGHT_CURVE_A_Y: height * 0.82,
+    RIGHT_CURVE_B_X: shoulderRight - shoulderWidth * 0.04,
+    RIGHT_CURVE_B_Y: height * 0.74,
+    RIGHT_CURVE_C_X: shoulderRight - shoulderWidth * 0.11,
     RIGHT_LAPEL_X: centerX + lapelInset,
-    RIGHT_CENTER_HEM_X: centerX + shoulderWidth * 0.03,
+    RIGHT_CENTER_HEM_X: centerX + shoulderWidth * 0.012,
     CENTER_X: centerX,
-    LEFT_COLLAR_X: centerX - collarSpread * 0.36,
-    LEFT_COLLAR_Y: jacketTop + height * 0.09,
-    RIGHT_COLLAR_X: centerX + collarSpread * 0.36,
-    RIGHT_COLLAR_Y: jacketTop + height * 0.09,
-    LAPEL_CENTER_Y: jacketTop + height * 0.16,
-    LEFT_CENTER_LINE_X: centerX - shoulderWidth * 0.02,
-    RIGHT_CENTER_LINE_X: centerX + shoulderWidth * 0.02,
-    CENTER_LINE_END_Y: height * 0.98,
-    LEFT_OUTER_LINE_X: centerX - shoulderWidth * 0.08,
+    LEFT_COLLAR_X: centerX - collarSpread * 0.24,
+    LEFT_COLLAR_Y: jacketTop + height * 0.03,
+    RIGHT_COLLAR_X: centerX + collarSpread * 0.24,
+    RIGHT_COLLAR_Y: jacketTop + height * 0.03,
+    LAPEL_CENTER_Y: jacketTop + height * 0.065,
+    LEFT_CENTER_LINE_X: centerX - shoulderWidth * 0.01,
+    RIGHT_CENTER_LINE_X: centerX + shoulderWidth * 0.01,
+    CENTER_LINE_END_Y: height * 0.86,
+    LEFT_OUTER_LINE_X: centerX - shoulderWidth * 0.05,
     LEFT_OUTER_LINE_Y: height * 0.72,
-    RIGHT_OUTER_LINE_X: centerX + shoulderWidth * 0.08,
+    RIGHT_OUTER_LINE_X: centerX + shoulderWidth * 0.05,
     RIGHT_OUTER_LINE_Y: height * 0.72,
     SHIRT_LEFT_X: centerX - collarSpread,
     SHIRT_RIGHT_X: centerX + collarSpread,
-    SHIRT_CURVE_Y: jacketTop + height * 0.08,
-    SHIRT_HEM_RIGHT_X: centerX + shoulderWidth * 0.08,
-    SHIRT_HEM_LEFT_X: centerX - shoulderWidth * 0.08,
-    SHIRT_HEM_Y: height * 0.92,
+    SHIRT_CURVE_Y: jacketTop + height * 0.02,
+    SHIRT_HEM_RIGHT_X: centerX + shoulderWidth * 0.03,
+    SHIRT_HEM_LEFT_X: centerX - shoulderWidth * 0.03,
+    SHIRT_HEM_Y: height * 0.8,
     TIE_LEFT_X: centerX - tieWidth,
     TIE_RIGHT_X: centerX + tieWidth,
-    TIE_TOP_Y: jacketTop + height * 0.055,
-    TIE_HEM_RIGHT_X: centerX + tieWidth * 0.72,
-    TIE_HEM_LEFT_X: centerX - tieWidth * 0.72,
-    TIE_HEM_Y: height * 0.84,
+    TIE_TOP_Y: jacketTop + height * 0.018,
+    TIE_HEM_RIGHT_X: centerX + tieWidth * 0.45,
+    TIE_HEM_LEFT_X: centerX - tieWidth * 0.45,
+    TIE_HEM_Y: height * 0.72,
     TIE_KNOT_LEFT_X: centerX - tieWidth * 1.1,
     TIE_KNOT_RIGHT_X: centerX + tieWidth * 1.1,
-    TIE_KNOT_Y: height * 0.83,
-    TIE_POINT_Y: height * 0.92,
-    ACCENT_OPACITY: 0.92 + (shading - 1) * 0.05,
-    CENTER_LINE_WIDTH: Math.max(1, width * 0.004),
-    SHADOW_Y: jacketTop + height * 0.03,
-    SHADOW_RX: shoulderWidth * 0.28,
-    SHADOW_RY: height * 0.04,
-    GLOW_START_X: shoulderLeft + shoulderWidth * 0.07,
-    GLOW_END_X: shoulderRight - shoulderWidth * 0.07,
-    GLOW_Y: jacketTop + height * 0.04,
-    GLOW_CONTROL_Y: jacketTop - height * 0.02,
-    GLOW_WIDTH: height * 0.06
+    TIE_KNOT_Y: jacketTop + height * 0.008,
+    TIE_POINT_Y: jacketTop + height * 0.03,
+    ACCENT_OPACITY: 0.9,
+    CENTER_LINE_WIDTH: Math.max(1, width * 0.0018),
+    SHADOW_Y: jacketTop + height * 0.012,
+    SHADOW_RX: shoulderWidth * 0.18,
+    SHADOW_RY: height * 0.015,
+    GLOW_START_X: shoulderLeft + shoulderWidth * 0.12,
+    GLOW_END_X: shoulderRight - shoulderWidth * 0.12,
+    GLOW_Y: jacketTop + height * 0.014,
+    GLOW_CONTROL_Y: jacketTop + height * 0.014,
+    GLOW_WIDTH: height * 0.012
   };
 }
 
@@ -343,15 +368,16 @@ function buildFemaleBlazerTokens({ width, height, shading = 1 }) {
   };
 }
 
-export async function renderSuitOverlay({ width, height, variant = 'clean', toolType = 'id_photo', faceHint = null, shading = 1 }) {
-  const selection = resolveSuitTemplate({ toolType, faceHint });
+export async function renderSuitOverlay({ width, height, variant = 'clean', toolType = 'id_photo', faceHint = null, geometry = null, shading = 1 }) {
+  const resolvedFaceHint = faceHint?.bbox ? faceHint : buildFaceHintFromGeometry(geometry);
+  const selection = resolveSuitTemplate({ toolType, faceHint: resolvedFaceHint });
   const template = selection.template;
   const svgTemplate = await getSuitTemplateAsset(template);
   const tokens = template === 'female_blazer'
     ? buildFemaleBlazerTokens({ width, height, shading })
     : template === 'casual_jacket'
       ? buildCasualJacketTokens({ width, height, shading })
-      : buildBusinessSuitTokens({ width, height, variant, shading, toolType });
+      : buildBusinessSuitTokens({ width, height, variant, shading, toolType, faceHint: resolvedFaceHint });
   const overlaySvg = replaceTemplateTokens(svgTemplate, tokens);
 
   return {

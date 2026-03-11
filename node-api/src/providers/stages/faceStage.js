@@ -97,7 +97,7 @@ export async function alignFaceStage({ inputBuffer, toolType = 'id_photo', faceH
     height: cropHeight
   });
 
-  if (Math.abs(rotation) > 1 && Math.abs(rotation) < 15) {
+  if (Math.abs(rotation) > 1.5 && Math.abs(rotation) < 8) {
     pipeline = pipeline.rotate(-rotation, { background: '#ffffff' });
   }
 

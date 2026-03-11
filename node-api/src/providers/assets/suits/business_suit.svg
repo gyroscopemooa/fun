@@ -21,7 +21,7 @@
       <stop offset="100%" stop-color="{{SHADOW_BOTTOM}}" />
     </linearGradient>
     <radialGradient id="business-shoulderGlow" cx="50%" cy="0%" r="85%">
-      <stop offset="0%" stop-color="rgba(255,255,255,0.12)" />
+      <stop offset="0%" stop-color="rgba(255,255,255,0.05)" />
       <stop offset="100%" stop-color="rgba(255,255,255,0)" />
     </radialGradient>
   </defs>
@@ -32,7 +32,7 @@
   <path d="M {{SHIRT_LEFT_X}} {{SHIRT_TOP_Y}} Q {{CENTER_X}} {{SHIRT_CURVE_Y}}, {{SHIRT_RIGHT_X}} {{SHIRT_TOP_Y}} L {{SHIRT_HEM_RIGHT_X}} {{SHIRT_HEM_Y}} L {{SHIRT_HEM_LEFT_X}} {{SHIRT_HEM_Y}} Z" fill="url(#business-shirt)" opacity="0.98"/>
   <path d="M {{TIE_LEFT_X}} {{TIE_TOP_Y}} L {{TIE_RIGHT_X}} {{TIE_TOP_Y}} L {{TIE_HEM_RIGHT_X}} {{TIE_HEM_Y}} L {{TIE_HEM_LEFT_X}} {{TIE_HEM_Y}} Z" fill="url(#business-accent)" opacity="{{ACCENT_OPACITY}}"/>
   <path d="M {{TIE_KNOT_LEFT_X}} {{TIE_KNOT_Y}} L {{TIE_KNOT_RIGHT_X}} {{TIE_KNOT_Y}} L {{CENTER_X}} {{TIE_POINT_Y}} Z" fill="url(#business-accent)" opacity="{{ACCENT_OPACITY}}"/>
-  <path d="M {{CENTER_X}} {{SHIRT_TOP_Y}} L {{CENTER_X}} {{CENTER_LINE_END_Y}}" stroke="rgba(255,255,255,0.18)" stroke-width="{{CENTER_LINE_WIDTH}}"/>
+  <path d="M {{CENTER_X}} {{SHIRT_TOP_Y}} L {{CENTER_X}} {{CENTER_LINE_END_Y}}" stroke="rgba(255,255,255,0.08)" stroke-width="{{CENTER_LINE_WIDTH}}"/>
   <ellipse cx="{{CENTER_X}}" cy="{{SHADOW_Y}}" rx="{{SHADOW_RX}}" ry="{{SHADOW_RY}}" fill="url(#business-shadow)"/>
   <path d="M {{GLOW_START_X}} {{GLOW_Y}} Q {{CENTER_X}} {{GLOW_CONTROL_Y}}, {{GLOW_END_X}} {{GLOW_Y}}" stroke="url(#business-shoulderGlow)" stroke-width="{{GLOW_WIDTH}}" stroke-linecap="round"/>
 </svg>

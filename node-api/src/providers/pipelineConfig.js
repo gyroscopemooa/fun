@@ -4,25 +4,25 @@ export const TOOL_PRESETS = {
   id_photo: {
     outputWidth: 600,
     outputHeight: 800,
-    faceWidthRatio: 0.36,
+    faceWidthRatio: 0.43,
     eyeLineRatio: 0.38,
     targetCenterX: 0.5,
-    cropWidthFloorRatio: 0.42,
-    cropHeightFloorRatio: 0.52,
+    cropWidthFloorRatio: 0.34,
+    cropHeightFloorRatio: 0.44,
     minFaceWidthRatio: 0.28,
-    maxFaceWidthRatio: 0.48,
+    maxFaceWidthRatio: 0.56,
     background: DEFAULT_BG
   },
   passport_photo: {
     outputWidth: 600,
     outputHeight: 800,
-    faceWidthRatio: 0.40,
+    faceWidthRatio: 0.46,
     eyeLineRatio: 0.42,
     targetCenterX: 0.5,
-    cropWidthFloorRatio: 0.38,
-    cropHeightFloorRatio: 0.48,
+    cropWidthFloorRatio: 0.32,
+    cropHeightFloorRatio: 0.42,
     minFaceWidthRatio: 0.32,
-    maxFaceWidthRatio: 0.50,
+    maxFaceWidthRatio: 0.58,
     background: DEFAULT_BG
   },
   headshot: {

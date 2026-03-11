@@ -14,10 +14,11 @@ import { qualityValidationStage } from './stages/validationStage.js';
 
 const VALIDATION_PROFILES = [
   { name: 'default', centerShift: 0, topShift: 0, zoomMultiplier: 1 },
-  { name: 'tight_center', centerShift: 0, topShift: -0.02, zoomMultiplier: 1.05 },
-  { name: 'wide_headroom', centerShift: 0, topShift: 0.02, zoomMultiplier: 0.94 },
-  { name: 'left_nudge', centerShift: -0.025, topShift: 0, zoomMultiplier: 1.01 },
-  { name: 'right_nudge', centerShift: 0.025, topShift: 0, zoomMultiplier: 1.01 }
+  { name: 'tight_center', centerShift: 0, topShift: -0.03, zoomMultiplier: 1.14 },
+  { name: 'tight_headroom', centerShift: 0, topShift: -0.01, zoomMultiplier: 1.2 },
+  { name: 'wide_headroom', centerShift: 0, topShift: 0.02, zoomMultiplier: 0.96 },
+  { name: 'left_nudge', centerShift: -0.025, topShift: -0.01, zoomMultiplier: 1.08 },
+  { name: 'right_nudge', centerShift: 0.025, topShift: -0.01, zoomMultiplier: 1.08 }
 ];
 
 const BACKGROUND_TONES = {
@@ -355,7 +356,6 @@ export async function generatePortraitPipeline({
   assignQualityReport(pipelineReport, quality);
 
   const generated = [];
-  let bestRejectedVariant = null;
   const variantsStartedAt = Date.now();
   for (const [index, profile] of VARIANT_PROFILES.entries()) {
     const buildVariant = async (modifiers) => {
@@ -370,6 +370,7 @@ export async function generatePortraitPipeline({
         variant: profile.name,
         toolType,
         faceHint,
+        geometry,
         shading: modifiers.suitShading
       });
       const identityScore = await calculateFaceIdentityScore({
@@ -412,15 +413,6 @@ export async function generatePortraitPipeline({
 
     if (variantResult.identityScore < MIN_IDENTITY_SCORE) {
       pipelineReport.identityRejectedVariants.push(profile.name);
-      if (!bestRejectedVariant || variantResult.identityScore > bestRejectedVariant.identityScore) {
-        bestRejectedVariant = {
-          variant: profile.name,
-          buffer: variantResult.buffer,
-          identityScore: variantResult.identityScore,
-          regenerated
-        };
-      }
-      continue;
     }
 
     const filePath = path.join(storageDir, `${jobId}-${uuidv4().slice(0, 8)}-${profile.name}.jpg`);
@@ -441,27 +433,6 @@ export async function generatePortraitPipeline({
     });
     pipelineReport.generatedVariants.push(profile.name);
     pipelineReport.variantScores[profile.name] = generated[generated.length - 1].score;
-  }
-
-  if (!generated.length && bestRejectedVariant) {
-    const filePath = path.join(storageDir, `${jobId}-${uuidv4().slice(0, 8)}-${bestRejectedVariant.variant}-fallback.jpg`);
-    await sharp(bestRejectedVariant.buffer)
-      .jpeg({ quality: 94 })
-      .toFile(filePath);
-    generated.push({
-      variant: `${bestRejectedVariant.variant}_fallback`,
-      filePath,
-      identityScore: bestRejectedVariant.identityScore,
-      regenerated: bestRejectedVariant.regenerated,
-      score: getVariantScore({
-        identityScore: bestRejectedVariant.identityScore,
-        qualityScore: pipelineReport.qualityScore,
-        regenerated: bestRejectedVariant.regenerated
-      })
-    });
-    pipelineReport.generatedVariants.push(`${bestRejectedVariant.variant}_fallback`);
-    pipelineReport.variantScores[`${bestRejectedVariant.variant}_fallback`] = generated[generated.length - 1].score;
-    pipelineReport.identityFallbackKept = bestRejectedVariant.variant;
   }
   pipelineReport.timings.variants = Date.now() - variantsStartedAt;
   generated.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
