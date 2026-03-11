@@ -24,8 +24,23 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       </form>
       <p id="debug-status" class="mt-3 text-xs text-slate-500">URL의 `?jobId=` 또는 입력창으로 생성 기록을 조회할 수 있습니다.</p>
       <div class="mt-4 flex flex-wrap gap-2">
-        <a href="/tools/ai-photo-ops" class="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">운영 요약 보기</a>
+        <a id="debug-back-to-ops" href="/tools/ai-photo-ops" class="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">운영 요약 보기</a>
+        <a id="debug-open-admin" href="/tools/ai-photo-admin" class="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">관리 허브 보기</a>
       </div>
+    </section>
+
+    <section id="debug-ops-context" class="mt-6 hidden rounded-2xl border border-sky-200 bg-sky-50 p-5">
+      <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">Shared Ops View</p>
+          <h2 class="mt-2 text-xl font-black text-slate-900">넘어온 ops 문맥</h2>
+          <p class="mt-2 text-sm text-slate-600">이 debug 화면이 어떤 ops 필터 상태에서 열렸는지 바로 확인합니다.</p>
+        </div>
+        <a id="debug-ops-context-link" href="/tools/ai-photo-ops" class="rounded-lg border border-sky-300 bg-white px-3 py-2 text-xs font-semibold text-sky-900 transition hover:border-sky-400">
+          ops view로 돌아가기
+        </a>
+      </div>
+      <div id="debug-ops-context-grid" class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4"></div>
     </section>
 
     <section id="debug-overview" class="mt-6 hidden grid gap-4 md:grid-cols-4">
@@ -45,6 +60,11 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Identity</p>
         <p id="overview-identity" class="mt-2 text-lg font-black text-slate-900">-</p>
       </article>
+    </section>
+
+    <section id="debug-processing-signals" class="mt-4 hidden rounded-2xl border border-slate-200 bg-white p-4">
+      <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Processing Signals</p>
+      <div id="debug-processing-signal-chips" class="mt-3 flex flex-wrap gap-2"></div>
     </section>
 
     <section id="debug-compare-wrap" class="mt-6 hidden rounded-2xl border border-slate-200 bg-white p-5">
@@ -73,6 +93,23 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       <ul id="debug-quality-feedback" class="mt-3 list-disc space-y-1 pl-5 text-sm text-emerald-900"></ul>
     </section>
 
+    <section id="debug-score-explain-wrap" class="mt-6 hidden rounded-2xl border border-slate-200 bg-white p-5">
+      <div>
+        <h2 class="text-xl font-black text-slate-900">Score Explanation</h2>
+        <p class="mt-1 text-sm text-slate-600">quality / identity 점수 결정 근거를 빠르게 확인합니다.</p>
+      </div>
+      <div class="mt-4 grid gap-4 xl:grid-cols-2">
+        <article class="rounded-2xl border border-sky-200 bg-sky-50 p-4">
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">Quality Drivers</p>
+          <div id="debug-quality-explain" class="mt-3 grid gap-3"></div>
+        </article>
+        <article class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Identity Drivers</p>
+          <div id="debug-identity-explain" class="mt-3 grid gap-3"></div>
+        </article>
+      </div>
+    </section>
+
     <section class="mt-6 grid gap-6 xl:grid-cols-[1.4fr_1fr]">
       <article class="rounded-2xl border border-slate-200 bg-white p-5">
         <h2 class="text-xl font-black text-slate-900">후보 결과</h2>
@@ -84,6 +121,10 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       <article class="rounded-2xl border border-slate-200 bg-white p-5">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <h2 class="text-xl font-black text-slate-900">Pipeline Report</h2>
+          <div class="flex flex-wrap gap-2">
+            <button id="debug-copy-summary" type="button" class="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">요약 복사</button>
+            <button id="debug-download-summary" type="button" class="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">요약 저장</button>
+          </div>
           <div class="flex flex-wrap gap-2">
             <button id="debug-copy-json" type="button" class="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">JSON 복사</button>
             <button id="debug-download-json" type="button" class="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">JSON 저장</button>
@@ -99,19 +140,30 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     </section>
   </main>
   <Footer />
+  <script is:inline src="/scripts/ai-photo-view-context.js"></script>
 
   <script define:vars={{ apiBase }} is:inline>
     const API_BASE = apiBase;
     const params = new URLSearchParams(window.location.search);
+    const backToOpsLink = document.getElementById('debug-back-to-ops');
+    const openAdminLink = document.getElementById('debug-open-admin');
+    const opsContextEl = document.getElementById('debug-ops-context');
+    const opsContextGridEl = document.getElementById('debug-ops-context-grid');
+    const opsContextLinkEl = document.getElementById('debug-ops-context-link');
     const formEl = document.getElementById('debug-form');
     const inputEl = document.getElementById('job-id-input');
     const statusEl = document.getElementById('debug-status');
     const overviewEl = document.getElementById('debug-overview');
     const compareWrapEl = document.getElementById('debug-compare-wrap');
     const feedbackWrapEl = document.getElementById('debug-feedback-wrap');
+    const scoreExplainWrapEl = document.getElementById('debug-score-explain-wrap');
+    const processingSignalsEl = document.getElementById('debug-processing-signals');
+    const processingSignalChipsEl = document.getElementById('debug-processing-signal-chips');
     const candidatesEl = document.getElementById('debug-candidates');
     const reportEl = document.getElementById('debug-report');
     const reportMetaEl = document.getElementById('debug-report-meta');
+    const qualityExplainEl = document.getElementById('debug-quality-explain');
+    const identityExplainEl = document.getElementById('debug-identity-explain');
     const retriesWrapEl = document.getElementById('debug-retries');
     const retryListEl = document.getElementById('debug-retry-list');
     const jobLabelEl = document.getElementById('debug-job-label');
@@ -125,13 +177,173 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     const compareAfterEl = document.getElementById('compare-after');
     const compareAfterWrapEl = document.getElementById('compare-after-wrap');
     const compareSliderEl = document.getElementById('compare-slider');
+    const copySummaryBtn = document.getElementById('debug-copy-summary');
+    const downloadSummaryBtn = document.getElementById('debug-download-summary');
     const copyJsonBtn = document.getElementById('debug-copy-json');
     const downloadJsonBtn = document.getElementById('debug-download-json');
+    const viewContextUtils = window.AIPhotoViewContext;
     let activeOriginalUrl = null;
     let currentJob = null;
 
+    const opsViewUrl = params.get('opsView')?.trim() ?? '';
+    const adminViewUrl = params.get('adminView')?.trim() ?? '';
+
+    if (backToOpsLink instanceof HTMLAnchorElement && opsViewUrl) {
+      backToOpsLink.href = opsViewUrl;
+    }
+    if (openAdminLink instanceof HTMLAnchorElement && (adminViewUrl || opsViewUrl)) {
+      openAdminLink.href = adminViewUrl || `/tools/ai-photo-admin?${new URLSearchParams({ opsView: opsViewUrl }).toString()}`;
+    }
+
     const setStatus = (text) => {
       if (statusEl) statusEl.textContent = text;
+    };
+
+    const formatNumber = (value, digits = 1) => {
+      if (typeof value !== 'number' || Number.isNaN(value)) return 'n/a';
+      return value.toFixed(digits);
+    };
+
+    const escapeHtml = (value) => String(value ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
+
+    const getOpsContextSummary = (viewUrl = opsViewUrl) => viewContextUtils?.parseOpsViewUrl(viewUrl) ?? null;
+
+    if (opsContextEl instanceof HTMLElement && opsContextGridEl instanceof HTMLElement && opsViewUrl) {
+      const opsContext = getOpsContextSummary(opsViewUrl);
+      const contextItems = [
+        ['status', opsContext?.status ?? 'all'],
+        ['tool', opsContext?.tool ?? 'all'],
+        ['provider', opsContext?.provider ?? 'all'],
+        ['limit', opsContext?.limit ?? '12'],
+        ['sinceHours', opsContext?.sinceHours ?? '24'],
+        ['flaggedOnly', String(opsContext?.flaggedOnly ?? false)],
+        ['fallbackOnly', String(opsContext?.fallbackOnly ?? false)],
+        ['miniTrend', opsContext?.miniTrend ?? 'risk'],
+        ['previewKey', opsContext?.previewKey ?? 'none']
+      ];
+      opsContextEl.classList.remove('hidden');
+      if (opsContextLinkEl instanceof HTMLAnchorElement) {
+        opsContextLinkEl.href = opsViewUrl;
+      }
+      opsContextGridEl.innerHTML = contextItems.map(([label, value]) => `
+        <article class="rounded-2xl border border-sky-100 bg-white p-4">
+          <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">${escapeHtml(label)}</p>
+          <p class="mt-2 text-sm font-bold text-slate-900">${escapeHtml(value)}</p>
+        </article>
+      `).join('');
+    }
+
+    const buildDebugExportPayload = () => {
+      const exportedAt = new Date().toISOString();
+      const opsContext = getOpsContextSummary(opsViewUrl);
+      return viewContextUtils?.createExportEnvelope('debug', {
+        job: currentJob,
+        adminViewUrl: adminViewUrl || null,
+        opsViewUrl: opsViewUrl || null,
+        opsContext,
+        viewContext: viewContextUtils?.createViewContext(opsViewUrl || null, opsContext) ?? { url: opsViewUrl || null, summary: opsContext },
+        legacy: viewContextUtils?.createLegacyFields({
+          adminViewUrl: adminViewUrl || null,
+          opsViewUrl: opsViewUrl || null,
+          opsContext
+        }),
+        exportMeta: viewContextUtils?.createExportMeta('debug', exportedAt) ?? { source: 'debug', exportedAt },
+        exportedAt
+      }, exportedAt) ?? {
+        schemaVersion: 'ai-photo-view-context.v1',
+        surface: 'debug',
+        job: currentJob,
+        adminViewUrl: adminViewUrl || null,
+        opsViewUrl: opsViewUrl || null,
+        opsContext,
+        viewContext: viewContextUtils?.createViewContext(opsViewUrl || null, opsContext) ?? { url: opsViewUrl || null, summary: opsContext },
+        legacy: viewContextUtils?.createLegacyFields({
+          adminViewUrl: adminViewUrl || null,
+          opsViewUrl: opsViewUrl || null,
+          opsContext
+        }),
+        exportMeta: viewContextUtils?.createExportMeta('debug', exportedAt) ?? { source: 'debug', exportedAt },
+        exportedAt
+      };
+    };
+
+    const buildDebugSummary = () => {
+      const exportPayload = buildDebugExportPayload();
+      const report = currentJob?.pipelineReport ?? null;
+      const viewSummary = exportPayload.viewContext?.summary ?? null;
+      const candidates = Array.isArray(currentJob?.candidateBreakdown) ? currentJob.candidateBreakdown : [];
+      const rejectedCandidates = Array.isArray(currentJob?.rejectedVariantBreakdown) ? currentJob.rejectedVariantBreakdown : [];
+      const lines = [
+        'AI photo debug summary',
+        `exportedAt: ${exportPayload.exportedAt ?? exportPayload.exportMeta?.exportedAt ?? new Date().toISOString()}`,
+        `surface: ${exportPayload.surface ?? 'debug'}`,
+        `jobId: ${currentJob?.id ?? 'n/a'}`,
+        `toolType: ${currentJob?.toolType ?? report?.toolType ?? 'n/a'}`,
+        `provider: ${currentJob?.provider ?? report?.resolvedProvider ?? 'n/a'}`,
+        `status: ${currentJob?.status ?? 'n/a'}`
+      ];
+
+      lines.push('', '[schema]');
+      lines.push(`- schemaVersion: ${exportPayload.schemaVersion ?? 'ai-photo-view-context.v1'}`);
+      lines.push(`- surface: ${exportPayload.surface ?? 'debug'}`);
+      lines.push(`- canonicalViewContext: ${exportPayload.legacy ? 'viewContext (legacy fields preserved)' : 'viewContext'}`);
+      lines.push('', '[viewContext]');
+      lines.push(`- url: ${exportPayload.viewContext?.url ?? 'none'}`);
+      lines.push(`- summary: ${viewContextUtils?.formatViewContextSummary(viewSummary) ?? 'status=all, tool=all, provider=all, limit=12, sinceHours=24, flaggedOnly=false, fallbackOnly=false, miniTrend=risk, previewKey=none'}`);
+      lines.push('', '[adminLink]');
+      lines.push(`- url: ${exportPayload.adminViewUrl ?? 'none'}`);
+      lines.push('', '[exportMeta]');
+      lines.push(`- source: ${exportPayload.exportMeta?.source ?? 'debug'}`);
+      lines.push(`- exportedAt: ${exportPayload.exportMeta?.exportedAt ?? new Date().toISOString()}`);
+
+      if (currentJob) {
+        lines.push('', '[job]');
+        lines.push(`- originalUrl: ${currentJob.originalUrl ?? 'n/a'}`);
+        lines.push(`- recommendedImageUrl: ${currentJob.recommendedImageUrl ?? 'n/a'}`);
+        lines.push(`- cropProfile: ${currentJob.cropProfile ?? 'n/a'}`);
+        lines.push(`- poseProfile: ${currentJob.poseProfile ?? 'n/a'}`);
+        lines.push(`- suitTemplate: ${currentJob.suitTemplate ?? 'n/a'}`);
+        lines.push(`- qualityScore: ${formatNumber(currentJob.qualityScore)}`);
+        lines.push(`- identityScore: ${formatNumber(currentJob.identityScore)}`);
+      }
+
+      if (report) {
+        lines.push('', '[pipelineReport]');
+        lines.push(`- requestedProvider: ${report.requestedProvider ?? 'n/a'}`);
+        lines.push(`- resolvedProvider: ${report.fallbackToLocalSharp ? 'local_sharp (fallback)' : (report.resolvedProvider ?? 'n/a')}`);
+        lines.push(`- backgroundProvider: ${report.backgroundProvider ?? 'n/a'}`);
+        lines.push(`- qualitySummary: ${report.qualitySummary ?? 'n/a'}`);
+        lines.push(`- recommendedVariant: ${report.recommendedVariant ?? 'n/a'}`);
+        lines.push(`- qualityScoreBeforeRetry: ${report.qualityScoreBeforeRetry ?? 'n/a'}`);
+        lines.push(`- finalQualityRetryTriggered: ${Boolean(report.finalQualityRetryTriggered)}`);
+        lines.push(`- finalQualityRetryProfile: ${report.finalQualityRetryProfile ?? 'n/a'}`);
+        lines.push(`- identityRejectedVariants: ${JSON.stringify(report.identityRejectedVariants ?? [])}`);
+        lines.push(`- identityRegeneratedVariants: ${JSON.stringify(report.identityRegeneratedVariants ?? [])}`);
+      }
+
+      if (candidates.length || rejectedCandidates.length) {
+        lines.push('', '[candidates]');
+        candidates.forEach((candidate) => {
+          lines.push(`- ${candidate.variant ?? 'unknown'}: quality=${formatNumber(candidate.qualityScore)}, identity=${formatNumber(candidate.identityScore)}, recommended=${Boolean(candidate.recommended)}, regenerated=${Boolean(candidate.regenerated)}`);
+        });
+        rejectedCandidates.forEach((candidate) => {
+          lines.push(`- rejected ${candidate.variant ?? 'unknown'}: quality=${formatNumber(candidate.qualityScore)}, identity=${formatNumber(candidate.identityScore)}`);
+        });
+      }
+
+      return lines.join('\n');
+    };
+
+    const scoreTone = (score) => {
+      if (score >= 90) return 'emerald';
+      if (score >= 80) return 'sky';
+      if (score >= 70) return 'amber';
+      return 'rose';
     };
 
     const reportMetaPairs = (report) => ([
@@ -163,6 +375,27 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       ['timings.finalRetry', `${report?.timings?.finalRetry ?? 0}ms`],
       ['timings.variants', `${report?.timings?.variants ?? 0}ms`]
     ]);
+
+    const renderProcessingSignals = (report) => {
+      if (!(processingSignalsEl instanceof HTMLElement) || !(processingSignalChipsEl instanceof HTMLElement)) return;
+      if (!report) {
+        processingSignalsEl.classList.add('hidden');
+        processingSignalChipsEl.innerHTML = '';
+        return;
+      }
+      const resolvedProvider = report.fallbackToLocalSharp
+        ? `local_sharp fallback from ${report.resolvedProvider ?? 'unknown'}`
+        : (report.resolvedProvider ?? 'unknown');
+      const callMode = report.externalBackgroundCall ? 'external' : 'local';
+      const cacheHits = ['aligned', 'cutout', 'flattened'].filter((key) => Boolean(report?.cache?.[key]));
+      const cacheLabel = cacheHits.length ? `cache:${cacheHits.join('+')}` : 'cache:miss';
+      processingSignalsEl.classList.remove('hidden');
+      processingSignalChipsEl.innerHTML = [
+        `<span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">provider ${escapeHtml(resolvedProvider)}</span>`,
+        `<span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">${escapeHtml(callMode)}</span>`,
+        `<span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">${escapeHtml(cacheLabel)}</span>`
+      ].join('');
+    };
 
     const renderMetaGrid = (report) => {
       if (!(reportMetaEl instanceof HTMLElement)) return;
@@ -260,6 +493,84 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         const feedback = Array.isArray(report?.qualityFeedback) ? report.qualityFeedback : [];
         qualityFeedbackEl.innerHTML = feedback.map((item) => `<li>${item}</li>`).join('');
       }
+    };
+
+    const renderScoreExplain = (job) => {
+      if (!(scoreExplainWrapEl instanceof HTMLElement) || !(qualityExplainEl instanceof HTMLElement) || !(identityExplainEl instanceof HTMLElement)) return;
+      const report = job?.pipelineReport ?? {};
+      const qualityScore = typeof report.qualityScore === 'number' ? report.qualityScore : null;
+      const qualityBeforeRetry = typeof report.qualityScoreBeforeRetry === 'number' ? report.qualityScoreBeforeRetry : null;
+      const retryDelta = qualityScore !== null && qualityBeforeRetry !== null ? qualityScore - qualityBeforeRetry : null;
+      const qualityTone = scoreTone(Number(qualityScore ?? 0));
+      const qualityFeedback = Array.isArray(report.qualityFeedback) ? report.qualityFeedback : [];
+      const qualityIssueCodes = Array.isArray(report.qualityIssueCodes) ? report.qualityIssueCodes : [];
+      const qualityMetrics = report.qualityMetrics ?? {};
+      const identityScore = typeof report.identityScore === 'number' ? report.identityScore : null;
+      const identityThreshold = typeof report.identityThreshold === 'number' ? report.identityThreshold : null;
+      const identityTone = scoreTone(Number(identityScore ?? 0));
+      const identitySummary = report.identitySummary ?? null;
+      const variantIdentityScores = Object.entries(report.variantIdentityScores ?? {}).sort((a, b) => Number(b[1] ?? 0) - Number(a[1] ?? 0));
+      const topIdentity = identitySummary?.topVariant ?? variantIdentityScores[0] ?? null;
+      const lowIdentity = identitySummary?.lowestVariant ?? variantIdentityScores[variantIdentityScores.length - 1] ?? null;
+      const rejectedVariants = Array.isArray(identitySummary?.rejectedVariants) ? identitySummary.rejectedVariants : (Array.isArray(report.identityRejectedVariants) ? report.identityRejectedVariants : []);
+      const regeneratedVariants = Array.isArray(identitySummary?.regeneratedVariants) ? identitySummary.regeneratedVariants : (Array.isArray(report.identityRegeneratedVariants) ? report.identityRegeneratedVariants : []);
+      const variantDecisionTrace = Array.isArray(report.variantDecisionTrace) ? report.variantDecisionTrace : [];
+
+      scoreExplainWrapEl.classList.remove('hidden');
+      qualityExplainEl.innerHTML = `
+        <div class="rounded-xl border border-${qualityTone}-200 bg-white p-3">
+          <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-${qualityTone}-600">score status</p>
+          <p class="mt-1 text-lg font-black text-slate-900">${formatNumber(qualityScore)}</p>
+          <p class="mt-1 text-xs text-slate-500">${escapeHtml(report.qualitySummary ?? 'quality summary n/a')}</p>
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-white p-3">
+          <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">retry effect</p>
+          <p class="mt-1 text-sm font-bold text-slate-900">${retryDelta === null ? 'retry data 없음' : `before ${formatNumber(qualityBeforeRetry)} -> after ${formatNumber(qualityScore)} (${retryDelta > 0 ? '+' : ''}${formatNumber(retryDelta)})`}</p>
+          <p class="mt-1 text-xs text-slate-500">${report.finalQualityRetryTriggered ? `retry profile ${escapeHtml(report.finalQualityRetryProfile ?? 'n/a')}` : 'final retry skipped'}</p>
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-white p-3">
+          <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">main reasons</p>
+          <ul class="mt-2 list-disc space-y-1 pl-4 text-sm text-slate-700">
+            ${qualityFeedback.length ? qualityFeedback.map((item) => `<li>${escapeHtml(item)}</li>`).join('') : '<li>quality feedback 없음</li>'}
+          </ul>
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-white p-3">
+          <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">issue codes / metrics</p>
+          <p class="mt-1 text-sm font-bold text-slate-900">${qualityIssueCodes.length ? qualityIssueCodes.map((item) => escapeHtml(item)).join(', ') : 'issue codes 없음'}</p>
+          <p class="mt-1 text-xs text-slate-500">centerX ${formatNumber(qualityMetrics.centerX)} / eyeLine ${formatNumber(qualityMetrics.eyeLineRatio)} / faceWidth ${formatNumber(qualityMetrics.faceWidthRatio)} / headroom ${formatNumber(qualityMetrics.topHeadMarginRatio)}</p>
+        </div>
+      `;
+
+      identityExplainEl.innerHTML = `
+        <div class="rounded-xl border border-${identityTone}-200 bg-white p-3">
+          <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-${identityTone}-600">score status</p>
+          <p class="mt-1 text-lg font-black text-slate-900">${formatNumber(identityScore)}</p>
+          <p class="mt-1 text-xs text-slate-500">threshold ${formatNumber(identityThreshold)} / recommended ${escapeHtml(identitySummary?.recommendedVariant ?? report.recommendedVariant ?? 'n/a')}</p>
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-white p-3">
+          <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">variant compare</p>
+          <p class="mt-1 text-sm font-bold text-slate-900">${topIdentity ? `top ${escapeHtml(topIdentity.variant ?? topIdentity[0])} ${formatNumber(Number(topIdentity.score ?? topIdentity[1]))}` : 'identity data 없음'}</p>
+          <p class="mt-1 text-sm font-bold text-slate-900">${lowIdentity ? `low ${escapeHtml(lowIdentity.variant ?? lowIdentity[0])} ${formatNumber(Number(lowIdentity.score ?? lowIdentity[1]))}` : 'identity data 없음'}</p>
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-white p-3">
+          <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">decision trace</p>
+          <div class="mt-2 flex flex-wrap gap-2">
+            ${rejectedVariants.length ? rejectedVariants.map((item) => `<span class="rounded-full bg-rose-100 px-2.5 py-1 text-[11px] font-semibold text-rose-900">rejected ${escapeHtml(item)}</span>`).join('') : '<span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-700">rejected none</span>'}
+            ${regeneratedVariants.length ? regeneratedVariants.map((item) => `<span class="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-900">regenerated ${escapeHtml(item)}</span>`).join('') : '<span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-700">regenerated none</span>'}
+            ${report.identityFallbackKept ? `<span class="rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-semibold text-sky-900">fallback kept ${escapeHtml(report.identityFallbackKept)}</span>` : ''}
+          </div>
+          <div class="mt-3 grid gap-2">
+            ${variantDecisionTrace.length
+              ? variantDecisionTrace.map((item) => `
+                  <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                    <p class="text-sm font-bold text-slate-900">${escapeHtml(item.variant)} / ${formatNumber(item.identityScore)}</p>
+                    <p class="mt-1 text-xs text-slate-500">${item.accepted ? 'accepted' : 'rejected'}${item.regenerated ? ' / regenerated' : ''}</p>
+                  </div>
+                `).join('')
+              : '<p class="text-sm text-slate-500">decision trace 없음</p>'}
+          </div>
+        </div>
+      `;
     };
 
     const setCompareImages = (originalUrl, candidateUrl) => {
@@ -377,8 +688,10 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         nextUrl.searchParams.set('jobId', jobId);
         window.history.replaceState({}, '', nextUrl);
         renderOverview(job);
+        renderProcessingSignals(job.pipelineReport ?? null);
         renderCompare(job);
         renderFeedback(job.pipelineReport ?? null);
+        renderScoreExplain(job);
         renderMetaGrid(job.pipelineReport ?? null);
         renderRetryCards(job.pipelineReport ?? null);
         renderReport(job.pipelineReport ?? null);
@@ -421,11 +734,37 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           return;
         }
         try {
-          await navigator.clipboard.writeText(JSON.stringify(currentJob, null, 2));
+          await viewContextUtils?.copyText(JSON.stringify(buildDebugExportPayload(), null, 2));
           setStatus('job JSON을 클립보드에 복사했습니다.');
         } catch {
           setStatus('JSON 복사에 실패했습니다.');
         }
+      });
+    }
+
+    if (copySummaryBtn instanceof HTMLButtonElement) {
+      copySummaryBtn.addEventListener('click', async () => {
+        if (!currentJob) {
+          setStatus('癒쇱? job??遺덈윭?ㅼ꽭??');
+          return;
+        }
+        try {
+          await viewContextUtils?.copyText(buildDebugSummary());
+          setStatus('job summary를 클립보드에 복사했습니다.');
+        } catch {
+          setStatus('summary 복사에 실패했습니다.');
+        }
+      });
+    }
+
+    if (downloadSummaryBtn instanceof HTMLButtonElement) {
+      downloadSummaryBtn.addEventListener('click', () => {
+        if (!currentJob) {
+          setStatus('癒쇱? job??遺덈윭?ㅼ꽭??');
+          return;
+        }
+        viewContextUtils?.downloadTextFile(`manytool-ai-photo-job-${currentJob.id ?? 'export'}-summary.txt`, buildDebugSummary());
+        setStatus('job summary를 저장했습니다.');
       });
     }
 
@@ -435,13 +774,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           setStatus('먼저 job을 불러오세요.');
           return;
         }
-        const blob = new Blob([JSON.stringify(currentJob, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const anchor = document.createElement('a');
-        anchor.href = url;
-        anchor.download = `manytool-ai-photo-job-${currentJob.id ?? 'export'}.json`;
-        anchor.click();
-        URL.revokeObjectURL(url);
+        viewContextUtils?.downloadTextFile(`manytool-ai-photo-job-${currentJob.id ?? 'export'}.json`, JSON.stringify(buildDebugExportPayload(), null, 2), 'application/json');
         setStatus('job JSON을 저장했습니다.');
       });
     }

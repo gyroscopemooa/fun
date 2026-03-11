@@ -64,6 +64,33 @@ function getVariantScore({ identityScore, qualityScore, regenerated }) {
   return Math.round(adjusted * 10) / 10;
 }
 
+function assignQualityReport(pipelineReport, quality) {
+  pipelineReport.qualityScore = quality.qualityScore;
+  pipelineReport.qualitySummary = quality.qualitySummary;
+  pipelineReport.qualityFeedback = quality.qualityFeedback;
+  pipelineReport.qualityIssueCodes = Array.isArray(quality.issues) ? quality.issues : [];
+  pipelineReport.qualityMetrics = quality.metrics ?? null;
+}
+
+function buildIdentitySummary(pipelineReport) {
+  const entries = Object.entries(pipelineReport.variantIdentityScores ?? {})
+    .map(([variant, score]) => ({ variant, score: Number(score ?? 0) }))
+    .sort((a, b) => b.score - a.score);
+  const topVariant = entries[0] ?? null;
+  const lowestVariant = entries[entries.length - 1] ?? null;
+  return {
+    threshold: pipelineReport.identityThreshold,
+    recommendedVariant: pipelineReport.recommendedVariant ?? null,
+    topVariant,
+    lowestVariant,
+    rejectedVariants: Array.isArray(pipelineReport.identityRejectedVariants) ? pipelineReport.identityRejectedVariants : [],
+    regeneratedVariants: Array.isArray(pipelineReport.identityRegeneratedVariants) ? pipelineReport.identityRegeneratedVariants : [],
+    fallbackKept: pipelineReport.identityFallbackKept ?? null,
+    variantCount: entries.length,
+    averageIdentityScore: pipelineReport.identityScore
+  };
+}
+
 async function applyMicroCropOffset(inputBuffer, offset, background) {
   const metadata = await sharp(inputBuffer).metadata();
   const width = metadata.width ?? 600;
@@ -134,12 +161,16 @@ export async function generatePortraitPipeline({
     qualityScoreBeforeRetry: null,
     qualitySummary: '',
     qualityFeedback: [],
+    qualityIssueCodes: [],
+    qualityMetrics: null,
     identityScore: 0,
     identityThreshold: MIN_IDENTITY_SCORE,
     variantIdentityScores: {},
     variantScores: {},
     identityRegeneratedVariants: [],
     identityRejectedVariants: [],
+    identitySummary: null,
+    variantDecisionTrace: [],
     cache: {
       aligned: false,
       cutout: false,
@@ -190,9 +221,7 @@ export async function generatePortraitPipeline({
         toolType
       });
       pipelineReport.cropProfile = profile.name;
-      pipelineReport.qualityScore = quality.qualityScore;
-      pipelineReport.qualitySummary = quality.qualitySummary;
-      pipelineReport.qualityFeedback = quality.qualityFeedback;
+      assignQualityReport(pipelineReport, quality);
       if (quality.valid) break;
     }
     pipelineReport.timings.align = Date.now() - alignStartedAt;
@@ -264,9 +293,7 @@ export async function generatePortraitPipeline({
     geometry,
     toolType
   });
-  pipelineReport.qualityScore = quality.qualityScore;
-  pipelineReport.qualitySummary = quality.qualitySummary;
-  pipelineReport.qualityFeedback = quality.qualityFeedback;
+  assignQualityReport(pipelineReport, quality);
   const relightStartedAt = Date.now();
   flattened = await faceRelightStage({
     inputBuffer: flattened,
@@ -325,9 +352,7 @@ export async function generatePortraitPipeline({
     }
   }
 
-  pipelineReport.qualityScore = quality.qualityScore;
-  pipelineReport.qualitySummary = quality.qualitySummary;
-  pipelineReport.qualityFeedback = quality.qualityFeedback;
+  assignQualityReport(pipelineReport, quality);
 
   const generated = [];
   let bestRejectedVariant = null;
@@ -378,6 +403,12 @@ export async function generatePortraitPipeline({
     pipelineReport.suitSelectionSummary = variantResult.suitSelection?.summary ?? pipelineReport.suitSelectionSummary;
     pipelineReport.suitSelectionInputs = variantResult.suitSelection?.inputs ?? pipelineReport.suitSelectionInputs;
     pipelineReport.variantIdentityScores[profile.name] = variantResult.identityScore;
+    pipelineReport.variantDecisionTrace.push({
+      variant: profile.name,
+      identityScore: variantResult.identityScore,
+      regenerated,
+      accepted: variantResult.identityScore >= MIN_IDENTITY_SCORE
+    });
 
     if (variantResult.identityScore < MIN_IDENTITY_SCORE) {
       pipelineReport.identityRejectedVariants.push(profile.name);
@@ -440,6 +471,7 @@ export async function generatePortraitPipeline({
   pipelineReport.identityScore = identityScores.length
     ? Math.round((identityScores.reduce((sum, value) => sum + value, 0) / identityScores.length) * 10) / 10
     : 0;
+  pipelineReport.identitySummary = buildIdentitySummary(pipelineReport);
 
   return {
     generated,

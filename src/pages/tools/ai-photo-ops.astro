@@ -101,6 +101,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       <p id="ops-status-text" class="mt-4 text-sm text-slate-500">최근 운영 데이터를 불러오는 중입니다.</p>
       <div class="mt-3 flex flex-wrap gap-2">
         <a id="ops-open-debug" href="/tools/ai-photo-debug" class="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">현재 필터 디버그</a>
+        <button id="ops-copy-view-link" type="button" class="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">현재 뷰 링크 복사</button>
       </div>
     </section>
 
@@ -151,6 +152,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         <div id="ops-tool-debug-links" class="mt-4 flex flex-wrap gap-2"></div>
         <div class="mt-4 flex flex-wrap gap-2">
           <button id="ops-download-tool-drilldown" type="button" class="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">tool drill-down 저장</button>
+          <button id="ops-download-tool-drilldown-csv" type="button" class="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">tool drill-down CSV</button>
         </div>
       </article>
       <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -160,6 +162,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         <div id="ops-provider-debug-links" class="mt-4 flex flex-wrap gap-2"></div>
         <div class="mt-4 flex flex-wrap gap-2">
           <button id="ops-download-provider-drilldown" type="button" class="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">provider drill-down 저장</button>
+          <button id="ops-download-provider-drilldown-csv" type="button" class="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">provider drill-down CSV</button>
         </div>
       </article>
     </section>
@@ -200,7 +203,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         <h2 class="text-xl font-black text-slate-900">관리 링크</h2>
         <p class="mt-1 text-sm text-slate-600">운영과 디버그 화면으로 바로 이동합니다.</p>
         <div class="mt-4 grid gap-3 md:grid-cols-2">
-          <a href="/tools/ai-photo-admin" class="rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:border-slate-300 hover:bg-white">
+          <a id="ops-open-admin" href="/tools/ai-photo-admin" class="rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:border-slate-300 hover:bg-white">
             <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Admin</p>
             <p class="mt-2 text-base font-black text-slate-900">관리자 허브</p>
           </a>
@@ -219,6 +222,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     </section>
   </main>
   <Footer />
+  <script is:inline src="/scripts/ai-photo-view-context.js"></script>
   <script define:vars={{ apiBase }} is:inline>
     const API_BASE = apiBase;
     const statusTextEl = document.getElementById('ops-status-text');
@@ -235,7 +239,9 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     const toolDebugLinksEl = document.getElementById('ops-tool-debug-links');
     const providerDebugLinksEl = document.getElementById('ops-provider-debug-links');
     const downloadToolDrilldownBtn = document.getElementById('ops-download-tool-drilldown');
+    const downloadToolDrilldownCsvBtn = document.getElementById('ops-download-tool-drilldown-csv');
     const downloadProviderDrilldownBtn = document.getElementById('ops-download-provider-drilldown');
+    const downloadProviderDrilldownCsvBtn = document.getElementById('ops-download-provider-drilldown-csv');
     const drilldownPreviewEl = document.getElementById('ops-drilldown-preview');
     const drilldownPreviewLabelEl = document.getElementById('ops-drilldown-preview-label');
     const drilldownPreviewLinkEl = document.getElementById('ops-drilldown-preview-link');
@@ -244,11 +250,15 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     const drilldownPreviewMetaEl = document.getElementById('ops-drilldown-preview-meta');
     const refreshBtn = document.getElementById('ops-refresh');
     const openDebugLink = document.getElementById('ops-open-debug');
+    const openAdminLink = document.getElementById('ops-open-admin');
+    const copyViewLinkBtn = document.getElementById('ops-copy-view-link');
     const copySummaryBtn = document.getElementById('ops-copy-summary');
     const downloadSummaryBtn = document.getElementById('ops-download-summary');
     const downloadJsonBtn = document.getElementById('ops-download-json');
     const presetButtons = Array.from(document.querySelectorAll('.ops-preset'));
     const miniTrendTabs = Array.from(document.querySelectorAll('.ops-mini-trend-tab'));
+    const pageParams = new URLSearchParams(window.location.search);
+    const viewContextUtils = window.AIPhotoViewContext;
 
     const filters = {
       status: document.getElementById('ops-status'),
@@ -262,7 +272,10 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
 
     let latestRecentPayload = null;
     let latestAlertsPayload = null;
+    let latestDerivedOpsData = null;
     let miniTrendMode = 'risk';
+    let activePreviewKey = pageParams.get('previewKey')?.trim() ?? '';
+    let pendingInitialPreviewKey = activePreviewKey;
 
     const setStatus = (text) => {
       if (statusTextEl instanceof HTMLElement) statusTextEl.textContent = text;
@@ -289,10 +302,11 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       .replaceAll('"', '&quot;')
       .replaceAll("'", '&#39;');
 
-    const createMetricCard = (label, value, tone = 'slate') => `
-      <article class="rounded-2xl border border-${tone}-200 bg-${tone}-50 p-4">
+    const createMetricCard = (label, value, tone = 'slate', options = {}) => `
+      <article class="rounded-2xl border border-${tone}-200 bg-${tone}-50 p-4 ${options.interactive ? 'cursor-pointer transition hover:border-' + tone + '-300 hover:bg-white' : ''}" ${options.dataAttrs ?? ''}>
         <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-${tone}-500">${label}</p>
         <p class="mt-2 text-2xl font-black text-${tone}-950">${escapeHtml(value)}</p>
+        ${options.hint ? `<p class="mt-2 text-xs text-${tone}-700">${escapeHtml(options.hint)}</p>` : ''}
       </article>
     `;
 
@@ -334,14 +348,102 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       `;
     };
 
+    const createProviderSummaryCard = (item, totalAlerts = 0) => {
+      const percent = totalAlerts > 0 ? (item.total / totalAlerts) * 100 : 0;
+      const fallbackCount = item.flags.find(([flag]) => flag === 'provider_fallback')?.[1] ?? 0;
+      return `
+        <article class="rounded-2xl border border-rose-200 bg-rose-50 p-4">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="text-sm font-black text-rose-950">${escapeHtml(item.key)}</p>
+              <p class="mt-1 text-xs text-rose-900">전체 경고 중 ${formatPercent(percent)}</p>
+            </div>
+            <span class="rounded-full bg-white px-3 py-1 text-xs font-semibold text-rose-900">${item.total}건</span>
+          </div>
+          <div class="mt-3 grid gap-2 sm:grid-cols-2">
+            <div class="rounded-xl bg-white px-3 py-2">
+              <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">top quality</p>
+              <p class="mt-1 text-xs font-bold text-slate-900">${escapeHtml(summarizeGroupReason(item.topQualityReason))}</p>
+            </div>
+            <div class="rounded-xl bg-white px-3 py-2">
+              <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">top identity</p>
+              <p class="mt-1 text-xs font-bold text-slate-900">${escapeHtml(summarizeGroupReason(item.topIdentityReason))}</p>
+            </div>
+            <div class="rounded-xl bg-white px-3 py-2">
+              <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">fallback</p>
+              <p class="mt-1 text-sm font-bold text-slate-900">${fallbackCount}</p>
+            </div>
+            <div class="rounded-xl bg-white px-3 py-2">
+              <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">related jobs</p>
+              <p class="mt-1 text-sm font-bold text-slate-900">${item.relatedJobIds?.length ?? 0}</p>
+            </div>
+          </div>
+          ${item.debugUrl ? `
+            <div class="mt-3">
+              <a href="${escapeHtml(item.debugUrl)}" class="inline-flex rounded-full border border-rose-300 bg-white px-3 py-1.5 text-xs font-semibold text-rose-900 transition hover:border-rose-400">
+                대표 job debug
+              </a>
+            </div>
+          ` : ''}
+        </article>
+      `;
+    };
+
     const groupFlags = (items, keySelector) => {
       const grouped = new Map();
+      const groupItemRisk = (item) => (
+        (item?.status === 'failed' ? 4 : 0)
+        + ((Array.isArray(item?.flags) && item.flags.length) ? 2 : 0)
+        + ((Array.isArray(item?.flags) && item.flags.includes('provider_fallback')) ? 1 : 0)
+      );
       for (const item of items) {
         const key = keySelector(item) ?? 'unknown';
-        const bucket = grouped.get(key) ?? { total: 0, flags: new Map() };
+        const bucket = grouped.get(key) ?? {
+          total: 0,
+          flags: new Map(),
+          qualityReasons: new Map(),
+          identityReasons: new Map(),
+          relatedJobs: [],
+          representativeJobId: null,
+          representativeJobCreatedAt: null,
+          representativeJobRisk: -1
+        };
         bucket.total += 1;
         for (const flag of item.flags ?? []) {
           bucket.flags.set(flag, (bucket.flags.get(flag) ?? 0) + 1);
+        }
+        for (const issue of item.qualityIssueCodes ?? []) {
+          const label = issueCodeLabel(issue);
+          bucket.qualityReasons.set(label, (bucket.qualityReasons.get(label) ?? 0) + 1);
+        }
+        const identitySummary = item.identitySummary ?? null;
+        for (const variant of identitySummary?.rejectedVariants ?? []) {
+          const label = `rejected ${variant}`;
+          bucket.identityReasons.set(label, (bucket.identityReasons.get(label) ?? 0) + 1);
+        }
+        for (const variant of identitySummary?.regeneratedVariants ?? []) {
+          const label = `regenerated ${variant}`;
+          bucket.identityReasons.set(label, (bucket.identityReasons.get(label) ?? 0) + 1);
+        }
+        if (!bucket.identityReasons.size && identitySummary?.recommendedVariant) {
+          const label = `recommended ${identitySummary.recommendedVariant}`;
+          bucket.identityReasons.set(label, (bucket.identityReasons.get(label) ?? 0) + 1);
+        }
+        const itemCreatedAt = item?.createdAt ? new Date(item.createdAt).getTime() : 0;
+        bucket.relatedJobs.push({ id: item.id ?? null, createdAt: itemCreatedAt });
+        bucket.relatedJobs.sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
+        bucket.relatedJobs = bucket.relatedJobs.filter((job, index, jobs) => (
+          job.id
+          && jobs.findIndex((candidate) => candidate.id === job.id) === index
+        )).slice(0, 4);
+        const itemRisk = groupItemRisk(item);
+        if (
+          itemRisk > bucket.representativeJobRisk
+          || (itemRisk === bucket.representativeJobRisk && (bucket.representativeJobCreatedAt ?? 0) < itemCreatedAt)
+        ) {
+          bucket.representativeJobId = item.id ?? null;
+          bucket.representativeJobCreatedAt = itemCreatedAt;
+          bucket.representativeJobRisk = itemRisk;
         }
         grouped.set(key, bucket);
       }
@@ -349,40 +451,304 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         .map(([key, bucket]) => ({
           key,
           total: bucket.total,
-          flags: [...bucket.flags.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5)
+          flags: [...bucket.flags.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5),
+          topQualityReason: [...bucket.qualityReasons.entries()].sort((a, b) => b[1] - a[1])[0] ?? null,
+          topIdentityReason: [...bucket.identityReasons.entries()].sort((a, b) => b[1] - a[1])[0] ?? null,
+          representativeJobId: bucket.representativeJobId,
+          relatedJobIds: bucket.relatedJobs.map((job) => job.id).filter(Boolean)
         }))
         .sort((a, b) => b.total - a.total);
     };
 
-    const buildDrilldownExport = (type) => {
-      const alertItems = Array.isArray(latestAlertsPayload?.items) ? latestAlertsPayload.items : [];
-      const groups = groupFlags(alertItems, (item) => (
+    const currentDrilldownFilterSummary = () => (
+      `status=${filters.status instanceof HTMLSelectElement ? filters.status.value : 'all'}, tool=${filters.tool instanceof HTMLSelectElement ? filters.tool.value : 'all'}, provider=${filters.provider instanceof HTMLSelectElement ? filters.provider.value : 'all'}, flagged=${filters.flagged instanceof HTMLSelectElement ? filters.flagged.value : 'true'}, fallbackOnly=${filters.fallbackOnly instanceof HTMLSelectElement ? filters.fallbackOnly.value : 'false'}`
+    );
+
+    const buildDebugUrl = (jobId = '', options = {}) => {
+      const { includeOpsView = true } = options;
+      const params = new URLSearchParams();
+      if (jobId) params.set('jobId', jobId);
+      if (includeOpsView) params.set('opsView', getCurrentViewUrl());
+      const query = params.toString();
+      return query ? `/tools/ai-photo-debug?${query}` : '/tools/ai-photo-debug';
+    };
+
+    const getNormalizedPreviewKey = (entryPreviewKey = '', fallbackType = 'tool', fallbackKey = '') => {
+      if (entryPreviewKey) return entryPreviewKey;
+      if (!fallbackKey) return '';
+      return `${fallbackType}:${fallbackKey}`;
+    };
+
+    const getDrilldownGroupsFromPayload = (alertsPayload, type) => {
+      const alertItems = Array.isArray(alertsPayload?.items) ? alertsPayload.items : [];
+      return groupFlags(alertItems, (item) => (
         type === 'tool'
           ? item.toolType
           : (item.provider ?? item.resolvedProvider)
-      ));
+      )).map((group) => ({
+        ...group,
+        groupType: type,
+        previewKey: `${type}:${group.key}`,
+        debugUrl: group.representativeJobId ? buildDebugUrl(group.representativeJobId) : null
+      }));
+    };
+
+    const getDrilldownGroups = (type) => getDrilldownGroupsFromPayload(latestAlertsPayload, type);
+
+    const getDerivedDrilldownGroups = (type, derivedData = latestDerivedOpsData) => {
+      if (type === 'tool') return derivedData?.toolDrilldown ?? getDrilldownGroups(type);
+      return derivedData?.providerDrilldown ?? getDrilldownGroups(type);
+    };
+
+    const summarizeGroupReason = (entry) => (
+      entry ? formatReasonEntry(entry[0], entry[1]) : 'none'
+    );
+
+    const DRILLDOWN_LEGACY_COLUMN_ALIASES = 'flag->signalCode;flagCount->signalCount;previewKey->viewPreviewKey;key->groupKey;type->drilldownType';
+
+    const getDrilldownExportMeta = (type, exportedAt = new Date().toISOString()) => {
+      const viewSummary = getCurrentViewContextSummary();
+      return {
+        schemaVersion: 'ai-photo-view-context.v1',
+        surface: `ops-${type}-drilldown`,
+        exportedAt,
+        viewContextUrl: getCurrentViewUrl(),
+        viewContextSummary: viewContextUtils?.formatViewContextSummary(viewSummary) ?? currentDrilldownFilterSummary(),
+        drilldownType: type,
+        drilldownFilters: currentDrilldownFilterSummary(),
+        legacyColumnAliases: DRILLDOWN_LEGACY_COLUMN_ALIASES
+      };
+    };
+
+    const buildDrilldownExport = (type) => {
+      const groups = getDerivedDrilldownGroups(type);
       if (!groups.length) return '';
+      const meta = getDrilldownExportMeta(type);
       return [
         `AI photo ops ${type} drill-down`,
-        `generatedAt: ${new Date().toISOString()}`,
-        `filters: status=${filters.status instanceof HTMLSelectElement ? filters.status.value : 'all'}, tool=${filters.tool instanceof HTMLSelectElement ? filters.tool.value : 'all'}, provider=${filters.provider instanceof HTMLSelectElement ? filters.provider.value : 'all'}, flagged=${filters.flagged instanceof HTMLSelectElement ? filters.flagged.value : 'true'}, fallbackOnly=${filters.fallbackOnly instanceof HTMLSelectElement ? filters.fallbackOnly.value : 'false'}`,
+        `[schema]`,
+        `schemaVersion: ${meta.schemaVersion}`,
+        `surface: ${meta.surface}`,
+        `exportedAt: ${meta.exportedAt}`,
+        `legacyColumnAliases: ${meta.legacyColumnAliases}`,
+        `[viewContext]`,
+        `url: ${meta.viewContextUrl}`,
+        `summary: ${meta.viewContextSummary}`,
+        `[drilldown]`,
+        `drilldownType: ${meta.drilldownType}`,
+        `drilldownFilters: ${meta.drilldownFilters}`,
         '',
         ...groups.map((group) => {
           const flags = group.flags.length
             ? group.flags.map(([flag, count]) => `${flag}:${count}`).join(', ')
             : 'none';
-          return `${group.key}\ttotal=${group.total}\tflags=${flags}`;
+          return `groupKey=${group.key}\ttotal=${group.total}\tsignalCounts=${flags}\ttopQualityReason=${summarizeGroupReason(group.topQualityReason)}\ttopIdentityReason=${summarizeGroupReason(group.topIdentityReason)}\tviewPreviewKey=${getNormalizedPreviewKey(group.previewKey, type, group.key)}\trepresentativeJobId=${group.representativeJobId ?? 'none'}\tdebugUrl=${group.debugUrl ?? 'none'}\trelatedJobIds=${(group.relatedJobIds ?? []).join(',') || 'none'}`;
         })
       ].join('\n');
     };
 
-    const applyDirectFilter = ({ toolType = 'all', provider = 'all', fallbackOnly = false, flaggedOnly = true, status = 'all' }) => {
+    const escapeCsv = (value) => {
+      const text = String(value ?? '');
+      if (text.includes('"') || text.includes(',') || text.includes('\n')) {
+        return `"${text.replaceAll('"', '""')}"`;
+      }
+      return text;
+    };
+
+    const buildDrilldownCsvExport = (type) => {
+      const groups = getDerivedDrilldownGroups(type);
+      if (!groups.length) return '';
+      const meta = getDrilldownExportMeta(type);
+      return [
+        ['meta', 'schemaVersion', meta.schemaVersion],
+        ['meta', 'surface', meta.surface],
+        ['meta', 'exportedAt', meta.exportedAt],
+        ['meta', 'viewContextUrl', meta.viewContextUrl],
+        ['meta', 'viewContextSummary', meta.viewContextSummary],
+        ['meta', 'drilldownType', meta.drilldownType],
+        ['meta', 'drilldownFilters', meta.drilldownFilters],
+        ['meta', 'legacyColumnAliases', meta.legacyColumnAliases],
+        [],
+        ['drilldownType', 'groupKey', 'viewPreviewKey', 'total', 'signalCode', 'signalCount', 'topQualityReason', 'topIdentityReason', 'representativeJobId', 'debugUrl', 'relatedJobIds'],
+        ...groups.flatMap((group) => (
+          group.flags.length
+            ? group.flags.map(([flag, count]) => [type, group.key, getNormalizedPreviewKey(group.previewKey, type, group.key), group.total, flag, count, summarizeGroupReason(group.topQualityReason), summarizeGroupReason(group.topIdentityReason), group.representativeJobId ?? '', group.debugUrl ?? '', (group.relatedJobIds ?? []).join(',')])
+            : [[type, group.key, getNormalizedPreviewKey(group.previewKey, type, group.key), group.total, 'none', 0, summarizeGroupReason(group.topQualityReason), summarizeGroupReason(group.topIdentityReason), group.representativeJobId ?? '', group.debugUrl ?? '', (group.relatedJobIds ?? []).join(',')]]
+        ))
+      ].map((row) => row.map(escapeCsv).join(',')).join('\n');
+    };
+
+    const setDirectFilterControls = ({ toolType = 'all', provider = 'all', fallbackOnly = false, flaggedOnly = true, status = 'all' }) => {
       if (filters.tool instanceof HTMLSelectElement) filters.tool.value = toolType;
       if (filters.provider instanceof HTMLSelectElement) filters.provider.value = provider;
       if (filters.fallbackOnly instanceof HTMLSelectElement) filters.fallbackOnly.value = fallbackOnly ? 'true' : 'false';
       if (filters.flagged instanceof HTMLSelectElement) filters.flagged.value = flaggedOnly ? 'true' : 'false';
       if (filters.status instanceof HTMLSelectElement) filters.status.value = status;
+    };
+
+    const applyDirectFilter = ({ toolType = 'all', provider = 'all', fallbackOnly = false, flaggedOnly = true, status = 'all' }) => {
+      setDirectFilterControls({ toolType, provider, fallbackOnly, flaggedOnly, status });
       loadOps();
+    };
+
+    const parsePreviewKey = (previewKey, fallbackType = 'tool', fallbackKey = '') => {
+      const [previewType, ...previewKeyParts] = String(previewKey ?? '').split(':');
+      const previewValue = previewKeyParts.join(':');
+      return {
+        type: previewValue ? previewType : fallbackType,
+        key: previewValue || fallbackKey
+      };
+    };
+
+    const applyPreviewKeyFilter = (type, key) => {
+      if (type === 'tool') {
+        applyDirectFilter({ toolType: key, provider: 'all', fallbackOnly: false, flaggedOnly: true, status: 'all' });
+        return;
+      }
+      applyDirectFilter({
+        toolType: 'all',
+        provider: key,
+        fallbackOnly: key === 'local_sharp',
+        flaggedOnly: true,
+        status: 'all'
+      });
+    };
+
+    const syncPreviewKeyFilters = (type, key) => {
+      if (type === 'tool') {
+        setDirectFilterControls({ toolType: key, provider: 'all', fallbackOnly: false, flaggedOnly: true, status: 'all' });
+        return;
+      }
+      setDirectFilterControls({
+        toolType: 'all',
+        provider: key,
+        fallbackOnly: key === 'local_sharp',
+        flaggedOnly: true,
+        status: 'all'
+      });
+    };
+
+    const getCurrentViewParams = () => {
+      const params = new URLSearchParams();
+      const status = filters.status instanceof HTMLSelectElement ? filters.status.value : 'all';
+      const toolType = filters.tool instanceof HTMLSelectElement ? filters.tool.value : 'all';
+      const provider = filters.provider instanceof HTMLSelectElement ? filters.provider.value : 'all';
+      const limit = filters.limit instanceof HTMLSelectElement ? filters.limit.value : '12';
+      const period = filters.period instanceof HTMLSelectElement ? filters.period.value : '24';
+      const flaggedOnly = filters.flagged instanceof HTMLSelectElement ? filters.flagged.value === 'true' : false;
+      const fallbackOnly = filters.fallbackOnly instanceof HTMLSelectElement ? filters.fallbackOnly.value === 'true' : false;
+      params.set('limit', limit);
+      if (status !== 'all') params.set('status', status);
+      if (toolType !== 'all') params.set('toolType', toolType);
+      if (provider !== 'all') params.set('provider', provider);
+      if (period !== '0') params.set('sinceHours', period);
+      if (flaggedOnly) params.set('flaggedOnly', 'true');
+      if (fallbackOnly) params.set('fallbackOnly', 'true');
+      if (miniTrendMode !== 'risk') params.set('miniTrend', miniTrendMode);
+      if (activePreviewKey) params.set('previewKey', activePreviewKey);
+      return params;
+    };
+
+    const getCurrentViewUrl = () => {
+      const nextUrl = new URL(window.location.href);
+      nextUrl.search = getCurrentViewParams().toString();
+      return nextUrl.toString();
+    };
+
+    const getCurrentViewContextSummary = () => viewContextUtils?.withDefaultContext({
+      status: filters.status instanceof HTMLSelectElement ? filters.status.value : 'all',
+      tool: filters.tool instanceof HTMLSelectElement ? filters.tool.value : 'all',
+      provider: filters.provider instanceof HTMLSelectElement ? filters.provider.value : 'all',
+      limit: filters.limit instanceof HTMLSelectElement ? filters.limit.value : '12',
+      sinceHours: filters.period instanceof HTMLSelectElement ? filters.period.value : '24',
+      flaggedOnly: filters.flagged instanceof HTMLSelectElement ? filters.flagged.value === 'true' : false,
+      fallbackOnly: filters.fallbackOnly instanceof HTMLSelectElement ? filters.fallbackOnly.value === 'true' : false,
+      miniTrend: miniTrendMode,
+      previewKey: activePreviewKey || null
+    }) ?? ({
+      status: filters.status instanceof HTMLSelectElement ? filters.status.value : 'all',
+      tool: filters.tool instanceof HTMLSelectElement ? filters.tool.value : 'all',
+      provider: filters.provider instanceof HTMLSelectElement ? filters.provider.value : 'all',
+      limit: filters.limit instanceof HTMLSelectElement ? filters.limit.value : '12',
+      sinceHours: filters.period instanceof HTMLSelectElement ? filters.period.value : '24',
+      flaggedOnly: filters.flagged instanceof HTMLSelectElement ? filters.flagged.value === 'true' : false,
+      fallbackOnly: filters.fallbackOnly instanceof HTMLSelectElement ? filters.fallbackOnly.value === 'true' : false,
+      miniTrend: miniTrendMode,
+      previewKey: activePreviewKey || null
+    });
+
+    const syncCurrentViewInUrl = () => {
+      window.history.replaceState({}, '', getCurrentViewUrl());
+    };
+
+    const hydrateControlsFromUrl = () => {
+      if (filters.status instanceof HTMLSelectElement) {
+        const status = pageParams.get('status');
+        if (status) filters.status.value = status;
+      }
+      if (filters.tool instanceof HTMLSelectElement) {
+        const toolType = pageParams.get('toolType');
+        if (toolType) filters.tool.value = toolType;
+      }
+      if (filters.provider instanceof HTMLSelectElement) {
+        const provider = pageParams.get('provider');
+        if (provider) filters.provider.value = provider;
+      }
+      if (filters.limit instanceof HTMLSelectElement) {
+        const limit = pageParams.get('limit');
+        if (limit) filters.limit.value = limit;
+      }
+      if (filters.period instanceof HTMLSelectElement) {
+        const sinceHours = pageParams.get('sinceHours');
+        if (sinceHours !== null) {
+          filters.period.value = sinceHours;
+        }
+      }
+      if (filters.flagged instanceof HTMLSelectElement) {
+        filters.flagged.value = pageParams.get('flaggedOnly') === 'true' ? 'true' : filters.flagged.value;
+      }
+      if (filters.fallbackOnly instanceof HTMLSelectElement) {
+        filters.fallbackOnly.value = pageParams.get('fallbackOnly') === 'true' ? 'true' : filters.fallbackOnly.value;
+      }
+      const initialMiniTrendMode = pageParams.get('miniTrend');
+      if (initialMiniTrendMode) {
+        miniTrendMode = initialMiniTrendMode;
+      }
+    };
+
+    const isPreviewKeyFilterActive = (type, key) => {
+      const status = filters.status instanceof HTMLSelectElement ? filters.status.value : 'all';
+      const tool = filters.tool instanceof HTMLSelectElement ? filters.tool.value : 'all';
+      const provider = filters.provider instanceof HTMLSelectElement ? filters.provider.value : 'all';
+      const flagged = filters.flagged instanceof HTMLSelectElement ? filters.flagged.value : 'false';
+      const fallbackOnly = filters.fallbackOnly instanceof HTMLSelectElement ? filters.fallbackOnly.value : 'false';
+      if (status !== 'all' || flagged !== 'true') return false;
+      if (type === 'tool') {
+        return tool === key && provider === 'all' && fallbackOnly === 'false';
+      }
+      return tool === 'all' && provider === key && fallbackOnly === (key === 'local_sharp' ? 'true' : 'false');
+    };
+
+    const resolvePreviewKeyEntry = (previewKey, fallbackType = 'tool', fallbackKey = '', derivedData = latestDerivedOpsData) => {
+      const { type, key } = parsePreviewKey(previewKey, fallbackType, fallbackKey);
+      if (!key) return null;
+      const normalizedPreviewKey = getNormalizedPreviewKey(previewKey, type, key);
+      const indexedEntry = derivedData?.drilldownIndex?.[normalizedPreviewKey];
+      if (indexedEntry) {
+        return {
+          ...indexedEntry,
+          groupType: indexedEntry.groupType ?? type,
+          key: indexedEntry.key ?? key,
+          previewKey: indexedEntry.previewKey ?? normalizedPreviewKey
+        };
+      }
+      const fallbackGroup = getDerivedDrilldownGroups(type, derivedData).find((group) => group.key === key);
+      if (!fallbackGroup) return null;
+      return {
+        ...fallbackGroup,
+        groupType: fallbackGroup.groupType ?? type,
+        previewKey: fallbackGroup.previewKey ?? normalizedPreviewKey
+      };
     };
 
     const scoreTone = (score) => {
@@ -392,7 +758,75 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       return 'rose';
     };
 
-    const summarizeInsights = (recentPayload, alertsPayload) => {
+    const clampScore = (value) => Math.max(0, Math.min(100, Number(value ?? 0) || 0));
+
+    const compactPreviewScoreBar = (label, score, tone = 'slate', detail = '') => `
+      <div class="rounded-xl border border-slate-200 bg-white p-3">
+        <div class="flex items-center justify-between gap-3">
+          <p class="text-xs font-semibold text-slate-600">${escapeHtml(label)}</p>
+          <p class="text-sm font-black text-slate-900">${formatNumber(score)}</p>
+        </div>
+        <div class="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
+          <div class="h-full rounded-full bg-${tone}-500" style="width:${Math.max(4, clampScore(score))}%"></div>
+        </div>
+        ${detail ? `<p class="mt-2 text-[11px] text-slate-500">${escapeHtml(detail)}</p>` : ''}
+      </div>
+    `;
+
+    const issueCodeLabel = (code) => {
+      if (code === 'center_alignment_out_of_bounds') return 'center misaligned';
+      if (code === 'face_ratio_out_of_bounds') return 'face ratio off';
+      if (code === 'top_head_margin_out_of_bounds') return 'headroom off';
+      if (code === 'eye_line_out_of_bounds') return 'eye line off';
+      if (code === 'resolution_below_minimum') return 'resolution low';
+      return code ?? 'unknown';
+    };
+
+    const formatReasonEntry = (label = '', count = null, fallbackLabel = 'none') => {
+      if (!label) return fallbackLabel;
+      return typeof count === 'number' ? `${label} (${count})` : label;
+    };
+
+    const formatReasonList = (values = [], fallbackLabel = 'none', limit = 3) => {
+      const normalized = values.filter(Boolean).slice(0, limit);
+      return normalized.length ? normalized.join(', ') : fallbackLabel;
+    };
+
+    const summarizeQualityReason = (item) => {
+      const issues = Array.isArray(item?.qualityIssueCodes) ? item.qualityIssueCodes : [];
+      if (!issues.length) return item?.qualitySummary ?? 'quality stable';
+      return formatReasonList(issues.map(issueCodeLabel), 'quality stable');
+    };
+
+    const summarizeIdentityReason = (item) => {
+      const summary = item?.identitySummary ?? null;
+      if (summary?.rejectedVariants?.length) {
+        return formatReasonList(summary.rejectedVariants.map((variant) => `rejected ${variant}`), 'identity stable', 2);
+      }
+      if (summary?.regeneratedVariants?.length) {
+        return formatReasonList(summary.regeneratedVariants.map((variant) => `regenerated ${variant}`), 'identity stable', 2);
+      }
+      if (summary?.recommendedVariant) {
+        return `recommended ${summary.recommendedVariant}`;
+      }
+      return 'identity stable';
+    };
+
+    const renderProcessingSignalChips = (item) => {
+      const resolvedProvider = item?.flags?.includes('provider_fallback')
+        ? `local_sharp fallback from ${item?.resolvedProvider ?? 'unknown'}`
+        : (item?.resolvedProvider ?? item?.provider ?? 'unknown');
+      const callMode = item?.pipelineReport?.externalBackgroundCall ? 'external' : 'local';
+      const cacheHits = ['aligned', 'cutout', 'flattened'].filter((key) => Boolean(item?.cache?.[key]));
+      const cacheLabel = cacheHits.length ? `cache:${cacheHits.join('+')}` : 'cache:miss';
+      return [
+        `<span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">provider ${escapeHtml(resolvedProvider)}</span>`,
+        `<span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">${escapeHtml(callMode)}</span>`,
+        `<span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">${escapeHtml(cacheLabel)}</span>`
+      ].join('');
+    };
+
+    const summarizeInsights = (recentPayload, alertsPayload, drilldownGroups = null) => {
       const items = Array.isArray(recentPayload?.items) ? recentPayload.items : [];
       const alertItems = Array.isArray(alertsPayload?.items) ? alertsPayload.items : [];
       const toolTrends = Array.isArray(recentPayload?.toolTrends) ? recentPayload.toolTrends : [];
@@ -411,6 +845,28 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       const topFlagEntry = [...flagCounts.entries()].sort((a, b) => b[1] - a[1])[0] ?? null;
       const worstTool = [...toolTrends].sort((a, b) => b.failed - a.failed)[0] ?? null;
       const fallbackCount = items.filter((item) => (item.flags ?? []).includes('provider_fallback')).length;
+      const qualityReasonCounts = new Map();
+      const identityReasonCounts = new Map();
+
+      for (const item of alertItems) {
+        for (const issue of item.qualityIssueCodes ?? []) {
+          const label = issueCodeLabel(issue);
+          qualityReasonCounts.set(label, (qualityReasonCounts.get(label) ?? 0) + 1);
+        }
+        for (const variant of item.identitySummary?.rejectedVariants ?? []) {
+          const label = `rejected ${variant}`;
+          identityReasonCounts.set(label, (identityReasonCounts.get(label) ?? 0) + 1);
+        }
+        for (const variant of item.identitySummary?.regeneratedVariants ?? []) {
+          const label = `regenerated ${variant}`;
+          identityReasonCounts.set(label, (identityReasonCounts.get(label) ?? 0) + 1);
+        }
+      }
+
+      const topQualityReason = [...qualityReasonCounts.entries()].sort((a, b) => b[1] - a[1])[0] ?? null;
+      const topIdentityReason = [...identityReasonCounts.entries()].sort((a, b) => b[1] - a[1])[0] ?? null;
+      const largestRelatedCluster = [...(drilldownGroups ?? [])]
+        .sort((a, b) => (b.relatedJobIds?.length ?? 0) - (a.relatedJobIds?.length ?? 0))[0] ?? null;
 
       return [
         {
@@ -432,6 +888,26 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           label: 'fallback 비율',
           value: items.length ? formatPercent((fallbackCount / items.length) * 100) : '0.0%',
           tone: fallbackCount > 0 ? 'sky' : 'slate'
+        },
+        {
+          label: 'top quality issue',
+          value: topQualityReason ? formatReasonEntry(topQualityReason[0], topQualityReason[1], '없음') : '없음',
+          tone: topQualityReason ? 'amber' : 'slate'
+        },
+        {
+          label: 'top identity signal',
+          value: topIdentityReason ? formatReasonEntry(topIdentityReason[0], topIdentityReason[1], '없음') : '없음',
+          tone: topIdentityReason ? 'rose' : 'slate'
+        },
+        {
+          label: 'largest related-job cluster',
+          value: largestRelatedCluster ? `${largestRelatedCluster.key} (${largestRelatedCluster.relatedJobIds?.length ?? 0} jobs)` : '?놁쓬',
+          tone: largestRelatedCluster && (largestRelatedCluster.relatedJobIds?.length ?? 0) > 1 ? 'sky' : 'slate',
+          clusterType: largestRelatedCluster?.groupType ?? null,
+          clusterKey: largestRelatedCluster?.key ?? null,
+          previewKey: getNormalizedPreviewKey(largestRelatedCluster?.previewKey ?? '', largestRelatedCluster?.groupType ?? 'tool', largestRelatedCluster?.key ?? ''),
+          representativeJobId: largestRelatedCluster?.representativeJobId ?? null,
+          debugUrl: largestRelatedCluster?.representativeJobId ? buildDebugUrl(largestRelatedCluster.representativeJobId) : null
         }
       ];
     };
@@ -465,7 +941,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         : '<p class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-500">표시할 추세 데이터가 없습니다.</p>';
     };
 
-    const renderAlerts = (payload) => {
+    const renderAlerts = (payload, derivedData = latestDerivedOpsData) => {
       const items = Array.isArray(payload?.items) ? payload.items : [];
       const toolCounts = payload?.byTool ?? {};
       const providerCounts = payload?.byProvider ?? {};
@@ -479,6 +955,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
 
       if (alertProvidersEl instanceof HTMLElement) {
         const entries = Object.entries(providerCounts);
+        const providerSummaries = derivedData?.providerSummaries ?? [];
         alertProvidersEl.innerHTML = entries.length
           ? entries.map(([label, count]) => createAlertRow(label, count, items.length, 'rose')).join('')
           : '<p class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">provider 경고 데이터가 없습니다.</p>';
@@ -493,7 +970,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
                     <p class="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">${escapeHtml(item.toolType)}</p>
                     <p class="mt-1 text-sm font-black text-slate-900">${escapeHtml(item.id)}</p>
                   </div>
-                  <a href="/tools/ai-photo-debug?jobId=${encodeURIComponent(item.id)}" class="rounded-lg bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-900 transition hover:bg-amber-200">디버그</a>
+                  <a href="${escapeHtml(buildDebugUrl(item.id))}" class="rounded-lg bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-900 transition hover:bg-amber-200">디버그</a>
                 </div>
                 <p class="mt-2 text-xs text-slate-500">${formatDate(item.createdAt)}</p>
                 <div class="mt-3 flex flex-wrap gap-2">
@@ -505,27 +982,134 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       }
     };
 
-    const renderInsights = (recentPayload, alertsPayload) => {
+    const renderProviderSummaries = (payload, derivedData = latestDerivedOpsData) => {
+      if (!(alertProvidersEl instanceof HTMLElement)) return;
+      const items = Array.isArray(payload?.items) ? payload.items : [];
+      const providerCounts = payload?.byProvider ?? {};
+      const entries = Object.entries(providerCounts);
+      const providerSummaries = derivedData?.providerSummaries ?? [];
+      alertProvidersEl.innerHTML = providerSummaries.length
+        ? providerSummaries.map((item) => createProviderSummaryCard(item, items.length)).join('')
+        : entries.length
+          ? entries.map(([label, count]) => createAlertRow(label, count, items.length, 'rose')).join('')
+          : '<p class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">provider 경고 데이터가 없습니다.</p>';
+    };
+
+    const buildDerivedOpsData = (recentPayload, alertsPayload) => {
+      const items = Array.isArray(recentPayload?.items) ? recentPayload.items : [];
+      const toolDrilldown = getDrilldownGroupsFromPayload(alertsPayload, 'tool');
+      const providerDrilldown = getDrilldownGroupsFromPayload(alertsPayload, 'provider');
+      const providerSummaries = [...providerDrilldown]
+        .sort((a, b) => {
+          const riskA = (a.flags.find(([flag]) => flag === 'provider_fallback')?.[1] ?? 0) * 3 + (a.relatedJobIds?.length ?? 0) + a.total;
+          const riskB = (b.flags.find(([flag]) => flag === 'provider_fallback')?.[1] ?? 0) * 3 + (b.relatedJobIds?.length ?? 0) + b.total;
+          return riskB - riskA || b.total - a.total;
+        })
+        .slice(0, 4)
+        .map((group) => ({
+          ...group,
+          previewKey: getNormalizedPreviewKey(group.previewKey, 'provider', group.key)
+        }));
+      const drilldownIndex = [...toolDrilldown, ...providerDrilldown]
+        .reduce((acc, group) => {
+          if (group.previewKey) {
+            acc[group.previewKey] = {
+              groupType: group.groupType ?? null,
+              key: group.key,
+              previewKey: group.previewKey,
+              total: group.total,
+              topQualityIssue: summarizeGroupReason(group.topQualityReason),
+              topIdentitySignal: summarizeGroupReason(group.topIdentityReason),
+              representativeJobId: group.representativeJobId ?? null,
+              debugUrl: group.debugUrl ?? null,
+              relatedJobIds: group.relatedJobIds ?? []
+            };
+          }
+          return acc;
+        }, {});
+      return {
+        insights: summarizeInsights(recentPayload, alertsPayload, [...toolDrilldown, ...providerDrilldown]),
+        miniTrend: summarizeMiniTrend(items),
+        toolDrilldown,
+        providerDrilldown,
+        providerSummaries,
+        drilldownIndex
+      };
+    };
+
+    const renderInsights = (recentPayload, alertsPayload, derivedData = latestDerivedOpsData) => {
       if (!(insightsEl instanceof HTMLElement)) return;
-      insightsEl.innerHTML = summarizeInsights(recentPayload, alertsPayload)
-        .map((item) => createMetricCard(item.label, item.value, item.tone))
+      const insights = derivedData?.insights ?? summarizeInsights(recentPayload, alertsPayload);
+      insightsEl.innerHTML = insights
+        .map((item) => createMetricCard(item.label, item.value, item.tone, item.label === 'largest related-job cluster' && item.clusterType && item.clusterKey
+          ? {
+              interactive: true,
+              hint: 'click to open drill-down',
+              dataAttrs: `data-insight-cluster="true" data-preview-key="${escapeHtml(getNormalizedPreviewKey(item.previewKey, item.clusterType ?? 'tool', item.clusterKey ?? ''))}" data-cluster-type="${escapeHtml(item.clusterType)}" data-cluster-key="${escapeHtml(item.clusterKey)}"`
+            }
+          : {}
+        ))
         .join('');
     };
 
     const summarizeMiniTrend = (items) => {
       const buckets = new Map();
+      const miniTrendItemRisk = (item) => (
+        (item?.status === 'failed' ? 4 : 0)
+        + ((Array.isArray(item?.flags) && item.flags.length) ? 2 : 0)
+        + ((Array.isArray(item?.flags) && item.flags.includes('provider_fallback')) ? 1 : 0)
+      );
       items.forEach((item) => {
         const parsed = item?.createdAt ? new Date(item.createdAt) : null;
         if (!parsed || Number.isNaN(parsed.getTime())) return;
         const hourKey = `${parsed.getMonth() + 1}/${parsed.getDate()} ${String(parsed.getHours()).padStart(2, '0')}:00`;
-        const bucket = buckets.get(hourKey) ?? { label: hourKey, total: 0, failed: 0, flagged: 0, fallback: 0 };
+        const bucket = buckets.get(hourKey) ?? {
+          label: hourKey,
+          total: 0,
+          failed: 0,
+          flagged: 0,
+          fallback: 0,
+          qualityReasons: new Map(),
+          identityReasons: new Map(),
+          representativeJobId: null,
+          representativeJobCreatedAt: null,
+          representativeJobRisk: -1
+        };
         bucket.total += 1;
         if (item.status === 'failed') bucket.failed += 1;
         if (Array.isArray(item.flags) && item.flags.length) bucket.flagged += 1;
         if (Array.isArray(item.flags) && item.flags.includes('provider_fallback')) bucket.fallback += 1;
+        for (const issue of item.qualityIssueCodes ?? []) {
+          const label = issueCodeLabel(issue);
+          bucket.qualityReasons.set(label, (bucket.qualityReasons.get(label) ?? 0) + 1);
+        }
+        for (const variant of item.identitySummary?.rejectedVariants ?? []) {
+          const label = `rejected ${variant}`;
+          bucket.identityReasons.set(label, (bucket.identityReasons.get(label) ?? 0) + 1);
+        }
+        for (const variant of item.identitySummary?.regeneratedVariants ?? []) {
+          const label = `regenerated ${variant}`;
+          bucket.identityReasons.set(label, (bucket.identityReasons.get(label) ?? 0) + 1);
+        }
+        const itemRisk = miniTrendItemRisk(item);
+        const itemCreatedAt = parsed.getTime();
+        if (
+          itemRisk > bucket.representativeJobRisk
+          || (itemRisk === bucket.representativeJobRisk && (bucket.representativeJobCreatedAt ?? 0) < itemCreatedAt)
+        ) {
+          bucket.representativeJobId = item.id ?? null;
+          bucket.representativeJobCreatedAt = itemCreatedAt;
+          bucket.representativeJobRisk = itemRisk;
+        }
         buckets.set(hourKey, bucket);
       });
       return [...buckets.values()]
+        .map((bucket) => ({
+          ...bucket,
+          topQualityReason: [...bucket.qualityReasons.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null,
+          topIdentityReason: [...bucket.identityReasons.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null,
+          debugUrl: bucket.representativeJobId ? buildDebugUrl(bucket.representativeJobId) : null
+        }))
         .sort((a, b) => {
           const riskA = a.failed * 4 + a.flagged * 2 + a.fallback;
           const riskB = b.failed * 4 + b.flagged * 2 + b.fallback;
@@ -534,10 +1118,11 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         .slice(0, 4);
     };
 
-    const renderMiniTrend = (payload) => {
+    const renderMiniTrend = (payload, derivedData = latestDerivedOpsData) => {
       if (!(miniTrendEl instanceof HTMLElement)) return;
       const items = Array.isArray(payload?.items) ? payload.items : [];
-      const trendItems = summarizeMiniTrend(items).sort((a, b) => {
+      const sourceTrendItems = derivedData?.miniTrend ?? summarizeMiniTrend(items);
+      const trendItems = [...sourceTrendItems].sort((a, b) => {
         if (miniTrendMode === 'failed') return b.failed - a.failed || b.total - a.total;
         if (miniTrendMode === 'flagged') return b.flagged - a.flagged || b.total - a.total;
         if (miniTrendMode === 'fallback') return b.fallback - a.fallback || b.total - a.total;
@@ -577,13 +1162,26 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
                     <p class="mt-1 text-sm font-bold text-slate-900">${item.fallback}</p>
                   </div>
                 </div>
+                <div class="mt-3 space-y-1 text-xs text-slate-600">
+                  <p><span class="font-semibold text-slate-900">quality:</span> ${escapeHtml(item.topQualityReason ?? 'none')}</p>
+                  <p><span class="font-semibold text-slate-900">identity:</span> ${escapeHtml(item.topIdentityReason ?? 'none')}</p>
+                </div>
+                ${item.debugUrl ? `
+                  <div class="mt-3">
+                    <a href="${escapeHtml(item.debugUrl)}" class="inline-flex rounded-full border border-${severity}-300 bg-white px-3 py-1.5 text-xs font-semibold text-${severity}-900 transition hover:border-${severity}-400">
+                      대표 job debug
+                    </a>
+                  </div>
+                ` : ''}
               </article>
             `;
           }).join('')
         : '<p class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">표시할 시간대 데이터가 없습니다.</p>';
     };
 
-    const getRepresentativeJobId = (type, key) => {
+    const getRepresentativeJobId = (type, key, derivedGroup = null) => {
+      const resolvedGroup = derivedGroup ?? getDerivedDrilldownGroups(type).find((group) => group.key === key);
+      if (resolvedGroup?.representativeJobId) return resolvedGroup.representativeJobId;
       const recentItems = Array.isArray(latestRecentPayload?.items) ? latestRecentPayload.items : [];
       const alertItems = Array.isArray(latestAlertsPayload?.items) ? latestAlertsPayload.items : [];
       const combined = [...recentItems, ...alertItems];
@@ -594,21 +1192,56 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       return match?.id ?? null;
     };
 
-    const getRepresentativeJob = (type, key) => {
+    const getRepresentativeJob = (type, key, derivedGroup = null) => {
+      const representativeJobId = getRepresentativeJobId(type, key, derivedGroup);
       const recentItems = Array.isArray(latestRecentPayload?.items) ? latestRecentPayload.items : [];
       const alertItems = Array.isArray(latestAlertsPayload?.items) ? latestAlertsPayload.items : [];
       const combined = [...recentItems, ...alertItems];
+      if (representativeJobId) {
+        const matchedById = combined.find((item) => item.id === representativeJobId);
+        if (matchedById) return matchedById;
+      }
       return combined.find((item) => {
         if (type === 'tool') return item.toolType === key;
         return (item.provider ?? item.resolvedProvider) === key;
       }) ?? null;
     };
 
-    const renderDrilldownPreview = (type, key) => {
+    const getRelatedJobs = (type, key, excludeId = null, derivedGroup = null) => {
+      const recentItems = Array.isArray(latestRecentPayload?.items) ? latestRecentPayload.items : [];
+      const alertItems = Array.isArray(latestAlertsPayload?.items) ? latestAlertsPayload.items : [];
+      const combined = [...recentItems, ...alertItems];
+      const resolvedGroup = derivedGroup ?? getDerivedDrilldownGroups(type).find((group) => group.key === key);
+      const relatedJobIds = (resolvedGroup?.relatedJobIds ?? []).filter((jobId) => jobId && jobId !== excludeId);
+      if (relatedJobIds.length) {
+        return relatedJobIds
+          .map((jobId) => combined.find((item) => item.id === jobId))
+          .filter(Boolean)
+          .slice(0, 4);
+      }
+      const seen = new Set();
+      return combined
+        .filter((item) => {
+          if (!item?.id || item.id === excludeId || seen.has(item.id)) return false;
+          const matches = type === 'tool'
+            ? item.toolType === key
+            : (item.provider ?? item.resolvedProvider) === key;
+          if (matches) seen.add(item.id);
+          return matches;
+        })
+        .slice(0, 4);
+    };
+
+    const hideDrilldownPreview = () => {
       if (!(drilldownPreviewEl instanceof HTMLElement)) return;
-      const item = getRepresentativeJob(type, key);
+      drilldownPreviewEl.classList.add('hidden');
+    };
+
+    const renderDrilldownPreview = (type, key, derivedGroup = null) => {
+      if (!(drilldownPreviewEl instanceof HTMLElement)) return;
+      const item = getRepresentativeJob(type, key, derivedGroup);
       if (!item) {
-        drilldownPreviewEl.classList.add('hidden');
+        hideDrilldownPreview();
         return;
       }
 
@@ -617,7 +1250,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         drilldownPreviewLabelEl.textContent = `${type === 'tool' ? '툴' : 'provider'} ${key} 그룹의 대표 job ${item.id}`;
       }
       if (drilldownPreviewLinkEl instanceof HTMLAnchorElement) {
-        drilldownPreviewLinkEl.href = `/tools/ai-photo-debug?jobId=${encodeURIComponent(item.id)}`;
+        drilldownPreviewLinkEl.href = buildDebugUrl(item.id);
       }
       if (drilldownPreviewOriginalEl instanceof HTMLImageElement) {
         drilldownPreviewOriginalEl.src = item.originalUrl ?? '';
@@ -635,6 +1268,25 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         const rejectedVariants = Array.isArray(item.rejectedVariantBreakdown)
           ? item.rejectedVariantBreakdown.slice(0, 2)
           : [];
+        const previewScoreBars = [
+          recommendedVariant
+            ? compactPreviewScoreBar(
+                `recommended ${recommendedVariant.variantId ?? recommendedVariant.variant ?? '-'}`,
+                recommendedVariant.score ?? recommendedVariant.estimatedScore ?? 0,
+                'emerald',
+                `identity ${formatNumber(recommendedVariant.identityScore ?? 0)} / quality ${formatNumber(recommendedVariant.qualityScore ?? 0)}`
+              )
+            : '<p class="rounded-xl border border-dashed border-slate-300 bg-white p-3 text-sm text-slate-500">recommended none</p>',
+          ...rejectedVariants.map((candidate, index) => compactPreviewScoreBar(
+            `rejected ${candidate.variantId ?? candidate.variant ?? index + 1}`,
+            candidate.score ?? candidate.estimatedScore ?? 0,
+            'rose',
+            `identity ${formatNumber(candidate.identityScore ?? 0)} / quality ${formatNumber(candidate.qualityScore ?? 0)}`
+          ))
+        ].join('');
+        const relatedJobs = getRelatedJobs(type, key, item.id, derivedGroup);
+        const qualityReason = summarizeQualityReason(item);
+        const identityReason = summarizeIdentityReason(item);
         const retryToneClass = retryDelta !== null && retryDelta > 0
           ? 'text-emerald-700'
           : retryDelta !== null && retryDelta < 0
@@ -664,6 +1316,8 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">flags</p>
             <p class="mt-1 text-sm font-bold text-slate-900">${escapeHtml((item.flags ?? []).join(', ') || 'none')}</p>
+            <p class="mt-2 text-xs text-slate-500">quality: ${escapeHtml(qualityReason)}</p>
+            <p class="mt-1 text-xs text-slate-500">identity: ${escapeHtml(identityReason)}</p>
           </div>
           <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 md:col-span-2 xl:col-span-1">
             <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">recommended vs rejected</p>
@@ -674,14 +1328,63 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
                 : '<span class="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-700">rejected none</span>'}
             </div>
           </div>
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 md:col-span-2 xl:col-span-1">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">score compare</p>
+            <div class="mt-3 grid gap-3">
+              ${previewScoreBars}
+            </div>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 md:col-span-2 xl:col-span-1">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">related jobs</p>
+            <div class="mt-3 grid gap-2">
+              ${relatedJobs.length
+                ? relatedJobs.map((related) => `
+                    <div class="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2">
+                      <div class="min-w-0">
+                        <p class="truncate text-xs font-bold text-slate-900">${escapeHtml(related.id)}</p>
+                        <p class="mt-1 text-[11px] text-slate-500">${escapeHtml(related.status ?? 'unknown')} / ${formatDate(related.createdAt)}</p>
+                      </div>
+                      <a href="${escapeHtml(buildDebugUrl(related.id))}" class="shrink-0 rounded-full border border-slate-300 bg-slate-50 px-3 py-1 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100">debug</a>
+                    </div>
+                  `).join('')
+                : '<p class="rounded-xl border border-dashed border-slate-300 bg-white p-3 text-sm text-slate-500">related jobs none</p>'}
+            </div>
+          </div>
         `;
       }
     };
 
-    const renderDrilldown = (alertsPayload) => {
-      const items = Array.isArray(alertsPayload?.items) ? alertsPayload.items : [];
-      const toolGroups = groupFlags(items, (item) => item.toolType);
-      const providerGroups = groupFlags(items, (item) => item.provider);
+    const openPreviewKey = (previewKey, fallbackType = 'tool', fallbackKey = '', options = {}) => {
+      const { alignFilter = false } = options;
+      const resolvedEntry = resolvePreviewKeyEntry(previewKey, fallbackType, fallbackKey);
+      if (!resolvedEntry?.key) {
+        activePreviewKey = '';
+        syncCurrentViewInUrl();
+        hideDrilldownPreview();
+        return false;
+      }
+      activePreviewKey = getNormalizedPreviewKey(resolvedEntry.previewKey, resolvedEntry.groupType ?? fallbackType, resolvedEntry.key);
+      renderDrilldownPreview(resolvedEntry.groupType ?? fallbackType, resolvedEntry.key, resolvedEntry);
+      syncCurrentViewInUrl();
+      if (alignFilter && !isPreviewKeyFilterActive(resolvedEntry.groupType ?? fallbackType, resolvedEntry.key)) {
+        applyPreviewKeyFilter(resolvedEntry.groupType ?? fallbackType, resolvedEntry.key);
+      }
+      return true;
+    };
+
+    const clearPreviewKeySelection = () => {
+      activePreviewKey = '';
+      pendingInitialPreviewKey = '';
+      syncCurrentViewInUrl();
+    };
+
+    const renderDrilldownPreviewByKey = (previewKey, fallbackType = 'tool', fallbackKey = '') => {
+      openPreviewKey(previewKey, fallbackType, fallbackKey);
+    };
+
+    const renderDrilldown = (alertsPayload, derivedData = latestDerivedOpsData) => {
+      const toolGroups = getDerivedDrilldownGroups('tool', derivedData);
+      const providerGroups = getDerivedDrilldownGroups('provider', derivedData);
 
       const renderGroup = (groups, target, emptyText) => {
         if (!(target instanceof HTMLElement)) return;
@@ -692,6 +1395,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
                 class="ops-drilldown w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:border-slate-300 hover:bg-white"
                 data-group-key="${escapeHtml(group.key)}"
                 data-group-type="${target === toolDrilldownEl ? 'tool' : 'provider'}"
+                data-preview-key="${escapeHtml(getNormalizedPreviewKey(group.previewKey, target === toolDrilldownEl ? 'tool' : 'provider', group.key))}"
               >
                 <div class="flex items-center justify-between gap-3">
                   <p class="text-sm font-black text-slate-900">${escapeHtml(group.key)}</p>
@@ -701,6 +1405,11 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
                   ${group.flags.length
                     ? group.flags.map(([flag, count]) => `<span class="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 shadow-sm">${escapeHtml(flag)} · ${count}</span>`).join('')
                     : '<span class="text-xs text-slate-500">플래그 없음</span>'}
+                </div>
+                <div class="mt-3 grid gap-1 text-[11px] text-slate-500">
+                  <p>top quality issue: ${escapeHtml(summarizeGroupReason(group.topQualityReason))}</p>
+                  <p>top identity signal: ${escapeHtml(summarizeGroupReason(group.topIdentityReason))}</p>
+                  <p>related jobs: ${group.relatedJobIds?.length ?? 0}</p>
                 </div>
               </button>
             `).join('')
@@ -712,9 +1421,8 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       if (toolDebugLinksEl instanceof HTMLElement) {
         toolDebugLinksEl.innerHTML = toolGroups.length
           ? toolGroups.map((group) => {
-              const jobId = getRepresentativeJobId('tool', group.key);
-              return jobId
-                ? `<a href="/tools/ai-photo-debug?jobId=${encodeURIComponent(jobId)}" class="rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-900 transition hover:bg-sky-100">${escapeHtml(group.key)} 대표 job 디버그</a>`
+              return group.debugUrl
+                ? `<a href="${escapeHtml(group.debugUrl)}" class="rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-900 transition hover:bg-sky-100">${escapeHtml(group.key)} 대표 job 디버그</a>`
                 : '';
             }).join('')
           : '';
@@ -723,9 +1431,8 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       if (providerDebugLinksEl instanceof HTMLElement) {
         providerDebugLinksEl.innerHTML = providerGroups.length
           ? providerGroups.map((group) => {
-              const jobId = getRepresentativeJobId('provider', group.key);
-              return jobId
-                ? `<a href="/tools/ai-photo-debug?jobId=${encodeURIComponent(jobId)}" class="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">${escapeHtml(group.key)} 대표 job 디버그</a>`
+              return group.debugUrl
+                ? `<a href="${escapeHtml(group.debugUrl)}" class="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">${escapeHtml(group.key)} 대표 job 디버그</a>`
                 : '';
             }).join('')
           : '';
@@ -771,6 +1478,8 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
             const recommended = Array.isArray(item.candidateBreakdown)
               ? item.candidateBreakdown.find((candidate) => candidate.recommended)
               : null;
+            const qualityReason = summarizeQualityReason(item);
+            const identityReason = summarizeIdentityReason(item);
             const candidateBars = [
               ...(item.candidateBreakdown ?? []).map((candidate) => scoreBar(candidate, candidate.recommended ? 'recommended' : candidate.regenerated ? 'regenerated' : 'candidate')),
               ...(item.rejectedVariantBreakdown ?? []).map((candidate) => scoreBar(candidate, 'rejected'))
@@ -785,7 +1494,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
                     <p class="mt-1 text-sm text-slate-500">${formatDate(item.createdAt)}</p>
                   </div>
                   <div class="flex flex-wrap gap-2">
-                    <a href="/tools/ai-photo-debug?jobId=${encodeURIComponent(item.id)}" class="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800">디버그</a>
+                    <a href="${escapeHtml(buildDebugUrl(item.id))}" class="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800">디버그</a>
                     ${(item.flags ?? []).map((flag) => `<span class="rounded-full bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm">${escapeHtml(flag)}</span>`).join('')}
                   </div>
                 </div>
@@ -853,6 +1562,11 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
                     <div class="rounded-2xl border border-slate-200 bg-white p-4">
                       <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">품질 요약</p>
                       <p class="mt-2 text-sm font-bold text-slate-900">${escapeHtml(item.qualitySummary ?? '요약 없음')}</p>
+                      <div class="mt-3 flex flex-wrap gap-2">
+                        ${renderProcessingSignalChips(item)}
+                      </div>
+                      <p class="mt-2 text-xs text-slate-500">quality reason: ${escapeHtml(qualityReason)}</p>
+                      <p class="mt-1 text-xs text-slate-500">identity reason: ${escapeHtml(identityReason)}</p>
                     </div>
 
                     <div class="rounded-2xl border border-slate-200 bg-white p-4">
@@ -883,6 +1597,14 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       const alerts = latestAlertsPayload;
       const items = Array.isArray(recent?.items) ? recent.items : [];
       const alertItems = Array.isArray(alerts?.items) ? alerts.items : [];
+      const derivedData = latestDerivedOpsData ?? buildDerivedOpsData(recent, alerts);
+      const exportPayload = buildOpsExportPayload();
+      const insights = derivedData.insights;
+      const miniTrends = derivedData.miniTrend;
+      const providerSummaries = derivedData.providerSummaries ?? [];
+      const drilldownIndex = Object.values(derivedData.drilldownIndex ?? {});
+      const currentViewUrl = exportPayload.viewContext?.url ?? getCurrentViewUrl();
+      const viewSummary = exportPayload.viewContext?.summary ?? getCurrentViewContextSummary();
       const lines = [
         'AI 사진 운영 요약',
         `생성 시각: ${new Date().toLocaleString('ko-KR')}`,
@@ -891,30 +1613,113 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         `경고 작업: ${alertItems.length}`
       ];
 
+      lines[1] = `exportedAt: ${exportPayload.exportedAt ?? exportPayload.exportMeta?.exportedAt ?? new Date().toISOString()}`;
+      lines.splice(2, 0, `surface: ${exportPayload.surface ?? 'ops'}`);
+      lines.push(`currentView: ${currentViewUrl}`);
+      lines.push('', '[schema]');
+      lines.push(`- schemaVersion: ${exportPayload.schemaVersion ?? 'ai-photo-view-context.v1'}`);
+      lines.push(`- surface: ${exportPayload.surface ?? 'ops'}`);
+      lines.push(`- canonicalViewContext: ${exportPayload.legacy ? 'viewContext (legacy fields preserved)' : 'viewContext'}`);
+      lines.push('', '[viewContext]');
+      lines.push(`- url: ${currentViewUrl}`);
+      lines.push(`- summary: ${viewContextUtils?.formatViewContextSummary(viewSummary) ?? 'status=all, tool=all, provider=all, limit=12, sinceHours=24, flaggedOnly=false, fallbackOnly=false, miniTrend=risk, previewKey=none'}`);
+      lines.push('', '[exportMeta]');
+      lines.push(`- source: ${exportPayload.exportMeta?.source ?? 'ops'}`);
+      lines.push(`- exportedAt: ${exportPayload.exportMeta?.exportedAt ?? new Date().toISOString()}`);
+
       (recent?.toolTrends ?? []).forEach((item) => {
         lines.push(`- ${item.toolType}: total=${item.total}, failed=${item.failed}, avgQuality=${formatNumber(item.avgQualityScore)}, avgIdentity=${formatNumber(item.avgIdentityScore)}`);
       });
 
+      if (insights.length) {
+        lines.push('', '[insights]');
+        insights.forEach((item) => {
+          const clusterPreviewKey = getNormalizedPreviewKey(item.previewKey, item.clusterType ?? 'tool', item.clusterKey ?? '');
+          const clusterMeta = item.label === 'largest related-job cluster' && clusterPreviewKey
+            ? ` / cluster=${clusterPreviewKey}`
+            : '';
+          const debugMeta = item.label === 'largest related-job cluster' && item.debugUrl
+            ? ` / debug=${item.debugUrl}`
+            : '';
+          lines.push(`- ${item.label}: ${item.value}${clusterMeta}${debugMeta}`);
+        });
+      }
+
+      if (miniTrends.length) {
+        lines.push('', '[mini trend]');
+        miniTrends.forEach((item) => {
+          lines.push(`- ${item.label}: total=${item.total}, failed=${item.failed}, flagged=${item.flagged}, fallback=${item.fallback}, quality=${item.topQualityReason ?? 'none'}, identity=${item.topIdentityReason ?? 'none'}, debug=${item.debugUrl ?? 'none'}`);
+        });
+      }
+
+      if (providerSummaries.length) {
+        lines.push('', '[provider summaries]');
+        providerSummaries.forEach((item) => {
+          const fallbackCount = item.flags.find(([flag]) => flag === 'provider_fallback')?.[1] ?? 0;
+          lines.push(`- ${item.previewKey}: total=${item.total}, fallback=${fallbackCount}, quality=${summarizeGroupReason(item.topQualityReason)}, identity=${summarizeGroupReason(item.topIdentityReason)}, related=${item.relatedJobIds?.length ?? 0}, debug=${item.debugUrl ?? 'none'}`);
+        });
+      }
+
+      if (drilldownIndex.length) {
+        lines.push('', '[drilldown index]');
+        drilldownIndex.forEach((item) => {
+          lines.push(`- ${item.previewKey}: total=${item.total}, quality=${item.topQualityIssue}, identity=${item.topIdentitySignal}, debug=${item.debugUrl ?? 'none'}, related=${item.relatedJobIds?.length ?? 0}`);
+        });
+      }
+
       alertItems.slice(0, 10).forEach((item) => {
-        lines.push(`- alert ${item.id}: ${item.toolType} / ${item.provider} / flags=${(item.flags ?? []).join(', ')}`);
+        lines.push(`- alert ${item.id}: ${item.toolType} / ${item.provider} / flags=${(item.flags ?? []).join(', ')} / quality=${summarizeQualityReason(item)} / identity=${summarizeIdentityReason(item)}`);
       });
 
       return lines.join('\n');
     };
 
-    const downloadText = (name, text) => {
-      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = name;
-      anchor.click();
-      URL.revokeObjectURL(url);
+    const buildOpsExportPayload = () => {
+      const recent = latestRecentPayload;
+      const alerts = latestAlertsPayload;
+      const derivedData = latestDerivedOpsData ?? buildDerivedOpsData(recent, alerts);
+      const exportedAt = new Date().toISOString();
+      const currentViewUrl = getCurrentViewUrl();
+      const viewContext = viewContextUtils?.createViewContext(currentViewUrl, getCurrentViewContextSummary()) ?? {
+        url: currentViewUrl,
+        summary: getCurrentViewContextSummary()
+      };
+      return viewContextUtils?.createExportEnvelope('ops', {
+        exportedAt,
+        recent,
+        alerts,
+        derived: derivedData,
+        currentViewUrl,
+        viewContext,
+        legacy: viewContextUtils?.createLegacyFields({
+          currentViewUrl
+        }),
+        exportMeta: viewContextUtils?.createExportMeta('ops', exportedAt) ?? {
+          source: 'ops',
+          exportedAt
+        }
+      }) ?? {
+        schemaVersion: 'ai-photo-view-context.v1',
+        surface: 'ops',
+        exportedAt,
+        recent,
+        alerts,
+        derived: derivedData,
+        currentViewUrl,
+        viewContext,
+        legacy: viewContextUtils?.createLegacyFields({
+          currentViewUrl
+        }),
+        exportMeta: viewContextUtils?.createExportMeta('ops', exportedAt) ?? {
+          source: 'ops',
+          exportedAt
+        }
+      };
     };
 
     const downloadJson = () => {
-      const text = JSON.stringify({ recent: latestRecentPayload, alerts: latestAlertsPayload }, null, 2);
-      downloadText(`ai-photo-ops-${Date.now()}.json`, text);
+      const text = JSON.stringify(buildOpsExportPayload(), null, 2);
+      viewContextUtils?.downloadTextFile(`ai-photo-ops-${Date.now()}.json`, text, 'application/json');
     };
 
     const buildQuery = () => {
@@ -941,20 +1746,34 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       const recentItems = Array.isArray(latestRecentPayload?.items) ? latestRecentPayload.items : [];
       const alertItems = Array.isArray(latestAlertsPayload?.items) ? latestAlertsPayload.items : [];
       const target = recentItems[0] ?? alertItems[0] ?? null;
-      return target?.id ? `/tools/ai-photo-debug?jobId=${encodeURIComponent(target.id)}` : '/tools/ai-photo-debug';
+      return buildDebugUrl(target?.id ?? '');
+    };
+
+    const getAdminUrl = () => {
+      const params = new URLSearchParams();
+      params.set('opsView', getCurrentViewUrl());
+      return `/tools/ai-photo-admin?${params.toString()}`;
     };
 
     const syncDebugLink = () => {
       if (!(openDebugLink instanceof HTMLAnchorElement)) return;
+      const recentItems = Array.isArray(latestRecentPayload?.items) ? latestRecentPayload.items : [];
+      const alertItems = Array.isArray(latestAlertsPayload?.items) ? latestAlertsPayload.items : [];
+      const hasTarget = Boolean((recentItems[0] ?? alertItems[0])?.id);
       const href = getPrimaryDebugUrl();
-      const hasTarget = href !== '/tools/ai-photo-debug';
       openDebugLink.href = href;
       openDebugLink.classList.toggle('opacity-50', !hasTarget);
       openDebugLink.classList.toggle('pointer-events-none', !hasTarget);
       openDebugLink.setAttribute('aria-disabled', hasTarget ? 'false' : 'true');
     };
 
+    const syncAdminLink = () => {
+      if (!(openAdminLink instanceof HTMLAnchorElement)) return;
+      openAdminLink.href = getAdminUrl();
+    };
+
     const applyPreset = (preset) => {
+      clearPreviewKeySelection();
       if (filters.status instanceof HTMLSelectElement) filters.status.value = 'all';
       if (filters.flagged instanceof HTMLSelectElement) filters.flagged.value = 'false';
       if (filters.fallbackOnly instanceof HTMLSelectElement) filters.fallbackOnly.value = 'false';
@@ -983,27 +1802,43 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         if (!recentRes.ok || !alertsRes.ok) throw new Error('운영 데이터를 불러오지 못했습니다.');
         const recentPayload = await recentRes.json();
         const alertsPayload = await alertsRes.json();
+        const derivedData = buildDerivedOpsData(recentPayload, alertsPayload);
         latestRecentPayload = recentPayload;
         latestAlertsPayload = alertsPayload;
+        latestDerivedOpsData = derivedData;
         renderStats(recentPayload, alertsPayload);
-        renderInsights(recentPayload, alertsPayload);
-        renderMiniTrend(recentPayload);
+        renderInsights(recentPayload, alertsPayload, derivedData);
+        renderMiniTrend(recentPayload, derivedData);
         renderTrends(recentPayload);
-        renderAlerts(alertsPayload);
-        renderDrilldown(alertsPayload);
+        renderAlerts(alertsPayload, derivedData);
+        renderProviderSummaries(alertsPayload, derivedData);
+        renderDrilldown(alertsPayload, derivedData);
         renderList(recentPayload);
         syncDebugLink();
+        syncAdminLink();
+        syncCurrentViewInUrl();
+        if (activePreviewKey) {
+          openPreviewKey(activePreviewKey, 'tool', '');
+          pendingInitialPreviewKey = '';
+        } else {
+          hideDrilldownPreview();
+        }
         setStatus(`최근 ${Array.isArray(recentPayload.items) ? recentPayload.items.length : 0}건, 경고 ${Array.isArray(alertsPayload.items) ? alertsPayload.items.length : 0}건을 불러왔습니다.`);
       } catch (error) {
         latestRecentPayload = null;
         latestAlertsPayload = null;
+        latestDerivedOpsData = null;
+        hideDrilldownPreview();
         syncDebugLink();
         setStatus(error instanceof Error ? error.message : '운영 데이터를 불러오지 못했습니다.');
       }
     };
 
     refreshBtn?.addEventListener('click', () => loadOps());
-    Object.values(filters).forEach((element) => element?.addEventListener('change', () => loadOps()));
+    Object.values(filters).forEach((element) => element?.addEventListener('change', () => {
+      clearPreviewKeySelection();
+      loadOps();
+    }));
     presetButtons.forEach((button) => {
       button.addEventListener('click', () => {
         const preset = button.getAttribute('data-preset') ?? 'all';
@@ -1013,40 +1848,57 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     miniTrendTabs.forEach((button) => {
       button.addEventListener('click', () => {
         miniTrendMode = button.getAttribute('data-mini-trend-tab') ?? 'risk';
-        renderMiniTrend(latestRecentPayload);
+        renderMiniTrend(latestRecentPayload, latestDerivedOpsData);
       });
     });
     document.addEventListener('click', (event) => {
-      const target = event.target instanceof HTMLElement ? event.target.closest('.ops-drilldown') : null;
-      if (!(target instanceof HTMLElement)) return;
-      const key = target.getAttribute('data-group-key') ?? 'all';
-      const type = target.getAttribute('data-group-type') ?? 'tool';
-      renderDrilldownPreview(type, key);
-      if (type === 'tool') {
-        applyDirectFilter({ toolType: key, provider: 'all', fallbackOnly: false, flaggedOnly: true, status: 'all' });
+      const insightTarget = event.target instanceof HTMLElement ? event.target.closest('[data-insight-cluster="true"]') : null;
+      if (insightTarget instanceof HTMLElement) {
+        const previewKey = insightTarget.getAttribute('data-preview-key') ?? '';
+        const { type, key } = parsePreviewKey(
+          previewKey,
+          insightTarget.getAttribute('data-cluster-type') ?? 'tool',
+          insightTarget.getAttribute('data-cluster-key') ?? ''
+        );
+        if (key) {
+          openPreviewKey(previewKey, type, key);
+          applyPreviewKeyFilter(type, key);
+        }
         return;
       }
-      applyDirectFilter({
-        toolType: 'all',
-        provider: key,
-        fallbackOnly: key === 'local_sharp',
-        flaggedOnly: true,
-        status: 'all'
-      });
+      const target = event.target instanceof HTMLElement ? event.target.closest('.ops-drilldown') : null;
+      if (!(target instanceof HTMLElement)) return;
+      const previewKey = target.getAttribute('data-preview-key') ?? '';
+      const { type, key } = parsePreviewKey(
+        previewKey,
+        target.getAttribute('data-group-type') ?? 'tool',
+        target.getAttribute('data-group-key') ?? 'all'
+      );
+      openPreviewKey(previewKey, type, key);
+      applyPreviewKeyFilter(type, key);
     });
 
     copySummaryBtn?.addEventListener('click', async () => {
       const summary = buildOpsSummary();
       try {
-        await navigator.clipboard.writeText(summary);
+        await viewContextUtils?.copyText(summary);
         setStatus('운영 요약을 클립보드에 복사했습니다.');
       } catch {
         setStatus('클립보드 복사에 실패했습니다.');
       }
     });
 
+    copyViewLinkBtn?.addEventListener('click', async () => {
+      try {
+        await viewContextUtils?.copyText(getCurrentViewUrl());
+        setStatus('현재 뷰 링크를 클립보드에 복사했습니다.');
+      } catch {
+        setStatus('현재 뷰 링크 복사에 실패했습니다.');
+      }
+    });
+
     downloadSummaryBtn?.addEventListener('click', () => {
-      downloadText(`ai-photo-ops-summary-${Date.now()}.txt`, buildOpsSummary());
+      viewContextUtils?.downloadTextFile(`ai-photo-ops-summary-${Date.now()}.txt`, buildOpsSummary());
       setStatus('운영 요약을 텍스트 파일로 저장했습니다.');
     });
 
@@ -1061,7 +1913,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         setStatus('tool drill-down으로 저장할 경고 데이터가 없습니다.');
         return;
       }
-      downloadText(`ai-photo-tool-drilldown-${Date.now()}.txt`, text);
+      viewContextUtils?.downloadTextFile(`ai-photo-tool-drilldown-${Date.now()}.txt`, text);
       setStatus('tool drill-down 요약을 저장했습니다.');
     });
 
@@ -1071,9 +1923,40 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         setStatus('provider drill-down으로 저장할 경고 데이터가 없습니다.');
         return;
       }
-      downloadText(`ai-photo-provider-drilldown-${Date.now()}.txt`, text);
+      viewContextUtils?.downloadTextFile(`ai-photo-provider-drilldown-${Date.now()}.txt`, text);
       setStatus('provider drill-down 요약을 저장했습니다.');
     });
+
+    downloadToolDrilldownCsvBtn?.addEventListener('click', () => {
+      const csv = buildDrilldownCsvExport('tool');
+      if (!csv) {
+        setStatus('tool drill-down CSV로 저장할 경고 데이터가 없습니다.');
+        return;
+      }
+      viewContextUtils?.downloadTextFile(`ai-photo-tool-drilldown-${Date.now()}.csv`, csv);
+      setStatus('tool drill-down CSV를 저장했습니다.');
+    });
+
+    downloadProviderDrilldownCsvBtn?.addEventListener('click', () => {
+      const csv = buildDrilldownCsvExport('provider');
+      if (!csv) {
+        setStatus('provider drill-down CSV로 저장할 경고 데이터가 없습니다.');
+        return;
+      }
+      viewContextUtils?.downloadTextFile(`ai-photo-provider-drilldown-${Date.now()}.csv`, csv);
+      setStatus('provider drill-down CSV를 저장했습니다.');
+    });
+
+    hydrateControlsFromUrl();
+
+    if (pendingInitialPreviewKey) {
+      const initialPreview = parsePreviewKey(pendingInitialPreviewKey, 'tool', '');
+      if (initialPreview.key) {
+        syncPreviewKeyFilters(initialPreview.type ?? 'tool', initialPreview.key);
+      } else {
+        clearPreviewKeySelection();
+      }
+    }
 
     loadOps();
   </script>

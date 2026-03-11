@@ -2,67 +2,800 @@
 import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
+
+const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
 ---
 
 <Layout
-  title="AI 증명사진 관리자 허브 | ManyTool"
-  description="AI 증명사진 운영 요약, 단일 작업 디버그, 최근 경고 작업 흐름을 한곳에서 관리하는 관리자 허브입니다."
+  title="AI 癲ル슣鍮섌뜮戮녈럷??鶯????굿?域밸Ŧ遊??????낅빘 | ManyTool"
+  description="AI 癲ル슣鍮섌뜮戮녈럷??鶯????⑤㈇猿 ??釉먯뒠?? ???쒒?????????釉먮폏?遺룹쐺? 癲ル슔?됭짆???濡ろ뜑?????????????????癰궽블뀤????????굿?域밸Ŧ肉ョ뵳?????굿?域밸Ŧ遊??????낅빘????낇돲??"
   noindex={true}
 >
   <Header />
   <main class="mx-auto max-w-6xl px-4 py-8">
     <section class="rounded-2xl border border-slate-200 bg-white p-6">
       <p class="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">Admin Hub</p>
-      <h1 class="mt-3 text-3xl font-black tracking-tight text-slate-900">AI 증명사진 관리자 허브</h1>
-      <p class="mt-2 text-sm text-slate-600">운영 요약, 단일 job 디버그, 최근 경고 작업 추적을 한 화면에서 시작합니다.</p>
+      <h1 class="mt-3 text-3xl font-black tracking-tight text-slate-900">AI 癲ル슣鍮섌뜮戮녈럷??鶯????굿?域밸Ŧ遊??????낅빘</h1>
+      <p class="mt-2 text-sm text-slate-600">???⑤㈇猿 ??釉먯뒠?? ???쒒?job ??釉먮폏?遺룹쐺? 癲ル슔?됭짆???濡ろ뜑???????????⑤베毓???????釉먮뻤????????筌믨퀣援??筌뤾퍓???</p>
       <div class="mt-5 grid gap-4 md:grid-cols-3">
-        <a href="/tools/ai-photo-ops" class="rounded-2xl border border-slate-200 bg-slate-50 p-5 transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white">
+        <a id="admin-open-ops" href="/tools/ai-photo-ops" class="rounded-2xl border border-slate-200 bg-slate-50 p-5 transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white">
           <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Ops</p>
-          <h2 class="mt-2 text-xl font-black text-slate-900">운영 요약</h2>
-          <p class="mt-2 text-sm text-slate-600">최근 생성, 저점수 플래그, provider fallback, 기간별 툴 추세를 빠르게 확인합니다.</p>
+          <h2 class="mt-2 text-xl font-black text-slate-900">???⑤㈇猿 ??釉먯뒠??/h2>
+          <p class="mt-2 text-sm text-slate-600">癲ル슔?됭짆????獄쏅똻?? ????????????μ쐺? provider fallback, ??れ삀??㉱??듆??????⑤베毓??筌???鴉????Ъ??嶺뚮Ĳ?됮??筌뤾퍓???</p>
         </a>
-        <a href="/tools/ai-photo-debug" class="rounded-2xl border border-slate-200 bg-slate-50 p-5 transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white">
+        <a id="admin-open-debug" href="/tools/ai-photo-debug" class="rounded-2xl border border-slate-200 bg-slate-50 p-5 transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white">
           <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Debug</p>
-          <h2 class="mt-2 text-xl font-black text-slate-900">단일 Job 디버그</h2>
-          <p class="mt-2 text-sm text-slate-600">원본/추천 후보 비교, pipelineReport, 재시도 이력, JSON export를 확인합니다.</p>
+          <h2 class="mt-2 text-xl font-black text-slate-900">???쒒?Job ??釉먮폏?遺룹쐺?/h2>
+          <p class="mt-2 text-sm text-slate-600">???亦???⑤베毓????ш끽維亦?????? pipelineReport, ?????????? JSON export???嶺뚮Ĳ?됮??筌뤾퍓???</p>
         </a>
         <a href="/ai-id-photo" class="rounded-2xl border border-slate-200 bg-slate-50 p-5 transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white">
           <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Tool</p>
-          <h2 class="mt-2 text-xl font-black text-slate-900">생성 페이지 열기</h2>
-          <p class="mt-2 text-sm text-slate-600">실제 업로드/생성 화면에서 디버그 링크와 운영 링크가 정상 동작하는지 확인합니다.</p>
+          <h2 class="mt-2 text-xl font-black text-slate-900">??獄쏅똻?????쒓낮?꾬┼??넊? ????깅탿</h2>
+          <p class="mt-2 text-sm text-slate-600">???源놁졆 ????겾????獄쏅똻????釉먮뻤????????釉먮폏?遺룹쐺?癲ル슢??湲룹물?? ???⑤㈇猿 癲ル슢??湲룹물筌먯빘苡? ?嶺뚮Ĳ?놅쭕?????깃탾??嚥▲꺂痢롳┼??넊? ?嶺뚮Ĳ?됮??筌뤾퍓???</p>
         </a>
       </div>
     </section>
 
     <section class="mt-6 grid gap-4 md:grid-cols-2">
       <article class="rounded-2xl border border-slate-200 bg-white p-5">
-        <h2 class="text-xl font-black text-slate-900">빠른 운영 순서</h2>
+        <h2 class="text-xl font-black text-slate-900">??鴉?????⑤㈇猿 ??筌?留?/h2>
         <ol class="mt-3 list-decimal space-y-1 pl-5 text-sm text-slate-700">
-          <li>운영 요약에서 실패, 저점수, 저동일성 비율 확인</li>
-          <li>문제가 있는 job은 단일 디버그로 이동</li>
-          <li>원본/추천 비교와 재시도 이력 확인</li>
-          <li>필요하면 생성 페이지에서 같은 유형을 재현</li>
+          <li>???⑤㈇猿 ??釉먯뒠??????????됰꽡, ??????? ??????곕럡????????嶺뚮Ĳ?됮?/li>
+          <li>???뽮덫?影?놁씀? ????덉툗 job?? ???쒒???釉먮폏?遺룹쐺獄쏅챷援↓쨹??????/li>
+          <li>???亦???⑤베毓???????? ???????????嶺뚮Ĳ?됮?/li>
+          <li>??ш끽維???嚥?????獄쏅똻?????쒓낮?꾬┼??넊????????좊즵?? ???レ챺???????/li>
         </ol>
       </article>
       <article class="rounded-2xl border border-slate-200 bg-white p-5">
-        <h2 class="text-xl font-black text-slate-900">현재 운영 포인트</h2>
+        <h2 class="text-xl font-black text-slate-900">??ш끽維?????⑤㈇猿 ?????/h2>
         <ul class="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-700">
-          <li>job 스냅샷이 파일로 저장되어 서버 재시작 후에도 복원됩니다.</li>
-          <li>운영 요약에서 기간별 툴 평균 규격/동일성 점수를 볼 수 있습니다.</li>
-          <li>경고 플래그가 붙은 작업은 바로 디버그로 이동할 수 있습니다.</li>
-          <li>외부 배경 제거 API 키가 없으면 로컬/구조 기반 파이프라인으로 동작합니다.</li>
+          <li>job ???怨좊룴??猷???????앗껋뒙????潁뺛깾逾????筌먦끉裕????????ш끽維????怨뚮옖甕???筌뤾퍓???</li>
+          <li>???⑤㈇猿 ??釉먯뒠????????れ삀??㉱??듆????????????獒뺢쑈??????곕럡???????????????怨?????덊렡.</li>
+          <li>?濡ろ뜑????????μ쐺獄쏅ı?? ??됰Ŧ?? ??????? ?袁⑸즴??繞???釉먮폏?遺룹쐺獄쏅챷援↓쨹????????????怨?????덊렡.</li>
+          <li>?嶺? ?袁⑸즲??㏓き???癰귙끋源?API ??? ???⑤챶?뺧┼??棺??짆?쏆춾?????깼????れ삀??뫢???????ш끽維곲?嶺뚮ㅎ?댐쭗?쒖뒙?????깃탾??筌뤾퍓???</li>
         </ul>
       </article>
     </section>
 
+    <section id="admin-ops-context" class="mt-6 hidden rounded-2xl border border-sky-200 bg-sky-50 p-5">
+      <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">Shared Ops View</p>
+          <h2 class="mt-2 text-xl font-black text-slate-900">??ш끽維???ops ???뽮덧??/h2>
+          <p class="mt-2 text-sm text-slate-600">admin ????낅빘?????怨쀪퐨???됰씚逾???ops ??ш낄援?????ㅺ컼?????숆강筌?????筌?六??筌뤾퍓???</p>
+        </div>
+        <a id="admin-ops-context-link" href="/tools/ai-photo-ops" class="rounded-lg border border-sky-300 bg-white px-3 py-2 text-xs font-semibold text-sky-900 transition hover:border-sky-400">
+          ops view???????믩쨬??쎛??        </a>
+      </div>
+      <div class="mt-3 flex flex-wrap gap-2">
+        <button id="admin-copy-summary" type="button" class="rounded-lg border border-sky-300 bg-white px-3 py-2 text-xs font-semibold text-sky-900 transition hover:border-sky-400">??釉먯뒠???怨뚮옖甕곕?苡?/button>
+        <button id="admin-download-summary" type="button" class="rounded-lg border border-sky-300 bg-white px-3 py-2 text-xs font-semibold text-sky-900 transition hover:border-sky-400">??釉먯뒠??????/button>
+        <button id="admin-copy-json" type="button" class="rounded-lg border border-sky-300 bg-white px-3 py-2 text-xs font-semibold text-sky-900 transition hover:border-sky-400">JSON ?怨뚮옖甕곕?苡?/button>
+        <button id="admin-download-json" type="button" class="rounded-lg border border-sky-300 bg-white px-3 py-2 text-xs font-semibold text-sky-900 transition hover:border-sky-400">JSON ????/button>
+      </div>
+      <p id="admin-export-status" class="mt-3 text-xs text-sky-900"></p>
+      <div id="admin-ops-context-grid" class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4"></div>
+    </section>
+
     <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-5">
-      <h2 class="text-xl font-black text-slate-900">바로 가기</h2>
+      <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Live Summary</p>
+          <h2 class="mt-2 text-xl font-black text-slate-900">Recent pipeline health</h2>
+          <p id="admin-live-summary-label" class="mt-2 text-sm text-slate-600">Loading current job summary.</p>
+          <div id="admin-live-scope" class="mt-3 flex flex-wrap gap-2"></div>
+        </div>
+      </div>
+      <div class="mt-4 flex flex-wrap gap-2">
+        <select id="admin-live-status" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700">
+          <option value="all">all status</option>
+          <option value="done">done</option>
+          <option value="failed">failed</option>
+          <option value="pending">pending</option>
+        </select>
+        <select id="admin-live-tool" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700">
+          <option value="all">all tools</option>
+        </select>
+        <select id="admin-live-provider" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700">
+          <option value="all">all providers</option>
+        </select>
+        <select id="admin-live-period" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700">
+          <option value="24">24h</option>
+          <option value="168">7d</option>
+          <option value="0">all</option>
+        </select>
+        <select id="admin-live-flagged" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700">
+          <option value="false">all jobs</option>
+          <option value="true">flagged only</option>
+        </select>
+        <select id="admin-live-fallback" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700">
+          <option value="false">all providers</option>
+          <option value="true">fallback only</option>
+        </select>
+        <button id="admin-live-refresh" type="button" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">Refresh</button>
+        <button id="admin-copy-link" type="button" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">Copy admin link</button>
+        <a id="admin-open-state" href="/tools/ai-photo-admin" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">Open current state</a>
+      </div>
+      <div id="admin-live-stats" class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-6"></div>
+      <div class="mt-4 grid gap-4 xl:grid-cols-2">
+        <div>
+          <h3 class="text-sm font-black uppercase tracking-[0.18em] text-slate-500">Top Tools</h3>
+          <div id="admin-live-tools" class="mt-3 grid gap-3"></div>
+        </div>
+        <div>
+          <h3 class="text-sm font-black uppercase tracking-[0.18em] text-slate-500">Top Providers</h3>
+          <div id="admin-live-providers" class="mt-3 grid gap-3"></div>
+        </div>
+      </div>
+      <div class="mt-4 grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+        <div>
+          <h3 class="text-sm font-black uppercase tracking-[0.18em] text-slate-500">Top Reasons</h3>
+          <div id="admin-live-reasons" class="mt-3 grid gap-3"></div>
+        </div>
+        <div>
+          <h3 class="text-sm font-black uppercase tracking-[0.18em] text-slate-500">Latest Flagged Jobs</h3>
+          <div id="admin-live-flagged-list" class="mt-3 grid gap-3"></div>
+        </div>
+      </div>
+      <div class="mt-4">
+        <h3 class="text-sm font-black uppercase tracking-[0.18em] text-slate-500">Provider Readiness</h3>
+        <div id="admin-provider-readiness" class="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4"></div>
+      </div>
+    </section>
+
+    <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-5">
+      <h2 class="text-xl font-black text-slate-900">?袁⑸즴??繞???좊읈???/h2>
       <div class="mt-3 grid gap-3 text-sm font-semibold md:grid-cols-3">
-        <a href="/ai-id-photo" class="rounded-xl border border-sky-100 bg-sky-50 px-4 py-3 text-sky-700">AI 증명사진</a>
-        <a href="/ai-passport-photo" class="rounded-xl border border-sky-100 bg-sky-50 px-4 py-3 text-sky-700">AI 여권사진</a>
-        <a href="/ai-photoshop" class="rounded-xl border border-sky-100 bg-sky-50 px-4 py-3 text-sky-700">AI 프로필사진</a>
+        <a href="/ai-id-photo" class="rounded-xl border border-sky-100 bg-sky-50 px-4 py-3 text-sky-700">AI 癲ル슣鍮섌뜮戮녈럷??鶯?/a>
+        <a href="/ai-passport-photo" class="rounded-xl border border-sky-100 bg-sky-50 px-4 py-3 text-sky-700">AI ?????鶯?/a>
+        <a href="/ai-photoshop" class="rounded-xl border border-sky-100 bg-sky-50 px-4 py-3 text-sky-700">AI ??ш끽維곩ㅇ??ш끽維?짰異?/a>
       </div>
     </section>
   </main>
   <Footer />
 </Layout>
+
+<script is:inline src="/scripts/ai-photo-view-context.js"></script>
+<script define:vars={{ apiBase }}>
+  const API_BASE = apiBase;
+  const params = new URLSearchParams(window.location.search);
+  const opsViewUrl = params.get('opsView')?.trim() ?? '';
+  const openOpsLink = document.getElementById('admin-open-ops');
+  const openDebugLink = document.getElementById('admin-open-debug');
+  const opsContextEl = document.getElementById('admin-ops-context');
+  const opsContextGridEl = document.getElementById('admin-ops-context-grid');
+  const opsContextLinkEl = document.getElementById('admin-ops-context-link');
+  const exportStatusEl = document.getElementById('admin-export-status');
+  const copySummaryBtn = document.getElementById('admin-copy-summary');
+  const downloadSummaryBtn = document.getElementById('admin-download-summary');
+  const copyJsonBtn = document.getElementById('admin-copy-json');
+  const downloadJsonBtn = document.getElementById('admin-download-json');
+  const liveSummaryLabelEl = document.getElementById('admin-live-summary-label');
+  const liveStatusEl = document.getElementById('admin-live-status');
+  const liveToolEl = document.getElementById('admin-live-tool');
+  const liveProviderEl = document.getElementById('admin-live-provider');
+  const livePeriodEl = document.getElementById('admin-live-period');
+  const liveFlaggedFilterEl = document.getElementById('admin-live-flagged');
+  const liveFallbackFilterEl = document.getElementById('admin-live-fallback');
+  const liveRefreshBtn = document.getElementById('admin-live-refresh');
+  const copyAdminLinkBtn = document.getElementById('admin-copy-link');
+  const openAdminStateLink = document.getElementById('admin-open-state');
+  const liveStatsEl = document.getElementById('admin-live-stats');
+  const liveScopeEl = document.getElementById('admin-live-scope');
+  const liveToolsEl = document.getElementById('admin-live-tools');
+  const liveProvidersEl = document.getElementById('admin-live-providers');
+  const liveReasonsEl = document.getElementById('admin-live-reasons');
+  const liveFlaggedEl = document.getElementById('admin-live-flagged-list');
+  const providerReadinessEl = document.getElementById('admin-provider-readiness');
+  const viewContextUtils = window.AIPhotoViewContext;
+  let latestConfigPayload = null;
+
+  const escapeHtml = (value) => String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+
+  const getOpsContextSummary = (viewUrl = opsViewUrl) => viewContextUtils?.parseOpsViewUrl(viewUrl) ?? null;
+  let liveViewSummary = viewContextUtils?.withDefaultContext({
+    ...(getOpsContextSummary(opsViewUrl) ?? {}),
+    status: params.get('adminStatus') ?? getOpsContextSummary(opsViewUrl)?.status ?? 'all',
+    tool: params.get('adminTool') ?? getOpsContextSummary(opsViewUrl)?.tool ?? 'all',
+    provider: params.get('adminProvider') ?? getOpsContextSummary(opsViewUrl)?.provider ?? 'all',
+    sinceHours: params.get('adminSinceHours') ?? getOpsContextSummary(opsViewUrl)?.sinceHours ?? '24',
+    flaggedOnly: params.get('adminFlaggedOnly')
+      ? params.get('adminFlaggedOnly') === 'true'
+      : (getOpsContextSummary(opsViewUrl)?.flaggedOnly ?? false),
+    fallbackOnly: params.get('adminFallbackOnly')
+      ? params.get('adminFallbackOnly') === 'true'
+      : (getOpsContextSummary(opsViewUrl)?.fallbackOnly ?? false)
+  }) ?? {
+    status: 'all',
+    tool: 'all',
+    provider: 'all',
+    limit: '12',
+    sinceHours: '24',
+    flaggedOnly: false,
+    fallbackOnly: false,
+    miniTrend: 'risk',
+    previewKey: null
+  };
+
+  const setExportStatus = (text) => {
+    if (exportStatusEl instanceof HTMLElement) {
+      exportStatusEl.textContent = text;
+    }
+  };
+
+  const formatNumber = (value, digits = 1) => {
+    if (typeof value !== 'number' || Number.isNaN(value)) return '-';
+    return value.toFixed(digits);
+  };
+
+  const formatDateTime = (value) => {
+    if (!value) return 'unknown';
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? 'unknown' : parsed.toLocaleString();
+  };
+
+  const createScopePill = (label, value, tone = 'slate') => {
+    const toneClass = tone === 'sky'
+      ? 'border-sky-200 bg-sky-50 text-sky-800'
+      : tone === 'amber'
+        ? 'border-amber-200 bg-amber-50 text-amber-900'
+        : 'border-slate-200 bg-slate-50 text-slate-700';
+    return `<span class="inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[11px] font-semibold ${toneClass}"><span class="uppercase tracking-[0.16em]">${escapeHtml(label)}</span><span>${escapeHtml(value)}</span></span>`;
+  };
+
+  const syncSelectOptions = (selectEl, values = [], allLabel = 'all', selectedValue = 'all') => {
+    if (!(selectEl instanceof HTMLSelectElement)) return;
+    const currentValue = String(selectedValue || 'all');
+    const uniqueValues = Array.from(new Set(values
+      .map((value) => String(value ?? '').trim())
+      .filter(Boolean)))
+      .sort((left, right) => left.localeCompare(right));
+    const mergedValues = currentValue !== 'all' && currentValue ? [currentValue, ...uniqueValues] : uniqueValues;
+    selectEl.innerHTML = [`<option value="all">${escapeHtml(allLabel)}</option>`, ...mergedValues.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`)].join('');
+    selectEl.value = mergedValues.includes(currentValue) || currentValue === 'all' ? currentValue : 'all';
+  };
+
+  const buildDebugUrl = (jobId) => {
+    if (!jobId) return '/tools/ai-photo-debug';
+    const search = new URLSearchParams({ jobId });
+    search.set('opsView', opsViewUrl || buildOpsViewUrlFromSummary(liveViewSummary));
+    search.set('adminView', buildCurrentAdminUrl());
+    return `/tools/ai-photo-debug?${search.toString()}`;
+  };
+
+  const buildOpsViewUrlFromSummary = (summary = liveViewSummary) => {
+    const normalized = viewContextUtils?.withDefaultContext(summary) ?? summary;
+    const query = new URLSearchParams();
+    query.set('status', normalized.status ?? 'all');
+    query.set('toolType', normalized.tool ?? 'all');
+    query.set('provider', normalized.provider ?? 'all');
+    query.set('limit', normalized.limit ?? '12');
+    query.set('sinceHours', normalized.sinceHours ?? '24');
+    query.set('flaggedOnly', String(normalized.flaggedOnly ?? false));
+    query.set('fallbackOnly', String(normalized.fallbackOnly ?? false));
+    query.set('miniTrend', normalized.miniTrend ?? 'risk');
+    if (normalized.previewKey) query.set('previewKey', normalized.previewKey);
+    return `/tools/ai-photo-ops?${query.toString()}`;
+  };
+
+  const buildScopedOpsUrl = (type, key) => {
+    const scopedSummary = {
+      ...liveViewSummary,
+      tool: type === 'tool' ? (key || 'all') : (liveViewSummary?.tool ?? 'all'),
+      provider: type === 'provider' ? (key || 'all') : (liveViewSummary?.provider ?? 'all'),
+      previewKey: type && key ? `${type}:${key}` : null
+    };
+    return buildOpsViewUrlFromSummary(scopedSummary);
+  };
+
+  const buildFlaggedOpsUrl = (item) => buildOpsViewUrlFromSummary({
+    ...liveViewSummary,
+    tool: item?.toolType ?? liveViewSummary?.tool ?? 'all',
+    provider: item?.resolvedProvider ?? item?.requestedProvider ?? liveViewSummary?.provider ?? 'all',
+    previewKey: item?.toolType ? `tool:${item.toolType}` : liveViewSummary?.previewKey ?? null
+  });
+
+  const buildMetricOpsUrl = (metric) => {
+    if (metric === 'flagged') {
+      return buildOpsViewUrlFromSummary({
+        ...liveViewSummary,
+        flaggedOnly: true
+      });
+    }
+    if (metric === 'failed') {
+      return buildOpsViewUrlFromSummary({
+        ...liveViewSummary,
+        status: 'failed',
+        flaggedOnly: false
+      });
+    }
+    if (metric === 'fallback') {
+      return buildOpsViewUrlFromSummary({
+        ...liveViewSummary,
+        fallbackOnly: true
+      });
+    }
+    return buildOpsViewUrlFromSummary(liveViewSummary);
+  };
+
+  const buildCurrentAdminUrl = () => {
+    const currentOpsUrl = buildOpsViewUrlFromSummary(liveViewSummary);
+    const query = new URLSearchParams();
+    query.set('opsView', currentOpsUrl);
+    query.set('adminStatus', String(liveViewSummary?.status ?? 'all'));
+    query.set('adminTool', String(liveViewSummary?.tool ?? 'all'));
+    query.set('adminProvider', String(liveViewSummary?.provider ?? 'all'));
+    query.set('adminSinceHours', String(liveViewSummary?.sinceHours ?? '24'));
+    query.set('adminFlaggedOnly', String(Boolean(liveViewSummary?.flaggedOnly)));
+    query.set('adminFallbackOnly', String(Boolean(liveViewSummary?.fallbackOnly)));
+    return `/tools/ai-photo-admin?${query.toString()}`;
+  };
+
+  const syncNavigationLinks = () => {
+    const currentOpsUrl = opsViewUrl || buildOpsViewUrlFromSummary(liveViewSummary);
+    const currentAdminUrl = buildCurrentAdminUrl();
+    if (openOpsLink instanceof HTMLAnchorElement) {
+      openOpsLink.href = currentOpsUrl;
+    }
+    if (openDebugLink instanceof HTMLAnchorElement) {
+      openDebugLink.href = `/tools/ai-photo-debug?${new URLSearchParams({ opsView: currentOpsUrl, adminView: currentAdminUrl }).toString()}`;
+    }
+    if (openAdminStateLink instanceof HTMLAnchorElement) {
+      openAdminStateLink.href = currentAdminUrl;
+    }
+    if (opsContextLinkEl instanceof HTMLAnchorElement) {
+      opsContextLinkEl.href = currentOpsUrl;
+    }
+  };
+
+  const syncAdminStateInUrl = () => {
+    window.history.replaceState({}, '', buildCurrentAdminUrl());
+  };
+
+  const createMetricCard = (label, value, metric = 'jobs') => `
+    <a href="${escapeHtml(buildMetricOpsUrl(metric))}" class="block rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white">
+      <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">${escapeHtml(label)}</p>
+      <p class="mt-2 text-lg font-black text-slate-900">${escapeHtml(value)}</p>
+      <p class="mt-3 text-xs font-semibold text-sky-700">Open in ops</p>
+    </a>
+  `;
+  const createAggregateRow = (item, type = 'tool') => {
+    const itemKey = item?.key ?? 'unknown';
+    const isActive = type === 'tool'
+      ? liveViewSummary?.tool === itemKey && itemKey !== 'all'
+      : liveViewSummary?.provider === itemKey && itemKey !== 'all';
+    return `
+    <a href="${escapeHtml(buildScopedOpsUrl(type, itemKey))}" class="block rounded-2xl border ${isActive ? 'border-sky-300 bg-sky-50' : 'border-slate-200 bg-slate-50'} p-4 transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">${escapeHtml(type)}</p>
+          <p class="mt-2 text-sm font-black text-slate-900">${escapeHtml(itemKey)}</p>
+        </div>
+        <div class="rounded-full ${isActive ? 'bg-sky-100 text-sky-800' : 'bg-white text-slate-700'} px-3 py-1 text-xs font-semibold">${escapeHtml(String(item.total ?? 0))} jobs</div>
+      </div>
+      <p class="mt-3 text-xs text-slate-600">flagged ${escapeHtml(String(item.flagged ?? 0))} | failed ${escapeHtml(String(item.failed ?? 0))} | fallback ${escapeHtml(String(item.fallback ?? 0))}</p>
+      <p class="mt-1 text-xs text-slate-500">avg quality ${escapeHtml(formatNumber(item.avgQualityScore ?? 0))} | avg identity ${escapeHtml(formatNumber(item.avgIdentityScore ?? 0))}</p>
+      <p class="mt-3 text-xs font-semibold ${isActive ? 'text-sky-700' : 'text-slate-500'}">${isActive ? 'Active scope' : 'Scope to this view'}</p>
+    </a>
+  `;
+  };
+
+  const createReasonBlock = (title, items, tone = 'amber') => `
+    <article class="rounded-2xl border ${tone === 'rose' ? 'border-rose-200 bg-rose-50' : 'border-amber-200 bg-amber-50'} p-4">
+      <p class="text-[11px] font-semibold uppercase tracking-[0.18em] ${tone === 'rose' ? 'text-rose-700' : 'text-amber-700'}">${escapeHtml(title)}</p>
+      <p class="mt-2 text-xs ${tone === 'rose' ? 'text-rose-700' : 'text-amber-800'}">Scoped to status ${escapeHtml(liveViewSummary?.status ?? 'all')} | tool ${escapeHtml(liveViewSummary?.tool ?? 'all')} | provider ${escapeHtml(liveViewSummary?.provider ?? 'all')}</p>
+      <div class="mt-3 flex flex-wrap gap-2">
+        ${(items?.length ? items : [{ label: 'none', count: 0 }]).map((item) => `
+          <a href="${escapeHtml(item?.representativeJobId ? buildDebugUrl(item.representativeJobId) : buildOpsViewUrlFromSummary({ ...liveViewSummary, flaggedOnly: true }))}" class="rounded-full bg-white px-3 py-1 text-xs font-semibold ${tone === 'rose' ? 'text-rose-900' : 'text-amber-900'} transition hover:-translate-y-0.5">${escapeHtml(item.label)} (${escapeHtml(String(item.count ?? 0))})</a>
+        `).join('')}
+      </div>
+    </article>
+  `;
+
+  const renderProcessingSignalChips = (item) => {
+    const resolvedProvider = Array.isArray(item?.flags) && item.flags.includes('provider_fallback')
+      ? `local_sharp fallback from ${item?.resolvedProvider ?? 'unknown'}`
+      : (item?.resolvedProvider ?? item?.requestedProvider ?? 'unknown');
+    const callMode = item?.pipelineReport?.externalBackgroundCall ? 'external' : 'local';
+    const cacheHits = ['aligned', 'cutout', 'flattened'].filter((key) => Boolean(item?.cache?.[key]));
+    const cacheLabel = cacheHits.length ? `cache:${cacheHits.join('+')}` : 'cache:miss';
+    return [
+      `<span class="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700">${escapeHtml(`provider ${resolvedProvider}`)}</span>`,
+      `<span class="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700">${escapeHtml(callMode)}</span>`,
+      `<span class="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700">${escapeHtml(cacheLabel)}</span>`
+    ].join('');
+  };
+
+  const renderProviderReadiness = (config) => {
+    if (!(providerReadinessEl instanceof HTMLElement)) return;
+    const entries = Object.values(config?.providerResolutionMap ?? {});
+    providerReadinessEl.innerHTML = entries.length
+      ? entries.map((entry) => `
+          <article class="rounded-2xl border ${entry.available ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'} p-4">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.18em] ${entry.available ? 'text-emerald-700' : 'text-amber-700'}">${escapeHtml(entry.requested ?? 'unknown')}</p>
+            <p class="mt-2 text-sm font-black text-slate-900">${escapeHtml(entry.resolved ?? 'unknown')}</p>
+            <p class="mt-2 text-xs text-slate-600">available ${escapeHtml(String(Boolean(entry.available)))}</p>
+            <p class="mt-1 text-xs text-slate-500">external ${escapeHtml(String(Boolean(entry.externalCapable)))}</p>
+            ${Array.isArray(entry.missingEnv) && entry.missingEnv.length
+              ? `<p class="mt-2 text-xs text-amber-900">need ${escapeHtml(entry.missingEnv.join(', '))}</p>`
+              : ''}
+          </article>
+        `).join('')
+      : '<p class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">Provider readiness is unavailable.</p>';
+  };
+
+  const renderLiveSummary = (payload) => {
+    if (liveSummaryLabelEl instanceof HTMLElement) {
+      const filters = payload?.filters ?? {};
+      liveSummaryLabelEl.textContent = `Window ${filters.sinceHours ?? 24}h | status ${filters.status ?? 'all'} | tool ${filters.toolType ?? 'all'} | provider ${filters.provider ?? 'all'} | flaggedOnly ${String(filters.flagged ?? false)} | fallbackOnly ${String(filters.fallbackOnly ?? false)}`;
+    }
+
+    if (liveScopeEl instanceof HTMLElement) {
+      liveScopeEl.innerHTML = [
+        createScopePill('status', liveViewSummary?.status ?? 'all'),
+        createScopePill('tool', liveViewSummary?.tool ?? 'all'),
+        createScopePill('provider', liveViewSummary?.provider ?? 'all'),
+        createScopePill('window', `${liveViewSummary?.sinceHours ?? '24'}h`, 'sky'),
+        createScopePill('flagged', String(Boolean(liveViewSummary?.flaggedOnly)), liveViewSummary?.flaggedOnly ? 'amber' : 'slate'),
+        createScopePill('fallback', String(Boolean(liveViewSummary?.fallbackOnly)), liveViewSummary?.fallbackOnly ? 'amber' : 'slate')
+      ].join('');
+    }
+
+    syncSelectOptions(liveToolEl, (payload?.topTools ?? []).map((item) => item?.key), 'all tools', liveViewSummary?.tool ?? 'all');
+    syncSelectOptions(liveProviderEl, (payload?.topProviders ?? []).map((item) => item?.key), 'all providers', liveViewSummary?.provider ?? 'all');
+
+    if (liveStatsEl instanceof HTMLElement) {
+      const totals = payload?.totals ?? {};
+      liveStatsEl.innerHTML = [
+        createMetricCard('jobs', String(totals.jobs ?? 0), 'jobs'),
+        createMetricCard('flagged', String(totals.flagged ?? 0), 'flagged'),
+        createMetricCard('failed', String(totals.failed ?? 0), 'failed'),
+        createMetricCard('fallback', String(totals.fallback ?? 0), 'fallback'),
+        createMetricCard('avg quality', formatNumber(totals.avgQualityScore ?? 0), 'avg_quality'),
+        createMetricCard('avg identity', formatNumber(totals.avgIdentityScore ?? 0), 'avg_identity')
+      ].join('');
+    }
+
+    if (liveToolsEl instanceof HTMLElement) {
+      const items = Array.isArray(payload?.topTools) ? payload.topTools : [];
+      liveToolsEl.innerHTML = items.length
+        ? items.map((item) => createAggregateRow(item, 'tool')).join('')
+        : '<p class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">No tool summary in this view.</p>';
+    }
+
+    if (liveProvidersEl instanceof HTMLElement) {
+      const items = Array.isArray(payload?.topProviders) ? payload.topProviders : [];
+      liveProvidersEl.innerHTML = items.length
+        ? items.map((item) => createAggregateRow(item, 'provider')).join('')
+        : '<p class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">No provider summary in this view.</p>';
+    }
+
+    if (liveReasonsEl instanceof HTMLElement) {
+      liveReasonsEl.innerHTML = [
+        createReasonBlock('quality reasons', payload?.topQualityReasons ?? [], 'amber'),
+        createReasonBlock('identity reasons', payload?.topIdentityReasons ?? [], 'rose')
+      ].join('');
+    }
+
+    if (liveFlaggedEl instanceof HTMLElement) {
+      const items = Array.isArray(payload?.latestFlagged) ? payload.latestFlagged : [];
+      liveFlaggedEl.innerHTML = items.length
+        ? items.map((item) => `
+            <article class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">${escapeHtml(item.toolType ?? 'unknown')}</p>
+                  <p class="mt-2 text-sm font-black text-slate-900">${escapeHtml(item.id ?? 'unknown')}</p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  <a href="${escapeHtml(buildFlaggedOpsUrl(item))}" class="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-semibold text-sky-700 transition hover:bg-sky-100">Open ops</a>
+                  <a href="${escapeHtml(buildDebugUrl(item.id))}" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100">Open debug</a>
+                </div>
+              </div>
+              <p class="mt-2 text-xs text-slate-500">${escapeHtml(formatDateTime(item.createdAt))}</p>
+              <div class="mt-3 flex flex-wrap gap-2">
+                ${(item.flags ?? []).map((flag) => `<span class="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-900">${escapeHtml(flag)}</span>`).join('')}
+              </div>
+              <div class="mt-3 flex flex-wrap gap-2">
+                ${renderProcessingSignalChips(item)}
+              </div>
+            </article>
+          `).join('')
+        : '<p class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">No flagged jobs in this view.</p>';
+    }
+  };
+
+  const loadLiveSummary = async () => {
+    const opsContext = liveViewSummary;
+    const query = new URLSearchParams();
+    query.set('limit', '6');
+    query.set('sinceHours', String(opsContext?.sinceHours ?? '24'));
+    if (opsContext?.status && opsContext.status !== 'all') query.set('status', opsContext.status);
+    if (opsContext?.tool && opsContext.tool !== 'all') query.set('toolType', opsContext.tool);
+    if (opsContext?.provider && opsContext.provider !== 'all') query.set('provider', opsContext.provider);
+    if (opsContext?.flaggedOnly) query.set('flagged', 'true');
+    if (opsContext?.fallbackOnly) query.set('fallbackOnly', 'true');
+    try {
+      const response = await fetch(`${API_BASE}/jobs/summary?${query.toString()}`);
+      if (!response.ok) throw new Error('summary fetch failed');
+      const payload = await response.json();
+      renderLiveSummary(payload);
+    } catch {
+      if (liveSummaryLabelEl instanceof HTMLElement) {
+        liveSummaryLabelEl.textContent = 'Failed to load current job summary.';
+      }
+      if (liveStatsEl instanceof HTMLElement) {
+        liveStatsEl.innerHTML = '<p class="rounded-2xl border border-dashed border-rose-200 bg-rose-50 p-4 text-sm text-rose-900">Live summary is unavailable right now.</p>';
+      }
+    }
+  };
+
+  const loadProviderConfig = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/config`);
+      if (!response.ok) throw new Error('config fetch failed');
+      latestConfigPayload = await response.json();
+      renderProviderReadiness(latestConfigPayload);
+    } catch {
+      latestConfigPayload = null;
+      renderProviderReadiness(null);
+    }
+  };
+
+  const getAdminStateSummary = () => ({
+    status: String(liveViewSummary?.status ?? 'all'),
+    tool: String(liveViewSummary?.tool ?? 'all'),
+    provider: String(liveViewSummary?.provider ?? 'all'),
+    sinceHours: String(liveViewSummary?.sinceHours ?? '24'),
+    flaggedOnly: Boolean(liveViewSummary?.flaggedOnly),
+    fallbackOnly: Boolean(liveViewSummary?.fallbackOnly)
+  });
+
+  const buildAdminExportPayload = () => {
+    const exportedAt = new Date().toISOString();
+    const opsContext = liveViewSummary;
+    const currentOpsViewUrl = opsViewUrl || buildOpsViewUrlFromSummary(opsContext);
+    const currentAdminUrl = buildCurrentAdminUrl();
+    const adminState = getAdminStateSummary();
+    return viewContextUtils?.createExportEnvelope('admin', {
+      exportedAt,
+      adminUrl: currentAdminUrl,
+      adminState,
+      opsViewUrl: currentOpsViewUrl || null,
+      opsContext,
+      viewContext: viewContextUtils?.createViewContext(currentOpsViewUrl || null, opsContext) ?? { url: currentOpsViewUrl || null, summary: opsContext },
+      legacy: viewContextUtils?.createLegacyFields({
+        adminUrl: currentAdminUrl,
+        adminState,
+        opsViewUrl: currentOpsViewUrl || null,
+        opsContext
+      }),
+      exportMeta: viewContextUtils?.createExportMeta('admin', exportedAt) ?? { source: 'admin', exportedAt }
+    }, exportedAt) ?? {
+      schemaVersion: 'ai-photo-view-context.v1',
+      surface: 'admin',
+      exportedAt,
+      adminUrl: currentAdminUrl,
+      adminState,
+      opsViewUrl: currentOpsViewUrl || null,
+      opsContext,
+      viewContext: viewContextUtils?.createViewContext(currentOpsViewUrl || null, opsContext) ?? { url: currentOpsViewUrl || null, summary: opsContext },
+      legacy: viewContextUtils?.createLegacyFields({
+        adminUrl: currentAdminUrl,
+        adminState,
+        opsViewUrl: currentOpsViewUrl || null,
+        opsContext
+      }),
+      exportMeta: viewContextUtils?.createExportMeta('admin', exportedAt) ?? { source: 'admin', exportedAt }
+    };
+  };
+
+  const buildAdminSummary = () => {
+    const exportPayload = buildAdminExportPayload();
+    const viewSummary = exportPayload.viewContext?.summary ?? null;
+    const lines = [
+      'AI photo admin summary',
+      `exportedAt: ${exportPayload.exportedAt ?? exportPayload.exportMeta?.exportedAt ?? new Date().toISOString()}`,
+      `surface: ${exportPayload.surface ?? 'admin'}`
+    ];
+
+    lines.push('', '[schema]');
+    lines.push(`- schemaVersion: ${exportPayload.schemaVersion ?? 'ai-photo-view-context.v1'}`);
+    lines.push(`- surface: ${exportPayload.surface ?? 'admin'}`);
+    lines.push(`- canonicalViewContext: ${exportPayload.legacy ? 'viewContext (legacy fields preserved)' : 'viewContext'}`);
+    lines.push('', '[viewContext]');
+    lines.push(`- url: ${exportPayload.viewContext?.url ?? 'none'}`);
+    lines.push(`- summary: ${viewContextUtils?.formatViewContextSummary(viewSummary) ?? 'status=all, tool=all, provider=all, limit=12, sinceHours=24, flaggedOnly=false, fallbackOnly=false, miniTrend=risk, previewKey=none'}`);
+    lines.push('', '[adminLink]');
+    lines.push(`- url: ${exportPayload.adminUrl ?? 'none'}`);
+    lines.push('', '[adminState]');
+    lines.push(`- status: ${exportPayload.adminState?.status ?? 'all'}`);
+    lines.push(`- tool: ${exportPayload.adminState?.tool ?? 'all'}`);
+    lines.push(`- provider: ${exportPayload.adminState?.provider ?? 'all'}`);
+    lines.push(`- sinceHours: ${exportPayload.adminState?.sinceHours ?? '24'}`);
+    lines.push(`- flaggedOnly: ${String(exportPayload.adminState?.flaggedOnly ?? false)}`);
+    lines.push(`- fallbackOnly: ${String(exportPayload.adminState?.fallbackOnly ?? false)}`);
+    lines.push('', '[exportMeta]');
+    lines.push(`- source: ${exportPayload.exportMeta?.source ?? 'admin'}`);
+    lines.push(`- exportedAt: ${exportPayload.exportMeta?.exportedAt ?? new Date().toISOString()}`);
+
+    return lines.join('\n');
+  };
+
+  syncNavigationLinks();
+  syncAdminStateInUrl();
+
+  if (opsContextEl instanceof HTMLElement && opsContextGridEl instanceof HTMLElement && opsViewUrl) {
+    const opsContext = getOpsContextSummary(opsViewUrl);
+    const contextItems = [
+      ['status', opsContext?.status ?? 'all'],
+      ['tool', opsContext?.tool ?? 'all'],
+      ['provider', opsContext?.provider ?? 'all'],
+      ['limit', opsContext?.limit ?? '12'],
+      ['sinceHours', opsContext?.sinceHours ?? '24'],
+      ['flaggedOnly', String(opsContext?.flaggedOnly ?? false)],
+      ['fallbackOnly', String(opsContext?.fallbackOnly ?? false)],
+      ['miniTrend', opsContext?.miniTrend ?? 'risk'],
+      ['previewKey', opsContext?.previewKey ?? 'none']
+    ];
+    opsContextEl.classList.remove('hidden');
+    if (opsContextLinkEl instanceof HTMLAnchorElement) {
+      opsContextLinkEl.href = opsViewUrl;
+    }
+    opsContextGridEl.innerHTML = contextItems.map(([label, value]) => `
+      <article class="rounded-2xl border border-sky-100 bg-white p-4">
+        <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">${escapeHtml(label)}</p>
+        <p class="mt-2 text-sm font-bold text-slate-900">${escapeHtml(value)}</p>
+      </article>
+    `).join('');
+  }
+
+  syncSelectOptions(liveToolEl, [liveViewSummary?.tool ?? 'all'], 'all tools', liveViewSummary?.tool ?? 'all');
+  syncSelectOptions(liveProviderEl, [liveViewSummary?.provider ?? 'all'], 'all providers', liveViewSummary?.provider ?? 'all');
+
+  if (liveStatusEl instanceof HTMLSelectElement) {
+    liveStatusEl.value = String(liveViewSummary?.status ?? 'all');
+    liveStatusEl.addEventListener('change', () => {
+      liveViewSummary = {
+        ...liveViewSummary,
+        status: liveStatusEl.value
+      };
+      syncNavigationLinks();
+      syncAdminStateInUrl();
+      loadLiveSummary();
+      loadProviderConfig();
+    });
+  }
+
+  if (liveToolEl instanceof HTMLSelectElement) {
+    liveToolEl.addEventListener('change', () => {
+      liveViewSummary = {
+        ...liveViewSummary,
+        tool: liveToolEl.value
+      };
+      syncNavigationLinks();
+      syncAdminStateInUrl();
+      loadLiveSummary();
+      loadProviderConfig();
+    });
+  }
+
+  if (liveProviderEl instanceof HTMLSelectElement) {
+    liveProviderEl.addEventListener('change', () => {
+      liveViewSummary = {
+        ...liveViewSummary,
+        provider: liveProviderEl.value
+      };
+      syncNavigationLinks();
+      syncAdminStateInUrl();
+      loadLiveSummary();
+      loadProviderConfig();
+    });
+  }
+
+  if (livePeriodEl instanceof HTMLSelectElement) {
+    livePeriodEl.value = String(liveViewSummary?.sinceHours ?? '24');
+    livePeriodEl.addEventListener('change', () => {
+      liveViewSummary = {
+        ...liveViewSummary,
+        sinceHours: livePeriodEl.value
+      };
+      syncNavigationLinks();
+      syncAdminStateInUrl();
+      loadLiveSummary();
+      loadProviderConfig();
+    });
+  }
+
+  if (liveFlaggedFilterEl instanceof HTMLSelectElement) {
+    liveFlaggedFilterEl.value = String(Boolean(liveViewSummary?.flaggedOnly));
+    liveFlaggedFilterEl.addEventListener('change', () => {
+      liveViewSummary = {
+        ...liveViewSummary,
+        flaggedOnly: liveFlaggedFilterEl.value === 'true'
+      };
+      syncNavigationLinks();
+      syncAdminStateInUrl();
+      loadLiveSummary();
+      loadProviderConfig();
+    });
+  }
+
+  if (liveFallbackFilterEl instanceof HTMLSelectElement) {
+    liveFallbackFilterEl.value = String(Boolean(liveViewSummary?.fallbackOnly));
+    liveFallbackFilterEl.addEventListener('change', () => {
+      liveViewSummary = {
+        ...liveViewSummary,
+        fallbackOnly: liveFallbackFilterEl.value === 'true'
+      };
+      syncNavigationLinks();
+      syncAdminStateInUrl();
+      loadLiveSummary();
+      loadProviderConfig();
+    });
+  }
+
+  if (liveRefreshBtn instanceof HTMLButtonElement) {
+    liveRefreshBtn.addEventListener("click", () => {
+      loadLiveSummary();
+      loadProviderConfig();
+    });
+  }
+
+  if (copyAdminLinkBtn instanceof HTMLButtonElement) {
+    copyAdminLinkBtn.addEventListener("click", async () => {
+      const adminUrl = new URL(buildCurrentAdminUrl(), window.location.origin).toString();
+      try {
+        await viewContextUtils?.copyText(adminUrl);
+        setExportStatus("admin state link copied.");
+      } catch {
+        setExportStatus("failed to copy admin state link.");
+      }
+    });
+  }
+
+  if (copySummaryBtn instanceof HTMLButtonElement) {
+    copySummaryBtn.addEventListener("click", async () => {
+      try {
+        await viewContextUtils?.copyText(buildAdminSummary());
+        setExportStatus("admin summary copied.");
+      } catch {
+        setExportStatus("failed to copy admin summary.");
+      }
+    });
+  }
+
+  if (downloadSummaryBtn instanceof HTMLButtonElement) {
+    downloadSummaryBtn.addEventListener("click", () => {
+      viewContextUtils?.downloadTextFile(`ai-photo-admin-shared-ops-${Date.now()}-summary.txt`, buildAdminSummary());
+      setExportStatus("admin summary downloaded.");
+    });
+  }
+
+  if (copyJsonBtn instanceof HTMLButtonElement) {
+    copyJsonBtn.addEventListener("click", async () => {
+      try {
+        await viewContextUtils?.copyText(JSON.stringify(buildAdminExportPayload(), null, 2));
+        setExportStatus("admin JSON copied.");
+      } catch {
+        setExportStatus("failed to copy admin JSON.");
+      }
+    });
+  }
+
+  if (downloadJsonBtn instanceof HTMLButtonElement) {
+    downloadJsonBtn.addEventListener("click", () => {
+      viewContextUtils?.downloadTextFile(`ai-photo-admin-shared-ops-${Date.now()}.json`, JSON.stringify(buildAdminExportPayload(), null, 2), "application/json");
+      setExportStatus("admin JSON downloaded.");
+    });
+  }
+
+  loadLiveSummary();
+  loadProviderConfig();
+</script>
+

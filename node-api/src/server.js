@@ -8,7 +8,7 @@ import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import { Webhook } from 'standardwebhooks';
 import { db } from './store.js';
-import { generateCandidatesWithProvider, getImageProvider, getResolvedImageProvider, isExternalAiEnabled } from './providers/providerRouter.js';
+import { generateCandidatesWithProvider, getImageProvider, getResolvedImageProvider, isExternalAiEnabled, normalizeRequestedProvider, resolveImageProvider } from './providers/providerRouter.js';
 
 const app = express();
 const port = Number(process.env.PORT ?? 8787);
@@ -57,6 +57,43 @@ const getPolarProductMap = () => ({
   headshot_addon: getFirstEnv('POLAR_PRODUCT_HEADSHOT_ADDON')
 });
 
+const getProviderDiagnostics = () => {
+  const externalAiEnabled = isExternalAiEnabled();
+  const removeBgMissing = ['REMOVE_BG_API_KEY'].filter((key) => !getFirstEnv(key));
+  const photoroomMissing = ['PHOTOROOM_API_KEY', 'PHOTOROOM_REMOVE_BG_URL'].filter((key) => !getFirstEnv(key));
+
+  return {
+    auto: {
+      requested: 'auto',
+      resolved: resolveImageProvider('auto'),
+      available: true,
+      externalCapable: externalAiEnabled && (removeBgMissing.length === 0 || photoroomMissing.length === 0),
+      missingEnv: []
+    },
+    local_sharp: {
+      requested: 'local_sharp',
+      resolved: 'local_sharp',
+      available: true,
+      externalCapable: false,
+      missingEnv: []
+    },
+    remove_bg: {
+      requested: 'remove_bg',
+      resolved: resolveImageProvider('remove_bg'),
+      available: externalAiEnabled && removeBgMissing.length === 0,
+      externalCapable: externalAiEnabled,
+      missingEnv: removeBgMissing
+    },
+    photoroom: {
+      requested: 'photoroom',
+      resolved: resolveImageProvider('photoroom'),
+      available: externalAiEnabled && photoroomMissing.length === 0,
+      externalCapable: externalAiEnabled,
+      missingEnv: photoroomMissing
+    }
+  };
+};
+
 app.get('/health', (_req, res) => {
   res.json({ ok: true, service: 'manytool-node-api' });
 });
@@ -72,12 +109,14 @@ app.get('/config', (_req, res) => {
     && polarProducts.add3
     && polarProducts.add7
   );
+  const providerDiagnostics = getProviderDiagnostics();
 
   res.json({
     imageProvider: getResolvedImageProvider(),
     configuredImageProvider: getImageProvider(),
     externalAiEnabled: isExternalAiEnabled(),
     paymentMode,
+    supportedImageProviders: ['auto', 'local_sharp', 'remove_bg', 'photoroom'],
     paymentProducts: Object.fromEntries(
       Object.entries(polarProducts).map(([key, value]) => [key, Boolean(value)])
     ),
@@ -86,7 +125,15 @@ app.get('/config', (_req, res) => {
       photoroomReady,
       polarReady: polarBaseReady,
       polarAddonReady
-    }
+    },
+    providerAvailability: {
+      auto: true,
+      local_sharp: true,
+      remove_bg: removeBgReady && isExternalAiEnabled(),
+      photoroom: photoroomReady && isExternalAiEnabled()
+    },
+    providerResolutionMap: providerDiagnostics,
+    providerDiagnostics
   });
 });
 
@@ -199,8 +246,11 @@ const toJobSummary = (job) => {
     finalQualityRetryTriggered: Boolean(report?.finalQualityRetryTriggered),
     finalQualityRetryProfile: report?.finalQualityRetryProfile ?? null,
     qualitySummary: report?.qualitySummary ?? null,
+    qualityIssueCodes: Array.isArray(report?.qualityIssueCodes) ? report.qualityIssueCodes : [],
+    qualityMetrics: report?.qualityMetrics ?? null,
     identityScore,
     identityThreshold: report?.identityThreshold ?? 78,
+    identitySummary: report?.identitySummary ?? null,
     score: typeof recommendedCandidate?.score === 'number' ? recommendedCandidate.score : null,
     recommendedCandidateId: recommendedCandidate?.id ?? null,
     recommendedVariant: report?.recommendedVariant ?? recommendedCandidate?.variant ?? null,
@@ -211,6 +261,7 @@ const toJobSummary = (job) => {
     originalUrl,
     candidateCount: Array.isArray(job?.candidates) ? job.candidates.length : 0,
     generatedVariants: Array.isArray(report?.generatedVariants) ? report.generatedVariants : [],
+    variantDecisionTrace: Array.isArray(report?.variantDecisionTrace) ? report.variantDecisionTrace : [],
     cache: report?.cache ?? {},
     timings: report?.timings ?? {},
     flags,
@@ -239,10 +290,77 @@ const loadPersistedRecentJobs = async () => {
   }
 };
 
+const loadAllJobSummaries = async () => {
+  const memoryJobs = Array.from(db.jobs.values());
+  const persistedJobs = await loadPersistedRecentJobs();
+  const deduped = new Map();
+  [...persistedJobs, ...memoryJobs].forEach((item) => {
+    if (item?.id) deduped.set(item.id, item);
+  });
+
+  return Array.from(deduped.values())
+    .sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())
+    .map(toJobSummary);
+};
+
 const applySinceHoursFilter = (items, sinceHours) => {
   if (!Number.isFinite(sinceHours) || sinceHours <= 0) return items;
   const cutoff = Date.now() - (sinceHours * 60 * 60 * 1000);
   return items.filter((item) => new Date(item.createdAt ?? 0).getTime() >= cutoff);
+};
+
+const applyJobSummaryFilters = (items, {
+  statusFilter = '',
+  flaggedOnly = false,
+  fallbackOnly = false,
+  toolFilter = '',
+  providerFilter = '',
+  sinceHours = 0
+} = {}) => {
+  let filtered = applySinceHoursFilter(items, sinceHours);
+
+  if (statusFilter) {
+    filtered = filtered.filter((item) => String(item.status).toLowerCase() === statusFilter);
+  }
+  if (toolFilter) {
+    filtered = filtered.filter((item) => String(item.toolType ?? '').toLowerCase() === toolFilter);
+  }
+  if (providerFilter) {
+    filtered = filtered.filter((item) => String(item.provider ?? item.resolvedProvider ?? '').toLowerCase() === providerFilter);
+  }
+  if (flaggedOnly) {
+    filtered = filtered.filter((item) => Array.isArray(item.flags) && item.flags.length > 0);
+  }
+  if (fallbackOnly) {
+    filtered = filtered.filter((item) => Array.isArray(item.flags) && item.flags.includes('provider_fallback'));
+  }
+
+  return filtered;
+};
+
+const summarizeIssueCounts = (items, extractor) => {
+  const counts = new Map();
+  items.forEach((item) => {
+    extractor(item).forEach((value) => {
+      if (!value) return;
+      const existing = counts.get(value);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        counts.set(value, {
+          count: 1,
+          representativeJobId: item.id ?? null
+        });
+      }
+    });
+  });
+  return [...counts.entries()]
+    .sort((a, b) => b[1].count - a[1].count)
+    .map(([label, meta]) => ({
+      label,
+      count: meta.count,
+      representativeJobId: meta.representativeJobId
+    }));
 };
 
 const createPolarCheckout = async ({ order, productId, clientSessionId = null }) => {
@@ -465,9 +583,13 @@ app.post('/upload', upload.single('image'), async (req, res) => {
 });
 
 app.post('/generate', async (req, res) => {
-  const { photoId, toolType = 'id_photo', outfitType = 'current', faceHint = null } = req.body ?? {};
+  const { photoId, toolType = 'id_photo', outfitType = 'current', faceHint = null, provider = null } = req.body ?? {};
   if (!photoId) {
     return res.status(400).json({ error: 'photoId is required' });
+  }
+  const requestedProvider = normalizeRequestedProvider(provider);
+  if (provider != null && !requestedProvider) {
+    return res.status(400).json({ error: 'invalid provider' });
   }
   const photo = db.photos.get(photoId);
   if (!photo) {
@@ -494,7 +616,8 @@ app.post('/generate', async (req, res) => {
       toolType,
       outfitType,
       faceHint: faceHint ?? photo.faceHint ?? null,
-      cacheKey: photoId
+      cacheKey: photoId,
+      requestedProvider
     });
     const generated = generation?.generated ?? [];
 
@@ -519,7 +642,9 @@ app.post('/generate', async (req, res) => {
       jobId,
       status: job.status,
       candidates,
-      pipelineReport: job.pipelineReport
+      pipelineReport: job.pipelineReport,
+      requestedProvider: requestedProvider ?? getImageProvider(),
+      resolvedProvider: resolveImageProvider(requestedProvider)
     });
   } catch (error) {
     job.status = 'failed';
@@ -536,6 +661,108 @@ app.get('/job/:id', async (req, res) => {
   return res.json(getJobPayload(job));
 });
 
+app.get('/jobs/summary', async (req, res) => {
+  const limit = Math.max(1, Math.min(24, Number(req.query.limit ?? 6) || 6));
+  const statusFilter = typeof req.query.status === 'string' ? req.query.status.trim().toLowerCase() : '';
+  const flaggedOnly = String(req.query.flagged ?? '').toLowerCase() === 'true';
+  const fallbackOnly = String(req.query.fallbackOnly ?? '').toLowerCase() === 'true';
+  const toolFilter = typeof req.query.toolType === 'string' ? req.query.toolType.trim().toLowerCase() : '';
+  const providerFilter = typeof req.query.provider === 'string' ? req.query.provider.trim().toLowerCase() : '';
+  const sinceHours = Number(req.query.sinceHours ?? 0) || 0;
+
+  const allItems = await loadAllJobSummaries();
+  const filtered = applyJobSummaryFilters(allItems, {
+    statusFilter,
+    flaggedOnly,
+    fallbackOnly,
+    toolFilter,
+    providerFilter,
+    sinceHours
+  });
+  const flagged = filtered.filter((item) => Array.isArray(item.flags) && item.flags.length > 0);
+
+  const byTool = new Map();
+  const byProvider = new Map();
+  filtered.forEach((item) => {
+    const toolKey = item.toolType ?? 'unknown';
+    const providerKey = item.resolvedProvider ?? item.requestedProvider ?? 'unknown';
+    if (!byTool.has(toolKey)) {
+      byTool.set(toolKey, { key: toolKey, total: 0, failed: 0, flagged: 0, fallback: 0, avgQualityScore: 0, avgIdentityScore: 0 });
+    }
+    if (!byProvider.has(providerKey)) {
+      byProvider.set(providerKey, { key: providerKey, total: 0, failed: 0, flagged: 0, fallback: 0, avgQualityScore: 0, avgIdentityScore: 0 });
+    }
+
+    const toolEntry = byTool.get(toolKey);
+    const providerEntry = byProvider.get(providerKey);
+    const isFlagged = Array.isArray(item.flags) && item.flags.length > 0;
+    const isFailed = item.status === 'failed';
+    const isFallback = item.flags.includes('provider_fallback');
+    toolEntry.total += 1;
+    providerEntry.total += 1;
+    if (isFlagged) {
+      toolEntry.flagged += 1;
+      providerEntry.flagged += 1;
+    }
+    if (isFailed) {
+      toolEntry.failed += 1;
+      providerEntry.failed += 1;
+    }
+    if (isFallback) {
+      toolEntry.fallback += 1;
+      providerEntry.fallback += 1;
+    }
+    toolEntry.avgQualityScore += Number(item.qualityScore ?? 0);
+    toolEntry.avgIdentityScore += Number(item.identityScore ?? 0);
+    providerEntry.avgQualityScore += Number(item.qualityScore ?? 0);
+    providerEntry.avgIdentityScore += Number(item.identityScore ?? 0);
+  });
+
+  const finalizeAggregateRows = (rows) => [...rows.values()]
+    .map((entry) => ({
+      ...entry,
+      avgQualityScore: entry.total ? Math.round((entry.avgQualityScore / entry.total) * 10) / 10 : 0,
+      avgIdentityScore: entry.total ? Math.round((entry.avgIdentityScore / entry.total) * 10) / 10 : 0
+    }))
+    .sort((a, b) => b.flagged - a.flagged || b.failed - a.failed || b.total - a.total)
+    .slice(0, limit);
+
+  const qualityReasons = summarizeIssueCounts(flagged, (item) => item.qualityIssueCodes ?? []).slice(0, 6);
+  const identityReasons = summarizeIssueCounts(flagged, (item) => [
+    ...(item.identitySummary?.rejectedVariants ?? []).map((variant) => `rejected ${variant}`),
+    ...(item.identitySummary?.regeneratedVariants ?? []).map((variant) => `regenerated ${variant}`)
+  ]).slice(0, 6);
+
+  return res.json({
+    totals: {
+      jobs: filtered.length,
+      flagged: flagged.length,
+      failed: filtered.filter((item) => item.status === 'failed').length,
+      fallback: filtered.filter((item) => item.flags.includes('provider_fallback')).length,
+      avgQualityScore: filtered.length
+        ? Math.round((filtered.reduce((sum, item) => sum + Number(item.qualityScore ?? 0), 0) / filtered.length) * 10) / 10
+        : 0,
+      avgIdentityScore: filtered.length
+        ? Math.round((filtered.reduce((sum, item) => sum + Number(item.identityScore ?? 0), 0) / filtered.length) * 10) / 10
+        : 0
+    },
+    topTools: finalizeAggregateRows(byTool),
+    topProviders: finalizeAggregateRows(byProvider),
+    topQualityReasons: qualityReasons,
+    topIdentityReasons: identityReasons,
+    latestFlagged: flagged.slice(0, limit),
+    filters: {
+      limit,
+      status: statusFilter || null,
+      flagged: flaggedOnly,
+      fallbackOnly,
+      toolType: toolFilter || null,
+      provider: providerFilter || null,
+      sinceHours: sinceHours > 0 ? sinceHours : null
+    }
+  });
+});
+
 app.get('/jobs/recent', async (req, res) => {
   const limit = Math.max(1, Math.min(100, Number(req.query.limit ?? 20) || 20));
   const statusFilter = typeof req.query.status === 'string' ? req.query.status.trim().toLowerCase() : '';
@@ -545,34 +772,15 @@ app.get('/jobs/recent', async (req, res) => {
   const providerFilter = typeof req.query.provider === 'string' ? req.query.provider.trim().toLowerCase() : '';
   const sinceHours = Number(req.query.sinceHours ?? 0) || 0;
 
-  const memoryJobs = Array.from(db.jobs.values());
-  const persistedJobs = await loadPersistedRecentJobs();
-  const deduped = new Map();
-  [...persistedJobs, ...memoryJobs].forEach((item) => {
-    if (item?.id) deduped.set(item.id, item);
+  let items = await loadAllJobSummaries();
+  items = applyJobSummaryFilters(items, {
+    statusFilter,
+    flaggedOnly,
+    fallbackOnly,
+    toolFilter,
+    providerFilter,
+    sinceHours
   });
-
-  let items = Array.from(deduped.values())
-    .sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())
-    .map(toJobSummary);
-
-  items = applySinceHoursFilter(items, sinceHours);
-
-  if (statusFilter) {
-    items = items.filter((item) => String(item.status).toLowerCase() === statusFilter);
-  }
-  if (toolFilter) {
-    items = items.filter((item) => String(item.toolType ?? '').toLowerCase() === toolFilter);
-  }
-  if (providerFilter) {
-    items = items.filter((item) => String(item.provider ?? item.resolvedProvider ?? '').toLowerCase() === providerFilter);
-  }
-  if (flaggedOnly) {
-    items = items.filter((item) => Array.isArray(item.flags) && item.flags.length > 0);
-  }
-  if (fallbackOnly) {
-    items = items.filter((item) => Array.isArray(item.flags) && item.flags.includes('provider_fallback'));
-  }
 
   const sliced = items.slice(0, limit);
   const stats = {
