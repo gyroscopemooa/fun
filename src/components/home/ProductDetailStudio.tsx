@@ -18,10 +18,13 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
   buildDetailPageHtml,
+  buildFallbackResult,
   buildFeatureCards,
   buildPlainCopyText,
   buildRenderSections,
   classifyImages,
+  detailPageTestScenarios,
+  ensureResultIntegrity,
   iconGlyphMap,
   sectionLabelMap,
   starterPrompts,
@@ -218,7 +221,7 @@ export default function ProductDetailStudio() {
         throw new Error(payload?.error || '상세페이지 생성에 실패했습니다.');
       }
 
-      const nextResult = payload.result as ProductDetailResult;
+      const nextResult = ensureResultIntegrity(payload.result as ProductDetailResult, formValues.pageCount);
       setResult(nextResult);
       setHtml(buildDetailPageHtml({ formValues, result: nextResult, images, theme }));
       setCopyText(buildPlainCopyText({ formValues, result: nextResult }));
@@ -265,20 +268,38 @@ export default function ProductDetailStudio() {
         canvasWidth: EXPORT_WIDTH * 2,
         width: EXPORT_WIDTH
       });
-      const totalSlices = Math.ceil(canvas.height / SLICE_HEIGHT);
-      for (let index = 0; index < totalSlices; index += 1) {
+      const sectionNodes = Array.from(exportRef.current.querySelectorAll<HTMLElement>('[data-export-section="true"]'));
+      const scale = canvas.width / EXPORT_WIDTH;
+      const boundaries = sectionNodes.map((node) => ({
+        top: Math.round(node.offsetTop * scale),
+        bottom: Math.round((node.offsetTop + node.offsetHeight) * scale)
+      }));
+      const sliceRanges: Array<{ top: number; height: number }> = [];
+      let sliceTop = 0;
+      while (sliceTop < canvas.height) {
+        const targetBottom = Math.min(canvas.height, sliceTop + (SLICE_HEIGHT * scale));
+        const safeBoundary = boundaries
+          .map((item) => item.bottom)
+          .filter((bottom) => bottom > sliceTop + 400 && bottom <= targetBottom)
+          .pop();
+        const sliceBottom = safeBoundary ?? targetBottom;
+        sliceRanges.push({ top: sliceTop, height: Math.max(1, sliceBottom - sliceTop) });
+        sliceTop = sliceBottom;
+      }
+
+      for (let index = 0; index < sliceRanges.length; index += 1) {
+        const range = sliceRanges[index];
         const sliceCanvas = document.createElement('canvas');
-        const sliceHeight = Math.min(SLICE_HEIGHT, canvas.height - (index * SLICE_HEIGHT));
         sliceCanvas.width = canvas.width;
-        sliceCanvas.height = sliceHeight;
+        sliceCanvas.height = range.height;
         const context = sliceCanvas.getContext('2d');
         if (!context) {
           throw new Error('슬라이스 캔버스를 만들지 못했습니다.');
         }
-        context.drawImage(canvas, 0, index * SLICE_HEIGHT, canvas.width, sliceHeight, 0, 0, canvas.width, sliceHeight);
+        context.drawImage(canvas, 0, range.top, canvas.width, range.height, 0, 0, canvas.width, range.height);
         downloadDataUrl(sliceCanvas.toDataURL('image/png'), `page${index + 1}.png`);
       }
-      toast.success(`${totalSlices}개의 3000px 슬라이스를 저장했습니다.`);
+      toast.success(`${sliceRanges.length}개의 섹션 기준 슬라이스를 저장했습니다.`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '슬라이스 저장에 실패했습니다.');
     } finally {
@@ -348,6 +369,24 @@ export default function ProductDetailStudio() {
                     className="rounded-full border border-white/12 bg-white/8 px-3 py-2 text-xs text-white/82 transition hover:bg-white/14"
                   >
                     {prompt}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-4 grid gap-2 md:grid-cols-2">
+                {detailPageTestScenarios.map((scenario) => (
+                  <button
+                    key={scenario.id}
+                    type="button"
+                    onClick={() => {
+                      setValue('pageCount', scenario.pageCount);
+                      setValue('sellingPoints', scenario.sellingPoints);
+                      setValue('audience', scenario.audience);
+                      setValue('prompt', scenario.prompt);
+                      toast.message(`Test scenario loaded: ${scenario.description}`);
+                    }}
+                    className="rounded-2xl border border-white/12 bg-white/6 px-3 py-3 text-left text-xs text-white/78 transition hover:bg-white/12"
+                  >
+                    {scenario.description}
                   </button>
                 ))}
               </div>
@@ -553,7 +592,7 @@ export default function ProductDetailStudio() {
 
                 <div className="px-6 pb-10 pt-6">
                   {renderSections.length > 0 ? renderSections.map((section) => (
-                    <section key={section.id} className="border-b border-slate-200 py-6 last:border-b-0">
+                    <section key={section.id} data-export-section="true" className="border-b border-slate-200 py-6 last:border-b-0">
                       <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-900 text-sm font-bold text-white">
                           {iconGlyphMap[section.type]}
@@ -578,7 +617,10 @@ export default function ProductDetailStudio() {
                       ) : null}
 
                       <div className="mt-5 overflow-hidden rounded-[1.75rem] bg-slate-200">
-                        <img data-zoomable src={section.image.url} alt={section.title} className="block h-auto w-full object-cover" />
+                        <img data-zoomable src={section.image.url} alt={section.title} className={cn('block h-auto w-full', section.cropClass)} />
+                        <div className="border-t border-slate-200 bg-white px-4 py-3 text-xs tracking-[0.12em] text-slate-400">
+                          {section.toneNote} / image #{section.imageIndex + 1}
+                        </div>
                       </div>
                     </section>
                   )) : (

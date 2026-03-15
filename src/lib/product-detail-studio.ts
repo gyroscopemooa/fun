@@ -67,6 +67,20 @@ export type ClassifiedImage = {
 export type RenderSection = ProductSection & {
   id: string;
   image: UploadedImage;
+  imageIndex: number;
+  emphasis: 'full' | 'detail' | 'soft';
+  cropClass: string;
+  toneNote: string;
+};
+
+export type DetailPageTestScenario = {
+  id: string;
+  pageCount: PageCountOption;
+  imageCount: number;
+  sellingPoints: string;
+  audience: string;
+  prompt: string;
+  description: string;
 };
 
 export const starterPrompts = [
@@ -139,6 +153,105 @@ export const themeLabelMap: Record<ThemeKey, string> = {
   playful: '플레이풀 소셜'
 };
 
+export const detailPageTestScenarios: DetailPageTestScenario[] = [
+  {
+    id: 'two-images-ten-pages',
+    pageCount: 10,
+    imageCount: 2,
+    sellingPoints: '보온감, 실사용 편의, 선물용 무드',
+    audience: '감성적인 주방 아이템을 찾는 고객',
+    prompt: '적은 이미지로도 완성도 높게 구성해줘.',
+    description: '2 images + 10 pages'
+  },
+  {
+    id: 'five-images-five-pages',
+    pageCount: 5,
+    imageCount: 5,
+    sellingPoints: '핵심 기능, 가격 메리트, 간결한 메시지',
+    audience: '빠르게 결정하는 실속형 고객',
+    prompt: '짧고 바로 이해되는 구성으로 정리해줘.',
+    description: '5 images + 5 pages'
+  },
+  {
+    id: 'ten-images-ten-pages',
+    pageCount: 10,
+    imageCount: 10,
+    sellingPoints: '디테일 강조, 프리미엄 무드, 비교 포인트',
+    audience: '완성도 높은 상세페이지를 기대하는 고객',
+    prompt: '프리미엄 쇼핑몰 상세페이지처럼 구성해줘.',
+    description: '10 images + 10 pages'
+  },
+  {
+    id: 'missing-selling-points',
+    pageCount: 7,
+    imageCount: 4,
+    sellingPoints: '',
+    audience: '정보 탐색형 고객',
+    prompt: '사진 기반으로 핵심 장점을 유추해줘.',
+    description: 'missing selling points'
+  },
+  {
+    id: 'missing-target-customer',
+    pageCount: 7,
+    imageCount: 4,
+    sellingPoints: '가벼운 사용감, 깔끔한 마감',
+    audience: '',
+    prompt: '대중적인 구매자 관점으로 정리해줘.',
+    description: 'missing target customer'
+  },
+  {
+    id: 'missing-prompt',
+    pageCount: 7,
+    imageCount: 4,
+    sellingPoints: '대표 장점 위주 정리',
+    audience: '실용적 구매 고객',
+    prompt: '',
+    description: 'missing prompt'
+  }
+];
+
+const PAGE_QUALITY_NOTES: Record<PageCountOption, string> = {
+  5: 'concise and essential',
+  7: 'balanced and standard',
+  10: 'premium and complete'
+};
+
+const DEFAULT_COPY_BY_PAGE_COUNT: Record<PageCountOption, GeneratedCopy> = {
+  5: {
+    headline: '한눈에 장점이 보이는 실속형 상세페이지',
+    subheadline: '핵심 정보만 빠르게 전달해 바로 구매 판단이 가능하도록 구성했습니다.',
+    key_selling_points: ['첫 화면에서 장점이 바로 보이는 구조', '불필요한 반복 없이 핵심만 정리', '모바일에서 빠르게 읽히는 카피'],
+    feature_descriptions: ['핵심 기능을 짧게 요약', '필요한 정보만 빠르게 전달', '간결한 구매 포인트 강조'],
+    usage_scenario_text: '일상 사용과 선물용 제안처럼 바로 이해되는 사용 장면 위주로 구성합니다.',
+    detail_description: '간단하지만 빠짐없이 상품 특징을 설명하는 실속형 상세 설명입니다.',
+    benefits: ['빠르게 비교 가능한 정보 구조', '짧은 체류 시간에도 이해되는 흐름'],
+    cta: '지금 필요한 포인트만 확인하고 바로 구매해보세요',
+    seo_title: '핵심 장점이 잘 보이는 모바일 상품 상세페이지'
+  },
+  7: {
+    headline: '가장 표준적인 한국형 쇼핑몰 상세페이지 구성',
+    subheadline: '헤드라인부터 사용 장면, 신뢰 포인트, CTA까지 균형 있게 이어지는 기본형 구성입니다.',
+    key_selling_points: ['모바일 쇼핑 흐름에 맞는 균형형 구조', '장점과 사용 장면을 자연스럽게 연결', '신뢰 포인트까지 포함한 표준형 카피'],
+    feature_descriptions: ['기능과 장점을 함께 보여주는 구성', '상품 이해와 구매 판단을 동시에 지원', '국내 마켓에 익숙한 상세페이지 흐름'],
+    usage_scenario_text: '대표 사용 장면과 고객 맥락을 자연스럽게 연결해 설득력을 높입니다.',
+    detail_description: '디테일 설명과 proof 섹션이 함께 들어가 표준적인 커머스 완성도를 유지합니다.',
+    benefits: ['정보 밀도와 가독성의 균형', '대부분의 스마트스토어 상품에 바로 적용 가능'],
+    cta: '고객이 망설이기 전에 핵심 정보를 확인하고 바로 선택해보세요',
+    seo_title: '모바일 쇼핑몰에 맞는 표준형 상품 상세페이지'
+  },
+  10: {
+    headline: '프리미엄 커머스 무드로 완성하는 풀사이즈 상세페이지',
+    subheadline: '기본 정보부터 비교 포인트, 베네핏, proof까지 촘촘하게 담아 완성도 높은 구매 경험을 만듭니다.',
+    key_selling_points: ['브랜드형 흐름을 살린 프리미엄 구성', '반복 없이 섹션별 역할이 분명한 전개', '상세한 비교와 설득 포인트까지 포함'],
+    feature_descriptions: ['디자인과 기능을 함께 설득하는 구조', '프리미엄 상품처럼 보이게 만드는 정보 밀도', '상세한 비교 포인트를 담는 완성형 카피'],
+    usage_scenario_text: '실사용 장면을 더 풍부하게 제시해 라이프스타일 제안형 상세페이지를 만듭니다.',
+    detail_description: '세부 특징, 비교 포인트, 베네핏, proof가 분리돼 더 완성도 높은 커머스 페이지를 구성합니다.',
+    benefits: ['상세히 읽는 고객에게도 설득력 유지', '고가 상품이나 경쟁 강한 카테고리에 유리'],
+    cta: '지금 주문하고 프리미엄 디테일의 차이를 직접 경험해보세요',
+    seo_title: '프리미엄 무드의 풀사이즈 모바일 상품 상세페이지'
+  }
+};
+
 const escapeHtml = (value: string) => value
   .replaceAll('&', '&amp;')
   .replaceAll('<', '&lt;')
@@ -160,7 +273,7 @@ const takeFromRole = (
   if (!list.length) return null;
   const index = counters[role] % list.length;
   counters[role] += 1;
-  return list[index];
+  return { image: list[index], index };
 };
 
 export const classifyImages = (result: ProductDetailResult, images: UploadedImage[]): ClassifiedImage[] => {
@@ -199,19 +312,37 @@ export const buildRenderSections = (
   if (!buckets.usage.length && buckets.detail[0]) buckets.usage.push(buckets.detail[0]);
 
   const counters: Record<ImageRoleType, number> = { hero: 0, detail: 0, usage: 0 };
+  let lastImageId = '';
 
   return result.sections.map((section, index) => {
-    const preferred = takeFromRole(buckets, counters, section.image_role);
-    const fallback = preferred
+    let selected = takeFromRole(buckets, counters, section.image_role)
       ?? takeFromRole(buckets, counters, 'hero')
       ?? takeFromRole(buckets, counters, 'detail')
       ?? takeFromRole(buckets, counters, 'usage')
-      ?? images[0];
+      ?? { image: images[0], index: 0 };
+
+    if (selected.image?.id === lastImageId) {
+      const alternateRole = section.image_role === 'hero' ? 'detail' : section.image_role === 'detail' ? 'usage' : 'detail';
+      const alternate = takeFromRole(buckets, counters, alternateRole);
+      if (alternate?.image && alternate.image.id !== lastImageId) {
+        selected = alternate;
+      }
+    }
+    lastImageId = selected.image?.id ?? '';
+
+    const variationIndex = index % 3;
+    const emphasis = variationIndex === 0 ? 'full' : variationIndex === 1 ? 'detail' : 'soft';
+    const cropClass = emphasis === 'full' ? 'object-cover object-center' : emphasis === 'detail' ? 'object-cover object-[50%_35%]' : 'object-cover object-[50%_60%]';
+    const toneNote = emphasis === 'full' ? '대표컷 강조' : emphasis === 'detail' ? '디테일 강조' : '분위기 강조';
 
     return {
       ...section,
       id: `${section.type}-${index}`,
-      image: fallback
+      image: selected.image,
+      imageIndex: selected.index,
+      emphasis,
+      cropClass,
+      toneNote
     };
   });
 };
@@ -226,6 +357,73 @@ export const buildFeatureCards = (result: ProductDetailResult) => {
     title: text.split(':')[0]?.trim() || `포인트 ${index + 1}`,
     body: text.includes(':') ? text.split(':').slice(1).join(':').trim() : text
   }));
+};
+
+export const buildFallbackResult = (pageCount: PageCountOption): ProductDetailResult => {
+  const copy = DEFAULT_COPY_BY_PAGE_COUNT[pageCount];
+  const sectionOrder =
+    pageCount === 5
+      ? ['hero', 'feature', 'feature', 'usage', 'cta']
+      : pageCount === 7
+        ? ['hero', 'feature', 'feature', 'usage', 'detail', 'proof', 'cta']
+        : ['hero', 'feature', 'feature', 'usage', 'detail', 'benefit', 'ingredient', 'comparison', 'proof', 'cta'];
+
+  return {
+    page_count: pageCount,
+    section_order: sectionOrder,
+    image_role_mapping: {
+      hero: [0],
+      detail: [1],
+      usage: [2]
+    },
+    sections: sectionOrder.map((type, index) => ({
+      type,
+      title: index === 0 ? copy.headline : `${sectionLabelMap[type]} Section`,
+      text:
+        type === 'hero'
+          ? copy.subheadline
+          : type === 'usage'
+            ? copy.usage_scenario_text
+            : type === 'detail'
+              ? copy.detail_description
+              : type === 'benefit'
+                ? copy.benefits.join('\n')
+                : type === 'cta'
+                  ? copy.cta
+                  : copy.key_selling_points.join('\n'),
+      image_role: type === 'hero' ? 'hero' : type === 'usage' ? 'usage' : 'detail'
+    })),
+    generated_copy: copy
+  };
+};
+
+export const ensureResultIntegrity = (
+  result: ProductDetailResult | null | undefined,
+  pageCount: PageCountOption
+) => {
+  if (!result) return buildFallbackResult(pageCount);
+  const fallback = buildFallbackResult(pageCount);
+  return {
+    page_count: result.page_count || fallback.page_count,
+    section_order: result.section_order?.length ? result.section_order : fallback.section_order,
+    image_role_mapping: {
+      hero: result.image_role_mapping?.hero?.length ? result.image_role_mapping.hero : fallback.image_role_mapping.hero,
+      detail: result.image_role_mapping?.detail?.length ? result.image_role_mapping.detail : fallback.image_role_mapping.detail,
+      usage: result.image_role_mapping?.usage?.length ? result.image_role_mapping.usage : fallback.image_role_mapping.usage
+    },
+    sections: result.sections?.length ? result.sections : fallback.sections,
+    generated_copy: {
+      headline: result.generated_copy?.headline || fallback.generated_copy.headline,
+      subheadline: result.generated_copy?.subheadline || fallback.generated_copy.subheadline,
+      key_selling_points: result.generated_copy?.key_selling_points?.length ? result.generated_copy.key_selling_points : fallback.generated_copy.key_selling_points,
+      feature_descriptions: result.generated_copy?.feature_descriptions?.length ? result.generated_copy.feature_descriptions : fallback.generated_copy.feature_descriptions,
+      usage_scenario_text: result.generated_copy?.usage_scenario_text || fallback.generated_copy.usage_scenario_text,
+      detail_description: result.generated_copy?.detail_description || fallback.generated_copy.detail_description,
+      benefits: result.generated_copy?.benefits?.length ? result.generated_copy.benefits : fallback.generated_copy.benefits,
+      cta: result.generated_copy?.cta || fallback.generated_copy.cta,
+      seo_title: result.generated_copy?.seo_title || fallback.generated_copy.seo_title
+    }
+  };
 };
 
 export const buildPlainCopyText = ({
@@ -257,6 +455,9 @@ export const buildPlainCopyText = ({
   ...result.generated_copy.benefits.map((item) => `- ${item}`),
   '',
   `[CTA] ${result.generated_copy.cta}`,
+  '',
+  '[섹션별 원고]',
+  ...result.sections.map((section, index) => `${index + 1}. ${sectionLabelMap[section.type]}\n제목: ${section.title}\n본문: ${section.text}`),
   '',
   '[섹션 순서]',
   ...result.section_order.map((item, index) => `${index + 1}. ${sectionLabelMap[item]}`)
@@ -296,10 +497,11 @@ export const buildDetailPageHtml = ({
         <p class="eyebrow">${escapeHtml(sectionLabelMap[section.type])}</p>
         <h2>${escapeHtml(section.title)}</h2>
         <p class="lead">${escapeHtml(section.text)}</p>
+        <p class="note">${escapeHtml(section.toneNote)}</p>
         ${cards}
         ${bullets}
         <div class="section-image">
-          <img src="${section.image.dataUrl}" alt="${escapeHtml(section.title)}" />
+          <img class="${section.cropClass}" src="${section.image.dataUrl}" alt="${escapeHtml(section.title)}" />
         </div>
       </section>`;
   }).join('\n');
@@ -328,7 +530,9 @@ export const buildDetailPageHtml = ({
       .section-block:last-child { border-bottom: 0; }
       .section-block h2 { margin: 0; font-size: 30px; line-height: 1.2; }
       .lead { margin: 14px 0 0; line-height: 1.8; color: #475569; }
+      .note { margin: 10px 0 0; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #94a3b8; }
       .section-image { overflow: hidden; margin-top: 18px; border-radius: 26px; background: #e2e8f0; }
+      .section-image img { aspect-ratio: 4 / 5; }
       .feature-grid { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 18px; }
       .feature-card { padding: 18px; border-radius: 20px; background: #f8fafc; }
       .glyph { font-size: 20px; margin-bottom: 10px; }
