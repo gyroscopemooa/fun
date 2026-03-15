@@ -1,8 +1,8 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
+import Header from '../../components/Header.astro';
 import ProductDetailStudio from '../../components/home/ProductDetailStudio';
+import Layout from '../../layouts/Layout.astro';
 
 const pathname = Astro.url.pathname;
 const locale = pathname.startsWith('/en/') || pathname === '/en'
@@ -13,22 +13,22 @@ const locale = pathname.startsWith('/en/') || pathname === '/en'
 
 const copy = {
   ko: {
-    title: '쇼핑몰 상세페이지 생성기 | ManyTool',
-    description: '상품 사진과 LLM 프롬프트를 넣으면 쇼핑몰 상세페이지 초안을 만들어주는 도구입니다.',
-    heading: '쇼핑몰 상세페이지 생성기',
-    body: '메인 카드에서는 진입만 하고, 실제 제작은 이 페이지에서 진행하도록 분리했습니다.'
+    title: '상세페이지 생성기 | ManyTool',
+    description: '상품 사진과 프롬프트를 바탕으로 AI 상세페이지 카피와 HTML 초안을 생성합니다.',
+    heading: '상세페이지 생성기',
+    body: '상품 정보, 프롬프트, 업로드한 이미지를 바탕으로 헤드라인, 상품 설명, SEO 문구, 복사용 HTML까지 한 번에 생성합니다.'
   },
   en: {
     title: 'Product Detail Studio | ManyTool',
-    description: 'Create a product detail page draft from product photos and an LLM prompt.',
+    description: 'Generate AI-powered product detail copy and exportable HTML from uploaded product images.',
     heading: 'Product Detail Studio',
-    body: 'The homepage now links here as a card, while the full creation flow lives on this dedicated page.'
+    body: 'Upload product photos, add product info and prompting instructions, then generate structured copy, preview sections, and export-ready HTML.'
   },
   ja: {
     title: '商品詳細ページ生成 | ManyTool',
-    description: '商品写真とLLMプロンプトから、商品詳細ページの下書きを生成するツールです。',
+    description: '商品写真とプロンプトをもとに、AIで商品詳細ページのコピーとHTML下書きを生成します。',
     heading: '商品詳細ページ生成',
-    body: 'ホームではカード導線だけを置き、実際の制作フローはこの専用ページに分離しました。'
+    body: '商品情報、プロンプト、アップロード画像を使って、見出し、説明文、SEO文言、貼り付け用HTMLまでまとめて生成します。'
   }
 }[locale];
 ---
@@ -36,7 +36,7 @@ const copy = {
 <Layout title={copy.title} description={copy.description}>
   <Header />
   <main class="mx-auto max-w-7xl px-4 py-8">
-    <section class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+    <section class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
       <h1 class="text-3xl font-black tracking-tight text-slate-900">{copy.heading}</h1>
       <p class="mt-3 max-w-3xl text-sm leading-6 text-slate-600">{copy.body}</p>
     </section>

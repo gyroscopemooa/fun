@@ -8,6 +8,7 @@ import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import { Webhook } from 'standardwebhooks';
 import { db } from './store.js';
+import { generateCommerceDetailPage } from './commerce/detailPage.js';
 import { generateCandidatesWithProvider, getImageProvider, getResolvedImageProvider, isExternalAiEnabled, normalizeRequestedProvider, resolveImageProvider } from './providers/providerRouter.js';
 
 const app = express();
@@ -31,7 +32,7 @@ await fs.mkdir(jobSnapshotDir, { recursive: true });
 
 app.use(cors());
 app.use(express.json({
-  limit: '4mb',
+  limit: '20mb',
   verify: (req, _res, buffer) => {
     req.rawBody = Buffer.from(buffer);
   }
@@ -652,6 +653,48 @@ app.post('/generate', async (req, res) => {
     job.originalUrl = `/files/originals/${path.basename(photo.originalPath)}`;
     await persistJobSnapshot(job);
     return res.status(500).json({ error: `generate failed: ${error.message}`, jobId });
+  }
+});
+
+app.post('/commerce/detail-page/generate', async (req, res) => {
+  const {
+    productName = '',
+    price = '',
+    audience = '',
+    highlight = '',
+    prompt = '',
+    theme = 'premium',
+    images = []
+  } = req.body ?? {};
+
+  if (!String(productName).trim()) {
+    return res.status(400).json({ error: 'productName is required' });
+  }
+  if (!Array.isArray(images) || images.length === 0) {
+    return res.status(400).json({ error: 'at least one product image is required' });
+  }
+
+  try {
+    const result = await generateCommerceDetailPage({
+      productName: String(productName).trim(),
+      price: String(price ?? '').trim(),
+      audience: String(audience ?? '').trim(),
+      highlight: String(highlight ?? '').trim(),
+      prompt: String(prompt ?? '').trim(),
+      theme: String(theme ?? 'premium').trim(),
+      images
+    });
+
+    return res.status(201).json({
+      ok: true,
+      model: process.env.OPENAI_MODEL?.trim() || 'gpt-5-mini',
+      result
+    });
+  } catch (error) {
+    const status = String(error?.message ?? '').includes('OPENAI_API_KEY is missing') ? 503 : 500;
+    return res.status(status).json({
+      error: error?.message ?? 'detail page generation failed'
+    });
   }
 });
 
