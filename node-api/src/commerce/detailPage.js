@@ -6,181 +6,112 @@ const detailPageSchema = {
   type: 'object',
   additionalProperties: false,
   properties: {
-    headline: { type: 'string' },
-    sub_headline: { type: 'string' },
-    selling_points: {
+    page_count: { type: 'integer', enum: [5, 7, 10] },
+    section_order: {
       type: 'array',
-      items: { type: 'string' },
-      minItems: 3,
-      maxItems: 6
+      items: {
+        type: 'string',
+        enum: ['hero', 'feature', 'usage', 'detail', 'benefit', 'ingredient', 'proof', 'comparison', 'cta']
+      },
+      minItems: 5,
+      maxItems: 10
     },
-    feature_icons: {
+    image_role_mapping: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        hero: {
+          type: 'array',
+          items: { type: 'integer', minimum: 0, maximum: 9 },
+          minItems: 1,
+          maxItems: 10
+        },
+        detail: {
+          type: 'array',
+          items: { type: 'integer', minimum: 0, maximum: 9 },
+          minItems: 0,
+          maxItems: 10
+        },
+        usage: {
+          type: 'array',
+          items: { type: 'integer', minimum: 0, maximum: 9 },
+          minItems: 0,
+          maxItems: 10
+        }
+      },
+      required: ['hero', 'detail', 'usage']
+    },
+    sections: {
       type: 'array',
       items: {
         type: 'object',
         additionalProperties: false,
         properties: {
-          icon: { type: 'string' },
-          label: { type: 'string' },
-          description: { type: 'string' }
+          type: {
+            type: 'string',
+            enum: ['hero', 'feature', 'usage', 'detail', 'benefit', 'ingredient', 'proof', 'comparison', 'cta']
+          },
+          title: { type: 'string' },
+          text: { type: 'string' },
+          image_role: {
+            type: 'string',
+            enum: ['hero', 'detail', 'usage']
+          }
         },
-        required: ['icon', 'label', 'description']
+        required: ['type', 'title', 'text', 'image_role']
       },
-      minItems: 3,
-      maxItems: 4
+      minItems: 5,
+      maxItems: 10
     },
-    description: { type: 'string' },
-    recommended_users: {
-      type: 'array',
-      items: { type: 'string' },
-      minItems: 2,
-      maxItems: 5
-    },
-    product_info: {
+    generated_copy: {
       type: 'object',
       additionalProperties: false,
       properties: {
-        price_note: { type: 'string' },
-        materials: {
+        headline: { type: 'string' },
+        subheadline: { type: 'string' },
+        key_selling_points: {
           type: 'array',
           items: { type: 'string' },
-          minItems: 1,
-          maxItems: 5
+          minItems: 3,
+          maxItems: 6
         },
-        colors: {
+        feature_descriptions: {
           type: 'array',
           items: { type: 'string' },
-          minItems: 1,
-          maxItems: 5
+          minItems: 3,
+          maxItems: 6
         },
-        visual_style: { type: 'string' },
-        usage_situations: {
-          type: 'array',
-          items: { type: 'string' },
-          minItems: 2,
-          maxItems: 5
-        },
-        key_visual_details: {
+        usage_scenario_text: { type: 'string' },
+        detail_description: { type: 'string' },
+        benefits: {
           type: 'array',
           items: { type: 'string' },
           minItems: 2,
           maxItems: 6
         },
-        size_tip: { type: 'string' },
-        package_includes: {
-          type: 'array',
-          items: { type: 'string' },
-          minItems: 1,
-          maxItems: 5
-        }
+        cta: { type: 'string' },
+        seo_title: { type: 'string' }
       },
       required: [
-        'price_note',
-        'materials',
-        'colors',
-        'visual_style',
-        'usage_situations',
-        'key_visual_details',
-        'size_tip',
-        'package_includes'
+        'headline',
+        'subheadline',
+        'key_selling_points',
+        'feature_descriptions',
+        'usage_scenario_text',
+        'detail_description',
+        'benefits',
+        'cta',
+        'seo_title'
       ]
-    },
-    cta: { type: 'string' },
-    layout_plan: {
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        hero_image_index: { type: 'integer', minimum: 0, maximum: 7 },
-        detail_image_index: { type: 'integer', minimum: 0, maximum: 7 },
-        usage_image_index: { type: 'integer', minimum: 0, maximum: 7 },
-        section_count: { type: 'integer', minimum: 6, maximum: 8 }
-      },
-      required: ['hero_image_index', 'detail_image_index', 'usage_image_index', 'section_count']
-    },
-    image_analysis: {
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        product_color: { type: 'string' },
-        materials: {
-          type: 'array',
-          items: { type: 'string' },
-          minItems: 1,
-          maxItems: 5
-        },
-        visual_style: { type: 'string' },
-        usage_situations: {
-          type: 'array',
-          items: { type: 'string' },
-          minItems: 2,
-          maxItems: 5
-        },
-        key_visual_details: {
-          type: 'array',
-          items: { type: 'string' },
-          minItems: 2,
-          maxItems: 6
-        }
-      },
-      required: [
-        'product_color',
-        'materials',
-        'visual_style',
-        'usage_situations',
-        'key_visual_details'
-      ]
-    },
-    image_roles: {
-      type: 'array',
-      items: {
-        type: 'object',
-        additionalProperties: false,
-        properties: {
-          index: { type: 'integer', minimum: 0, maximum: 7 },
-          role: { type: 'string' },
-          reason: { type: 'string' }
-        },
-        required: ['index', 'role', 'reason']
-      },
-      minItems: 1,
-      maxItems: 8
-    },
-    seo: {
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        naver_title: { type: 'string' },
-        product_keywords: {
-          type: 'array',
-          items: { type: 'string' },
-          minItems: 4,
-          maxItems: 10
-        },
-        product_tags: {
-          type: 'array',
-          items: { type: 'string' },
-          minItems: 4,
-          maxItems: 10
-        },
-        short_marketing_copy: { type: 'string' }
-      },
-      required: ['naver_title', 'product_keywords', 'product_tags', 'short_marketing_copy']
     }
   },
-  required: [
-    'headline',
-    'sub_headline',
-    'selling_points',
-    'feature_icons',
-    'description',
-    'recommended_users',
-    'product_info',
-    'cta',
-    'layout_plan',
-    'image_analysis',
-    'image_roles',
-    'seo'
-  ]
+  required: ['page_count', 'section_order', 'image_role_mapping', 'sections', 'generated_copy']
+};
+
+const PAGE_TEMPLATES = {
+  5: ['hero', 'feature', 'feature', 'usage', 'cta'],
+  7: ['hero', 'feature', 'feature', 'usage', 'detail', 'proof', 'cta'],
+  10: ['hero', 'feature', 'feature', 'usage', 'detail', 'benefit', 'ingredient', 'comparison', 'proof', 'cta']
 };
 
 let client = null;
@@ -201,113 +132,106 @@ const normalizeStringList = (value, fallback = []) => {
   return value.map((item) => normalizeString(item)).filter(Boolean);
 };
 
-const normalizeFeatureIcons = (value) => {
-  if (!Array.isArray(value)) {
-    return [
-      { icon: 'sparkles', label: '핵심 포인트', description: '첫 화면에서 장점을 바로 전달합니다.' },
-      { icon: 'badge-check', label: '신뢰감', description: '상품 특징을 이해하기 쉽게 정리합니다.' },
-      { icon: 'shopping-bag', label: '구매 유도', description: '모바일 쇼핑 동선에 맞춘 CTA를 배치합니다.' }
-    ];
-  }
-
-  const normalized = value
-    .map((item) => ({
-      icon: normalizeString(item?.icon, 'sparkles'),
-      label: normalizeString(item?.label),
-      description: normalizeString(item?.description)
-    }))
-    .filter((item) => item.label && item.description)
-    .slice(0, 4);
-
-  return normalized.length ? normalized : normalizeFeatureIcons(null);
-};
-
-const normalizeImageRoles = (value, imageCount) => {
-  if (!Array.isArray(value)) return [];
-  return value
-    .map((item) => ({
-      index: Number(item?.index ?? -1),
-      role: normalizeString(item?.role, 'detail'),
-      reason: normalizeString(item?.reason, '상품 흐름상 적합한 이미지로 분류')
-    }))
-    .filter((item) => Number.isInteger(item.index) && item.index >= 0 && item.index < imageCount);
-};
-
-const uniqueIndices = (...indices) => {
+const normalizeRoleArray = (value, imageCount, fallback = []) => {
+  const list = Array.isArray(value) ? value : fallback;
+  const unique = [];
   const seen = new Set();
-  return indices.filter((value) => {
-    if (seen.has(value)) return false;
-    seen.add(value);
-    return true;
+  list.forEach((item) => {
+    const index = Number(item);
+    if (!Number.isInteger(index) || index < 0 || index >= imageCount || seen.has(index)) return;
+    seen.add(index);
+    unique.push(index);
   });
+  return unique;
 };
 
-const normalizePayload = (payload, imageCount) => {
-  const imageAnalysis = payload?.image_analysis ?? {};
-  const productInfo = payload?.product_info ?? {};
-  const heroImageIndex = Number(payload?.layout_plan?.hero_image_index ?? 0);
-  const detailImageIndex = Number(payload?.layout_plan?.detail_image_index ?? Math.min(1, imageCount - 1));
-  const usageImageIndex = Number(payload?.layout_plan?.usage_image_index ?? Math.min(2, imageCount - 1));
-  const sectionCount = Number(payload?.layout_plan?.section_count ?? (imageCount > 5 ? 8 : 6));
-  const safeHero = Number.isInteger(heroImageIndex) && heroImageIndex >= 0 && heroImageIndex < imageCount ? heroImageIndex : 0;
-  const safeDetail = Number.isInteger(detailImageIndex) && detailImageIndex >= 0 && detailImageIndex < imageCount ? detailImageIndex : Math.min(1, imageCount - 1);
-  const safeUsage = Number.isInteger(usageImageIndex) && usageImageIndex >= 0 && usageImageIndex < imageCount ? usageImageIndex : Math.min(2, imageCount - 1);
-  const roles = normalizeImageRoles(payload?.image_roles, imageCount);
-  const fallbackRoles = uniqueIndices(safeHero, safeDetail, safeUsage).map((index) => ({
-    index,
-    role: index === safeHero ? 'hero' : index === safeUsage ? 'usage' : 'detail',
-    reason: index === safeHero
-      ? '대표 상품 이미지로 적합'
-      : index === safeUsage
-        ? '사용 장면이나 라이프스타일 연출에 적합'
-        : '디테일 설명 섹션에 적합'
-  }));
+const normalizeSectionType = (value) => {
+  const allowed = new Set(['hero', 'feature', 'usage', 'detail', 'benefit', 'ingredient', 'proof', 'comparison', 'cta']);
+  return allowed.has(value) ? value : 'detail';
+};
+
+const normalizeImageRole = (value) => (value === 'hero' || value === 'usage' ? value : 'detail');
+
+const ensureRoleFallbacks = (mapping, imageCount) => {
+  const hero = mapping.hero.length ? mapping.hero : [0];
+  const detailFallback = imageCount > 1 ? [1] : [hero[0]];
+  const usageFallback = imageCount > 2 ? [2] : [detailFallback[0]];
 
   return {
-    headline: normalizeString(payload?.headline, '상품의 첫 인상을 선명하게 보여주는 상세페이지'),
-    sub_headline: normalizeString(payload?.sub_headline, '실제 상품 사진과 입력한 조건을 바탕으로 모바일 쇼핑에 맞춘 상세페이지 흐름을 구성했습니다.'),
-    selling_points: normalizeStringList(payload?.selling_points, [
+    hero,
+    detail: mapping.detail.length ? mapping.detail : detailFallback,
+    usage: mapping.usage.length ? mapping.usage : usageFallback
+  };
+};
+
+const normalizeSections = (value, sectionOrder, generatedCopy) => {
+  const fallbackSections = sectionOrder.map((type, index) => ({
+    type,
+    title: index === 0 ? generatedCopy.headline : `${type.toUpperCase()} Section`,
+    text:
+      type === 'hero'
+        ? generatedCopy.subheadline
+        : type === 'usage'
+          ? generatedCopy.usage_scenario_text
+          : type === 'detail'
+            ? generatedCopy.detail_description
+            : type === 'cta'
+              ? generatedCopy.cta
+              : generatedCopy.key_selling_points.join('\n'),
+    image_role: type === 'hero' ? 'hero' : type === 'usage' ? 'usage' : 'detail'
+  }));
+
+  if (!Array.isArray(value)) return fallbackSections;
+
+  const normalized = value.map((item, index) => ({
+    type: normalizeSectionType(item?.type ?? sectionOrder[index] ?? 'detail'),
+    title: normalizeString(item?.title, fallbackSections[index]?.title || 'Section'),
+    text: normalizeString(item?.text, fallbackSections[index]?.text || generatedCopy.detail_description),
+    image_role: normalizeImageRole(item?.image_role ?? fallbackSections[index]?.image_role)
+  }));
+
+  return normalized.length ? normalized : fallbackSections;
+};
+
+const normalizePayload = (payload, imageCount, requestedPageCount) => {
+  const pageCount = [5, 7, 10].includes(Number(payload?.page_count)) ? Number(payload.page_count) : requestedPageCount;
+  const generatedCopy = {
+    headline: normalizeString(payload?.generated_copy?.headline, '상품의 첫인상을 선명하게 보여주는 상세페이지'),
+    subheadline: normalizeString(payload?.generated_copy?.subheadline, '실제 상품 사진과 상품 정보를 바탕으로 모바일 커머스에 맞는 상세페이지 흐름을 구성했습니다.'),
+    key_selling_points: normalizeStringList(payload?.generated_copy?.key_selling_points, [
       '첫 화면에서 핵심 장점이 바로 보이도록 정리',
-      '한국형 모바일 쇼핑몰 톤으로 카피 구성',
-      '구매 결정을 돕는 CTA 흐름까지 포함'
-    ]).slice(0, 6),
-    feature_icons: normalizeFeatureIcons(payload?.feature_icons),
-    description: normalizeString(payload?.description, '상품 특징과 실제 사용 장면을 자연스럽게 연결한 상세 설명입니다.'),
-    recommended_users: normalizeStringList(payload?.recommended_users, [
-      '실용적인 상품 정보를 빠르게 파악하고 싶은 고객',
-      '사진 중심으로 상품 분위기를 보고 구매를 결정하는 고객'
-    ]).slice(0, 5),
-    product_info: {
-      price_note: normalizeString(productInfo.price_note, '가격 및 옵션 정보는 판매 정책에 맞게 최종 조정해 주세요.'),
-      materials: normalizeStringList(productInfo.materials, normalizeStringList(imageAnalysis.materials, ['대표 소재 정보'])),
-      colors: normalizeStringList(productInfo.colors, [normalizeString(imageAnalysis.product_color, '대표 컬러')]),
-      visual_style: normalizeString(productInfo.visual_style, normalizeString(imageAnalysis.visual_style, '모바일 커머스에 맞는 깔끔한 비주얼')),
-      usage_situations: normalizeStringList(productInfo.usage_situations, normalizeStringList(imageAnalysis.usage_situations, ['일상 사용', '선물 제안'])),
-      key_visual_details: normalizeStringList(productInfo.key_visual_details, normalizeStringList(imageAnalysis.key_visual_details, ['형태', '질감', '디테일'])),
-      size_tip: normalizeString(productInfo.size_tip, '옵션과 사이즈 정보는 판매 페이지 기준으로 보완해 주세요.'),
-      package_includes: normalizeStringList(productInfo.package_includes, ['상품 본품'])
-    },
-    cta: normalizeString(payload?.cta, '지금 바로 상품의 매력을 상세페이지로 완성해 보세요.'),
-    layout_plan: {
-      hero_image_index: safeHero,
-      detail_image_index: safeDetail,
-      usage_image_index: safeUsage,
-      section_count: Math.max(6, Math.min(imageCount > 5 ? 8 : 6, sectionCount || 6))
-    },
-    image_analysis: {
-      product_color: normalizeString(imageAnalysis.product_color, '대표 컬러'),
-      materials: normalizeStringList(imageAnalysis.materials, ['대표 소재']),
-      visual_style: normalizeString(imageAnalysis.visual_style, '실사용 중심의 커머스 스타일'),
-      usage_situations: normalizeStringList(imageAnalysis.usage_situations, ['일상 사용', '선물 제안']),
-      key_visual_details: normalizeStringList(imageAnalysis.key_visual_details, ['형태', '질감', '마감'])
-    },
-    image_roles: roles.length ? roles : fallbackRoles,
-    seo: {
-      naver_title: normalizeString(payload?.seo?.naver_title, normalizeString(payload?.headline, '상품 상세페이지 초안')),
-      product_keywords: normalizeStringList(payload?.seo?.product_keywords, ['상품상세', '상세페이지', '스마트스토어', '쇼핑몰']),
-      product_tags: normalizeStringList(payload?.seo?.product_tags, ['상세페이지', '스마트스토어', '쿠팡', '상품소개']),
-      short_marketing_copy: normalizeString(payload?.seo?.short_marketing_copy, '실제 상품 사진을 기반으로 설득력 있게 정리한 판매 문구입니다.')
-    }
+      '모바일 쇼핑몰 흐름에 맞춘 설득형 카피 구성',
+      '상세 설명과 CTA까지 자연스럽게 연결'
+    ]),
+    feature_descriptions: normalizeStringList(payload?.generated_copy?.feature_descriptions, [
+      '핵심 기능을 짧고 강한 문장으로 요약',
+      '상품의 분위기와 사용 맥락을 빠르게 이해',
+      '구매 결정을 돕는 정보 구조 제공'
+    ]),
+    usage_scenario_text: normalizeString(payload?.generated_copy?.usage_scenario_text, '일상 사용, 선물, 취향 소비 등 다양한 맥락에서 자연스럽게 제안할 수 있습니다.'),
+    detail_description: normalizeString(payload?.generated_copy?.detail_description, '상품의 재질감, 디테일, 완성도를 모바일 상세페이지 흐름에 맞게 설명합니다.'),
+    benefits: normalizeStringList(payload?.generated_copy?.benefits, ['실사용 만족도를 높이는 구성', '가볍게 비교해도 장점이 드러나는 카피']),
+    cta: normalizeString(payload?.generated_copy?.cta, '지금 바로 구매해보세요'),
+    seo_title: normalizeString(payload?.generated_copy?.seo_title, '상품 상세페이지 초안')
+  };
+
+  const requestedOrder = PAGE_TEMPLATES[pageCount];
+  const sectionOrder = Array.isArray(payload?.section_order) && payload.section_order.length
+    ? payload.section_order.map((item) => normalizeSectionType(item)).slice(0, requestedOrder.length)
+    : requestedOrder;
+
+  const imageRoleMapping = ensureRoleFallbacks({
+    hero: normalizeRoleArray(payload?.image_role_mapping?.hero, imageCount, [0]),
+    detail: normalizeRoleArray(payload?.image_role_mapping?.detail, imageCount, imageCount > 1 ? [1] : [0]),
+    usage: normalizeRoleArray(payload?.image_role_mapping?.usage, imageCount, imageCount > 2 ? [2] : [Math.min(1, imageCount - 1)])
+  }, imageCount);
+
+  return {
+    page_count: pageCount,
+    section_order: sectionOrder,
+    image_role_mapping: imageRoleMapping,
+    sections: normalizeSections(payload?.sections, sectionOrder, generatedCopy),
+    generated_copy: generatedCopy
   };
 };
 
@@ -318,9 +242,7 @@ const extractJson = (value) => {
   const trimmed = value.trim();
   const firstBrace = trimmed.indexOf('{');
   const lastBrace = trimmed.lastIndexOf('}');
-  const candidate = firstBrace >= 0 && lastBrace > firstBrace
-    ? trimmed.slice(firstBrace, lastBrace + 1)
-    : trimmed;
+  const candidate = firstBrace >= 0 && lastBrace > firstBrace ? trimmed.slice(firstBrace, lastBrace + 1) : trimmed;
   return JSON.parse(candidate);
 };
 
@@ -328,41 +250,46 @@ const buildPrompt = ({
   productName,
   price,
   audience,
-  highlight,
+  sellingPoints,
   prompt,
   theme,
+  pageCount,
   imageCount
 }) => [
-  '다음 입력값과 업로드된 상품 이미지를 함께 분석해서 한국형 모바일 쇼핑 상세페이지용 JSON만 생성하세요.',
-  '레이아웃은 860px 폭의 세로형 쇼핑몰 상세페이지를 전제로 합니다.',
-  '반드시 다음 섹션 흐름을 반영하세요: Hero, Key selling points, Feature icons, Usage scenario, Detail description, CTA.',
-  '이미지는 hero image, detail image, usage image로 분류하고 image_roles 배열과 layout_plan 인덱스에 반영하세요.',
-  '문체는 스마트스토어, 쿠팡, 카페24에서 바로 쓸 수 있는 자연스러운 한국어 판매 톤으로 작성하세요.',
-  'HTML이나 마크다운은 출력하지 말고 JSON만 반환하세요.',
+  '한국 모바일 쇼핑몰용 상세페이지 JSON만 생성하세요.',
+  '페이지 폭은 860px이고 스마트스토어, 쿠팡, 카페24에 붙여넣는 것을 전제로 합니다.',
+  `목표 페이지 수는 ${pageCount}장입니다.`,
+  `페이지 수별 섹션 규칙은 다음과 같습니다: ${JSON.stringify(PAGE_TEMPLATES[pageCount])}`,
+  '반드시 page_count, section_order, image_role_mapping, sections, generated_copy를 포함하세요.',
+  'sections.type은 hero, feature, usage, detail, benefit, ingredient, proof, comparison, cta 중 하나만 사용하세요.',
+  'sections.image_role은 hero, detail, usage만 사용하세요.',
+  'Hero 섹션에는 대표컷이 오고, detail 섹션은 디테일컷, usage 섹션은 사용컷이 오도록 image_role_mapping을 배치하세요.',
+  '이미지가 부족하면 재사용을 전제로 가장 합리적인 매핑을 만드세요.',
   `상품명: ${productName}`,
   `가격/옵션: ${price || '미입력'}`,
   `타깃 고객: ${audience || '미입력'}`,
-  `핵심 포인트: ${highlight || '미입력'}`,
-  `추가 프롬프트: ${prompt || '실제 상품 사진을 바탕으로 구매 전환형 상세페이지 카피를 생성'}`,
+  `키 셀링 포인트: ${sellingPoints || '미입력'}`,
   `테마: ${theme}`,
+  `추가 프롬프트: ${prompt || '상품 사진을 바탕으로 구매 전환형 상세페이지를 생성'}`,
   `업로드 이미지 수: ${imageCount}`,
-  'feature_icons는 아이콘 이름, 짧은 라벨, 한 줄 설명으로 구성하세요.',
-  'image_roles.role은 hero, detail, usage 중 하나를 우선 사용하세요.',
-  'section_count는 기본 6으로 두고 이미지가 매우 다양하면 7 또는 8까지 확장해도 됩니다.',
-  'seo 필드도 반드시 포함하세요.'
+  'generated_copy.feature_descriptions는 아이콘형 feature 섹션에 바로 쓸 수 있게 짧고 강한 문장으로 작성하세요.',
+  'generated_copy.seo_title은 한국 검색형 상품명 스타일로 작성하세요.',
+  'generated_copy.cta는 짧고 직접적인 구매 유도 문장으로 작성하세요.',
+  '마크다운, HTML, 설명문 없이 JSON만 출력하세요.'
 ].join('\n');
 
 export const generateCommerceDetailPage = async ({
   productName,
   price,
   audience,
-  highlight,
+  sellingPoints,
   prompt,
   theme,
+  pageCount,
   images
 }) => {
   const safeImages = Array.isArray(images)
-    ? images.filter((item) => typeof item === 'string' && item.startsWith('data:image/')).slice(0, 8)
+    ? images.filter((item) => typeof item === 'string' && item.startsWith('data:image/')).slice(0, 10)
     : [];
 
   if (!safeImages.length) {
@@ -371,11 +298,11 @@ export const generateCommerceDetailPage = async ({
 
   const completion = await getClient().chat.completions.create({
     model: DEFAULT_MODEL,
-    temperature: 0.8,
+    temperature: 0.7,
     messages: [
       {
         role: 'system',
-        content: 'You generate structured Korean e-commerce JSON for mobile shopping detail pages.'
+        content: 'You generate structured Korean e-commerce JSON for mobile product detail pages.'
       },
       {
         role: 'user',
@@ -386,9 +313,10 @@ export const generateCommerceDetailPage = async ({
               productName,
               price,
               audience,
-              highlight,
+              sellingPoints,
               prompt,
               theme,
+              pageCount,
               imageCount: safeImages.length
             })
           },
@@ -411,5 +339,5 @@ export const generateCommerceDetailPage = async ({
 
   const content = completion.choices?.[0]?.message?.content;
   const parsed = extractJson(content);
-  return normalizePayload(parsed, safeImages.length);
+  return normalizePayload(parsed, safeImages.length, pageCount);
 };

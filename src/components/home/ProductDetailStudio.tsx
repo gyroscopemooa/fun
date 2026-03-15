@@ -18,12 +18,15 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
   buildDetailPageHtml,
+  buildFeatureCards,
   buildPlainCopyText,
-  buildSectionPlans,
+  buildRenderSections,
   classifyImages,
   iconGlyphMap,
+  sectionLabelMap,
   starterPrompts,
   themes,
+  type PageCountOption,
   type ProductDetailFormValues,
   type ProductDetailResult,
   type ThemeKey,
@@ -57,10 +60,11 @@ const useStudioStore = create<StudioState>((set) => ({
   setIsGenerating: (isGenerating) => set({ isGenerating })
 }));
 
-const MAX_IMAGES = 8;
+const MAX_IMAGES = 10;
 const API_BASE = import.meta.env.PUBLIC_NODE_API_BASE || 'http://127.0.0.1:8787';
 const EXPORT_WIDTH = 860;
 const SLICE_HEIGHT = 3000;
+const PAGE_COUNT_OPTIONS: PageCountOption[] = [5, 7, 10];
 
 const resizeImageToDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
   const reader = new FileReader();
@@ -69,7 +73,7 @@ const resizeImageToDataUrl = (file: File) => new Promise<string>((resolve, rejec
     const source = new Image();
     source.onerror = () => reject(new Error('이미지 미리보기를 만들지 못했습니다.'));
     source.onload = () => {
-      const maxSide = 1800;
+      const maxSide = 1440;
       const ratio = Math.min(1, maxSide / Math.max(source.width, source.height));
       const width = Math.max(1, Math.round(source.width * ratio));
       const height = Math.max(1, Math.round(source.height * ratio));
@@ -82,7 +86,7 @@ const resizeImageToDataUrl = (file: File) => new Promise<string>((resolve, rejec
         return;
       }
       context.drawImage(source, 0, 0, width, height);
-      resolve(canvas.toDataURL('image/jpeg', 0.86));
+      resolve(canvas.toDataURL('image/jpeg', 0.84));
     };
     source.src = String(reader.result);
   };
@@ -110,9 +114,10 @@ export default function ProductDetailStudio() {
     defaultValues: {
       productName: '프리미엄 세라믹 머그컵',
       price: '29,900원 / 2컬러',
-      audience: '감도 있는 주방 소품을 찾는 20-30대',
-      highlight: '묵직한 세라믹 질감과 선물하기 좋은 분위기',
-      prompt: starterPrompts[0]
+      audience: '감성 주방 아이템을 찾는 20-30대',
+      sellingPoints: '보온감, 묵직한 세라믹 질감, 선물하기 좋은 디자인',
+      prompt: starterPrompts[0],
+      pageCount: 7
     }
   });
   const {
@@ -135,8 +140,9 @@ export default function ProductDetailStudio() {
   const exportRef = useRef<HTMLDivElement | null>(null);
   const values = watch();
   const activeTheme = useMemo(() => themes.find((item) => item.key === theme) ?? themes[0], [theme]);
-  const sections = useMemo(() => (result ? buildSectionPlans(result, images) : []), [result, images]);
+  const renderSections = useMemo(() => (result ? buildRenderSections(result, images) : []), [result, images]);
   const classifiedImages = useMemo(() => (result ? classifyImages(result, images) : []), [result, images]);
+  const featureCards = useMemo(() => (result ? buildFeatureCards(result) : []), [result]);
 
   useEffect(() => {
     if (!zoomRootRef.current || images.length === 0) return;
@@ -173,7 +179,7 @@ export default function ProductDetailStudio() {
       setHtml('');
       setCopyText('');
       previous.forEach((image) => URL.revokeObjectURL(image.url));
-      toast.success(`${loadedImages.length}장의 상품 이미지를 불러왔습니다.`);
+      toast.success(`${loadedImages.length}장의 이미지를 불러왔습니다.`);
     } catch (error) {
       previous.forEach((image) => URL.revokeObjectURL(image.url));
       setImages([]);
@@ -197,8 +203,13 @@ export default function ProductDetailStudio() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...formValues,
+          productName: formValues.productName,
+          price: formValues.price,
+          audience: formValues.audience,
+          sellingPoints: formValues.sellingPoints,
+          prompt: formValues.prompt,
           theme,
+          pageCount: Number(formValues.pageCount),
           images: images.map((image) => image.dataUrl)
         })
       });
@@ -211,7 +222,7 @@ export default function ProductDetailStudio() {
       setResult(nextResult);
       setHtml(buildDetailPageHtml({ formValues, result: nextResult, images, theme }));
       setCopyText(buildPlainCopyText({ formValues, result: nextResult }));
-      toast.success('섹션형 상세페이지 초안이 생성되었습니다.');
+      toast.success(`${nextResult.page_count}장 구성의 상세페이지가 생성되었습니다.`);
     } catch (error) {
       const message = error instanceof Error ? error.message : '상세페이지 생성에 실패했습니다.';
       setApiError(message);
@@ -227,7 +238,7 @@ export default function ProductDetailStudio() {
       return;
     }
     await navigator.clipboard.writeText(html);
-    toast.success('HTML을 클립보드에 복사했습니다.');
+    toast.success('HTML을 복사했습니다.');
   };
 
   const onCopyText = async () => {
@@ -236,7 +247,7 @@ export default function ProductDetailStudio() {
       return;
     }
     await navigator.clipboard.writeText(copyText);
-    toast.success('카피 텍스트를 클립보드에 복사했습니다.');
+    toast.success('카피 텍스트를 복사했습니다.');
   };
 
   const onExportSlices = async () => {
@@ -255,7 +266,6 @@ export default function ProductDetailStudio() {
         width: EXPORT_WIDTH
       });
       const totalSlices = Math.ceil(canvas.height / SLICE_HEIGHT);
-
       for (let index = 0; index < totalSlices; index += 1) {
         const sliceCanvas = document.createElement('canvas');
         const sliceHeight = Math.min(SLICE_HEIGHT, canvas.height - (index * SLICE_HEIGHT));
@@ -265,23 +275,12 @@ export default function ProductDetailStudio() {
         if (!context) {
           throw new Error('슬라이스 캔버스를 만들지 못했습니다.');
         }
-        context.drawImage(
-          canvas,
-          0,
-          index * SLICE_HEIGHT,
-          canvas.width,
-          sliceHeight,
-          0,
-          0,
-          canvas.width,
-          sliceHeight
-        );
-        downloadDataUrl(sliceCanvas.toDataURL('image/png'), `detail-page-slice-${index + 1}.png`);
+        context.drawImage(canvas, 0, index * SLICE_HEIGHT, canvas.width, sliceHeight, 0, 0, canvas.width, sliceHeight);
+        downloadDataUrl(sliceCanvas.toDataURL('image/png'), `page${index + 1}.png`);
       }
-
-      toast.success(`${totalSlices}개의 3000px 슬라이스 이미지를 저장했습니다.`);
+      toast.success(`${totalSlices}개의 3000px 슬라이스를 저장했습니다.`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : '슬라이스 이미지 내보내기에 실패했습니다.');
+      toast.error(error instanceof Error ? error.message : '슬라이스 저장에 실패했습니다.');
     } finally {
       setIsExportingSlices(false);
     }
@@ -302,28 +301,27 @@ export default function ProductDetailStudio() {
           <div className="space-y-6">
             <div className="flex flex-wrap items-center gap-3">
               <span className={cn('rounded-full bg-gradient-to-r px-4 py-1 text-xs font-semibold text-slate-900', activeTheme.accent)}>
-                Section Detail Builder
+                AI Detail Page Builder
               </span>
               <span className="rounded-full border border-white/15 px-3 py-1 text-xs text-white/70">
-                860px mobile detail page
+                860px mobile commerce layout
               </span>
             </div>
 
             <div className="max-w-2xl">
               <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
-                이미지를 섹션별로 분류해서 긴 세로형 쇼핑몰 상세페이지로 바로 변환합니다.
+                상품 사진과 상품 정보를 한국형 모바일 상세페이지로 바로 변환합니다.
               </h1>
               <p className="mt-3 text-sm leading-6 text-white/72 sm:text-base">
-                업로드 이미지를 hero, detail, usage 컷으로 분류하고 Hero, Key Selling Points, Feature Icons,
-                Usage Scenario, Detail Description, CTA 섹션을 860px 기준 세로 레이아웃으로 생성합니다.
+                업로드 이미지를 hero, detail, usage로 자동 분류하고 선택한 장수에 맞춰 긴 세로형 쇼핑몰 상세페이지를 생성합니다.
               </p>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3">
               {[
-                { icon: ScanSearch, title: '이미지 분류', body: 'AI가 hero, detail, usage 역할을 나눕니다.' },
-                { icon: Wand2, title: '섹션 생성', body: '6개 핵심 섹션을 세로형 흐름으로 묶습니다.' },
-                { icon: Download, title: '멀티 export', body: 'HTML, 복사용 텍스트, 3000px 슬라이스 이미지를 뽑습니다.' }
+                { icon: ScanSearch, title: '이미지 분류', body: '대표컷, 디테일컷, 사용컷을 자동으로 나눕니다.' },
+                { icon: Wand2, title: '섹션 생성', body: '5장, 7장, 10장 흐름에 맞는 섹션을 동적으로 구성합니다.' },
+                { icon: Download, title: '3종 export', body: 'HTML, PNG 슬라이스, 카피 텍스트를 바로 뽑습니다.' }
               ].map((item) => (
                 <div key={item.title} className="rounded-[1.6rem] border border-white/10 bg-white/8 p-4 backdrop-blur">
                   <item.icon className="h-5 w-5 text-white" />
@@ -337,7 +335,7 @@ export default function ProductDetailStudio() {
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs uppercase tracking-[0.2em] text-white/45">Prompt Quick Fill</p>
-                  <p className="mt-1 text-sm text-white/74">자주 쓰는 지시문을 바로 넣어서 테스트 속도를 줄입니다.</p>
+                  <p className="mt-1 text-sm text-white/74">자주 쓰는 지시문으로 테스트 속도를 줄입니다.</p>
                 </div>
                 <Sparkles className="h-5 w-5 text-white/70" />
               </div>
@@ -360,7 +358,7 @@ export default function ProductDetailStudio() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-white/45">Theme</p>
-                <h2 className="mt-1 text-xl font-bold">상세페이지 톤 선택</h2>
+                <h2 className="mt-1 text-xl font-bold">디자인 톤 선택</h2>
               </div>
               <Store className="h-5 w-5 text-white/72" />
             </div>
@@ -409,7 +407,7 @@ export default function ProductDetailStudio() {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Input</p>
-                <h2 className="mt-1 text-xl font-black tracking-tight">상품 입력값</h2>
+                <h2 className="mt-1 text-xl font-black tracking-tight">상품 입력</h2>
               </div>
               <Wand2 className="h-5 w-5 text-slate-500" />
             </div>
@@ -428,43 +426,58 @@ export default function ProductDetailStudio() {
                 <input {...register('audience')} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-slate-400" />
               </label>
               <label className="space-y-2 text-sm">
-                <span className="font-semibold">핵심 포인트</span>
-                <input {...register('highlight')} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-slate-400" />
+                <span className="font-semibold">페이지 수</span>
+                <select {...register('pageCount', { valueAsNumber: true })} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-slate-400">
+                  {PAGE_COUNT_OPTIONS.map((count) => (
+                    <option key={count} value={count}>{count} pages</option>
+                  ))}
+                </select>
               </label>
             </div>
 
             <div className="mt-4">
-              <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
-                <span>LLM 프롬프트</span>
-                <span className="rounded-full border border-slate-200 px-2 py-0.5 text-xs text-slate-500">custom</span>
-              </div>
-              <textarea
-                {...register('prompt')}
-                rows={5}
-                className="w-full rounded-[1.4rem] border border-slate-200 bg-white px-4 py-3 text-sm leading-6 outline-none transition focus:border-slate-400"
-                placeholder="예: 업로드한 상품 사진을 분석해서 hero, detail, usage 섹션이 살아 있는 스마트스토어용 상세페이지를 만들어줘."
-              />
+              <label className="space-y-2 text-sm">
+                <span className="font-semibold">키 셀링 포인트</span>
+                <textarea
+                  {...register('sellingPoints')}
+                  rows={3}
+                  className="w-full rounded-[1.4rem] border border-slate-200 bg-white px-4 py-3 text-sm leading-6 outline-none transition focus:border-slate-400"
+                  placeholder="예: 3중 보온 구조, 감성적인 컬러감, 선물용 패키지"
+                />
+              </label>
+            </div>
+
+            <div className="mt-4">
+              <label className="space-y-2 text-sm">
+                <span className="font-semibold">LLM 프롬프트</span>
+                <textarea
+                  {...register('prompt')}
+                  rows={4}
+                  className="w-full rounded-[1.4rem] border border-slate-200 bg-white px-4 py-3 text-sm leading-6 outline-none transition focus:border-slate-400"
+                  placeholder="예: 스마트스토어형 톤으로 7장 상세페이지를 만들고 proof 섹션에 신뢰감을 더해줘."
+                />
+              </label>
             </div>
 
             <div className="mt-4 rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50 p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-semibold">상품 사진 업로드</p>
-                  <p className="mt-1 text-xs text-slate-500">최대 8장까지 올릴 수 있습니다. 대표컷, 디테일컷, 사용컷이 섞여 있으면 좋습니다.</p>
+                  <p className="text-sm font-semibold">상품 이미지 업로드</p>
+                  <p className="mt-1 text-xs text-slate-500">최대 10장까지 업로드할 수 있습니다. 1장만 있어도 생성되며 부족한 섹션은 자동 재사용됩니다.</p>
                 </div>
                 <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
                   <ImagePlus className="h-4 w-4" />
-                  사진 선택
+                  이미지 선택
                 </Button>
               </div>
               <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={(event) => { void onImagesSelected(event); }} />
-              <div className="mt-4 grid grid-cols-4 gap-2">
+              <div className="mt-4 grid grid-cols-5 gap-2">
                 {images.length > 0 ? images.map((image, index) => (
                   <div key={image.id} className="overflow-hidden rounded-2xl bg-slate-200">
                     <img src={image.url} alt={`업로드 이미지 ${index + 1}`} className="h-24 w-full object-cover" />
                   </div>
                 )) : (
-                  <div className="col-span-4 rounded-2xl bg-white px-4 py-8 text-center text-sm text-slate-400">
+                  <div className="col-span-5 rounded-2xl bg-white px-4 py-8 text-center text-sm text-slate-400">
                     아직 업로드된 이미지가 없습니다.
                   </div>
                 )}
@@ -480,19 +493,19 @@ export default function ProductDetailStudio() {
             <div className="mt-5 flex flex-wrap gap-3">
               <Button type="submit" disabled={isGenerating}>
                 {isGenerating ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-                상세페이지 생성
+                Generate Detail Page
               </Button>
               <Button type="button" variant="secondary" onClick={() => void onCopyHtml()} disabled={!html}>
                 <Copy className="h-4 w-4" />
-                HTML 복사
+                HTML
               </Button>
               <Button type="button" variant="secondary" onClick={() => void onCopyText()} disabled={!copyText}>
                 <Copy className="h-4 w-4" />
-                카피 복사
+                Copy Text
               </Button>
               <Button type="button" variant="secondary" onClick={() => void onExportSlices()} disabled={!result || isExportingSlices}>
                 {isExportingSlices ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                슬라이스 저장
+                PNG Slices
               </Button>
             </div>
           </form>
@@ -501,120 +514,88 @@ export default function ProductDetailStudio() {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Preview</p>
-                <h2 className="mt-1 text-xl font-black tracking-tight">860px 세로 상세페이지</h2>
+                <h2 className="mt-1 text-xl font-black tracking-tight">860px vertical detail page</h2>
               </div>
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">{activeTheme.name}</span>
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                {result ? `${result.page_count} pages` : `${values.pageCount} pages`}
+              </span>
+            </div>
+
+            <div className="mt-4 grid gap-3 rounded-[1.4rem] bg-slate-50 p-4 md:grid-cols-3">
+              {classifiedImages.length > 0 ? classifiedImages.map((item, index) => (
+                <div key={`${item.image.id}-${item.role}`} className="rounded-[1.2rem] bg-white p-3 shadow-sm">
+                  <img src={item.image.url} alt={`classified-${index + 1}`} className="h-28 w-full rounded-xl object-cover" />
+                  <p className="mt-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">{item.role}</p>
+                </div>
+              )) : (
+                <div className="rounded-[1.2rem] bg-white px-4 py-6 text-sm text-slate-500 md:col-span-3">
+                  생성 후 hero / detail / usage 자동 분류가 여기에 표시됩니다.
+                </div>
+              )}
             </div>
 
             <div className="mt-5 overflow-x-auto rounded-[1.6rem] bg-slate-100 p-3">
               <div ref={exportRef} className="mx-auto w-full max-w-[860px] overflow-hidden rounded-[2rem] bg-white shadow-[0_18px_48px_rgba(15,23,42,0.12)]">
                 <div className={cn('bg-gradient-to-br px-7 pb-7 pt-8', activeTheme.heroSurface)}>
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Hero</p>
-                  <h3 className="mt-3 text-[2rem] font-black leading-[1.1] tracking-tight text-slate-950">
-                    {result?.headline ?? `${values.productName}의 첫인상을 선명하게 보여줄 영역입니다.`}
+                  <h3 className="mt-3 text-[2rem] font-black leading-[1.08] tracking-tight text-slate-950">
+                    {result?.generated_copy.headline ?? `${values.productName} 상세페이지 헤드라인이 여기에 표시됩니다.`}
                   </h3>
                   <p className="mt-4 text-[15px] leading-7 text-slate-600">
-                    {result?.sub_headline ?? 'AI 생성 후에는 실제 쇼핑몰 상세페이지 구조에 맞는 헤드라인과 서브 카피가 여기서 시작됩니다.'}
+                    {result?.generated_copy.subheadline ?? '상품명, 가격, 타깃 고객, 업로드 이미지를 바탕으로 모바일 상세페이지가 생성됩니다.'}
                   </p>
-                  {sections[0]?.image ? (
+                  {renderSections[0]?.image ? (
                     <div className="mt-6 overflow-hidden rounded-[1.75rem] bg-slate-200">
-                      <img data-zoomable src={sections[0].image.url} alt={sections[0].title} className="block h-auto w-full object-cover" />
+                      <img data-zoomable src={renderSections[0].image.url} alt={renderSections[0].title} className="block h-auto w-full object-cover" />
                     </div>
                   ) : null}
-                  <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                    <div className="rounded-[1.35rem] bg-white/70 p-4">
-                      <p className="text-xs uppercase tracking-[0.2em] text-slate-400">상품명</p>
-                      <p className="mt-2 text-sm font-semibold text-slate-900">{values.productName}</p>
-                    </div>
-                    <div className="rounded-[1.35rem] bg-white/70 p-4">
-                      <p className="text-xs uppercase tracking-[0.2em] text-slate-400">가격/옵션</p>
-                      <p className="mt-2 text-sm font-semibold text-slate-900">{values.price || result?.product_info.price_note}</p>
-                    </div>
-                    <div className="rounded-[1.35rem] bg-white/70 p-4">
-                      <p className="text-xs uppercase tracking-[0.2em] text-slate-400">타깃</p>
-                      <p className="mt-2 text-sm font-semibold text-slate-900">{values.audience}</p>
-                    </div>
-                  </div>
                 </div>
 
                 <div className="px-6 pb-10 pt-6">
-                  {sections.length > 0 ? sections.map((section) => (
+                  {renderSections.length > 0 ? renderSections.map((section) => (
                     <section key={section.id} className="border-b border-slate-200 py-6 last:border-b-0">
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{section.label}</p>
-                      <h4 className="mt-2 text-[1.9rem] font-black leading-[1.15] tracking-tight text-slate-950">{section.title}</h4>
-                      <p className="mt-4 text-[15px] leading-7 text-slate-600">{section.body}</p>
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-900 text-sm font-bold text-white">
+                          {iconGlyphMap[section.type]}
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{sectionLabelMap[section.type]}</p>
+                          <h4 className="mt-1 text-[1.75rem] font-black leading-[1.15] tracking-tight text-slate-950">{section.title}</h4>
+                        </div>
+                      </div>
+                      <p className="mt-4 text-[15px] leading-7 text-slate-600">{section.text}</p>
 
-                      {section.icons?.length ? (
+                      {section.type === 'feature' && featureCards.length > 0 ? (
                         <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                          {section.icons.map((item) => (
-                            <div key={`${section.id}-${item.label}`} className="rounded-[1.4rem] bg-slate-50 p-5">
-                              <div className="text-xl">{iconGlyphMap[item.icon] ?? '✦'}</div>
-                              <p className="mt-3 text-lg font-bold text-slate-950">{item.label}</p>
-                              <p className="mt-2 text-sm leading-6 text-slate-600">{item.description}</p>
+                          {featureCards.map((item) => (
+                            <div key={`${section.id}-${item.title}`} className="rounded-[1.4rem] bg-slate-50 p-5">
+                              <div className="text-xl font-bold text-slate-900">{item.glyph}</div>
+                              <p className="mt-3 text-lg font-bold text-slate-950">{item.title}</p>
+                              <p className="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
                             </div>
                           ))}
                         </div>
                       ) : null}
 
-                      {section.bullets?.length ? (
-                        <div className="mt-5 grid gap-3">
-                          {section.bullets.map((item) => (
-                            <div key={`${section.id}-${item}`} className="rounded-[1.4rem] bg-slate-50 px-5 py-4 text-[15px] leading-7 text-slate-700">
-                              {item}
-                            </div>
-                          ))}
-                        </div>
-                      ) : null}
-
-                      {section.image ? (
-                        <div className="mt-5 overflow-hidden rounded-[1.75rem] bg-slate-200">
-                          <img data-zoomable src={section.image.url} alt={section.title} className="block h-auto w-full object-cover" />
-                        </div>
-                      ) : null}
+                      <div className="mt-5 overflow-hidden rounded-[1.75rem] bg-slate-200">
+                        <img data-zoomable src={section.image.url} alt={section.title} className="block h-auto w-full object-cover" />
+                      </div>
                     </section>
                   )) : (
                     <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50 px-5 py-12 text-center text-sm leading-7 text-slate-500">
-                      생성 후에는 Hero, Key Selling Points, Feature Icons, Usage Scenario, Detail Description, CTA가
-                      세로형 상세페이지로 배치됩니다.
+                      생성 후 선택한 페이지 수에 맞는 긴 세로형 상세페이지가 렌더링됩니다.
                     </div>
                   )}
-
-                  <section className="border-b border-slate-200 py-6 last:border-b-0">
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Image Roles</p>
-                    <h4 className="mt-2 text-[1.9rem] font-black leading-[1.15] tracking-tight text-slate-950">업로드 이미지를 역할별로 분류</h4>
-                    <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                      {classifiedImages.length > 0 ? classifiedImages.map((item, index) => (
-                        <div key={`${item.image.id}-${item.role}`} className="overflow-hidden rounded-[1.4rem] bg-slate-50">
-                          <img src={item.image.url} alt={`분류 이미지 ${index + 1}`} className="h-44 w-full object-cover" />
-                          <div className="p-4">
-                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">{item.role}</p>
-                            <p className="mt-2 text-sm leading-6 text-slate-700">{item.reason}</p>
-                          </div>
-                        </div>
-                      )) : (
-                        <div className="rounded-[1.4rem] bg-slate-50 px-5 py-8 text-sm text-slate-500 sm:col-span-3">
-                          생성 후에 이미지 역할 분류가 표시됩니다.
-                        </div>
-                      )}
-                    </div>
-                  </section>
 
                   <section className="pt-6">
                     <div className="rounded-[1.8rem] bg-slate-950 px-6 py-7 text-white">
                       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/40">SEO / CTA</p>
                       <h4 className="mt-2 text-[1.9rem] font-black leading-[1.15] tracking-tight">
-                        {result?.seo.naver_title ?? '생성 후 SEO 타이틀과 CTA가 표시됩니다.'}
+                        {result?.generated_copy.seo_title ?? '생성 후 SEO title이 표시됩니다.'}
                       </h4>
                       <p className="mt-4 text-[15px] leading-7 text-white/80">
-                        {result?.cta ?? '상세페이지 생성 후 전환형 CTA 문구가 들어갑니다.'}
+                        {result?.generated_copy.cta ?? '생성 후 CTA 문구가 표시됩니다.'}
                       </p>
-                      <div className="mt-5 flex flex-wrap gap-2">
-                        {(result?.seo.product_tags ?? []).map((tag) => (
-                          <span key={tag} className="rounded-full bg-white/10 px-3 py-1 text-xs text-white/78">
-                            #{tag}
-                          </span>
-                        ))}
-                      </div>
                     </div>
                   </section>
                 </div>
