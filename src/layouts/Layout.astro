@@ -1,6 +1,7 @@
 ﻿---
 import '../styles/global.css';
 import AdSense from '../components/AdSense.astro';
+import SiteProviders from '../components/providers/SiteProviders';
 import globalCssUrl from '../styles/global.css?url';
 
 interface Props {
@@ -200,7 +201,7 @@ const breadcrumbJsonLd = {
 ---
 
 <!doctype html>
-<html lang={htmlLang}>
+<html lang={htmlLang} suppressHydrationWarning>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -257,6 +258,7 @@ const breadcrumbJsonLd = {
     )}
   </head>
   <body class="bg-slate-50 text-slate-900">
+    <SiteProviders client:load />
     {pathNoLocale !== '/' && (
       <nav aria-label="Breadcrumb" class="mx-auto max-w-5xl px-4 pt-3 text-xs text-slate-500">
         <ol class="flex flex-wrap items-center gap-1">
