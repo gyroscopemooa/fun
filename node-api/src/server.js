@@ -17,6 +17,7 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 12 
 const paymentMode = process.env.PAYMENT_MODE ?? 'mock';
 const polarServer = process.env.POLAR_SERVER === 'sandbox' ? 'https://sandbox-api.polar.sh' : 'https://api.polar.sh';
 const polarCheckoutUrl = `${polarServer}/v1/checkouts`;
+const resendApiUrl = 'https://api.resend.com/emails';
 
 const thisFile = fileURLToPath(import.meta.url);
 const thisDir = path.dirname(thisFile);
@@ -68,6 +69,11 @@ const getFirstEnv = (...keys) => {
   return null;
 };
 
+const getResendConfig = () => ({
+  apiKey: getFirstEnv('RESEND_API_KEY'),
+  fromEmail: getFirstEnv('RESEND_FROM_EMAIL')
+});
+
 const getPolarProductMap = () => ({
   base: getFirstEnv('POLAR_PRODUCT_BASE', 'POLAR_PRODUCT_ID'),
   add2: getFirstEnv('POLAR_PRODUCT_ADD2'),
@@ -84,6 +90,25 @@ const getPolarDetailPageTierMap = () => ({
   15: getFirstEnv('POLAR_PRODUCT_DETAIL_PAGE_15'),
   20: getFirstEnv('POLAR_PRODUCT_DETAIL_PAGE_20')
 });
+
+const resolveCustomerEmail = (payload) => (
+  payload?.customerEmail
+  ?? payload?.customer_email
+  ?? payload?.customer?.email
+  ?? payload?.data?.customerEmail
+  ?? payload?.data?.customer_email
+  ?? payload?.data?.customer?.email
+  ?? payload?.data?.checkout?.customerEmail
+  ?? payload?.data?.checkout?.customer_email
+  ?? payload?.data?.checkout?.customer?.email
+  ?? payload?.data?.order?.customerEmail
+  ?? payload?.data?.order?.customer_email
+  ?? payload?.data?.order?.customer?.email
+  ?? payload?.order?.customerEmail
+  ?? payload?.order?.customer_email
+  ?? payload?.order?.customer?.email
+  ?? null
+);
 
 const getProviderDiagnostics = () => {
   const externalAiEnabled = isExternalAiEnabled();
@@ -141,6 +166,7 @@ app.get('/config', (_req, res) => {
     && polarProducts.add7
   );
   const providerDiagnostics = getProviderDiagnostics();
+  const resend = getResendConfig();
 
   res.json({
     imageProvider: getResolvedImageProvider(),
@@ -159,6 +185,7 @@ app.get('/config', (_req, res) => {
     },
     readiness: {
       openAiReady,
+      resendReady: Boolean(resend.apiKey && resend.fromEmail),
       removeBgReady,
       photoroomReady,
       polarReady: Boolean(process.env.POLAR_ACCESS_TOKEN) && (polarBaseReady || detailPageTiersReady),
@@ -418,6 +445,77 @@ const buildOrderReturnUrl = (baseUrl, orderId) => {
   }
 };
 
+const buildDetailPageResultUrl = (orderId) => {
+  const base = getFirstEnv('PUBLIC_WEB_BASE_URL', 'WEB_BASE_URL') ?? 'https://manytool.net';
+  try {
+    const url = new URL('/tools/product-detail-studio/result/', base);
+    url.searchParams.set('orderId', orderId);
+    return url.toString();
+  } catch {
+    return `https://manytool.net/tools/product-detail-studio/result/?orderId=${encodeURIComponent(orderId)}`;
+  }
+};
+
+const sendDetailPageResultEmail = async (order) => {
+  const resend = getResendConfig();
+  if (!resend.apiKey || !resend.fromEmail) throw new Error('Resend is not configured');
+  if (!order?.customerEmail) throw new Error('customer email is missing');
+  if (!order?.detailPageRequest?.productName) throw new Error('detail page request is missing');
+
+  const resultUrl = buildDetailPageResultUrl(order.id);
+  const pageCount = Number(order?.detailPageRequest?.pageCount ?? 0) || 0;
+  const productName = String(order.detailPageRequest.productName).trim();
+
+  const response = await fetch(resendApiUrl, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${resend.apiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      from: resend.fromEmail,
+      to: [order.customerEmail],
+      subject: `[ManyTool] ${productName} 상세페이지가 준비되었습니다`,
+      html: `
+        <div style="font-family:Arial,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;line-height:1.7;color:#0f172a;">
+          <h1 style="font-size:22px;margin:0 0 16px;">상세페이지 생성이 완료되었습니다.</h1>
+          <p style="margin:0 0 10px;"><strong>상품명:</strong> ${productName}</p>
+          <p style="margin:0 0 14px;"><strong>구성 장수:</strong> ${pageCount}장</p>
+          <p style="margin:0 0 20px;">아래 링크에서 결과를 확인하고 PNG, JPG, PDF, HTML로 저장할 수 있습니다.</p>
+          <p style="margin:0 0 22px;">
+            <a href="${resultUrl}" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:700;">결과 페이지 열기</a>
+          </p>
+          <p style="margin:0 0 6px;color:#475569;">링크가 열리지 않으면 아래 주소를 복사해 접속해 주세요.</p>
+          <p style="margin:0;color:#334155;word-break:break-all;">${resultUrl}</p>
+        </div>
+      `
+    })
+  });
+
+  if (!response.ok) {
+    const reason = await response.text();
+    throw new Error(`resend email send failed: ${response.status} ${reason}`);
+  }
+
+  return response.json();
+};
+
+const sendDetailPageResultEmailIfNeeded = async (order) => {
+  if (!order || order.productType !== 'detail_page') return order;
+  if (!order.customerEmail || order.emailStatus === 'sent') return order;
+
+  const emailPayload = await sendDetailPageResultEmail(order);
+  const nextOrder = {
+    ...order,
+    emailStatus: 'sent',
+    emailSentAt: new Date().toISOString(),
+    emailError: null,
+    emailPayload
+  };
+  db.orders.set(order.id, nextOrder);
+  return nextOrder;
+};
+
 const createPolarCheckout = async ({ order, productId, clientSessionId = null }) => {
   const accessToken = process.env.POLAR_ACCESS_TOKEN;
   if (!accessToken) {
@@ -646,6 +744,7 @@ const refreshOrderFromPolarIfNeeded = async (order) => {
       ...order,
       status: nextStatus,
       polarOrderId: order.polarOrderId ?? checkout?.order?.id ?? null,
+      customerEmail: order.customerEmail ?? resolveCustomerEmail(checkout),
       paidAt: nextStatus === 'paid' ? order.paidAt ?? new Date().toISOString() : order.paidAt ?? null,
       polarCheckoutPayload: checkout
     };
@@ -836,12 +935,14 @@ app.post('/order/:id/detail-page', async (req, res) => {
     return res.status(402).json({ error: 'payment required', status: order.status });
   }
   if (order.detailPageResult) {
+    const mailedOrder = await sendDetailPageResultEmailIfNeeded(order);
     return res.json({
       ok: true,
-      orderId: order.id,
-      status: order.status,
-      result: order.detailPageResult,
-      request: order.detailPageRequest ?? null
+      orderId: mailedOrder.id,
+      status: mailedOrder.status,
+      result: mailedOrder.detailPageResult,
+      request: mailedOrder.detailPageRequest ?? null,
+      emailStatus: mailedOrder.emailStatus ?? null
     });
   }
 
@@ -871,13 +972,15 @@ app.post('/order/:id/detail-page', async (req, res) => {
       detailPageGeneratedAt: new Date().toISOString()
     };
     db.orders.set(order.id, nextOrder);
+    const mailedOrder = await sendDetailPageResultEmailIfNeeded(nextOrder);
 
     return res.json({
       ok: true,
-      orderId: nextOrder.id,
-      status: nextOrder.status,
+      orderId: mailedOrder.id,
+      status: mailedOrder.status,
       result,
-      request: nextOrder.detailPageRequest ?? null
+      request: mailedOrder.detailPageRequest ?? null,
+      emailStatus: mailedOrder.emailStatus ?? null
     });
   } catch (error) {
     const message = error?.message ?? 'detail page generation failed';
@@ -1174,6 +1277,11 @@ app.post('/checkout', async (req, res) => {
     detailPageGeneratedAt: null,
     detailPageGenerationStatus: 'pending',
     detailPageGenerationError: null,
+    customerEmail: null,
+    emailStatus: null,
+    emailSentAt: null,
+    emailError: null,
+    emailPayload: null,
     refundId: null,
     refundStatus: null,
     refundPayload: null,
@@ -1241,6 +1349,7 @@ app.post('/payment/webhook', (req, res) => {
     ...current,
     status,
     polarOrderId: current.polarOrderId ?? resolvePolarOrderIdFromWebhook(payload),
+    customerEmail: current.customerEmail ?? resolveCustomerEmail(payload),
     paidAt: status === 'paid' ? new Date().toISOString() : current.paidAt ?? null,
     refundedAt: status === 'refunded' ? new Date().toISOString() : current.refundedAt ?? null,
     payload
