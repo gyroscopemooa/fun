@@ -647,7 +647,7 @@ export default function ProductDetailStudio() {
     }
   };
 
-  const onResetAll = () => {
+  const onClearInputs = () => {
     images.forEach((image) => URL.revokeObjectURL(image.url));
     setImages([]);
     setResult(null);
@@ -657,9 +657,8 @@ export default function ProductDetailStudio() {
     reset(defaultFormValues);
     if (typeof window !== 'undefined') {
       window.localStorage.removeItem(DETAIL_PAGE_DRAFT_KEY);
-      window.localStorage.removeItem('manytool.detailPageOrderId');
     }
-    toast.success('입력값과 결과를 모두 초기화했습니다.');
+    toast.success('입력값과 이미지를 비웠습니다.');
   };
 
   return (
@@ -1012,9 +1011,9 @@ export default function ProductDetailStudio() {
                 {isStartingCheckout ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Store className="h-4 w-4" />}
                 Pay and Generate
               </Button>
-              <Button type="button" variant="outline" onClick={onResetAll}>
+              <Button type="button" variant="outline" onClick={onClearInputs}>
                 <RotateCcw className="h-4 w-4" />
-                전면 초기화
+                입력값 비우기
               </Button>
               <Button type="button" variant="secondary" onClick={() => void onCopyHtml()} disabled={!html}>
                 <Copy className="h-4 w-4" />
