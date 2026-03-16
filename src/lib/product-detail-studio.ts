@@ -1,6 +1,6 @@
 export type ThemeKey = 'premium' | 'minimal' | 'playful';
 export type ImageRoleType = 'hero' | 'detail' | 'usage';
-export type PageCountOption = 5 | 7 | 10;
+export type PageCountOption = number;
 export type SectionType =
   | 'hero'
   | 'feature'
@@ -91,11 +91,51 @@ export type DetailPageTestScenario = {
 };
 
 export const DETAIL_PAGE_UNIT_PRICE = 10000;
+export const DETAIL_PAGE_MIN_COUNT = 5;
+export const DETAIL_PAGE_MAX_COUNT = 20;
+
+const DETAIL_PAGE_BODY_SEQUENCE: SectionType[] = [
+  'feature',
+  'feature',
+  'usage',
+  'detail',
+  'benefit',
+  'ingredient',
+  'comparison',
+  'proof',
+  'feature',
+  'usage',
+  'detail',
+  'benefit',
+  'comparison',
+  'proof',
+  'feature',
+  'usage',
+  'detail',
+  'benefit'
+];
+
+export const normalizeDetailPageCount = (value: number): PageCountOption => {
+  const count = Math.round(Number(value) || DETAIL_PAGE_MIN_COUNT);
+  return Math.min(DETAIL_PAGE_MAX_COUNT, Math.max(DETAIL_PAGE_MIN_COUNT, count));
+};
+
+export const buildDetailPageSectionOrder = (pageCount: number): SectionType[] => {
+  const safeCount = normalizeDetailPageCount(pageCount);
+  const bodyCount = Math.max(0, safeCount - 2);
+  return ['hero', ...DETAIL_PAGE_BODY_SEQUENCE.slice(0, bodyCount), 'cta'];
+};
+
+const getDetailPageQualityNote = (pageCount: number) => {
+  if (pageCount <= 6) return 'concise and essential';
+  if (pageCount <= 10) return 'balanced and standard';
+  return 'premium and complete';
+};
 
 export const buildDetailPagePricing = (pageCount: PageCountOption): DetailPagePricing => ({
-  page_count: pageCount,
+  page_count: normalizeDetailPageCount(pageCount),
   unit_price: DETAIL_PAGE_UNIT_PRICE,
-  total_price: pageCount * DETAIL_PAGE_UNIT_PRICE,
+  total_price: normalizeDetailPageCount(pageCount) * DETAIL_PAGE_UNIT_PRICE,
   currency: 'KRW'
 });
 
@@ -226,12 +266,6 @@ export const detailPageTestScenarios: DetailPageTestScenario[] = [
   }
 ];
 
-const PAGE_QUALITY_NOTES: Record<PageCountOption, string> = {
-  5: 'concise and essential',
-  7: 'balanced and standard',
-  10: 'premium and complete'
-};
-
 const DEFAULT_COPY_BY_PAGE_COUNT: Record<PageCountOption, GeneratedCopy> = {
   5: {
     headline: '한눈에 장점이 보이는 실속형 상세페이지',
@@ -266,6 +300,12 @@ const DEFAULT_COPY_BY_PAGE_COUNT: Record<PageCountOption, GeneratedCopy> = {
     cta: '지금 주문하고 프리미엄 디테일의 차이를 직접 경험해보세요',
     seo_title: '프리미엄 무드의 풀사이즈 모바일 상품 상세페이지'
   }
+};
+
+const getDefaultCopyForPageCount = (pageCount: number): GeneratedCopy => {
+  if (pageCount <= 6) return DEFAULT_COPY_BY_PAGE_COUNT[5];
+  if (pageCount <= 10) return DEFAULT_COPY_BY_PAGE_COUNT[7];
+  return DEFAULT_COPY_BY_PAGE_COUNT[10];
 };
 
 const escapeHtml = (value: string) => value
@@ -376,16 +416,12 @@ export const buildFeatureCards = (result: ProductDetailResult) => {
 };
 
 export const buildFallbackResult = (pageCount: PageCountOption): ProductDetailResult => {
-  const copy = DEFAULT_COPY_BY_PAGE_COUNT[pageCount];
-  const sectionOrder =
-    pageCount === 5
-      ? ['hero', 'feature', 'feature', 'usage', 'cta']
-      : pageCount === 7
-        ? ['hero', 'feature', 'feature', 'usage', 'detail', 'proof', 'cta']
-        : ['hero', 'feature', 'feature', 'usage', 'detail', 'benefit', 'ingredient', 'comparison', 'proof', 'cta'];
+  const safePageCount = normalizeDetailPageCount(pageCount);
+  const copy = getDefaultCopyForPageCount(safePageCount);
+  const sectionOrder = buildDetailPageSectionOrder(safePageCount);
 
   return {
-    page_count: pageCount,
+    page_count: safePageCount,
     section_order: sectionOrder,
     image_role_mapping: {
       hero: [0],

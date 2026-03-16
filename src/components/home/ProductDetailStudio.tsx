@@ -17,6 +17,8 @@ import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
+  DETAIL_PAGE_MAX_COUNT,
+  DETAIL_PAGE_MIN_COUNT,
   buildDetailPagePricing,
   buildDetailPageHtml,
   buildFallbackResult,
@@ -27,10 +29,10 @@ import {
   detailPageTestScenarios,
   ensureResultIntegrity,
   iconGlyphMap,
+  normalizeDetailPageCount,
   sectionLabelMap,
   starterPrompts,
   themes,
-  type PageCountOption,
   type ProductDetailFormValues,
   type ProductDetailResult,
   type ThemeKey,
@@ -75,7 +77,6 @@ const DEV_API_BASE = 'http://127.0.0.1:8787';
 const API_BASE = (RAW_API_BASE || (import.meta.env.DEV ? DEV_API_BASE : '')).replace(/\/+$/, '');
 const EXPORT_WIDTH = 860;
 const SLICE_HEIGHT = 3000;
-const PAGE_COUNT_OPTIONS: PageCountOption[] = [5, 7, 10];
 const SHOW_DEBUG_SCENARIOS = import.meta.env.DEV || import.meta.env.PUBLIC_DETAIL_PAGE_DEBUG === 'true';
 const INVALID_API_RESPONSE_MESSAGE = '생성 서버 응답을 처리할 수 없습니다. 잠시 후 다시 시도해주세요.';
 const MISSING_API_BASE_MESSAGE = 'API 서버 주소가 설정되지 않았습니다. 배포 환경변수를 확인해주세요.';
@@ -166,7 +167,8 @@ export default function ProductDetailStudio() {
   const zoomRootRef = useRef<HTMLDivElement | null>(null);
   const exportRef = useRef<HTMLDivElement | null>(null);
   const values = watch();
-  const pricingSummary = buildDetailPagePricing(values.pageCount as PageCountOption);
+  const normalizedPageCount = normalizeDetailPageCount(values.pageCount);
+  const pricingSummary = buildDetailPagePricing(normalizedPageCount);
   const activeTheme = useMemo(() => themes.find((item) => item.key === theme) ?? themes[0], [theme]);
   const renderSections = useMemo(() => (result ? buildRenderSections(result, images) : []), [result, images]);
   const classifiedImages = useMemo(() => (result ? classifyImages(result, images) : []), [result, images]);
@@ -258,6 +260,7 @@ export default function ProductDetailStudio() {
   };
 
   const onGenerate = handleSubmit(async (formValues) => {
+    const pageCount = normalizeDetailPageCount(formValues.pageCount);
     if (!images.length) {
       toast.error('먼저 상품 이미지를 업로드해 주세요.');
       return;
@@ -291,8 +294,8 @@ export default function ProductDetailStudio() {
           sellingPoints: formValues.sellingPoints,
           prompt: formValues.prompt,
           theme,
-          pageCount: Number(formValues.pageCount),
-          pricing: buildDetailPagePricing(formValues.pageCount),
+          pageCount,
+          pricing: buildDetailPagePricing(pageCount),
           images: images.map((image) => image.dataUrl)
         })
       });
@@ -306,7 +309,7 @@ export default function ProductDetailStudio() {
         throw new Error(payload?.error || '상세페이지 생성에 실패했습니다.');
       }
 
-      const nextResult = ensureResultIntegrity(payload.result as ProductDetailResult, formValues.pageCount);
+      const nextResult = ensureResultIntegrity(payload.result as ProductDetailResult, pageCount);
       setResult(nextResult);
       setHtml(buildDetailPageHtml({ formValues, result: nextResult, images, theme }));
       setCopyText(buildPlainCopyText({ formValues, result: nextResult }));
@@ -677,11 +680,15 @@ export default function ProductDetailStudio() {
               </label>
               <label className="space-y-2 text-sm">
                 <span className="font-semibold">페이지 수</span>
-                <select {...register('pageCount', { valueAsNumber: true })} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-slate-400">
-                  {PAGE_COUNT_OPTIONS.map((count) => (
-                    <option key={count} value={count}>{count} pages</option>
-                  ))}
-                </select>
+                <input
+                  type="number"
+                  min={DETAIL_PAGE_MIN_COUNT}
+                  max={DETAIL_PAGE_MAX_COUNT}
+                  step={1}
+                  {...register('pageCount', { valueAsNumber: true })}
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-slate-400"
+                />
+                <p className="text-xs text-slate-500">{DETAIL_PAGE_MIN_COUNT}~{DETAIL_PAGE_MAX_COUNT}장까지 설정할 수 있습니다.</p>
               </label>
             </div>
 
@@ -800,7 +807,7 @@ export default function ProductDetailStudio() {
                 <h2 className="mt-1 text-xl font-black tracking-tight">860px vertical detail page</h2>
               </div>
               <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                {result ? `${result.page_count} pages` : `${values.pageCount} pages`}
+                {result ? `${result.page_count} pages` : `${normalizedPageCount} pages`}
               </span>
             </div>
 
