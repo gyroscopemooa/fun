@@ -550,6 +550,34 @@ export default function ProductDetailStudio() {
               </p>
             </div>
 
+            <div className="rounded-[1.8rem] border border-[rgba(255,206,220,0.24)] bg-[linear-gradient(135deg,rgba(255,245,247,0.12),rgba(255,230,238,0.08),rgba(255,255,255,0.04))] p-5 backdrop-blur">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.22em] text-white/42">Why It Sells</p>
+                  <h2 className="mt-2 text-xl font-black tracking-tight text-white">예뻐 보여서 멈추고, 읽다 보면 사고 싶어지게.</h2>
+                </div>
+                <span className="rounded-full border border-white/12 bg-white/8 px-3 py-1 text-xs font-semibold text-white/78">
+                  soft conversion angle
+                </span>
+              </div>
+              <p className="mt-3 max-w-3xl text-sm leading-6 text-white/76">
+                이 페이지는 결과물을 과하게 꾸미기보다, 판매 페이지 자체에서 먼저 구매 명분을 느끼게 하는 데 초점을 둡니다.
+                선물하기 좋은 상품인지, 내 공간 분위기를 바꾸는 아이템인지, 사진 한 장만으로도 더 갖고 싶어 보이게 만들 수 있는지 같은 포인트를 자연스럽게 전달합니다.
+              </p>
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                {[
+                  '작은 셀러도 브랜드처럼 보이게 하는 첫 화면 톤',
+                  '선물, 자기만족, 분위기 전환 같은 구매 이유를 쉽게 설명',
+                  '상품 사진이 적어도 감성 흐름과 구매 흐름을 같이 설계',
+                  '디자인 감각이 없어도 판매용 상세페이지를 빠르게 확보'
+                ].map((point) => (
+                  <div key={point} className="rounded-2xl border border-white/10 bg-black/10 px-4 py-3 text-sm text-white/82">
+                    {point}
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div className="grid gap-3 sm:grid-cols-3">
               {[
                 { icon: ScanSearch, title: '이미지 분류', body: '대표컷, 디테일컷, 사용컷을 자동으로 나눕니다.' },
@@ -571,6 +599,18 @@ export default function ProductDetailStudio() {
                   <p className="mt-1 text-sm text-white/74">자주 쓰는 지시문으로 테스트 속도를 줄입니다.</p>
                 </div>
                 <Sparkles className="h-5 w-5 text-white/70" />
+              </div>
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
+                {[
+                  { title: 'Gift Angle', body: '집들이, 생일, 작은 감사 선물처럼 구매 명분이 바로 보이는 상품에 특히 잘 맞습니다.' },
+                  { title: 'Mood Upgrade', body: '실용성만이 아니라 사진발, 공간 무드, 취향 만족감을 같이 전달하는 구조를 빠르게 만듭니다.' },
+                  { title: 'Soft Persuasion', body: '대놓고 과장하지 않고도 예뻐 보이고 사고 싶어 보이는 판매 흐름을 잡는 데 유리합니다.' }
+                ].map((item) => (
+                  <div key={item.title} className="rounded-2xl border border-white/10 bg-white/6 px-4 py-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[rgba(255,220,232,0.88)]">{item.title}</p>
+                    <p className="mt-2 text-xs leading-5 text-white/74">{item.body}</p>
+                  </div>
+                ))}
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
                 {starterPrompts.map((prompt) => (
