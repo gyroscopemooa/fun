@@ -553,7 +553,7 @@ export default function ProductDetailStudio() {
               </p>
             </div>
 
-            <div className="rounded-[1.8rem] border border-white/12 bg-black/12 px-5 py-5 backdrop-blur">
+            <div className="hidden rounded-[1.8rem] border border-white/12 bg-black/12 px-5 py-5 backdrop-blur">
               <p className="text-xs uppercase tracking-[0.22em] text-white/42">Marketplace Ready</p>
               <h2 className="mt-2 text-2xl font-black tracking-tight text-white sm:text-[2rem]">
                 쇼핑몰·오픈마켓·자사몰용 상세페이지를 빠르게 제작합니다.
