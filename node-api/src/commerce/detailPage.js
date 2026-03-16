@@ -377,7 +377,6 @@ export const generateCommerceDetailPage = async ({
 
   const completion = await getClient().chat.completions.create({
     model: DEFAULT_MODEL,
-    temperature: 0.7,
     messages: [
       {
         role: 'system',
