@@ -380,6 +380,16 @@ export default function ProductDetailStudio() {
     });
   };
 
+  const onPageCountChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const rawValue = Number(event.target.value);
+    const nextValue = Number.isFinite(rawValue) ? rawValue : DETAIL_PAGE_MIN_COUNT;
+    setValue('pageCount', nextValue, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true
+    });
+  };
+
   const onExportImage = async (format: 'png' | 'jpg') => {
     if (!result) {
       toast.error('먼저 상세페이지를 생성해주세요.');
@@ -793,6 +803,8 @@ export default function ProductDetailStudio() {
                   max={DETAIL_PAGE_MAX_COUNT}
                   step={1}
                   {...register('pageCount', { valueAsNumber: true })}
+                  value={Number.isFinite(values.pageCount) ? values.pageCount : DETAIL_PAGE_MIN_COUNT}
+                  onChange={onPageCountChange}
                   className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-slate-400"
                 />
                 <p className="text-xs text-slate-500">{DETAIL_PAGE_MIN_COUNT}~{DETAIL_PAGE_MAX_COUNT}장까지 설정할 수 있습니다.</p>
