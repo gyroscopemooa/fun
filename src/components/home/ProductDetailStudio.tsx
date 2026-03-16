@@ -67,7 +67,7 @@ const useStudioStore = create<StudioState>((set) => ({
 const MAX_IMAGES = 10;
 const RAW_API_BASE = import.meta.env.PUBLIC_NODE_API_BASE?.trim() ?? '';
 const DEV_API_BASE = 'http://127.0.0.1:8787';
-const API_BASE = RAW_API_BASE || (import.meta.env.DEV ? DEV_API_BASE : '');
+const API_BASE = (RAW_API_BASE || (import.meta.env.DEV ? DEV_API_BASE : '')).replace(/\/+$/, '');
 const EXPORT_WIDTH = 860;
 const SLICE_HEIGHT = 3000;
 const PAGE_COUNT_OPTIONS: PageCountOption[] = [5, 7, 10];

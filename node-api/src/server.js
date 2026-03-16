@@ -8,7 +8,7 @@ import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import { Webhook } from 'standardwebhooks';
 import { db } from './store.js';
-import { buildFallbackCommerceDetailPage, generateCommerceDetailPage } from './commerce/detailPage.js';
+import { generateCommerceDetailPage } from './commerce/detailPage.js';
 import { generateCandidatesWithProvider, getImageProvider, getResolvedImageProvider, isExternalAiEnabled, normalizeRequestedProvider, resolveImageProvider } from './providers/providerRouter.js';
 
 const app = express();
@@ -30,7 +30,21 @@ await fs.mkdir(originalDir, { recursive: true });
 await fs.mkdir(generatedDir, { recursive: true });
 await fs.mkdir(jobSnapshotDir, { recursive: true });
 
-app.use(cors());
+const allowedOrigins = new Set([
+  'https://manytool.net',
+  'http://127.0.0.1:4321',
+  'http://localhost:4321'
+]);
+
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.has(origin)) {
+      callback(null, true);
+      return;
+    }
+    callback(new Error(`CORS blocked for origin: ${origin}`));
+  }
+}));
 app.use(express.json({
   limit: '20mb',
   verify: (req, _res, buffer) => {
@@ -659,6 +673,14 @@ app.post('/generate', async (req, res) => {
 });
 
 app.post('/commerce/detail-page/generate', async (req, res) => {
+  console.log('detail-page request', {
+    productName: req.body?.productName ?? '',
+    pageCount: req.body?.pageCount ?? '',
+    imageCount: Array.isArray(req.body?.images) ? req.body.images.length : 0,
+    origin: req.headers.origin ?? '',
+    userAgent: req.headers['user-agent'] ?? ''
+  });
+
   const {
     productName = '',
     price = '',
@@ -697,14 +719,15 @@ app.post('/commerce/detail-page/generate', async (req, res) => {
       result
     });
   } catch (error) {
-    const fallbackResult = buildFallbackCommerceDetailPage(pageCount, Array.isArray(images) ? images.length : 1);
-    console.error('[commerce/detail-page/generate] generation failed, returning fallback:', error);
-    return res.status(201).json({
-      ok: true,
-      model: process.env.OPENAI_MODEL?.trim() || 'gpt-5-mini',
-      result: fallbackResult,
-      fallback: true,
-      warning: error?.message ?? 'detail page generation failed'
+    const message = error?.message ?? 'detail page generation failed';
+    const status = message.includes('OPENAI_API_KEY is missing') ? 503 : 500;
+    console.error('[commerce/detail-page/generate] generation failed:', error);
+    return res.status(status).json({
+      ok: false,
+      error: {
+        code: status === 503 ? 'OPENAI_NOT_CONFIGURED' : 'DETAIL_PAGE_GENERATION_FAILED',
+        message
+      }
     });
   }
 });
