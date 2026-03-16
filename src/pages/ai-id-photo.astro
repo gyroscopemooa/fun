@@ -1576,6 +1576,17 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       if (!res.ok) throw new Error(`checkout failed: ${res.status}`);
       return res.json();
     };
+    const formatCheckoutAmount = (checkout) => {
+      const amount = Number(checkout?.amount ?? 0);
+      const currency = String(checkout?.currency ?? 'USD').toUpperCase();
+      if (!Number.isFinite(amount) || amount <= 0) return '';
+      try {
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount / 100);
+      } catch {
+        return `${amount} ${currency}`;
+      }
+    };
+
 
     const moveToCheckoutIfPending = (checkout, pendingMessage, persistBaseOrder = false) => {
       if (!checkout || !checkout.checkoutUrl || checkout.paid) return false;
@@ -1583,7 +1594,8 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         baseOrderId = checkout.orderId ?? baseOrderId;
         savePageState();
       }
-      setStatus(pendingMessage);
+      const amountLabel = formatCheckoutAmount(checkout);
+      setStatus(amountLabel ? `${pendingMessage} Final amount ${amountLabel}` : pendingMessage);
       window.location.href = checkout.checkoutUrl;
       return true;
     };

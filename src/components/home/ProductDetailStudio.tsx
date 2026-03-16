@@ -69,6 +69,12 @@ const EXPORT_WIDTH = 860;
 const SLICE_HEIGHT = 3000;
 const PAGE_COUNT_OPTIONS: PageCountOption[] = [5, 7, 10];
 const SHOW_DEBUG_SCENARIOS = import.meta.env.DEV || import.meta.env.PUBLIC_DETAIL_PAGE_DEBUG === 'true';
+const HAS_LOCAL_API_FALLBACK = /^(https?:\/\/)?(127\.0\.0\.1|localhost)(:\d+)?$/i.test(API_BASE);
+const DETAIL_PAGE_PRICING: Record<PageCountOption, { amountLabel: string; note: string }> = {
+  5: { amountLabel: '$29', note: 'Starter layout' },
+  7: { amountLabel: '$39', note: 'Balanced default' },
+  10: { amountLabel: '$59', note: 'Premium full set' }
+};
 
 const resizeImageToDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
   const reader = new FileReader();
@@ -143,6 +149,7 @@ export default function ProductDetailStudio() {
   const zoomRootRef = useRef<HTMLDivElement | null>(null);
   const exportRef = useRef<HTMLDivElement | null>(null);
   const values = watch();
+  const pricingSummary = DETAIL_PAGE_PRICING[values.pageCount as PageCountOption] ?? DETAIL_PAGE_PRICING[7];
   const activeTheme = useMemo(() => themes.find((item) => item.key === theme) ?? themes[0], [theme]);
   const renderSections = useMemo(() => (result ? buildRenderSections(result, images) : []), [result, images]);
   const classifiedImages = useMemo(() => (result ? classifyImages(result, images) : []), [result, images]);
@@ -199,6 +206,13 @@ export default function ProductDetailStudio() {
       return;
     }
 
+    if (!import.meta.env.DEV && HAS_LOCAL_API_FALLBACK) {
+      const message = '배포 환경의 API 주소가 비어 있습니다. PUBLIC_NODE_API_BASE를 실제 Node API 주소로 설정해야 합니다.';
+      setApiError(message);
+      toast.error(message);
+      return;
+    }
+
     setApiError('');
     setIsGenerating(true);
 
@@ -228,7 +242,11 @@ export default function ProductDetailStudio() {
       setCopyText(buildPlainCopyText({ formValues, result: nextResult }));
       toast.success(`${nextResult.page_count}장 구성의 상세페이지가 생성되었습니다.`);
     } catch (error) {
-      const message = error instanceof Error ? error.message : '상세페이지 생성에 실패했습니다.';
+      const fallbackMessage = '상세페이지 생성에 실패했습니다.';
+      const rawMessage = error instanceof Error ? error.message : fallbackMessage;
+      const message = rawMessage === 'Failed to fetch'
+        ? `API 요청에 실패했습니다. 현재 요청 주소: ${API_BASE}. Node API 배포, CORS, PUBLIC_NODE_API_BASE 설정을 확인하세요.`
+        : rawMessage;
       setApiError(message);
       toast.error(message);
     } finally {
@@ -531,6 +549,17 @@ export default function ProductDetailStudio() {
                 {apiError}
               </div>
             ) : null}
+
+            <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+              <div>
+                <p className="font-semibold text-slate-900">{values.pageCount} pages</p>
+                <p className="text-xs text-slate-500">{pricingSummary.note}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Estimated</p>
+                <p className="font-semibold text-slate-900">{pricingSummary.amountLabel}</p>
+              </div>
+            </div>
 
             <div className="mt-5 flex flex-wrap gap-3">
               <Button type="submit" disabled={isGenerating}>

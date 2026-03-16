@@ -947,6 +947,8 @@ app.post('/checkout', async (req, res) => {
       orderId: order.id,
       status: order.status,
       paymentMode,
+      amount: order.amount,
+      currency: order.currency,
       paid: order.status === 'paid',
       checkoutUrl: order.checkoutUrl
     });
