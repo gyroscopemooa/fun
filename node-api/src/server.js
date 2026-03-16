@@ -36,15 +36,20 @@ const allowedOrigins = new Set([
   'http://localhost:4321'
 ]);
 
-app.use(cors({
+const corsOptions = {
   origin(origin, callback) {
     if (!origin || allowedOrigins.has(origin)) {
       callback(null, true);
       return;
     }
     callback(new Error(`CORS blocked for origin: ${origin}`));
-  }
-}));
+  },
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type']
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(express.json({
   limit: '20mb',
   verify: (req, _res, buffer) => {
