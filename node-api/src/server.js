@@ -8,7 +8,7 @@ import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import { Webhook } from 'standardwebhooks';
 import { db } from './store.js';
-import { generateCommerceDetailPage } from './commerce/detailPage.js';
+import { buildFallbackCommerceDetailPage, generateCommerceDetailPage } from './commerce/detailPage.js';
 import { generateCandidatesWithProvider, getImageProvider, getResolvedImageProvider, isExternalAiEnabled, normalizeRequestedProvider, resolveImageProvider } from './providers/providerRouter.js';
 
 const app = express();
@@ -695,9 +695,14 @@ app.post('/commerce/detail-page/generate', async (req, res) => {
       result
     });
   } catch (error) {
-    const status = String(error?.message ?? '').includes('OPENAI_API_KEY is missing') ? 503 : 500;
-    return res.status(status).json({
-      error: error?.message ?? 'detail page generation failed'
+    const fallbackResult = buildFallbackCommerceDetailPage(pageCount, Array.isArray(images) ? images.length : 1);
+    console.error('[commerce/detail-page/generate] generation failed, returning fallback:', error);
+    return res.status(201).json({
+      ok: true,
+      model: process.env.OPENAI_MODEL?.trim() || 'gpt-5-mini',
+      result: fallbackResult,
+      fallback: true,
+      warning: error?.message ?? 'detail page generation failed'
     });
   }
 });

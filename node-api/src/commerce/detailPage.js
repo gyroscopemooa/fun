@@ -261,6 +261,12 @@ const buildFallbackPayload = (pageCount) => {
   };
 };
 
+export const buildFallbackCommerceDetailPage = (pageCount = 7, imageCount = 1) => {
+  const safePageCount = [5, 7, 10].includes(Number(pageCount)) ? Number(pageCount) : 7;
+  const safeImageCount = Math.max(1, Number(imageCount) || 1);
+  return normalizePayload(buildFallbackPayload(safePageCount), safeImageCount, safePageCount);
+};
+
 const normalizePayload = (payload, imageCount, requestedPageCount) => {
   const safeRequestedPageCount = [5, 7, 10].includes(Number(requestedPageCount)) ? Number(requestedPageCount) : 7;
   const fallbackPayload = buildFallbackPayload(safeRequestedPageCount);
