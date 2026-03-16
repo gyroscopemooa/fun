@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 
 const DEFAULT_MODEL = process.env.OPENAI_MODEL?.trim() || 'gpt-5-mini';
+const MAX_DETAIL_PAGE_IMAGES = 30;
 
 const detailPageSchema = {
   type: 'object',
@@ -22,21 +23,21 @@ const detailPageSchema = {
       properties: {
         hero: {
           type: 'array',
-          items: { type: 'integer', minimum: 0, maximum: 9 },
+          items: { type: 'integer', minimum: 0, maximum: MAX_DETAIL_PAGE_IMAGES - 1 },
           minItems: 1,
-          maxItems: 10
+          maxItems: MAX_DETAIL_PAGE_IMAGES
         },
         detail: {
           type: 'array',
-          items: { type: 'integer', minimum: 0, maximum: 9 },
+          items: { type: 'integer', minimum: 0, maximum: MAX_DETAIL_PAGE_IMAGES - 1 },
           minItems: 0,
-          maxItems: 10
+          maxItems: MAX_DETAIL_PAGE_IMAGES
         },
         usage: {
           type: 'array',
-          items: { type: 'integer', minimum: 0, maximum: 9 },
+          items: { type: 'integer', minimum: 0, maximum: MAX_DETAIL_PAGE_IMAGES - 1 },
           minItems: 0,
-          maxItems: 10
+          maxItems: MAX_DETAIL_PAGE_IMAGES
         }
       },
       required: ['hero', 'detail', 'usage']
@@ -368,7 +369,7 @@ export const generateCommerceDetailPage = async ({
   images
 }) => {
   const safeImages = Array.isArray(images)
-    ? images.filter((item) => typeof item === 'string' && item.startsWith('data:image/')).slice(0, 10)
+    ? images.filter((item) => typeof item === 'string' && item.startsWith('data:image/')).slice(0, MAX_DETAIL_PAGE_IMAGES)
     : [];
 
   if (!safeImages.length) {

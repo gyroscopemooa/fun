@@ -51,7 +51,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 app.use(express.json({
-  limit: '20mb',
+  limit: '50mb',
   verify: (req, _res, buffer) => {
     req.rawBody = Buffer.from(buffer);
   }

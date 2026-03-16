@@ -69,7 +69,7 @@ const useStudioStore = create<StudioState>((set) => ({
   setIsGenerating: (isGenerating) => set({ isGenerating })
 }));
 
-const MAX_IMAGES = 10;
+const MAX_IMAGES = 30;
 const RAW_API_BASE = import.meta.env.PUBLIC_NODE_API_BASE?.trim() ?? '';
 const DEV_API_BASE = 'http://127.0.0.1:8787';
 const API_BASE = (RAW_API_BASE || (import.meta.env.DEV ? DEV_API_BASE : '')).replace(/\/+$/, '');
@@ -713,7 +713,7 @@ export default function ProductDetailStudio() {
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold">상품 이미지 업로드</p>
-                  <p className="mt-1 text-xs text-slate-500">최대 10장까지 업로드할 수 있습니다. 1장만 있어도 생성되며 부족한 섹션은 자동 재사용됩니다.</p>
+                  <p className="mt-1 text-xs text-slate-500">최대 30장까지 업로드할 수 있습니다. 1장만 있어도 생성되며 부족한 섹션은 자동 재사용됩니다.</p>
                 </div>
                 <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
                   <ImagePlus className="h-4 w-4" />
