@@ -4,7 +4,7 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 ---
 
-<Layout title="이용약관 | ManyTool" description="ManyTool 서비스 이용 조건, 책임 제한, 금지 행위, 면책 사항 안내">
+<Layout title="이용약관 | ManyTool" description="ManyTool 무료 도구와 유료 AI 생성 서비스의 이용 조건, 책임 제한, 결제 관련 기준 안내">
   <Header />
   <main class="mx-auto max-w-3xl px-4 py-8">
     <h1 class="text-2xl font-bold">이용약관</h1>
@@ -17,7 +17,14 @@ import Footer from '../components/Footer.astro';
     </section>
 
     <section class="mt-6 space-y-3 rounded-xl border border-slate-200 bg-white p-5 text-slate-700">
-      <h2 class="text-lg font-semibold text-slate-900">2. 금지 행위</h2>
+      <h2 class="text-lg font-semibold text-slate-900">2. 유료 AI 생성 서비스</h2>
+      <p>일부 AI 기반 생성 기능은 결제가 필요한 유료 서비스로 제공될 수 있습니다.</p>
+      <p>유료 서비스는 주문 단위로 제공되며, 결제 완료 후 생성 결과 페이지 또는 다운로드 기능이 제공됩니다.</p>
+      <p>환불 기준은 <a href="/refund-policy" class="font-medium text-slate-900 underline underline-offset-4">환불정책</a>에 따릅니다.</p>
+    </section>
+
+    <section class="mt-6 space-y-3 rounded-xl border border-slate-200 bg-white p-5 text-slate-700">
+      <h2 class="text-lg font-semibold text-slate-900">3. 금지 행위</h2>
       <ul class="list-disc space-y-1 pl-5">
         <li>서비스 방해, 자동화 남용, 비정상 트래픽 유도 행위</li>
         <li>타인 권리 침해 및 법령 위반 콘텐츠 등록</li>
@@ -26,14 +33,14 @@ import Footer from '../components/Footer.astro';
     </section>
 
     <section class="mt-6 space-y-3 rounded-xl border border-slate-200 bg-white p-5 text-slate-700">
-      <h2 class="text-lg font-semibold text-slate-900">3. 변경 및 중단</h2>
+      <h2 class="text-lg font-semibold text-slate-900">4. 변경 및 중단</h2>
       <p>서비스 품질 개선 또는 운영상 사유로 일부 기능은 사전 공지 없이 변경되거나 중단될 수 있습니다.</p>
       <p>중요 정책 변경 시 관련 페이지의 업데이트 날짜를 갱신해 안내합니다.</p>
     </section>
 
     <section class="mt-6 space-y-3 rounded-xl border border-slate-200 bg-white p-5 text-slate-700">
-      <h2 class="text-lg font-semibold text-slate-900">4. 문의</h2>
-      <p>약관 문의: contact@funhub.example</p>
+      <h2 class="text-lg font-semibold text-slate-900">5. 문의</h2>
+      <p>약관 문의 및 결제 관련 문의는 <a href="/contact" class="font-medium text-slate-900 underline underline-offset-4">문의 페이지</a>를 통해 접수할 수 있습니다.</p>
     </section>
   </main>
   <Footer />

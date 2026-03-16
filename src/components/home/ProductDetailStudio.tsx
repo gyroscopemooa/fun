@@ -1040,6 +1040,14 @@ export default function ProductDetailStudio() {
                 PNG Slices
               </Button>
             </div>
+
+            <p className="mt-4 text-xs leading-6 text-slate-500">
+              결제를 진행하면{' '}
+              <a href="/terms" className="font-medium text-slate-700 underline underline-offset-4">이용약관</a>,{' '}
+              <a href="/privacy" className="font-medium text-slate-700 underline underline-offset-4">개인정보 처리방침</a>,{' '}
+              <a href="/refund-policy" className="font-medium text-slate-700 underline underline-offset-4">환불정책</a>
+              에 동의한 것으로 간주됩니다.
+            </p>
           </form>
 
           <div ref={zoomRootRef} className="rounded-[1.7rem] border border-white/10 bg-white p-5 text-slate-900 shadow-xl">

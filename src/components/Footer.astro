@@ -7,9 +7,9 @@ const locale = pathname.startsWith('/en/') || pathname === '/en'
     : 'ko';
 const localePrefix = locale === 'ko' ? '' : `/${locale}`;
 const t = {
-  ko: { rights: 'All rights reserved.', about: '소개', privacy: '개인정보', terms: '약관', contact: '문의', editorial: '운영원칙', disclaimer: '면책고지' },
-  en: { rights: 'All rights reserved.', about: 'About', privacy: 'Privacy', terms: 'Terms', contact: 'Contact', editorial: 'Editorial', disclaimer: 'Disclaimer' },
-  ja: { rights: 'All rights reserved.', about: '概要', privacy: 'プライバシー', terms: '利用規約', contact: 'お問い合わせ', editorial: '運営方針', disclaimer: '免責事項' }
+  ko: { rights: 'All rights reserved.', about: '소개', privacy: '개인정보', terms: '약관', refund: '환불정책', contact: '문의', editorial: '운영원칙', disclaimer: '면책고지' },
+  en: { rights: 'All rights reserved.', about: 'About', privacy: 'Privacy', terms: 'Terms', refund: 'Refunds', contact: 'Contact', editorial: 'Editorial', disclaimer: 'Disclaimer' },
+  ja: { rights: 'All rights reserved.', about: '概要', privacy: 'プライバシー', terms: '利用規約', refund: '返金方針', contact: 'お問い合わせ', editorial: '運営方針', disclaimer: '免責事項' }
 }[locale];
 const withLocale = (path: string) => `${localePrefix}${path}`.replace(/\/{2,}/g, '/');
 ---
@@ -21,6 +21,7 @@ const withLocale = (path: string) => `${localePrefix}${path}`.replace(/\/{2,}/g,
       <a href={withLocale('/about')} class="hover:underline">{t.about}</a>
       <a href={withLocale('/privacy')} class="hover:underline">{t.privacy}</a>
       <a href={withLocale('/terms')} class="hover:underline">{t.terms}</a>
+      <a href={withLocale('/refund-policy')} class="hover:underline">{t.refund}</a>
       <a href={withLocale('/contact')} class="hover:underline">{t.contact}</a>
       <a href={withLocale('/editorial-policy')} class="hover:underline">{t.editorial}</a>
       <a href={withLocale('/content-disclaimer')} class="hover:underline">{t.disclaimer}</a>
