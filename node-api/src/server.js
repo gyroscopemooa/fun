@@ -421,6 +421,10 @@ const createPolarCheckout = async ({ order, productId, clientSessionId = null })
       product_type: order.productType
     }
   };
+  if (order.productType === 'detail_page' && Number.isFinite(Number(order.amount)) && Number(order.amount) > 0) {
+    payload.amount = Math.round(Number(order.amount));
+    payload.metadata.page_count = String(order?.detailPageRequest?.pageCount ?? '');
+  }
   if (order.jobId) payload.metadata.job_id = order.jobId;
   if (successUrl) payload.success_url = successUrl;
   if (returnUrl) payload.return_url = returnUrl;

@@ -23,9 +23,11 @@ export type ProductDetailFormValues = {
 
 export type DetailPagePricing = {
   page_count: PageCountOption;
-  unit_price: 10000;
+  unit_price: number;
   total_price: number;
-  currency: 'KRW';
+  unit_amount_cents: number;
+  total_amount_cents: number;
+  currency: 'USD';
 };
 
 export type UploadedImage = {
@@ -90,7 +92,7 @@ export type DetailPageTestScenario = {
   description: string;
 };
 
-export const DETAIL_PAGE_UNIT_PRICE = 10000;
+export const DETAIL_PAGE_UNIT_PRICE_CENTS = 699;
 export const DETAIL_PAGE_MIN_COUNT = 5;
 export const DETAIL_PAGE_MAX_COUNT = 20;
 
@@ -134,10 +136,19 @@ const getDetailPageQualityNote = (pageCount: number) => {
 
 export const buildDetailPagePricing = (pageCount: PageCountOption): DetailPagePricing => ({
   page_count: normalizeDetailPageCount(pageCount),
-  unit_price: DETAIL_PAGE_UNIT_PRICE,
-  total_price: normalizeDetailPageCount(pageCount) * DETAIL_PAGE_UNIT_PRICE,
-  currency: 'KRW'
+  unit_price: DETAIL_PAGE_UNIT_PRICE_CENTS / 100,
+  total_price: Number(((normalizeDetailPageCount(pageCount) * DETAIL_PAGE_UNIT_PRICE_CENTS) / 100).toFixed(2)),
+  unit_amount_cents: DETAIL_PAGE_UNIT_PRICE_CENTS,
+  total_amount_cents: normalizeDetailPageCount(pageCount) * DETAIL_PAGE_UNIT_PRICE_CENTS,
+  currency: 'USD'
 });
+
+export const formatDetailPagePrice = (amount: number, currency: 'USD' = 'USD') => new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency,
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+}).format(amount);
 
 export const starterPrompts = [
   '업로드한 상품 사진을 분석해서 한국 쇼핑몰형 상세페이지 카피를 작성해줘.',

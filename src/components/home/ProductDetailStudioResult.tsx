@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import {
   buildDetailPageHtml,
   buildFeatureCards,
+  formatDetailPagePrice,
   buildPlainCopyText,
   buildRenderSections,
   classifyImages,
@@ -37,7 +38,8 @@ type DetailPageOrder = {
     pageCount: number;
     pricing: {
       total_price: number;
-      currency: string;
+      currency: 'USD';
+      total_amount_cents?: number;
     } | null;
     images: string[];
   } | null;
@@ -180,12 +182,21 @@ export default function ProductDetailStudioResult() {
     if (!exportRef.current || !result) {
       throw new Error('Generate result is not ready yet.');
     }
+    const sourceWidth = Math.max(1, exportRef.current.getBoundingClientRect().width);
+    const scale = EXPORT_WIDTH / sourceWidth;
+    const exportHeight = Math.max(1, Math.round(exportRef.current.scrollHeight * scale));
     const { toCanvas } = await import('html-to-image');
     return toCanvas(exportRef.current, {
       cacheBust: true,
       pixelRatio: 2,
+      height: exportHeight,
       canvasWidth: EXPORT_WIDTH * 2,
-      width: EXPORT_WIDTH
+      canvasHeight: exportHeight * 2,
+      width: EXPORT_WIDTH,
+      style: {
+        width: `${EXPORT_WIDTH}px`,
+        maxWidth: `${EXPORT_WIDTH}px`
+      }
     });
   };
 
@@ -233,13 +244,7 @@ export default function ProductDetailStudioResult() {
     if (!exportRef.current || !result || !formValues) return;
     setIsExportingSlices(true);
     try {
-      const { toCanvas } = await import('html-to-image');
-      const canvas = await toCanvas(exportRef.current, {
-        cacheBust: true,
-        pixelRatio: 2,
-        canvasWidth: EXPORT_WIDTH * 2,
-        width: EXPORT_WIDTH
-      });
+      const canvas = await renderExportCanvas();
       downloadDataUrl(canvas.toDataURL('image/png'), `${getExportFileBaseName(formValues.productName)}-full.png`);
     } finally {
       setIsExportingSlices(false);
@@ -257,7 +262,7 @@ export default function ProductDetailStudioResult() {
           <span className="rounded-full bg-slate-100 px-3 py-1">status: {order?.status ?? 'loading'}</span>
           {order?.detailPageRequest?.pricing?.total_price ? (
             <span className="rounded-full bg-slate-100 px-3 py-1">
-              amount: {Number(order.detailPageRequest.pricing.total_price).toLocaleString('ko-KR')} KRW
+              amount: {formatDetailPagePrice(Number(order.detailPageRequest.pricing.total_price), order.detailPageRequest.pricing.currency)}
             </span>
           ) : null}
         </div>

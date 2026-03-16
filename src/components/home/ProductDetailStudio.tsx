@@ -19,8 +19,8 @@ import { Button } from '@/components/ui/button';
 import {
   DETAIL_PAGE_MAX_COUNT,
   DETAIL_PAGE_MIN_COUNT,
-  buildDetailPagePricing,
   buildDetailPageHtml,
+  buildDetailPagePricing,
   buildFallbackResult,
   buildFeatureCards,
   buildPlainCopyText,
@@ -28,6 +28,7 @@ import {
   classifyImages,
   detailPageTestScenarios,
   ensureResultIntegrity,
+  formatDetailPagePrice,
   iconGlyphMap,
   normalizeDetailPageCount,
   sectionLabelMap,
@@ -360,12 +361,21 @@ export default function ProductDetailStudio() {
       throw new Error('먼저 상세페이지를 생성해주세요.');
     }
 
+    const sourceWidth = Math.max(1, exportRef.current.getBoundingClientRect().width);
+    const scale = EXPORT_WIDTH / sourceWidth;
+    const exportHeight = Math.max(1, Math.round(exportRef.current.scrollHeight * scale));
     const { toCanvas } = await import('html-to-image');
     return toCanvas(exportRef.current, {
       cacheBust: true,
       pixelRatio: 2,
+      height: exportHeight,
       canvasWidth: EXPORT_WIDTH * 2,
-      width: EXPORT_WIDTH
+      canvasHeight: exportHeight * 2,
+      width: EXPORT_WIDTH,
+      style: {
+        width: `${EXPORT_WIDTH}px`,
+        maxWidth: `${EXPORT_WIDTH}px`
+      }
     });
   };
 
@@ -458,7 +468,7 @@ export default function ProductDetailStudio() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           productType: 'detail_page',
-          amount: pricing.total_price,
+          amount: pricing.total_amount_cents,
           currency: pricing.currency,
           successUrl: redirectBaseUrl,
           returnUrl: redirectBaseUrl,
@@ -512,13 +522,7 @@ export default function ProductDetailStudio() {
 
     setIsExportingSlices(true);
     try {
-      const { toCanvas } = await import('html-to-image');
-      const canvas = await toCanvas(exportRef.current, {
-        cacheBust: true,
-        pixelRatio: 2,
-        canvasWidth: EXPORT_WIDTH * 2,
-        width: EXPORT_WIDTH
-      });
+      const canvas = await renderExportCanvas();
       const sectionNodes = Array.from(exportRef.current.querySelectorAll<HTMLElement>('[data-export-section="true"]'));
       const scale = canvas.width / EXPORT_WIDTH;
       const boundaries = sectionNodes.map((node) => ({
@@ -849,7 +853,7 @@ export default function ProductDetailStudio() {
               </div>
             ) : null}
 
-            <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+            <div className="hidden mt-5 items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
               <div>
                 <p className="font-semibold text-slate-900">선택 장수: {pricingSummary.page_count}장</p>
                 <p className="text-xs text-slate-500">장당 {pricingSummary.unit_price.toLocaleString('ko-KR')}원</p>
@@ -857,6 +861,17 @@ export default function ProductDetailStudio() {
               <div className="text-right">
                 <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Estimated</p>
                 <p className="font-semibold text-slate-900">예상 금액: {pricingSummary.total_price.toLocaleString('ko-KR')}원</p>
+              </div>
+            </div>
+
+            <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+              <div>
+                <p className="font-semibold text-slate-900">선택 장수: {pricingSummary.page_count}장</p>
+                <p className="text-xs text-slate-500">장당 {formatDetailPagePrice(pricingSummary.unit_price, pricingSummary.currency)}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Estimated</p>
+                <p className="font-semibold text-slate-900">예상 금액: {formatDetailPagePrice(pricingSummary.total_price, pricingSummary.currency)}</p>
               </div>
             </div>
 
