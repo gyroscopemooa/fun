@@ -397,31 +397,72 @@ export const buildFallbackResult = (pageCount: PageCountOption): ProductDetailRe
   };
 };
 
+const normalizeText = (value: unknown, fallback: string) => {
+  if (typeof value !== 'string') return fallback;
+  const trimmed = value.trim();
+  return trimmed.length ? trimmed : fallback;
+};
+
+const normalizeList = (value: unknown, fallback: string[]) => {
+  if (!Array.isArray(value)) return fallback;
+  const normalized = value
+    .map((item) => (typeof item === 'string' ? item.trim() : ''))
+    .filter(Boolean);
+  return normalized.length ? normalized : fallback;
+};
+
+const normalizeSectionType = (value: unknown): SectionType | null => {
+  if (typeof value !== 'string') return null;
+  return value in sectionLabelMap ? (value as SectionType) : null;
+};
+
+const normalizeImageRole = (value: unknown): ImageRoleType | null => {
+  if (value === 'hero' || value === 'detail' || value === 'usage') return value;
+  return null;
+};
+
 export const ensureResultIntegrity = (
   result: ProductDetailResult | null | undefined,
   pageCount: PageCountOption
 ) => {
   if (!result) return buildFallbackResult(pageCount);
   const fallback = buildFallbackResult(pageCount);
+  const normalizedSectionOrder = Array.isArray(result.section_order)
+    ? result.section_order
+      .map((item) => normalizeSectionType(item))
+      .filter((item): item is SectionType => Boolean(item))
+    : [];
+  const normalizedSections = Array.isArray(result.sections)
+    ? result.sections.map((section, index) => {
+      const fallbackSection = fallback.sections[index] ?? fallback.sections[fallback.sections.length - 1];
+      return {
+        type: normalizeSectionType(section?.type) ?? fallbackSection.type,
+        title: normalizeText(section?.title, fallbackSection.title),
+        text: normalizeText(section?.text, fallbackSection.text),
+        image_role: normalizeImageRole(section?.image_role) ?? fallbackSection.image_role
+      };
+    }).filter((section) => Boolean(section.title) && Boolean(section.text))
+    : [];
+
   return {
     page_count: result.page_count || fallback.page_count,
-    section_order: result.section_order?.length ? result.section_order : fallback.section_order,
+    section_order: normalizedSectionOrder.length ? normalizedSectionOrder : fallback.section_order,
     image_role_mapping: {
       hero: result.image_role_mapping?.hero?.length ? result.image_role_mapping.hero : fallback.image_role_mapping.hero,
       detail: result.image_role_mapping?.detail?.length ? result.image_role_mapping.detail : fallback.image_role_mapping.detail,
       usage: result.image_role_mapping?.usage?.length ? result.image_role_mapping.usage : fallback.image_role_mapping.usage
     },
-    sections: result.sections?.length ? result.sections : fallback.sections,
+    sections: normalizedSections.length ? normalizedSections : fallback.sections,
     generated_copy: {
-      headline: result.generated_copy?.headline || fallback.generated_copy.headline,
-      subheadline: result.generated_copy?.subheadline || fallback.generated_copy.subheadline,
-      key_selling_points: result.generated_copy?.key_selling_points?.length ? result.generated_copy.key_selling_points : fallback.generated_copy.key_selling_points,
-      feature_descriptions: result.generated_copy?.feature_descriptions?.length ? result.generated_copy.feature_descriptions : fallback.generated_copy.feature_descriptions,
-      usage_scenario_text: result.generated_copy?.usage_scenario_text || fallback.generated_copy.usage_scenario_text,
-      detail_description: result.generated_copy?.detail_description || fallback.generated_copy.detail_description,
-      benefits: result.generated_copy?.benefits?.length ? result.generated_copy.benefits : fallback.generated_copy.benefits,
-      cta: result.generated_copy?.cta || fallback.generated_copy.cta,
-      seo_title: result.generated_copy?.seo_title || fallback.generated_copy.seo_title
+      headline: normalizeText(result.generated_copy?.headline, fallback.generated_copy.headline),
+      subheadline: normalizeText(result.generated_copy?.subheadline, fallback.generated_copy.subheadline),
+      key_selling_points: normalizeList(result.generated_copy?.key_selling_points, fallback.generated_copy.key_selling_points),
+      feature_descriptions: normalizeList(result.generated_copy?.feature_descriptions, fallback.generated_copy.feature_descriptions),
+      usage_scenario_text: normalizeText(result.generated_copy?.usage_scenario_text, fallback.generated_copy.usage_scenario_text),
+      detail_description: normalizeText(result.generated_copy?.detail_description, fallback.generated_copy.detail_description),
+      benefits: normalizeList(result.generated_copy?.benefits, fallback.generated_copy.benefits),
+      cta: normalizeText(result.generated_copy?.cta, fallback.generated_copy.cta),
+      seo_title: normalizeText(result.generated_copy?.seo_title, fallback.generated_copy.seo_title)
     }
   };
 };

@@ -68,6 +68,7 @@ const API_BASE = import.meta.env.PUBLIC_NODE_API_BASE || 'http://127.0.0.1:8787'
 const EXPORT_WIDTH = 860;
 const SLICE_HEIGHT = 3000;
 const PAGE_COUNT_OPTIONS: PageCountOption[] = [5, 7, 10];
+const SHOW_DEBUG_SCENARIOS = import.meta.env.DEV || import.meta.env.PUBLIC_DETAIL_PAGE_DEBUG === 'true';
 
 const resizeImageToDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
   const reader = new FileReader();
@@ -372,24 +373,26 @@ export default function ProductDetailStudio() {
                   </button>
                 ))}
               </div>
-              <div className="mt-4 grid gap-2 md:grid-cols-2">
-                {detailPageTestScenarios.map((scenario) => (
-                  <button
-                    key={scenario.id}
-                    type="button"
-                    onClick={() => {
-                      setValue('pageCount', scenario.pageCount);
-                      setValue('sellingPoints', scenario.sellingPoints);
-                      setValue('audience', scenario.audience);
-                      setValue('prompt', scenario.prompt);
-                      toast.message(`Test scenario loaded: ${scenario.description}`);
-                    }}
-                    className="rounded-2xl border border-white/12 bg-white/6 px-3 py-3 text-left text-xs text-white/78 transition hover:bg-white/12"
-                  >
-                    {scenario.description}
-                  </button>
-                ))}
-              </div>
+              {SHOW_DEBUG_SCENARIOS ? (
+                <div className="mt-4 grid gap-2 md:grid-cols-2">
+                  {detailPageTestScenarios.map((scenario) => (
+                    <button
+                      key={scenario.id}
+                      type="button"
+                      onClick={() => {
+                        setValue('pageCount', scenario.pageCount);
+                        setValue('sellingPoints', scenario.sellingPoints);
+                        setValue('audience', scenario.audience);
+                        setValue('prompt', scenario.prompt);
+                        toast.message(`Test scenario loaded: ${scenario.description}`);
+                      }}
+                      className="rounded-2xl border border-white/12 bg-white/6 px-3 py-3 text-left text-xs text-white/78 transition hover:bg-white/12"
+                    >
+                      {scenario.description}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
             </div>
           </div>
 
