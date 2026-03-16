@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
+  buildDetailPagePricing,
   buildDetailPageHtml,
   buildFallbackResult,
   buildFeatureCards,
@@ -64,17 +65,15 @@ const useStudioStore = create<StudioState>((set) => ({
 }));
 
 const MAX_IMAGES = 10;
-const API_BASE = import.meta.env.PUBLIC_NODE_API_BASE || 'http://127.0.0.1:8787';
+const RAW_API_BASE = import.meta.env.PUBLIC_NODE_API_BASE?.trim() ?? '';
+const DEV_API_BASE = 'http://127.0.0.1:8787';
+const API_BASE = RAW_API_BASE || (import.meta.env.DEV ? DEV_API_BASE : '');
 const EXPORT_WIDTH = 860;
 const SLICE_HEIGHT = 3000;
 const PAGE_COUNT_OPTIONS: PageCountOption[] = [5, 7, 10];
 const SHOW_DEBUG_SCENARIOS = import.meta.env.DEV || import.meta.env.PUBLIC_DETAIL_PAGE_DEBUG === 'true';
-const HAS_LOCAL_API_FALLBACK = /^(https?:\/\/)?(127\.0\.0\.1|localhost)(:\d+)?$/i.test(API_BASE);
-const DETAIL_PAGE_PRICING: Record<PageCountOption, { amountLabel: string; note: string }> = {
-  5: { amountLabel: '$29', note: 'Starter layout' },
-  7: { amountLabel: '$39', note: 'Balanced default' },
-  10: { amountLabel: '$59', note: 'Premium full set' }
-};
+const MISSING_API_BASE_MESSAGE = 'API 서버 주소가 설정되지 않았습니다. 배포 환경변수를 확인해주세요.';
+const UNREACHABLE_API_MESSAGE = '생성 서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.';
 
 const resizeImageToDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
   const reader = new FileReader();
@@ -149,7 +148,7 @@ export default function ProductDetailStudio() {
   const zoomRootRef = useRef<HTMLDivElement | null>(null);
   const exportRef = useRef<HTMLDivElement | null>(null);
   const values = watch();
-  const pricingSummary = DETAIL_PAGE_PRICING[values.pageCount as PageCountOption] ?? DETAIL_PAGE_PRICING[7];
+  const pricingSummary = buildDetailPagePricing(values.pageCount as PageCountOption);
   const activeTheme = useMemo(() => themes.find((item) => item.key === theme) ?? themes[0], [theme]);
   const renderSections = useMemo(() => (result ? buildRenderSections(result, images) : []), [result, images]);
   const classifiedImages = useMemo(() => (result ? classifyImages(result, images) : []), [result, images]);
@@ -206,10 +205,9 @@ export default function ProductDetailStudio() {
       return;
     }
 
-    if (!import.meta.env.DEV && HAS_LOCAL_API_FALLBACK) {
-      const message = '배포 환경의 API 주소가 비어 있습니다. PUBLIC_NODE_API_BASE를 실제 Node API 주소로 설정해야 합니다.';
-      setApiError(message);
-      toast.error(message);
+    if (!API_BASE) {
+      setApiError(MISSING_API_BASE_MESSAGE);
+      toast.error(MISSING_API_BASE_MESSAGE);
       return;
     }
 
@@ -228,6 +226,7 @@ export default function ProductDetailStudio() {
           prompt: formValues.prompt,
           theme,
           pageCount: Number(formValues.pageCount),
+          pricing: buildDetailPagePricing(formValues.pageCount),
           images: images.map((image) => image.dataUrl)
         })
       });
@@ -245,7 +244,7 @@ export default function ProductDetailStudio() {
       const fallbackMessage = '상세페이지 생성에 실패했습니다.';
       const rawMessage = error instanceof Error ? error.message : fallbackMessage;
       const message = rawMessage === 'Failed to fetch'
-        ? `API 요청에 실패했습니다. 현재 요청 주소: ${API_BASE}. Node API 배포, CORS, PUBLIC_NODE_API_BASE 설정을 확인하세요.`
+        ? UNREACHABLE_API_MESSAGE
         : rawMessage;
       setApiError(message);
       toast.error(message);
@@ -552,12 +551,12 @@ export default function ProductDetailStudio() {
 
             <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
               <div>
-                <p className="font-semibold text-slate-900">{values.pageCount} pages</p>
-                <p className="text-xs text-slate-500">{pricingSummary.note}</p>
+                <p className="font-semibold text-slate-900">선택 장수: {pricingSummary.page_count}장</p>
+                <p className="text-xs text-slate-500">장당 {pricingSummary.unit_price.toLocaleString('ko-KR')}원</p>
               </div>
               <div className="text-right">
                 <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Estimated</p>
-                <p className="font-semibold text-slate-900">{pricingSummary.amountLabel}</p>
+                <p className="font-semibold text-slate-900">예상 금액: {pricingSummary.total_price.toLocaleString('ko-KR')}원</p>
               </div>
             </div>
 

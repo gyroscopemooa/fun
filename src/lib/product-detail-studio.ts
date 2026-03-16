@@ -21,6 +21,13 @@ export type ProductDetailFormValues = {
   pageCount: PageCountOption;
 };
 
+export type DetailPagePricing = {
+  page_count: PageCountOption;
+  unit_price: 10000;
+  total_price: number;
+  currency: 'KRW';
+};
+
 export type UploadedImage = {
   id: string;
   file: File;
@@ -82,6 +89,15 @@ export type DetailPageTestScenario = {
   prompt: string;
   description: string;
 };
+
+export const DETAIL_PAGE_UNIT_PRICE = 10000;
+
+export const buildDetailPagePricing = (pageCount: PageCountOption): DetailPagePricing => ({
+  page_count: pageCount,
+  unit_price: DETAIL_PAGE_UNIT_PRICE,
+  total_price: pageCount * DETAIL_PAGE_UNIT_PRICE,
+  currency: 'KRW'
+});
 
 export const starterPrompts = [
   '업로드한 상품 사진을 분석해서 한국 쇼핑몰형 상세페이지 카피를 작성해줘.',

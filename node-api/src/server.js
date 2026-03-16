@@ -661,9 +661,11 @@ app.post('/commerce/detail-page/generate', async (req, res) => {
     productName = '',
     price = '',
     audience = '',
-    highlight = '',
+    sellingPoints = '',
     prompt = '',
     theme = 'premium',
+    pageCount = 7,
+    pricing = null,
     images = []
   } = req.body ?? {};
 
@@ -679,9 +681,11 @@ app.post('/commerce/detail-page/generate', async (req, res) => {
       productName: String(productName).trim(),
       price: String(price ?? '').trim(),
       audience: String(audience ?? '').trim(),
-      highlight: String(highlight ?? '').trim(),
+      sellingPoints: String(sellingPoints ?? '').trim(),
       prompt: String(prompt ?? '').trim(),
       theme: String(theme ?? 'premium').trim(),
+      pageCount: [5, 7, 10].includes(Number(pageCount)) ? Number(pageCount) : 7,
+      pricing: pricing && typeof pricing === 'object' ? pricing : null,
       images
     });
 

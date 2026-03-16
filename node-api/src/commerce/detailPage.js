@@ -321,7 +321,8 @@ const buildPrompt = ({
   prompt,
   theme,
   pageCount,
-  imageCount
+  imageCount,
+  pricing = null
 }) => [
   '한국 모바일 쇼핑몰용 상세페이지 JSON만 생성하세요.',
   '페이지 폭은 860px이고 스마트스토어, 쿠팡, 카페24에 붙여넣는 것을 전제로 합니다.',
@@ -335,6 +336,7 @@ const buildPrompt = ({
   '이미지가 부족하면 재사용을 전제로 가장 합리적인 매핑을 만드세요.',
   `상품명: ${productName}`,
   `가격/옵션: ${price || '미입력'}`,
+  `구조화 가격 정보: ${pricing ? JSON.stringify(pricing) : '없음'}`,
   `타깃 고객: ${audience || '미입력'}`,
   `키 셀링 포인트: ${sellingPoints || '미입력'}`,
   `테마: ${theme}`,
@@ -356,6 +358,7 @@ export const generateCommerceDetailPage = async ({
   prompt,
   theme,
   pageCount,
+  pricing = null,
   images
 }) => {
   const safeImages = Array.isArray(images)
@@ -387,7 +390,8 @@ export const generateCommerceDetailPage = async ({
               prompt,
               theme,
               pageCount,
-              imageCount: safeImages.length
+              imageCount: safeImages.length,
+              pricing
             })
           },
           ...safeImages.map((image) => ({
