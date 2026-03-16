@@ -541,6 +541,17 @@ export default function ProductDetailStudio() {
               </span>
             </div>
 
+            <div className="rounded-[1.8rem] border border-white/12 bg-black/12 px-5 py-5 backdrop-blur">
+              <p className="text-xs uppercase tracking-[0.22em] text-white/42">Marketplace Ready</p>
+              <h2 className="mt-2 text-2xl font-black tracking-tight text-white sm:text-[2rem]">
+                쇼핑몰·오픈마켓·자사몰용 상세페이지를 빠르게 제작합니다.
+              </h2>
+              <p className="mt-3 max-w-3xl text-sm leading-6 text-white/74 sm:text-base">
+                스마트스토어, 쿠팡, 11번가, 네이버, 옥션, 위메프, 토스, 카카오, 자사몰에 올릴 판매용 상세페이지를
+                사진과 상품 정보만으로 빠르게 정리할 수 있게 설계했습니다.
+              </p>
+            </div>
+
             <div className="max-w-2xl">
               <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
                 상품 사진과 상품 정보를 한국형 모바일 상세페이지로 바로 변환합니다.
