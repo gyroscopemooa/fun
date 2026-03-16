@@ -100,6 +100,7 @@ app.get('/health', (_req, res) => {
 });
 
 app.get('/config', (_req, res) => {
+  const openAiReady = Boolean(process.env.OPENAI_API_KEY?.trim());
   const removeBgReady = Boolean(process.env.REMOVE_BG_API_KEY);
   const photoroomReady = Boolean(process.env.PHOTOROOM_API_KEY && process.env.PHOTOROOM_REMOVE_BG_URL);
   const polarProducts = getPolarProductMap();
@@ -122,6 +123,7 @@ app.get('/config', (_req, res) => {
       Object.entries(polarProducts).map(([key, value]) => [key, Boolean(value)])
     ),
     readiness: {
+      openAiReady,
       removeBgReady,
       photoroomReady,
       polarReady: polarBaseReady,

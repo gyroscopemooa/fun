@@ -75,6 +75,7 @@ const SHOW_DEBUG_SCENARIOS = import.meta.env.DEV || import.meta.env.PUBLIC_DETAI
 const INVALID_API_RESPONSE_MESSAGE = '생성 서버 응답을 처리할 수 없습니다. 잠시 후 다시 시도해주세요.';
 const MISSING_API_BASE_MESSAGE = 'API 서버 주소가 설정되지 않았습니다. 배포 환경변수를 확인해주세요.';
 const UNREACHABLE_API_MESSAGE = '생성 서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.';
+const DETAIL_PAGE_REQUEST_PATH = '/commerce/detail-page/generate';
 
 const resizeImageToDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
   const reader = new FileReader();
@@ -178,6 +179,15 @@ export default function ProductDetailStudio() {
     images.forEach((image) => URL.revokeObjectURL(image.url));
   }, [images]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    console.info('[ProductDetailStudio] PUBLIC_NODE_API_BASE:', RAW_API_BASE || '(empty)');
+    console.info(
+      '[ProductDetailStudio] detail page API:',
+      API_BASE ? `${API_BASE}${DETAIL_PAGE_REQUEST_PATH}` : '(missing API base URL)'
+    );
+  }, []);
+
   const onImagesSelected = async (event: ChangeEvent<HTMLInputElement>) => {
     const nextFiles = Array.from(event.target.files ?? []).slice(0, MAX_IMAGES);
     if (!nextFiles.length) return;
@@ -216,7 +226,9 @@ export default function ProductDetailStudio() {
     setIsGenerating(true);
 
     try {
-      const response = await fetch(`${API_BASE}/commerce/detail-page/generate`, {
+      const requestUrl = `${API_BASE}${DETAIL_PAGE_REQUEST_PATH}`;
+      console.info('[ProductDetailStudio] detail page request URL:', requestUrl);
+      const response = await fetch(requestUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -231,7 +243,11 @@ export default function ProductDetailStudio() {
           images: images.map((image) => image.dataUrl)
         })
       });
+      console.info('[ProductDetailStudio] detail page response status:', response.status);
       const rawBody = await response.text();
+      if (!response.ok) {
+        console.error('[ProductDetailStudio] detail page error response body:', rawBody || '(empty)');
+      }
       const payload = rawBody ? JSON.parse(rawBody) : null;
       if (!response.ok || !payload?.result) {
         throw new Error(payload?.error || '상세페이지 생성에 실패했습니다.');
