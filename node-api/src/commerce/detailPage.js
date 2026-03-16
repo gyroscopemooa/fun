@@ -392,6 +392,7 @@ const buildPrompt = ({
   'generated_copy.feature_descriptions should be short, punchy, and immediately usable in a feature section.',
   'generated_copy.seo_title should read naturally for Korean marketplace listings and product search contexts.',
   'generated_copy.cta should feel specific to the product and purchase motivation, not generic.',
+  'For 1 to 3 pages, keep the composition compact and simpler, and note that continuity can be lighter than longer layouts.',
   'Make the composition feel more basic at 5 pages, more persuasive at 7 pages, and more premium and complete at 10 pages or more.',
   'Avoid repetitive copy between sections, especially for benefit, ingredient, comparison, and proof sections.',
   'Do not include markdown, HTML, or explanatory notes. Return JSON only.'

@@ -658,7 +658,7 @@ export default function ProductDetailStudio() {
             <div className="grid gap-3 sm:grid-cols-3">
               {[
                 { icon: ScanSearch, title: '이미지 분류', body: '대표컷, 디테일컷, 사용컷을 자동으로 나눕니다.' },
-                { icon: Wand2, title: '섹션 생성', body: '5장, 7장, 10장 흐름에 맞는 섹션을 동적으로 구성합니다.' },
+                { icon: Wand2, title: '섹션 생성', body: '1장부터 20장까지 선택한 분량에 맞춰 섹션을 동적으로 구성합니다.' },
                 { icon: Download, title: '3종 export', body: 'HTML, PNG 슬라이스, 카피 텍스트를 바로 뽑습니다.' }
               ].map((item) => (
                 <div key={item.title} className="rounded-[1.6rem] border border-white/10 bg-white/8 p-4 backdrop-blur">
