@@ -84,6 +84,7 @@ const UNREACHABLE_API_MESSAGE = '생성 서버에 연결할 수 없습니다. �
 const INVALID_PRODUCTION_API_BASE_MESSAGE = '프로덕션 API 주소가 잘못 설정되었습니다. PUBLIC_NODE_API_BASE를 https://api.manytool.net 으로 설정해주세요.';
 const DETAIL_PAGE_REQUEST_PATH = '/commerce/detail-page/generate';
 const CHECKOUT_REQUEST_PATH = '/checkout';
+const DETAIL_PAGE_RESULT_PATH = '/tools/product-detail-studio/result/';
 
 const resizeImageToDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
   const reader = new FileReader();
@@ -126,6 +127,13 @@ const downloadDataUrl = (dataUrl: string, filename: string) => {
   anchor.href = dataUrl;
   anchor.download = filename;
   anchor.click();
+};
+
+const buildDetailPageResultUrl = (orderId: string) => {
+  if (typeof window === 'undefined') {
+    return `${DETAIL_PAGE_RESULT_PATH}?orderId=${encodeURIComponent(orderId)}`;
+  }
+  return `${window.location.origin}${DETAIL_PAGE_RESULT_PATH}?orderId=${encodeURIComponent(orderId)}`;
 };
 
 const getExportFileBaseName = (productName: string) => {
@@ -409,9 +417,9 @@ export default function ProductDetailStudio() {
     }
   };
 
-  const onStartCheckout = async () => {
-    if (!result) {
-      toast.error('먼저 상세페이지를 생성해주세요.');
+  const onStartCheckout = handleSubmit(async (formValues) => {
+    if (!images.length) {
+      toast.error('Upload at least one product image first.');
       return;
     }
 
@@ -421,49 +429,80 @@ export default function ProductDetailStudio() {
       return;
     }
 
+    if (hasInvalidProductionApiBase) {
+      setApiError(INVALID_PRODUCTION_API_BASE_MESSAGE);
+      toast.error(INVALID_PRODUCTION_API_BASE_MESSAGE);
+      return;
+    }
+
     if (paymentMode !== 'polar') {
-      toast.message('현재는 mock 결제 모드입니다.');
+      toast.message('Payment mode is currently mock.');
       return;
     }
 
     if (!paymentProducts.detail_page) {
-      toast.error('Polar 상세페이지 상품 ID가 아직 설정되지 않았습니다.');
+      toast.error('POLAR_PRODUCT_DETAIL_PAGE is not configured yet.');
       return;
     }
 
     setIsStartingCheckout(true);
     try {
+      const pageCount = normalizeDetailPageCount(formValues.pageCount);
+      const pricing = buildDetailPagePricing(pageCount);
       const requestUrl = `${API_BASE}${CHECKOUT_REQUEST_PATH}`;
+      const pendingResultUrl = buildDetailPageResultUrl('pending');
+      const redirectBaseUrl = pendingResultUrl.replace('orderId=pending', 'orderId=');
       console.info('[ProductDetailStudio] checkout request URL:', requestUrl);
       const response = await fetch(requestUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           productType: 'detail_page',
-          amount: pricingSummary.total_price,
-          currency: pricingSummary.currency
+          amount: pricing.total_price,
+          currency: pricing.currency,
+          successUrl: redirectBaseUrl,
+          returnUrl: redirectBaseUrl,
+          detailPageRequest: {
+            productName: formValues.productName,
+            price: formValues.price,
+            audience: formValues.audience,
+            sellingPoints: formValues.sellingPoints,
+            prompt: formValues.prompt,
+            theme,
+            pageCount,
+            pricing,
+            images: images.map((image) => image.dataUrl)
+          }
         })
       });
       console.info('[ProductDetailStudio] checkout response status:', response.status);
-      const payload = await response.json();
+      const rawBody = await response.text();
+      const payload = rawBody ? JSON.parse(rawBody) : null;
       if (!response.ok) {
-        throw new Error(payload?.error || '결제 요청에 실패했습니다.');
+        throw new Error(payload?.error?.message || payload?.error || 'checkout request failed');
       }
 
-      const amountLabel = `${pricingSummary.total_price.toLocaleString('ko-KR')}원`;
+      if (payload?.orderId) {
+        localStorage.setItem('manytool.detailPageOrderId', String(payload.orderId));
+      }
+
+      if (payload?.paid && payload?.orderId) {
+        window.location.href = buildDetailPageResultUrl(String(payload.orderId));
+        return;
+      }
+
       if (payload?.checkoutUrl) {
-        toast.message(`최종 결제 금액 ${amountLabel}. 결제 페이지로 이동합니다.`);
         window.location.href = payload.checkoutUrl;
         return;
       }
 
-      toast.success(`결제 준비가 완료되었습니다. 최종 결제 금액 ${amountLabel}`);
+      throw new Error('checkout url is missing');
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : '결제 시작에 실패했습니다.');
+      toast.error(error instanceof Error ? error.message : 'failed to start checkout');
     } finally {
       setIsStartingCheckout(false);
     }
-  };
+  });
 
   const onExportSlices = async () => {
     if (!exportRef.current || !result) {
@@ -716,7 +755,7 @@ export default function ProductDetailStudio() {
           <form
             onSubmit={(event) => {
               event.preventDefault();
-              void onGenerate();
+              void onStartCheckout();
             }}
             className="rounded-[1.7rem] border border-slate-200 bg-white p-5 text-slate-900 shadow-xl"
           >
@@ -822,20 +861,10 @@ export default function ProductDetailStudio() {
             </div>
 
             <div className="mt-5 flex flex-wrap gap-3">
-              <Button type="submit" disabled={isGenerating}>
-                {isGenerating ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-                Generate Detail Page
+              <Button type="submit" disabled={isStartingCheckout}>
+                {isStartingCheckout ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Store className="h-4 w-4" />}
+                Pay and Generate
               </Button>
-              {paymentMode === 'polar' ? (
-                <Button
-                  type="button"
-                  onClick={() => void onStartCheckout()}
-                  disabled={!result || isStartingCheckout || !paymentProducts.detail_page}
-                >
-                  {isStartingCheckout ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Store className="h-4 w-4" />}
-                  Pay {pricingSummary.total_price.toLocaleString('ko-KR')}원
-                </Button>
-              ) : null}
               <Button type="button" variant="secondary" onClick={() => void onCopyHtml()} disabled={!html}>
                 <Copy className="h-4 w-4" />
                 HTML

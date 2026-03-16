@@ -386,6 +386,17 @@ const summarizeIssueCounts = (items, extractor) => {
     }));
 };
 
+const buildOrderReturnUrl = (baseUrl, orderId) => {
+  if (!baseUrl || !orderId) return baseUrl ?? null;
+  try {
+    const url = new URL(baseUrl);
+    url.searchParams.set('orderId', orderId);
+    return url.toString();
+  } catch {
+    return baseUrl;
+  }
+};
+
 const createPolarCheckout = async ({ order, productId, clientSessionId = null }) => {
   const accessToken = process.env.POLAR_ACCESS_TOKEN;
   if (!accessToken) {
@@ -394,8 +405,14 @@ const createPolarCheckout = async ({ order, productId, clientSessionId = null })
   if (!productId) {
     throw new Error(`Polar product id is missing for productType=${order.productType}`);
   }
-  const successUrl = process.env.POLAR_SUCCESS_URL ?? process.env.PUBLIC_WEB_BASE_URL ?? null;
-  const returnUrl = process.env.POLAR_RETURN_URL ?? process.env.PUBLIC_WEB_BASE_URL ?? null;
+  const successUrl = buildOrderReturnUrl(
+    order.successUrl ?? process.env.POLAR_SUCCESS_URL ?? process.env.PUBLIC_WEB_BASE_URL ?? null,
+    order.id
+  );
+  const returnUrl = buildOrderReturnUrl(
+    order.returnUrl ?? process.env.POLAR_RETURN_URL ?? process.env.PUBLIC_WEB_BASE_URL ?? null,
+    order.id
+  );
 
   const payload = {
     products: [productId],
@@ -714,7 +731,7 @@ app.post('/commerce/detail-page/generate', async (req, res) => {
       sellingPoints: String(sellingPoints ?? '').trim(),
       prompt: String(prompt ?? '').trim(),
       theme: String(theme ?? 'premium').trim(),
-      pageCount: [5, 7, 10].includes(Number(pageCount)) ? Number(pageCount) : 7,
+      pageCount: Math.max(5, Math.min(20, Math.round(Number(pageCount) || 7))),
       pricing: pricing && typeof pricing === 'object' ? pricing : null,
       images
     });
@@ -734,6 +751,66 @@ app.post('/commerce/detail-page/generate', async (req, res) => {
         code: status === 503 ? 'OPENAI_NOT_CONFIGURED' : 'DETAIL_PAGE_GENERATION_FAILED',
         message
       }
+    });
+  }
+});
+
+app.post('/order/:id/detail-page', async (req, res) => {
+  const order = await refreshOrderFromPolarIfNeeded(db.orders.get(req.params.id));
+  if (!order) return res.status(404).json({ error: 'order not found' });
+  if (order.productType !== 'detail_page') {
+    return res.status(400).json({ error: 'order is not for detail_page' });
+  }
+  if (order.status !== 'paid') {
+    return res.status(402).json({ error: 'payment required', status: order.status });
+  }
+  if (order.detailPageResult) {
+    return res.json({
+      ok: true,
+      orderId: order.id,
+      status: order.status,
+      result: order.detailPageResult,
+      request: order.detailPageRequest ?? null
+    });
+  }
+
+  const request = order.detailPageRequest;
+  if (!request?.productName || !Array.isArray(request.images) || request.images.length === 0) {
+    return res.status(400).json({ error: 'detail page request payload is missing' });
+  }
+
+  try {
+    const result = await generateCommerceDetailPage({
+      productName: String(request.productName).trim(),
+      price: String(request.price ?? '').trim(),
+      audience: String(request.audience ?? '').trim(),
+      sellingPoints: String(request.sellingPoints ?? '').trim(),
+      prompt: String(request.prompt ?? '').trim(),
+      theme: String(request.theme ?? 'premium').trim(),
+      pageCount: Math.max(5, Math.min(20, Math.round(Number(request.pageCount) || 7))),
+      pricing: request.pricing && typeof request.pricing === 'object' ? request.pricing : null,
+      images: request.images
+    });
+
+    const nextOrder = {
+      ...order,
+      detailPageResult: result,
+      detailPageGeneratedAt: new Date().toISOString()
+    };
+    db.orders.set(order.id, nextOrder);
+
+    return res.json({
+      ok: true,
+      orderId: nextOrder.id,
+      status: nextOrder.status,
+      result,
+      request: nextOrder.detailPageRequest ?? null
+    });
+  } catch (error) {
+    return res.status(500).json({
+      ok: false,
+      error: error?.message ?? 'detail page generation failed',
+      orderId: order.id
     });
   }
 });
@@ -950,7 +1027,10 @@ app.post('/checkout', async (req, res) => {
     currency = 'KRW',
     jobId = null,
     provider = 'polar',
-    clientSessionId = null
+    clientSessionId = null,
+    successUrl = null,
+    returnUrl = null,
+    detailPageRequest = null
   } = req.body ?? {};
 
   if (!Number.isFinite(Number(amount)) || Number(amount) <= 0) {
@@ -969,7 +1049,14 @@ app.post('/checkout', async (req, res) => {
     paymentMode,
     polarCheckoutId: null,
     checkoutUrl: null,
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    successUrl: typeof successUrl === 'string' ? successUrl.trim() || null : null,
+    returnUrl: typeof returnUrl === 'string' ? returnUrl.trim() || null : null,
+    detailPageRequest: productType === 'detail_page' && detailPageRequest && typeof detailPageRequest === 'object'
+      ? detailPageRequest
+      : null,
+    detailPageResult: null,
+    detailPageGeneratedAt: null
   };
   db.orders.set(orderId, order);
 
