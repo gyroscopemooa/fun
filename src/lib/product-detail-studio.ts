@@ -150,6 +150,12 @@ export const formatDetailPagePrice = (amount: number, currency: 'USD' = 'USD') =
   maximumFractionDigits: 2
 }).format(amount);
 
+export const formatApproxKrw = (usdAmount: number, rate = 1450) => {
+  const krw = Math.round(usdAmount * rate);
+  const rounded = Math.round(krw / 1000) * 1000;
+  return `약 ${rounded.toLocaleString('ko-KR')}원`;
+};
+
 export const starterPrompts = [
   '업로드한 상품 사진을 분석해서 한국 쇼핑몰형 상세페이지 카피를 작성해줘.',
   '860px 모바일 상세페이지 기준으로 섹션 흐름이 자연스럽게 이어지도록 작성해줘.',

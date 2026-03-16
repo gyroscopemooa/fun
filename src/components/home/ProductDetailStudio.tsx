@@ -28,6 +28,7 @@ import {
   classifyImages,
   detailPageTestScenarios,
   ensureResultIntegrity,
+  formatApproxKrw,
   formatDetailPagePrice,
   iconGlyphMap,
   normalizeDetailPageCount,
@@ -868,10 +869,12 @@ export default function ProductDetailStudio() {
               <div>
                 <p className="font-semibold text-slate-900">선택 장수: {pricingSummary.page_count}장</p>
                 <p className="text-xs text-slate-500">장당 {formatDetailPagePrice(pricingSummary.unit_price, pricingSummary.currency)}</p>
+                <p className="text-xs text-slate-400">장당 {formatApproxKrw(pricingSummary.unit_price)} 수준</p>
               </div>
               <div className="text-right">
                 <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Estimated</p>
                 <p className="font-semibold text-slate-900">예상 금액: {formatDetailPagePrice(pricingSummary.total_price, pricingSummary.currency)}</p>
+                <p className="text-xs text-slate-400">{formatApproxKrw(pricingSummary.total_price)} / 실제 결제는 USD 기준</p>
               </div>
             </div>
 

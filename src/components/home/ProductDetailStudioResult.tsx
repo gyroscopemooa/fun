@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Copy, Download, LoaderCircle, Store } from 'lucide-react';
+import { Copy, Download, Home, LoaderCircle, Store } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
   buildDetailPageHtml,
   buildFeatureCards,
+  formatApproxKrw,
   formatDetailPagePrice,
   buildPlainCopyText,
   buildRenderSections,
@@ -262,9 +263,19 @@ export default function ProductDetailStudioResult() {
           <span className="rounded-full bg-slate-100 px-3 py-1">status: {order?.status ?? 'loading'}</span>
           {order?.detailPageRequest?.pricing?.total_price ? (
             <span className="rounded-full bg-slate-100 px-3 py-1">
-              amount: {formatDetailPagePrice(Number(order.detailPageRequest.pricing.total_price), order.detailPageRequest.pricing.currency)}
+              amount: {formatDetailPagePrice(Number(order.detailPageRequest.pricing.total_price), order.detailPageRequest.pricing.currency)} ({formatApproxKrw(Number(order.detailPageRequest.pricing.total_price))})
             </span>
           ) : null}
+        </div>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <Button type="button" variant="secondary" onClick={() => { window.location.href = '/tools/product-detail-studio/'; }}>
+            <Store className="h-4 w-4" />
+            새 상세페이지 만들기
+          </Button>
+          <Button type="button" variant="ghost" onClick={() => { window.location.href = '/'; }}>
+            <Home className="h-4 w-4" />
+            메인으로
+          </Button>
         </div>
         {order?.status === 'pending' && order.checkoutUrl ? (
           <div className="mt-4">
