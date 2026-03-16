@@ -72,6 +72,7 @@ const EXPORT_WIDTH = 860;
 const SLICE_HEIGHT = 3000;
 const PAGE_COUNT_OPTIONS: PageCountOption[] = [5, 7, 10];
 const SHOW_DEBUG_SCENARIOS = import.meta.env.DEV || import.meta.env.PUBLIC_DETAIL_PAGE_DEBUG === 'true';
+const INVALID_API_RESPONSE_MESSAGE = '생성 서버 응답을 처리할 수 없습니다. 잠시 후 다시 시도해주세요.';
 const MISSING_API_BASE_MESSAGE = 'API 서버 주소가 설정되지 않았습니다. 배포 환경변수를 확인해주세요.';
 const UNREACHABLE_API_MESSAGE = '생성 서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.';
 
@@ -230,7 +231,8 @@ export default function ProductDetailStudio() {
           images: images.map((image) => image.dataUrl)
         })
       });
-      const payload = await response.json();
+      const rawBody = await response.text();
+      const payload = rawBody ? JSON.parse(rawBody) : null;
       if (!response.ok || !payload?.result) {
         throw new Error(payload?.error || '상세페이지 생성에 실패했습니다.');
       }
@@ -245,7 +247,9 @@ export default function ProductDetailStudio() {
       const rawMessage = error instanceof Error ? error.message : fallbackMessage;
       const message = rawMessage === 'Failed to fetch'
         ? UNREACHABLE_API_MESSAGE
-        : rawMessage;
+        : rawMessage === 'Unexpected end of JSON input'
+          ? INVALID_API_RESPONSE_MESSAGE
+          : rawMessage;
       setApiError(message);
       toast.error(message);
     } finally {
