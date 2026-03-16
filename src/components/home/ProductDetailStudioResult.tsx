@@ -51,6 +51,7 @@ const RAW_API_BASE = import.meta.env.PUBLIC_NODE_API_BASE?.trim() ?? '';
 const DEV_API_BASE = 'http://127.0.0.1:8787';
 const API_BASE = (RAW_API_BASE || (import.meta.env.DEV ? DEV_API_BASE : '')).replace(/\/+$/, '');
 const EXPORT_WIDTH = 860;
+const DETAIL_PAGE_DRAFT_KEY = 'manytool.detailPageDraft';
 
 const buildImagesFromOrder = (images: string[]): UploadedImage[] => images.map((dataUrl, index) => ({
   id: `order-image-${index + 1}`,
@@ -69,6 +70,23 @@ const downloadDataUrl = (dataUrl: string, filename: string) => {
   anchor.href = dataUrl;
   anchor.download = filename;
   anchor.click();
+};
+
+const saveDetailPageDraft = ({
+  formValues,
+  theme,
+  images
+}: {
+  formValues: ProductDetailFormValues;
+  theme: ThemeKey;
+  images: UploadedImage[];
+}) => {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(DETAIL_PAGE_DRAFT_KEY, JSON.stringify({
+    formValues,
+    theme,
+    images: images.map((image) => image.dataUrl)
+  }));
 };
 
 export default function ProductDetailStudioResult() {
@@ -271,6 +289,18 @@ export default function ProductDetailStudioResult() {
           <Button type="button" variant="secondary" onClick={() => { window.location.href = '/tools/product-detail-studio/'; }}>
             <Store className="h-4 w-4" />
             새 상세페이지 만들기
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => {
+              if (!formValues) return;
+              saveDetailPageDraft({ formValues, theme, images });
+              window.location.href = '/tools/product-detail-studio/';
+            }}
+          >
+            <Store className="h-4 w-4" />
+            이어서 수정하기
           </Button>
           <Button type="button" variant="ghost" onClick={() => { window.location.href = '/'; }}>
             <Home className="h-4 w-4" />

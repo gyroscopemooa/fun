@@ -30,6 +30,12 @@ export type DetailPagePricing = {
   currency: 'USD';
 };
 
+export type DetailPageTier = {
+  pageCount: PageCountOption;
+  name: string;
+  summary: string;
+};
+
 export type UploadedImage = {
   id: string;
   file: File;
@@ -93,8 +99,35 @@ export type DetailPageTestScenario = {
 };
 
 export const DETAIL_PAGE_UNIT_PRICE_CENTS = 699;
-export const DETAIL_PAGE_MIN_COUNT = 1;
+export const DETAIL_PAGE_MIN_COUNT = 5;
 export const DETAIL_PAGE_MAX_COUNT = 20;
+export const DETAIL_PAGE_TIER_OPTIONS: DetailPageTier[] = [
+  {
+    pageCount: 5,
+    name: 'Core',
+    summary: '핵심 정보 중심의 가장 가벼운 상세페이지 구성'
+  },
+  {
+    pageCount: 7,
+    name: 'Standard',
+    summary: '가장 무난한 기본형 구성으로 흐름과 설명의 균형이 좋음'
+  },
+  {
+    pageCount: 10,
+    name: 'Premium',
+    summary: '디테일과 활용 설명까지 넓게 담는 메인형 구성'
+  },
+  {
+    pageCount: 15,
+    name: 'Signature',
+    summary: '비교, 장점 전개, 신뢰 요소를 더 풍부하게 담는 확장형 구성'
+  },
+  {
+    pageCount: 20,
+    name: 'Complete',
+    summary: '긴 흐름과 다양한 섹션 전개를 모두 담는 최대 구성'
+  }
+];
 
 const DETAIL_PAGE_BODY_SEQUENCE: SectionType[] = [
   'feature',
@@ -122,6 +155,11 @@ export const normalizeDetailPageCount = (value: number): PageCountOption => {
   return Math.min(DETAIL_PAGE_MAX_COUNT, Math.max(DETAIL_PAGE_MIN_COUNT, count));
 };
 
+export const getDetailPageTier = (pageCount: number): DetailPageTier => (
+  DETAIL_PAGE_TIER_OPTIONS.find((item) => item.pageCount === normalizeDetailPageCount(pageCount))
+  ?? DETAIL_PAGE_TIER_OPTIONS[0]
+);
+
 export const buildDetailPageSectionOrder = (pageCount: number): SectionType[] => {
   const safeCount = normalizeDetailPageCount(pageCount);
   const bodyCount = Math.max(0, safeCount - 2);
@@ -129,8 +167,8 @@ export const buildDetailPageSectionOrder = (pageCount: number): SectionType[] =>
 };
 
 const getDetailPageQualityNote = (pageCount: number) => {
-  if (pageCount <= 3) return 'compact and minimal';
-  if (pageCount <= 6) return 'concise and essential';
+  if (pageCount <= 5) return 'concise and essential';
+  if (pageCount <= 7) return 'balanced and standard';
   if (pageCount <= 10) return 'balanced and standard';
   return 'premium and complete';
 };

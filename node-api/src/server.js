@@ -73,9 +73,16 @@ const getPolarProductMap = () => ({
   add2: getFirstEnv('POLAR_PRODUCT_ADD2'),
   add3: getFirstEnv('POLAR_PRODUCT_ADD3'),
   add7: getFirstEnv('POLAR_PRODUCT_ADD7'),
-  detail_page: getFirstEnv('POLAR_PRODUCT_DETAIL_PAGE'),
   passport_addon: getFirstEnv('POLAR_PRODUCT_PASSPORT_ADDON'),
   headshot_addon: getFirstEnv('POLAR_PRODUCT_HEADSHOT_ADDON')
+});
+
+const getPolarDetailPageTierMap = () => ({
+  5: getFirstEnv('POLAR_PRODUCT_DETAIL_PAGE_5'),
+  7: getFirstEnv('POLAR_PRODUCT_DETAIL_PAGE_7'),
+  10: getFirstEnv('POLAR_PRODUCT_DETAIL_PAGE_10'),
+  15: getFirstEnv('POLAR_PRODUCT_DETAIL_PAGE_15'),
+  20: getFirstEnv('POLAR_PRODUCT_DETAIL_PAGE_20')
 });
 
 const getProviderDiagnostics = () => {
@@ -124,6 +131,8 @@ app.get('/config', (_req, res) => {
   const removeBgReady = Boolean(process.env.REMOVE_BG_API_KEY);
   const photoroomReady = Boolean(process.env.PHOTOROOM_API_KEY && process.env.PHOTOROOM_REMOVE_BG_URL);
   const polarProducts = getPolarProductMap();
+  const detailPageTierMap = getPolarDetailPageTierMap();
+  const detailPageTiersReady = Object.values(detailPageTierMap).every(Boolean);
   const polarBaseReady = Boolean(process.env.POLAR_ACCESS_TOKEN && polarProducts.base);
   const polarAddonReady = Boolean(
     process.env.POLAR_ACCESS_TOKEN
@@ -139,14 +148,20 @@ app.get('/config', (_req, res) => {
     externalAiEnabled: isExternalAiEnabled(),
     paymentMode,
     supportedImageProviders: ['auto', 'local_sharp', 'remove_bg', 'photoroom'],
-    paymentProducts: Object.fromEntries(
-      Object.entries(polarProducts).map(([key, value]) => [key, Boolean(value)])
-    ),
+    paymentProducts: {
+      ...Object.fromEntries(
+        Object.entries(polarProducts).map(([key, value]) => [key, Boolean(value)])
+      ),
+      detail_page: detailPageTiersReady,
+      detail_page_tiers: Object.fromEntries(
+        Object.entries(detailPageTierMap).map(([key, value]) => [key, Boolean(value)])
+      )
+    },
     readiness: {
       openAiReady,
       removeBgReady,
       photoroomReady,
-      polarReady: polarBaseReady,
+      polarReady: Boolean(process.env.POLAR_ACCESS_TOKEN) && (polarBaseReady || detailPageTiersReady),
       polarAddonReady
     },
     providerAvailability: {
@@ -163,6 +178,12 @@ app.get('/config', (_req, res) => {
 const getPolarProductIdByType = (productType) => {
   const map = getPolarProductMap();
   return map[productType] ?? null;
+};
+
+const getDetailPageTierProductId = (pageCount) => {
+  const tierMap = getPolarDetailPageTierMap();
+  const safeCount = Math.max(5, Math.min(20, Math.round(Number(pageCount) || 7)));
+  return tierMap[safeCount] ?? null;
 };
 
 const getJobPayload = (job) => {
@@ -1162,7 +1183,9 @@ app.post('/checkout', async (req, res) => {
 
   try {
     if (paymentMode === 'polar') {
-      const productId = getPolarProductIdByType(productType);
+      const productId = productType === 'detail_page'
+        ? getDetailPageTierProductId(order.detailPageRequest?.pageCount)
+        : getPolarProductIdByType(productType);
       const polarCheckout = await createPolarCheckout({ order, productId, clientSessionId });
       order.polarCheckoutId = polarCheckout.checkoutId;
       order.checkoutUrl = polarCheckout.checkoutUrl;

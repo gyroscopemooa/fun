@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import {
   DETAIL_PAGE_MAX_COUNT,
   DETAIL_PAGE_MIN_COUNT,
+  DETAIL_PAGE_TIER_OPTIONS,
   buildDetailPageHtml,
   buildDetailPagePricing,
   buildFallbackResult,
@@ -30,6 +31,7 @@ import {
   ensureResultIntegrity,
   formatApproxKrw,
   formatDetailPagePrice,
+  getDetailPageTier,
   iconGlyphMap,
   normalizeDetailPageCount,
   sectionLabelMap,
@@ -58,6 +60,7 @@ type StudioState = {
 type PaymentMode = 'mock' | 'polar';
 type PaymentProducts = {
   detail_page: boolean;
+  detail_page_tiers?: Partial<Record<number, boolean>>;
 };
 
 const useStudioStore = create<StudioState>((set) => ({
@@ -87,6 +90,7 @@ const INVALID_PRODUCTION_API_BASE_MESSAGE = '프로덕션 API 주소가 잘못 �
 const DETAIL_PAGE_REQUEST_PATH = '/commerce/detail-page/generate';
 const CHECKOUT_REQUEST_PATH = '/checkout';
 const DETAIL_PAGE_RESULT_PATH = '/tools/product-detail-studio/result/';
+const DETAIL_PAGE_DRAFT_KEY = 'manytool.detailPageDraft';
 
 const resizeImageToDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
   const reader = new FileReader();
@@ -143,6 +147,30 @@ const getExportFileBaseName = (productName: string) => {
   return normalized || 'detail-page';
 };
 
+const buildUploadedImagesFromDataUrls = (items: string[] = []): UploadedImage[] => items.map((dataUrl, index) => ({
+  id: `draft-image-${index + 1}`,
+  file: new File([], `draft-image-${index + 1}.jpg`, { type: 'image/jpeg' }),
+  url: dataUrl,
+  dataUrl
+}));
+
+const saveDetailPageDraft = ({
+  formValues,
+  theme,
+  images
+}: {
+  formValues: ProductDetailFormValues;
+  theme: ThemeKey;
+  images: UploadedImage[];
+}) => {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(DETAIL_PAGE_DRAFT_KEY, JSON.stringify({
+    formValues,
+    theme,
+    images: images.map((image) => image.dataUrl)
+  }));
+};
+
 export default function ProductDetailStudio() {
   const { register, handleSubmit, setValue, watch } = useForm<ProductDetailFormValues>({
     defaultValues: {
@@ -179,6 +207,7 @@ export default function ProductDetailStudio() {
   const values = watch();
   const normalizedPageCount = normalizeDetailPageCount(values.pageCount);
   const pricingSummary = buildDetailPagePricing(normalizedPageCount);
+  const activeTier = getDetailPageTier(normalizedPageCount);
   const activeTheme = useMemo(() => themes.find((item) => item.key === theme) ?? themes[0], [theme]);
   const renderSections = useMemo(() => (result ? buildRenderSections(result, images) : []), [result, images]);
   const classifiedImages = useMemo(() => (result ? classifyImages(result, images) : []), [result, images]);
@@ -222,6 +251,34 @@ export default function ProductDetailStudio() {
   }, []);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const rawDraft = window.localStorage.getItem(DETAIL_PAGE_DRAFT_KEY);
+    if (!rawDraft) return;
+
+    try {
+      const draft = JSON.parse(rawDraft) as {
+        formValues?: Partial<ProductDetailFormValues>;
+        theme?: ThemeKey;
+        images?: string[];
+      };
+      if (draft.formValues?.productName) setValue('productName', draft.formValues.productName);
+      if (draft.formValues?.price) setValue('price', draft.formValues.price);
+      if (draft.formValues?.audience) setValue('audience', draft.formValues.audience);
+      if (draft.formValues?.sellingPoints) setValue('sellingPoints', draft.formValues.sellingPoints);
+      if (draft.formValues?.prompt) setValue('prompt', draft.formValues.prompt);
+      if (Number.isFinite(Number(draft.formValues?.pageCount))) {
+        setValue('pageCount', normalizeDetailPageCount(Number(draft.formValues?.pageCount)));
+      }
+      if (draft.theme) setTheme(draft.theme);
+      if (Array.isArray(draft.images) && draft.images.length) {
+        setImages(buildUploadedImagesFromDataUrls(draft.images.slice(0, MAX_IMAGES)));
+      }
+    } catch {
+      window.localStorage.removeItem(DETAIL_PAGE_DRAFT_KEY);
+    }
+  }, [setTheme, setValue]);
+
+  useEffect(() => {
     if (!API_BASE || hasInvalidProductionApiBase) return;
     let cancelled = false;
 
@@ -233,7 +290,8 @@ export default function ProductDetailStudio() {
         if (cancelled) return;
         setPaymentMode(payload?.paymentMode === 'polar' ? 'polar' : 'mock');
         setPaymentProducts({
-          detail_page: Boolean(payload?.paymentProducts?.detail_page)
+          detail_page: Boolean(payload?.paymentProducts?.detail_page),
+          detail_page_tiers: payload?.paymentProducts?.detail_page_tiers ?? {}
         });
       } catch {
         if (cancelled) return;
@@ -462,14 +520,26 @@ export default function ProductDetailStudio() {
     }
 
     if (!paymentProducts.detail_page) {
-      toast.error('POLAR_PRODUCT_DETAIL_PAGE is not configured yet.');
+      toast.error('상세페이지 티어 결제 상품이 아직 설정되지 않았습니다.');
       return;
     }
 
     setIsStartingCheckout(true);
     try {
       const pageCount = normalizeDetailPageCount(formValues.pageCount);
+      const tierEnabled = paymentProducts.detail_page_tiers?.[pageCount];
+      if (paymentProducts.detail_page_tiers && tierEnabled === false) {
+        throw new Error(`${pageCount}장 티어 결제가 아직 설정되지 않았습니다.`);
+      }
       const pricing = buildDetailPagePricing(pageCount);
+      saveDetailPageDraft({
+        formValues: {
+          ...formValues,
+          pageCount
+        },
+        theme,
+        images
+      });
       const requestUrl = `${API_BASE}${CHECKOUT_REQUEST_PATH}`;
       const pendingResultUrl = buildDetailPageResultUrl('pending');
       const redirectBaseUrl = pendingResultUrl.replace('orderId=pending', 'orderId=');
@@ -797,18 +867,47 @@ export default function ProductDetailStudio() {
               </label>
               <label className="space-y-2 text-sm">
                 <span className="font-semibold">페이지 수</span>
-                <input
-                  type="number"
-                  min={DETAIL_PAGE_MIN_COUNT}
-                  max={DETAIL_PAGE_MAX_COUNT}
-                  step={1}
-                  {...register('pageCount', { valueAsNumber: true })}
-                  value={Number.isFinite(values.pageCount) ? values.pageCount : DETAIL_PAGE_MIN_COUNT}
-                  onChange={onPageCountChange}
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-slate-400"
-                />
-                <p className="text-xs text-slate-500">{DETAIL_PAGE_MIN_COUNT}~{DETAIL_PAGE_MAX_COUNT}장까지 설정할 수 있습니다.</p>
+                <input type="hidden" {...register('pageCount', { valueAsNumber: true })} value={normalizedPageCount} />
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {DETAIL_PAGE_TIER_OPTIONS.map((option) => {
+                    const selected = normalizedPageCount === option.pageCount;
+                    return (
+                      <button
+                        key={option.pageCount}
+                        type="button"
+                        onClick={() => setValue('pageCount', option.pageCount, {
+                          shouldDirty: true,
+                          shouldTouch: true,
+                          shouldValidate: true
+                        })}
+                        className={cn(
+                          'rounded-2xl border px-4 py-3 text-left transition',
+                          selected
+                            ? 'border-slate-900 bg-slate-900 text-white shadow-sm'
+                            : 'border-slate-200 bg-white text-slate-700 hover:border-slate-400'
+                        )}
+                      >
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] opacity-70">{option.name}</p>
+                        <p className="mt-1 text-lg font-black">{option.pageCount}장</p>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-slate-500">5, 7, 10, 15, 20장 티어 중에서 선택할 수 있습니다.</p>
               </label>
+            </div>
+
+            <div className="mt-4 rounded-[1.4rem] border border-slate-200 bg-slate-50 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Selected Tier</p>
+                  <h3 className="mt-1 text-base font-black text-slate-950">{activeTier.name} · {activeTier.pageCount}장</h3>
+                </div>
+                <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600">
+                  장수가 많을수록 더 흐름이 자연스럽고 설명이 풍부해집니다
+                </span>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-slate-600">{activeTier.summary}</p>
             </div>
 
             <div className="mt-4">
