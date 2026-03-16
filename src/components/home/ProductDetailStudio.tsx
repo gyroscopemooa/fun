@@ -51,6 +51,11 @@ type StudioState = {
   setIsGenerating: (value: boolean) => void;
 };
 
+type PaymentMode = 'mock' | 'polar';
+type PaymentProducts = {
+  detail_page: boolean;
+};
+
 const useStudioStore = create<StudioState>((set) => ({
   theme: 'premium',
   result: null,
@@ -77,6 +82,7 @@ const MISSING_API_BASE_MESSAGE = 'API 서버 주소가 설정되지 않았습니
 const UNREACHABLE_API_MESSAGE = '생성 서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.';
 const INVALID_PRODUCTION_API_BASE_MESSAGE = '프로덕션 API 주소가 잘못 설정되었습니다. PUBLIC_NODE_API_BASE를 https://api.manytool.net 으로 설정해주세요.';
 const DETAIL_PAGE_REQUEST_PATH = '/commerce/detail-page/generate';
+const CHECKOUT_REQUEST_PATH = '/checkout';
 
 const resizeImageToDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
   const reader = new FileReader();
@@ -121,6 +127,11 @@ const downloadDataUrl = (dataUrl: string, filename: string) => {
   anchor.click();
 };
 
+const getExportFileBaseName = (productName: string) => {
+  const normalized = productName.trim().toLowerCase().replace(/[^a-z0-9가-힣]+/gi, '-').replace(/^-+|-+$/g, '');
+  return normalized || 'detail-page';
+};
+
 export default function ProductDetailStudio() {
   const { register, handleSubmit, setValue, watch } = useForm<ProductDetailFormValues>({
     defaultValues: {
@@ -147,6 +158,10 @@ export default function ProductDetailStudio() {
   const [images, setImages] = useState<UploadedImage[]>([]);
   const [apiError, setApiError] = useState('');
   const [isExportingSlices, setIsExportingSlices] = useState(false);
+  const [isExportingFile, setIsExportingFile] = useState<'png' | 'jpg' | 'pdf' | null>(null);
+  const [isStartingCheckout, setIsStartingCheckout] = useState(false);
+  const [paymentMode, setPaymentMode] = useState<PaymentMode>('mock');
+  const [paymentProducts, setPaymentProducts] = useState<PaymentProducts>({ detail_page: false });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const zoomRootRef = useRef<HTMLDivElement | null>(null);
   const exportRef = useRef<HTMLDivElement | null>(null);
@@ -193,6 +208,32 @@ export default function ProductDetailStudio() {
       setApiError(INVALID_PRODUCTION_API_BASE_MESSAGE);
     }
   }, []);
+
+  useEffect(() => {
+    if (!API_BASE || hasInvalidProductionApiBase) return;
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const response = await fetch(`${API_BASE}/config`);
+        if (!response.ok) return;
+        const payload = await response.json();
+        if (cancelled) return;
+        setPaymentMode(payload?.paymentMode === 'polar' ? 'polar' : 'mock');
+        setPaymentProducts({
+          detail_page: Boolean(payload?.paymentProducts?.detail_page)
+        });
+      } catch {
+        if (cancelled) return;
+        setPaymentMode('mock');
+        setPaymentProducts({ detail_page: false });
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hasInvalidProductionApiBase]);
 
   const onImagesSelected = async (event: ChangeEvent<HTMLInputElement>) => {
     const nextFiles = Array.from(event.target.files ?? []).slice(0, MAX_IMAGES);
@@ -301,6 +342,124 @@ export default function ProductDetailStudio() {
     }
     await navigator.clipboard.writeText(copyText);
     toast.success('카피 텍스트를 복사했습니다.');
+  };
+
+  const renderExportCanvas = async () => {
+    if (!exportRef.current || !result) {
+      throw new Error('먼저 상세페이지를 생성해주세요.');
+    }
+
+    const { toCanvas } = await import('html-to-image');
+    return toCanvas(exportRef.current, {
+      cacheBust: true,
+      pixelRatio: 2,
+      canvasWidth: EXPORT_WIDTH * 2,
+      width: EXPORT_WIDTH
+    });
+  };
+
+  const onExportImage = async (format: 'png' | 'jpg') => {
+    if (!result) {
+      toast.error('먼저 상세페이지를 생성해주세요.');
+      return;
+    }
+
+    setIsExportingFile(format);
+    try {
+      const canvas = await renderExportCanvas();
+      const mime = format === 'png' ? 'image/png' : 'image/jpeg';
+      const quality = format === 'png' ? undefined : 0.92;
+      downloadDataUrl(
+        canvas.toDataURL(mime, quality),
+        `${getExportFileBaseName(values.productName)}.${format === 'png' ? 'png' : 'jpg'}`
+      );
+      toast.success(`${format.toUpperCase()} 파일을 저장했습니다.`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '이미지 저장에 실패했습니다.');
+    } finally {
+      setIsExportingFile(null);
+    }
+  };
+
+  const onExportPdf = async () => {
+    if (!result) {
+      toast.error('먼저 상세페이지를 생성해주세요.');
+      return;
+    }
+
+    setIsExportingFile('pdf');
+    try {
+      const canvas = await renderExportCanvas();
+      const { jsPDF } = await import('jspdf');
+      const pdf = new jsPDF({
+        orientation: canvas.height >= canvas.width ? 'portrait' : 'landscape',
+        unit: 'px',
+        format: [canvas.width, canvas.height]
+      });
+      pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, canvas.width, canvas.height);
+      pdf.save(`${getExportFileBaseName(values.productName)}.pdf`);
+      toast.success('PDF 파일을 저장했습니다.');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'PDF 저장에 실패했습니다.');
+    } finally {
+      setIsExportingFile(null);
+    }
+  };
+
+  const onStartCheckout = async () => {
+    if (!result) {
+      toast.error('먼저 상세페이지를 생성해주세요.');
+      return;
+    }
+
+    if (!API_BASE) {
+      setApiError(MISSING_API_BASE_MESSAGE);
+      toast.error(MISSING_API_BASE_MESSAGE);
+      return;
+    }
+
+    if (paymentMode !== 'polar') {
+      toast.message('현재는 mock 결제 모드입니다.');
+      return;
+    }
+
+    if (!paymentProducts.detail_page) {
+      toast.error('Polar 상세페이지 상품 ID가 아직 설정되지 않았습니다.');
+      return;
+    }
+
+    setIsStartingCheckout(true);
+    try {
+      const requestUrl = `${API_BASE}${CHECKOUT_REQUEST_PATH}`;
+      console.info('[ProductDetailStudio] checkout request URL:', requestUrl);
+      const response = await fetch(requestUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productType: 'detail_page',
+          amount: pricingSummary.total_price,
+          currency: pricingSummary.currency
+        })
+      });
+      console.info('[ProductDetailStudio] checkout response status:', response.status);
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload?.error || '결제 요청에 실패했습니다.');
+      }
+
+      const amountLabel = `${pricingSummary.total_price.toLocaleString('ko-KR')}원`;
+      if (payload?.checkoutUrl) {
+        toast.message(`최종 결제 금액 ${amountLabel}. 결제 페이지로 이동합니다.`);
+        window.location.href = payload.checkoutUrl;
+        return;
+      }
+
+      toast.success(`결제 준비가 완료되었습니다. 최종 결제 금액 ${amountLabel}`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '결제 시작에 실패했습니다.');
+    } finally {
+      setIsStartingCheckout(false);
+    }
   };
 
   const onExportSlices = async () => {
@@ -597,6 +756,16 @@ export default function ProductDetailStudio() {
                 {isGenerating ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
                 Generate Detail Page
               </Button>
+              {paymentMode === 'polar' ? (
+                <Button
+                  type="button"
+                  onClick={() => void onStartCheckout()}
+                  disabled={!result || isStartingCheckout || !paymentProducts.detail_page}
+                >
+                  {isStartingCheckout ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Store className="h-4 w-4" />}
+                  Pay {pricingSummary.total_price.toLocaleString('ko-KR')}원
+                </Button>
+              ) : null}
               <Button type="button" variant="secondary" onClick={() => void onCopyHtml()} disabled={!html}>
                 <Copy className="h-4 w-4" />
                 HTML
@@ -604,6 +773,18 @@ export default function ProductDetailStudio() {
               <Button type="button" variant="secondary" onClick={() => void onCopyText()} disabled={!copyText}>
                 <Copy className="h-4 w-4" />
                 Copy Text
+              </Button>
+              <Button type="button" variant="secondary" onClick={() => void onExportImage('png')} disabled={!result || isExportingFile !== null}>
+                {isExportingFile === 'png' ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                PNG
+              </Button>
+              <Button type="button" variant="secondary" onClick={() => void onExportImage('jpg')} disabled={!result || isExportingFile !== null}>
+                {isExportingFile === 'jpg' ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                JPG
+              </Button>
+              <Button type="button" variant="secondary" onClick={() => void onExportPdf()} disabled={!result || isExportingFile !== null}>
+                {isExportingFile === 'pdf' ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                PDF
               </Button>
               <Button type="button" variant="secondary" onClick={() => void onExportSlices()} disabled={!result || isExportingSlices}>
                 {isExportingSlices ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}

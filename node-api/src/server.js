@@ -73,6 +73,7 @@ const getPolarProductMap = () => ({
   add2: getFirstEnv('POLAR_PRODUCT_ADD2'),
   add3: getFirstEnv('POLAR_PRODUCT_ADD3'),
   add7: getFirstEnv('POLAR_PRODUCT_ADD7'),
+  detail_page: getFirstEnv('POLAR_PRODUCT_DETAIL_PAGE'),
   passport_addon: getFirstEnv('POLAR_PRODUCT_PASSPORT_ADDON'),
   headshot_addon: getFirstEnv('POLAR_PRODUCT_HEADSHOT_ADDON')
 });
