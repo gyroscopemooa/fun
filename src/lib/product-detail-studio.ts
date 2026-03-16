@@ -104,7 +104,7 @@ export const DETAIL_PAGE_MAX_COUNT = 20;
 export const DETAIL_PAGE_TIER_OPTIONS: DetailPageTier[] = [
   {
     pageCount: 5,
-    name: 'Core',
+    name: 'Essential',
     summary: '핵심 정보 중심의 가장 가벼운 상세페이지 구성'
   },
   {

@@ -93,7 +93,7 @@ export default function ProductDetailStudioResult() {
   const [orderId, setOrderId] = useState('');
   const [order, setOrder] = useState<DetailPageOrder | null>(null);
   const [result, setResult] = useState<ProductDetailResult | null>(null);
-  const [statusMessage, setStatusMessage] = useState('Loading paid result...');
+  const [statusMessage, setStatusMessage] = useState('결제 완료 결과를 불러오는 중입니다.');
   const [isLoading, setIsLoading] = useState(true);
   const [isExportingSlices, setIsExportingSlices] = useState(false);
   const [isExportingFile, setIsExportingFile] = useState<'png' | 'jpg' | 'pdf' | null>(null);
@@ -123,10 +123,10 @@ export default function ProductDetailStudioResult() {
 
         if (nextOrder.status !== 'paid') {
           setStatusMessage(nextOrder.status === 'pending'
-            ? 'Payment is still pending. Complete checkout to unlock the result.'
+            ? '결제가 아직 완료되지 않았습니다. 결제를 마치면 결과를 열 수 있습니다.'
             : nextOrder.status === 'refunded'
-              ? 'Generation failed and the payment was refunded.'
-            : `Order status: ${nextOrder.status}`);
+              ? '생성 실패로 결제가 환불되었습니다.'
+            : `주문 상태: ${nextOrder.status}`);
           setResult(null);
           return;
         }
@@ -138,15 +138,15 @@ export default function ProductDetailStudioResult() {
         const payload = await generateResponse.json();
         if (!generateResponse.ok || !payload?.result) {
           if (payload?.refundStatus === 'succeeded' || payload?.refunded) {
-            throw new Error('Generation failed and the payment was refunded automatically.');
+            throw new Error('생성에 실패해 자동 환불이 완료되었습니다.');
           }
           if (payload?.refundStatus === 'pending') {
-            throw new Error('Generation failed. Refund has started and is still pending.');
+            throw new Error('생성에 실패해 환불이 진행 중입니다.');
           }
           if (payload?.refundStatus === 'failed') {
-            throw new Error('Generation failed and the automatic refund also failed. Please contact support.');
+            throw new Error('생성에도 실패했고 자동 환불도 실패했습니다. 문의가 필요합니다.');
           }
-          throw new Error(payload?.error?.message || payload?.error || 'detail page result is not available');
+          throw new Error(payload?.error?.message || payload?.error || '상세페이지 결과를 불러오지 못했습니다.');
         }
         if (cancelled) return;
         const normalized = ensureResultIntegrity(
@@ -154,10 +154,10 @@ export default function ProductDetailStudioResult() {
           normalizeDetailPageCount(nextOrder.detailPageRequest?.pageCount ?? 7)
         );
         setResult(normalized);
-        setStatusMessage('Paid result ready.');
+        setStatusMessage('결제 완료 결과가 준비되었습니다.');
       } catch (error) {
         if (cancelled) return;
-        setStatusMessage(error instanceof Error ? error.message : 'failed to load result');
+        setStatusMessage(error instanceof Error ? error.message : '결과를 불러오지 못했습니다.');
       } finally {
         if (!cancelled) setIsLoading(false);
       }
@@ -199,7 +199,7 @@ export default function ProductDetailStudioResult() {
 
   const renderExportCanvas = async () => {
     if (!exportRef.current || !result) {
-      throw new Error('Generate result is not ready yet.');
+      throw new Error('아직 저장할 결과가 준비되지 않았습니다.');
     }
     const sourceWidth = Math.max(1, exportRef.current.getBoundingClientRect().width);
     const scale = EXPORT_WIDTH / sourceWidth;
@@ -274,14 +274,13 @@ export default function ProductDetailStudioResult() {
     <section className="mx-auto max-w-7xl px-4 py-8">
       <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
         <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Paid Result</p>
-        <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950">Product Detail Studio Result</h1>
+        <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950">상세페이지 결과</h1>
         <p className="mt-3 text-sm leading-6 text-slate-600">{statusMessage}</p>
         <div className="mt-4 flex flex-wrap gap-3 text-sm text-slate-600">
-          <span className="rounded-full bg-slate-100 px-3 py-1">order: {orderId || 'missing'}</span>
-          <span className="rounded-full bg-slate-100 px-3 py-1">status: {order?.status ?? 'loading'}</span>
+          <span className="rounded-full bg-slate-100 px-3 py-1">상태: {order?.status ?? 'loading'}</span>
           {order?.detailPageRequest?.pricing?.total_price ? (
             <span className="rounded-full bg-slate-100 px-3 py-1">
-              amount: {formatDetailPagePrice(Number(order.detailPageRequest.pricing.total_price), order.detailPageRequest.pricing.currency)} ({formatApproxKrw(Number(order.detailPageRequest.pricing.total_price))})
+              결제 금액: {formatDetailPagePrice(Number(order.detailPageRequest.pricing.total_price), order.detailPageRequest.pricing.currency)} ({formatApproxKrw(Number(order.detailPageRequest.pricing.total_price))})
             </span>
           ) : null}
         </div>
@@ -311,7 +310,7 @@ export default function ProductDetailStudioResult() {
           <div className="mt-4">
             <Button type="button" onClick={() => { window.location.href = order.checkoutUrl ?? ''; }}>
               <Store className="h-4 w-4" />
-              Continue Checkout
+              결제 이어서 진행
             </Button>
           </div>
         ) : null}

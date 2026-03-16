@@ -881,14 +881,19 @@ export default function ProductDetailStudio() {
                           shouldValidate: true
                         })}
                         className={cn(
-                          'rounded-2xl border px-4 py-3 text-left transition',
+                          'rounded-[1.15rem] border px-3 py-2.5 text-left transition',
                           selected
                             ? 'border-slate-900 bg-slate-900 text-white shadow-sm'
                             : 'border-slate-200 bg-white text-slate-700 hover:border-slate-400'
                         )}
                       >
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] opacity-70">{option.name}</p>
-                        <p className="mt-1 text-lg font-black">{option.pageCount}장</p>
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] opacity-70">{option.name}</p>
+                          <p className="text-base font-black">{option.pageCount}장</p>
+                        </div>
+                        <p className={cn('mt-1 text-[11px] leading-5', selected ? 'text-white/80' : 'text-slate-500')}>
+                          {option.summary}
+                        </p>
                       </button>
                     );
                   })}
@@ -903,7 +908,7 @@ export default function ProductDetailStudio() {
                   <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Selected Tier</p>
                   <h3 className="mt-1 text-base font-black text-slate-950">{activeTier.name} · {activeTier.pageCount}장</h3>
                 </div>
-                <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600">
+                <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600">
                   장수가 많을수록 더 흐름이 자연스럽고 설명이 풍부해집니다
                 </span>
               </div>
