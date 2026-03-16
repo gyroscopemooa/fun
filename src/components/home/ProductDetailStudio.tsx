@@ -8,6 +8,7 @@ import {
   Download,
   ImagePlus,
   LoaderCircle,
+  RotateCcw,
   ScanSearch,
   Sparkles,
   Store,
@@ -172,14 +173,17 @@ const saveDetailPageDraft = ({
 };
 
 export default function ProductDetailStudio() {
-  const { register, handleSubmit, setValue, watch } = useForm<ProductDetailFormValues>({
+  const defaultFormValues: ProductDetailFormValues = {
+    productName: '프리미엄 세라믹 머그컵',
+    price: '29,900원 / 2컬러',
+    audience: '감성 주방 아이템을 찾는 20-30대 고객',
+    sellingPoints: '보온감, 묵직한 세라믹 질감, 선물하기 좋은 디자인',
+    prompt: starterPrompts[0],
+    pageCount: 7
+  };
+  const { register, handleSubmit, reset, setValue, watch } = useForm<ProductDetailFormValues>({
     defaultValues: {
-      productName: '프리미엄 세라믹 머그컵',
-      price: '29,900원 / 2컬러',
-      audience: '감성 주방 아이템을 찾는 20-30대 고객',
-      sellingPoints: '보온감, 묵직한 세라믹 질감, 선물하기 좋은 디자인',
-      prompt: starterPrompts[0],
-      pageCount: 7
+      ...defaultFormValues
     }
   });
   const {
@@ -643,6 +647,21 @@ export default function ProductDetailStudio() {
     }
   };
 
+  const onResetAll = () => {
+    images.forEach((image) => URL.revokeObjectURL(image.url));
+    setImages([]);
+    setResult(null);
+    setHtml('');
+    setCopyText('');
+    setApiError('');
+    reset(defaultFormValues);
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(DETAIL_PAGE_DRAFT_KEY);
+      window.localStorage.removeItem('manytool.detailPageOrderId');
+    }
+    toast.success('입력값과 결과를 모두 초기화했습니다.');
+  };
+
   return (
     <section className="px-4 pb-10 pt-8 lg:px-10">
       <motion.div
@@ -992,6 +1011,10 @@ export default function ProductDetailStudio() {
               <Button type="submit" disabled={isStartingCheckout}>
                 {isStartingCheckout ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Store className="h-4 w-4" />}
                 Pay and Generate
+              </Button>
+              <Button type="button" variant="outline" onClick={onResetAll}>
+                <RotateCcw className="h-4 w-4" />
+                전면 초기화
               </Button>
               <Button type="button" variant="secondary" onClick={() => void onCopyHtml()} disabled={!html}>
                 <Copy className="h-4 w-4" />
