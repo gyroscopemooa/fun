@@ -75,6 +75,7 @@ const SHOW_DEBUG_SCENARIOS = import.meta.env.DEV || import.meta.env.PUBLIC_DETAI
 const INVALID_API_RESPONSE_MESSAGE = '생성 서버 응답을 처리할 수 없습니다. 잠시 후 다시 시도해주세요.';
 const MISSING_API_BASE_MESSAGE = 'API 서버 주소가 설정되지 않았습니다. 배포 환경변수를 확인해주세요.';
 const UNREACHABLE_API_MESSAGE = '생성 서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.';
+const INVALID_PRODUCTION_API_BASE_MESSAGE = '프로덕션 API 주소가 잘못 설정되었습니다. PUBLIC_NODE_API_BASE를 https://api.manytool.net 으로 설정해주세요.';
 const DETAIL_PAGE_REQUEST_PATH = '/commerce/detail-page/generate';
 
 const resizeImageToDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
@@ -155,6 +156,7 @@ export default function ProductDetailStudio() {
   const renderSections = useMemo(() => (result ? buildRenderSections(result, images) : []), [result, images]);
   const classifiedImages = useMemo(() => (result ? classifyImages(result, images) : []), [result, images]);
   const featureCards = useMemo(() => (result ? buildFeatureCards(result) : []), [result]);
+  const hasInvalidProductionApiBase = !import.meta.env.DEV && API_BASE === 'https://manytool.net';
 
   useEffect(() => {
     if (!zoomRootRef.current || images.length === 0) return;
@@ -186,6 +188,10 @@ export default function ProductDetailStudio() {
       '[ProductDetailStudio] detail page API:',
       API_BASE ? `${API_BASE}${DETAIL_PAGE_REQUEST_PATH}` : '(missing API base URL)'
     );
+    if (hasInvalidProductionApiBase) {
+      console.error('[ProductDetailStudio] invalid production API base:', API_BASE);
+      setApiError(INVALID_PRODUCTION_API_BASE_MESSAGE);
+    }
   }, []);
 
   const onImagesSelected = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -219,6 +225,12 @@ export default function ProductDetailStudio() {
     if (!API_BASE) {
       setApiError(MISSING_API_BASE_MESSAGE);
       toast.error(MISSING_API_BASE_MESSAGE);
+      return;
+    }
+
+    if (hasInvalidProductionApiBase) {
+      setApiError(INVALID_PRODUCTION_API_BASE_MESSAGE);
+      toast.error(INVALID_PRODUCTION_API_BASE_MESSAGE);
       return;
     }
 
