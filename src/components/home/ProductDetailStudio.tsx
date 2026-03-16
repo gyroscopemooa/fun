@@ -868,7 +868,7 @@ export default function ProductDetailStudio() {
               <label className="space-y-2 text-sm">
                 <span className="font-semibold">페이지 수</span>
                 <input type="hidden" {...register('pageCount', { valueAsNumber: true })} value={normalizedPageCount} />
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                <div className="flex flex-wrap gap-2">
                   {DETAIL_PAGE_TIER_OPTIONS.map((option) => {
                     const selected = normalizedPageCount === option.pageCount;
                     return (
@@ -881,13 +881,13 @@ export default function ProductDetailStudio() {
                           shouldValidate: true
                         })}
                         className={cn(
-                          'rounded-2xl border px-4 py-3 text-center transition',
+                          'min-w-[64px] rounded-full border px-3 py-1.5 text-center text-sm transition',
                           selected
                             ? 'border-slate-900 bg-slate-900 text-white shadow-sm'
                             : 'border-slate-200 bg-white text-slate-700 hover:border-slate-400'
                         )}
                       >
-                        <p className="text-base font-black">{option.pageCount}장</p>
+                        <p className="font-bold">{option.pageCount}장</p>
                       </button>
                     );
                   })}
