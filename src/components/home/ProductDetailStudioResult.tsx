@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+﻿import { useEffect, useMemo, useRef, useState } from 'react';
 import { Copy, Download, Home, LoaderCircle, Store } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -60,7 +60,7 @@ const buildImagesFromOrder = (images: string[]): UploadedImage[] => images.map((
 }));
 
 const getExportFileBaseName = (productName: string) => {
-  const normalized = productName.trim().toLowerCase().replace(/[^a-z0-9가-힣]+/gi, '-').replace(/^-+|-+$/g, '');
+  const normalized = productName.trim().toLowerCase().replace(/[^a-z0-9-]+/gi, '-').replace(/^-+|-+$/g, '');
   return normalized || 'detail-page';
 };
 
@@ -387,3 +387,4 @@ export default function ProductDetailStudioResult() {
     </section>
   );
 }
+

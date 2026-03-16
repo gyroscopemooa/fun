@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
+﻿import { Fragment, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
@@ -139,7 +139,7 @@ const buildDetailPageResultUrl = (orderId: string) => {
 };
 
 const getExportFileBaseName = (productName: string) => {
-  const normalized = productName.trim().toLowerCase().replace(/[^a-z0-9가-힣]+/gi, '-').replace(/^-+|-+$/g, '');
+  const normalized = productName.trim().toLowerCase().replace(/[^a-z0-9-]+/gi, '-').replace(/^-+|-+$/g, '');
   return normalized || 'detail-page';
 };
 
@@ -148,7 +148,7 @@ export default function ProductDetailStudio() {
     defaultValues: {
       productName: '프리미엄 세라믹 머그컵',
       price: '29,900원 / 2컬러',
-      audience: '감성 주방 아이템을 찾는 20-30대',
+      audience: '감성 주방 아이템을 찾는 20-30대 고객',
       sellingPoints: '보온감, 묵직한 세라믹 질감, 선물하기 좋은 디자인',
       prompt: starterPrompts[0],
       pageCount: 7
@@ -272,7 +272,7 @@ export default function ProductDetailStudio() {
   const onGenerate = handleSubmit(async (formValues) => {
     const pageCount = normalizeDetailPageCount(formValues.pageCount);
     if (!images.length) {
-      toast.error('먼저 상품 이미지를 업로드해 주세요.');
+      toast.error('먼저 상품 이미지를 업로드해주세요.');
       return;
     }
 
@@ -341,7 +341,7 @@ export default function ProductDetailStudio() {
 
   const onCopyHtml = async () => {
     if (!html) {
-      toast.error('먼저 상세페이지를 생성해 주세요.');
+      toast.error('먼저 상세페이지를 생성해주세요.');
       return;
     }
     await navigator.clipboard.writeText(html);
@@ -350,7 +350,7 @@ export default function ProductDetailStudio() {
 
   const onCopyText = async () => {
     if (!copyText) {
-      toast.error('먼저 상세페이지를 생성해 주세요.');
+      toast.error('먼저 상세페이지를 생성해주세요.');
       return;
     }
     await navigator.clipboard.writeText(copyText);
@@ -440,7 +440,7 @@ export default function ProductDetailStudio() {
 
   const onStartCheckout = handleSubmit(async (formValues) => {
     if (!images.length) {
-      toast.error('Upload at least one product image first.');
+      toast.error('먼저 상품 이미지를 최소 1장 업로드해주세요.');
       return;
     }
 
@@ -527,7 +527,7 @@ export default function ProductDetailStudio() {
 
   const onExportSlices = async () => {
     if (!exportRef.current || !result) {
-      toast.error('먼저 상세페이지를 생성해 주세요.');
+      toast.error('먼저 상세페이지를 생성해주세요.');
       return;
     }
 
@@ -565,7 +565,7 @@ export default function ProductDetailStudio() {
         context.drawImage(canvas, 0, range.top, canvas.width, range.height, 0, 0, canvas.width, range.height);
         downloadDataUrl(sliceCanvas.toDataURL('image/png'), `page${index + 1}.png`);
       }
-      toast.success(`${sliceRanges.length}개의 섹션 기준 슬라이스를 저장했습니다.`);
+      toast.success(`${sliceRanges.length}개의 PNG 슬라이스를 저장했습니다.`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '슬라이스 저장에 실패했습니다.');
     } finally {
@@ -610,20 +610,20 @@ export default function ProductDetailStudio() {
             <div className="hidden rounded-[1.8rem] border border-white/12 bg-black/12 px-5 py-5 backdrop-blur">
               <p className="text-xs uppercase tracking-[0.22em] text-white/42">Marketplace Ready</p>
               <h2 className="mt-2 text-2xl font-black tracking-tight text-white sm:text-[2rem]">
-                쇼핑몰·오픈마켓·자사몰용 상세페이지를 빠르게 제작합니다.
+                쇼핑몰·오픈마켓·자사몰에 올릴 상세페이지를 빠르게 시작합니다.
               </h2>
               <p className="mt-3 max-w-3xl text-sm leading-6 text-white/74 sm:text-base">
-                스마트스토어, 쿠팡, 11번가, 네이버, 옥션, 위메프, 토스, 카카오, 자사몰에 올릴 판매용 상세페이지를
-                사진과 상품 정보만으로 빠르게 정리할 수 있게 설계했습니다.
+                스마트스토어, 쿠팡, 11번가, 네이버, 옥션, 위메프, 토스, 카카오, 자사몰에 어울리는 판매형 상세페이지를
+                사진과 상품 정보만으로 빠르게 정리할 수 있게 구성했습니다.
               </p>
             </div>
 
             <div className="max-w-2xl">
               <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
-                상품 사진과 상품 정보를 한국형 모바일 상세페이지로 바로 변환합니다.
+                상품 사진과 상품 정보를 판매용 상세페이지 초안으로 바로 정리합니다.
               </h1>
               <p className="mt-3 text-sm leading-6 text-white/72 sm:text-base">
-                업로드 이미지를 hero, detail, usage로 자동 분류하고 선택한 장수에 맞춰 긴 세로형 쇼핑몰 상세페이지를 생성합니다.
+                업로드 이미지를 hero, detail, usage로 자동 분류하고 선택한 페이지 수에 맞춰 긴 흐름의 판매형 상세페이지를 구성합니다.
               </p>
             </div>
 
@@ -631,22 +631,22 @@ export default function ProductDetailStudio() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-xs uppercase tracking-[0.22em] text-white/42">Why It Sells</p>
-                  <h2 className="mt-2 text-xl font-black tracking-tight text-white">예뻐 보여서 멈추고, 읽다 보면 사고 싶어지게.</h2>
+                  <h2 className="mt-2 text-xl font-black tracking-tight text-white">예뻐 보이고, 잘 팔리게 만드는 판매 흐름</h2>
                 </div>
                 <span className="rounded-full border border-white/12 bg-white/8 px-3 py-1 text-xs font-semibold text-white/78">
                   soft conversion angle
                 </span>
               </div>
               <p className="mt-3 max-w-3xl text-sm leading-6 text-white/76">
-                이 페이지는 결과물을 과하게 꾸미기보다, 판매 페이지 자체에서 먼저 구매 명분을 느끼게 하는 데 초점을 둡니다.
-                선물하기 좋은 상품인지, 내 공간 분위기를 바꾸는 아이템인지, 사진 한 장만으로도 더 갖고 싶어 보이게 만들 수 있는지 같은 포인트를 자연스럽게 전달합니다.
+                결과물만 만드는 툴이 아니라 판매 페이지 자체에서 구매 이유가 더 잘 보이도록 구성했습니다.
+                선물하기 좋은 상품인지, 집 분위기를 바꿔주는 아이템인지, 사진 몇 장만으로도 갖고 싶어 보이게 만들 수 있는지 같은 구매 포인트를 자연스럽게 전달합니다.
               </p>
               <div className="mt-4 grid gap-3 md:grid-cols-2">
                 {[
-                  '작은 셀러도 브랜드처럼 보이게 하는 첫 화면 톤',
-                  '선물, 자기만족, 분위기 전환 같은 구매 이유를 쉽게 설명',
-                  '상품 사진이 적어도 감성 흐름과 구매 흐름을 같이 설계',
-                  '디자인 감각이 없어도 판매용 상세페이지를 빠르게 확보'
+                  '작은 셀러도 브랜드처럼 보이게 하는 첫 화면 구성',
+                  '선물, 자기만족, 분위기 전환 같은 구매 이유를 짧게 설명',
+                  '상품 사진만으로도 감성 흐름과 구매 흐름이 함께 이어지게 구성',
+                  '과하지 않게 설득하는 판매형 상세페이지 카피를 빠르게 정리'
                 ].map((point) => (
                   <div key={point} className="rounded-2xl border border-white/10 bg-black/10 px-4 py-3 text-sm text-white/82">
                     {point}
@@ -657,9 +657,9 @@ export default function ProductDetailStudio() {
 
             <div className="grid gap-3 sm:grid-cols-3">
               {[
-                { icon: ScanSearch, title: '이미지 분류', body: '대표컷, 디테일컷, 사용컷을 자동으로 나눕니다.' },
+                { icon: ScanSearch, title: '이미지 분류', body: '히어로컷, 디테일컷, 사용컷을 자동으로 나눕니다.' },
                 { icon: Wand2, title: '섹션 생성', body: '1장부터 20장까지 선택한 분량에 맞춰 섹션을 동적으로 구성합니다.' },
-                { icon: Download, title: '3종 export', body: 'HTML, PNG 슬라이스, 카피 텍스트를 바로 뽑습니다.' }
+                { icon: Download, title: '다중 저장', body: 'HTML, PNG, JPG, PDF, 복사 텍스트까지 바로 저장합니다.' }
               ].map((item) => (
                 <div key={item.title} className="rounded-[1.6rem] border border-white/10 bg-white/8 p-4 backdrop-blur">
                   <item.icon className="h-5 w-5 text-white" />
@@ -673,15 +673,15 @@ export default function ProductDetailStudio() {
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs uppercase tracking-[0.2em] text-white/45">Prompt Quick Fill</p>
-                  <p className="mt-1 text-sm text-white/74">자주 쓰는 지시문으로 테스트 속도를 줄입니다.</p>
+                  <p className="mt-1 text-sm text-white/74">자주 쓰는 지시문을 바로 넣을 수 있습니다.</p>
                 </div>
                 <Sparkles className="h-5 w-5 text-white/70" />
               </div>
               <div className="mt-4 grid gap-3 md:grid-cols-3">
                 {[
-                  { title: 'Gift Angle', body: '집들이, 생일, 작은 감사 선물처럼 구매 명분이 바로 보이는 상품에 특히 잘 맞습니다.' },
-                  { title: 'Mood Upgrade', body: '실용성만이 아니라 사진발, 공간 무드, 취향 만족감을 같이 전달하는 구조를 빠르게 만듭니다.' },
-                  { title: 'Soft Persuasion', body: '대놓고 과장하지 않고도 예뻐 보이고 사고 싶어 보이는 판매 흐름을 잡는 데 유리합니다.' }
+                  { title: 'Gift Angle', body: '집들이, 생일, 작은 감사 선물처럼 구매 명분이 바로 보이는 상품에 잘 맞습니다.' },
+                  { title: 'Mood Upgrade', body: '실용성뿐 아니라 사진발, 공간 무드, 취향 만족감까지 같이 전달하는 구조를 빠르게 만듭니다.' },
+                  { title: 'Soft Persuasion', body: '과장하지 않아도 예뻐 보이고 사고 싶어 보이게 만드는 판매 흐름을 정리합니다.' }
                 ].map((item) => (
                   <div key={item.title} className="rounded-2xl border border-white/10 bg-white/6 px-4 py-3">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[rgba(255,220,232,0.88)]">{item.title}</p>
@@ -813,12 +813,12 @@ export default function ProductDetailStudio() {
 
             <div className="mt-4">
               <label className="space-y-2 text-sm">
-                <span className="font-semibold">키 셀링 포인트</span>
+                <span className="font-semibold">핵심 판매 포인트</span>
                 <textarea
                   {...register('sellingPoints')}
                   rows={3}
                   className="w-full rounded-[1.4rem] border border-slate-200 bg-white px-4 py-3 text-sm leading-6 outline-none transition focus:border-slate-400"
-                  placeholder="예: 3중 보온 구조, 감성적인 컬러감, 선물용 패키지"
+                  placeholder="예: 3중 보온 구조, 감성적인 컬러감, 선물하기 좋은 패키지"
                 />
               </label>
             </div>
@@ -830,7 +830,7 @@ export default function ProductDetailStudio() {
                   {...register('prompt')}
                   rows={4}
                   className="w-full rounded-[1.4rem] border border-slate-200 bg-white px-4 py-3 text-sm leading-6 outline-none transition focus:border-slate-400"
-                  placeholder="예: 스마트스토어형 톤으로 7장 상세페이지를 만들고 proof 섹션에 신뢰감을 더해줘."
+                  placeholder="예: 스마트스토어 흐름으로 7장 구성, proof 섹션은 신뢰감 있게 정리해줘"
                 />
               </label>
             </div>
@@ -839,7 +839,7 @@ export default function ProductDetailStudio() {
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold">상품 이미지 업로드</p>
-                  <p className="mt-1 text-xs text-slate-500">최대 30장까지 업로드할 수 있습니다. 1장만 있어도 생성되며 부족한 섹션은 자동 재사용됩니다.</p>
+                  <p className="mt-1 text-xs text-slate-500">최대 30장까지 업로드할 수 있습니다. 이미지가 적어도 부족한 섹션은 자동으로 재구성합니다.</p>
                 </div>
                 <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
                   <ImagePlus className="h-4 w-4" />
@@ -854,7 +854,7 @@ export default function ProductDetailStudio() {
                   </div>
                 )) : (
                   <div className="col-span-5 rounded-2xl bg-white px-4 py-8 text-center text-sm text-slate-400">
-                    아직 업로드된 이미지가 없습니다.
+                    아직 업로드한 이미지가 없습니다.
                   </div>
                 )}
               </div>
@@ -869,11 +869,11 @@ export default function ProductDetailStudio() {
             <div className="hidden mt-5 items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
               <div>
                 <p className="font-semibold text-slate-900">선택 장수: {pricingSummary.page_count}장</p>
-                <p className="text-xs text-slate-500">장당 {pricingSummary.unit_price.toLocaleString('ko-KR')}원</p>
+                <p className="text-xs text-slate-500">장당 약 {Math.round(pricingSummary.unit_price * 1450).toLocaleString('ko-KR')}원</p>
               </div>
               <div className="text-right">
                 <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Estimated</p>
-                <p className="font-semibold text-slate-900">예상 금액: {pricingSummary.total_price.toLocaleString('ko-KR')}원</p>
+                <p className="font-semibold text-slate-900">예상 금액: 약 {Math.round(pricingSummary.total_price * 1450).toLocaleString('ko-KR')}원</p>
               </div>
             </div>
 
@@ -954,7 +954,7 @@ export default function ProductDetailStudio() {
                     {result?.generated_copy.headline ?? `${values.productName} 상세페이지 헤드라인이 여기에 표시됩니다.`}
                   </h3>
                   <p className="mt-4 text-[15px] leading-7 text-slate-600">
-                    {result?.generated_copy.subheadline ?? '상품명, 가격, 타깃 고객, 업로드 이미지를 바탕으로 모바일 상세페이지가 생성됩니다.'}
+                    {result?.generated_copy.subheadline ?? '상품명, 가격, 타깃 고객, 업로드 이미지 기준으로 상세페이지 카피가 생성됩니다.'}
                   </p>
                   {renderSections[0]?.image ? (
                     <div className="mt-6 overflow-hidden rounded-[1.75rem] bg-slate-200">
@@ -998,7 +998,7 @@ export default function ProductDetailStudio() {
                     </section>
                   )) : (
                     <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50 px-5 py-12 text-center text-sm leading-7 text-slate-500">
-                      생성 후 선택한 페이지 수에 맞는 긴 세로형 상세페이지가 렌더링됩니다.
+                      생성 후 선택한 페이지 수에 맞는 긴 흐름의 상세페이지가 렌더링됩니다.
                     </div>
                   )}
 
@@ -1006,10 +1006,10 @@ export default function ProductDetailStudio() {
                     <div className="rounded-[1.8rem] bg-slate-950 px-6 py-7 text-white">
                       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/40">SEO / CTA</p>
                       <h4 className="mt-2 text-[1.9rem] font-black leading-[1.15] tracking-tight">
-                        {result?.generated_copy.seo_title ?? '생성 후 SEO title이 표시됩니다.'}
+                        {result?.generated_copy.seo_title ?? '생성 후 SEO title이 여기에 표시됩니다.'}
                       </h4>
                       <p className="mt-4 text-[15px] leading-7 text-white/80">
-                        {result?.generated_copy.cta ?? '생성 후 CTA 문구가 표시됩니다.'}
+                        {result?.generated_copy.cta ?? '생성 후 CTA 문구가 여기에 표시됩니다.'}
                       </p>
                     </div>
                   </section>
@@ -1022,3 +1022,4 @@ export default function ProductDetailStudio() {
     </section>
   );
 }
+
