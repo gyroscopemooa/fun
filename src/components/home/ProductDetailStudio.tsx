@@ -541,6 +541,18 @@ export default function ProductDetailStudio() {
               </span>
             </div>
 
+            <div className="max-w-3xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/46">Marketplace Ready</p>
+              <h1 className="mt-3 text-4xl font-black leading-[1.04] tracking-tight text-white sm:text-[3.35rem]">
+                {'\uC1FC\uD551\uBAB0\u00B7\uC624\uD508\uB9C8\uCF13\u00B7\uC790\uC0AC\uBAB0\uC5D0 \uC62C\uB9B4 \uC0C1\uC138\uD398\uC774\uC9C0\uB97C \uBE60\uB974\uAC8C \uC81C\uC791\uD569\uB2C8\uB2E4.'}
+              </h1>
+              <p className="mt-4 max-w-3xl text-[15px] leading-7 text-white/74 sm:text-[1.05rem]">
+                {'\uC2A4\uB9C8\uD2B8\uC2A4\uD1A0\uC5B4, \uCFE0\uD321, 11\uBC88\uAC00, \uB124\uC774\uBC84, \uC625\uC158, \uC704\uBA54\uD504, \uD1A0\uC2A4, \uCE74\uCE74\uC624, \uC790\uC0AC\uBAB0\uC5D0 \uBC14\uB85C \uC751\uC6A9\uD560 \uC218 \uC788\uB294'}
+                {' '}
+                {'\uD310\uB9E4\uC6A9 \uC0C1\uC138\uD398\uC774\uC9C0 \uCD08\uC548\uC744 \uC0C1\uD488 \uC0AC\uC9C4\uACFC \uC815\uBCF4\uB9CC\uC73C\uB85C \uC815\uB9AC\uD569\uB2C8\uB2E4.'}
+              </p>
+            </div>
+
             <div className="rounded-[1.8rem] border border-white/12 bg-black/12 px-5 py-5 backdrop-blur">
               <p className="text-xs uppercase tracking-[0.22em] text-white/42">Marketplace Ready</p>
               <h2 className="mt-2 text-2xl font-black tracking-tight text-white sm:text-[2rem]">
