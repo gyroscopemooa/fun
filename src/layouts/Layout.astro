@@ -13,8 +13,8 @@ interface Props {
 }
 
 const {
-  title = 'ManyTool | 재미있는 온라인 도구 모음',
-  description = 'ManyTool은 다양한 재미있는 온라인 도구와 테스트, 게임, 지도 기능을 제공하는 웹 기반 툴 플랫폼입니다.',
+  title = 'ManyTool | 무료 온라인 도구 모음',
+  description = 'ManyTool은 무료 온라인 도구, 테스트, 게임, 지도, 쇼핑몰 보조 툴을 제공하는 웹 기반 툴 플랫폼입니다.',
   image = '/og-image.png',
   keywords,
   noindex = false
@@ -45,16 +45,6 @@ const localeDescSuffix = locale === 'ko'
     ? ' | English version of this page.'
     : ' | 日本語ページです。';
 const normalizedPathLabel = pathNoLocale === '/' ? 'main' : pathNoLocale.replace(/\//g, ' ').trim();
-const baseTitle = `${localeTitlePrefix}${title}`;
-const resolvedTitle = locale === 'ko' && !baseTitle.includes('무료')
-  ? `무료 ${baseTitle}`
-  : baseTitle;
-const resolvedDescription = `${description}${localeDescSuffix}${locale === 'ko' ? '' : ` (path: ${normalizedPathLabel})`}`;
-const defaultKeywords = '온라인 도구, 웹툴, 테스트 사이트, MBTI 테스트, 이름 궁합, 랜덤 테스트';
-const keywordsBase = keywords ?? defaultKeywords;
-const resolvedKeywords = locale === 'ko' && !keywordsBase.includes('무료')
-  ? `무료, ${keywordsBase}`
-  : keywordsBase;
 const segments = pathNoLocale.split('/').filter(Boolean);
 const topSlug = segments[segments.length - 1] ?? '';
 const freeLabelMap: Record<string, string> = {
@@ -64,6 +54,18 @@ const freeLabelMap: Record<string, string> = {
   'love-compatibility': '무료 연애궁합'
 };
 const freeBodyLabel = locale === 'ko' ? freeLabelMap[topSlug] : undefined;
+const freeAutoPaths = new Set(['/', '/tools', '/games', '/tests', '/maps', '/online-tools']);
+const shouldAutoFreeLabel = locale === 'ko' && (Boolean(freeBodyLabel) || freeAutoPaths.has(pathNoLocale));
+const baseTitle = `${localeTitlePrefix}${title}`;
+const resolvedTitle = shouldAutoFreeLabel && !baseTitle.includes('무료')
+  ? `무료 ${baseTitle}`
+  : baseTitle;
+const resolvedDescription = `${description}${localeDescSuffix}${locale === 'ko' ? '' : ` (path: ${normalizedPathLabel})`}`;
+const defaultKeywords = '무료 온라인 도구, 웹툴, 온라인 툴, 무료 테스트, 브라우저 게임, 지도 도구, 쇼핑몰 보조 툴, 스마트스토어 툴';
+const keywordsBase = keywords ?? defaultKeywords;
+const resolvedKeywords = shouldAutoFreeLabel && !keywordsBase.includes('무료')
+  ? `무료, ${keywordsBase}`
+  : keywordsBase;
 const labelMap: Record<string, string> = {
   about: '소개',
   contact: '문의',
