@@ -23,6 +23,10 @@ type DetailPageOrder = {
   id: string;
   status: string;
   checkoutUrl: string | null;
+  detailPageGenerationStatus?: string | null;
+  detailPageGenerationError?: string | null;
+  refundStatus?: string | null;
+  refundError?: string | null;
   detailPageRequest: {
     productName: string;
     price: string;
@@ -99,6 +103,8 @@ export default function ProductDetailStudioResult() {
         if (nextOrder.status !== 'paid') {
           setStatusMessage(nextOrder.status === 'pending'
             ? 'Payment is still pending. Complete checkout to unlock the result.'
+            : nextOrder.status === 'refunded'
+              ? 'Generation failed and the payment was refunded.'
             : `Order status: ${nextOrder.status}`);
           setResult(null);
           return;
@@ -110,7 +116,16 @@ export default function ProductDetailStudioResult() {
         });
         const payload = await generateResponse.json();
         if (!generateResponse.ok || !payload?.result) {
-          throw new Error(payload?.error || 'detail page result is not available');
+          if (payload?.refundStatus === 'succeeded' || payload?.refunded) {
+            throw new Error('Generation failed and the payment was refunded automatically.');
+          }
+          if (payload?.refundStatus === 'pending') {
+            throw new Error('Generation failed. Refund has started and is still pending.');
+          }
+          if (payload?.refundStatus === 'failed') {
+            throw new Error('Generation failed and the automatic refund also failed. Please contact support.');
+          }
+          throw new Error(payload?.error?.message || payload?.error || 'detail page result is not available');
         }
         if (cancelled) return;
         const normalized = ensureResultIntegrity(

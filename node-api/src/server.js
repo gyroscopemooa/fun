@@ -528,6 +528,52 @@ const createPolarRefund = async ({ order, reason = 'service_disruption' }) => {
   return response.json();
 };
 
+const autoRefundOrder = async (order, reason = 'service_disruption') => {
+  if (!order || order.paymentMode !== 'polar') {
+    return {
+      order,
+      attempted: false,
+      refunded: false,
+      refundStatus: order?.refundStatus ?? null
+    };
+  }
+  if (order.status !== 'paid') {
+    return {
+      order,
+      attempted: false,
+      refunded: false,
+      refundStatus: order.refundStatus ?? null
+    };
+  }
+  if (order.status === 'refunded' || order.refundStatus === 'succeeded') {
+    return {
+      order,
+      attempted: false,
+      refunded: true,
+      refundStatus: order.refundStatus ?? 'succeeded'
+    };
+  }
+
+  const refund = await createPolarRefund({ order, reason });
+  const refundStatus = String(refund?.status ?? 'pending').toLowerCase();
+  const nextOrder = {
+    ...order,
+    status: refundStatus === 'succeeded' ? 'refunded' : order.status,
+    refundedAt: refundStatus === 'succeeded' ? new Date().toISOString() : order.refundedAt ?? null,
+    refundId: refund?.id ?? null,
+    refundStatus,
+    refundPayload: refund,
+    refundError: null
+  };
+  db.orders.set(order.id, nextOrder);
+  return {
+    order: nextOrder,
+    attempted: true,
+    refunded: refundStatus === 'succeeded',
+    refundStatus
+  };
+};
+
 const fetchPolarCheckout = async (checkoutId) => {
   const accessToken = process.env.POLAR_ACCESS_TOKEN;
   if (!accessToken) throw new Error('POLAR_ACCESS_TOKEN is missing');
@@ -794,6 +840,8 @@ app.post('/order/:id/detail-page', async (req, res) => {
 
     const nextOrder = {
       ...order,
+      detailPageGenerationStatus: 'succeeded',
+      detailPageGenerationError: null,
       detailPageResult: result,
       detailPageGeneratedAt: new Date().toISOString()
     };
@@ -807,11 +855,51 @@ app.post('/order/:id/detail-page', async (req, res) => {
       request: nextOrder.detailPageRequest ?? null
     });
   } catch (error) {
-    return res.status(500).json({
-      ok: false,
-      error: error?.message ?? 'detail page generation failed',
-      orderId: order.id
-    });
+    const message = error?.message ?? 'detail page generation failed';
+    let failedOrder = {
+      ...order,
+      detailPageGenerationStatus: 'failed',
+      detailPageGenerationError: message
+    };
+    db.orders.set(order.id, failedOrder);
+
+    try {
+      const refund = await autoRefundOrder(failedOrder, 'service_disruption');
+      failedOrder = {
+        ...refund.order,
+        detailPageGenerationStatus: 'failed',
+        detailPageGenerationError: message
+      };
+      db.orders.set(order.id, failedOrder);
+      return res.status(500).json({
+        ok: false,
+        error: {
+          code: 'DETAIL_PAGE_GENERATION_FAILED',
+          message
+        },
+        orderId: order.id,
+        refundStatus: failedOrder.refundStatus ?? null,
+        refunded: failedOrder.status === 'refunded'
+      });
+    } catch (refundError) {
+      const refundMessage = refundError?.message ?? 'refund failed';
+      failedOrder = {
+        ...failedOrder,
+        refundStatus: 'failed',
+        refundError: refundMessage
+      };
+      db.orders.set(order.id, failedOrder);
+      return res.status(500).json({
+        ok: false,
+        error: {
+          code: 'DETAIL_PAGE_GENERATION_FAILED',
+          message
+        },
+        orderId: order.id,
+        refundStatus: 'failed',
+        refundError: refundMessage
+      });
+    }
   }
 });
 
@@ -1050,13 +1138,21 @@ app.post('/checkout', async (req, res) => {
     polarCheckoutId: null,
     checkoutUrl: null,
     createdAt: new Date().toISOString(),
+    paidAt: null,
+    refundedAt: null,
     successUrl: typeof successUrl === 'string' ? successUrl.trim() || null : null,
     returnUrl: typeof returnUrl === 'string' ? returnUrl.trim() || null : null,
     detailPageRequest: productType === 'detail_page' && detailPageRequest && typeof detailPageRequest === 'object'
       ? detailPageRequest
       : null,
     detailPageResult: null,
-    detailPageGeneratedAt: null
+    detailPageGeneratedAt: null,
+    detailPageGenerationStatus: 'pending',
+    detailPageGenerationError: null,
+    refundId: null,
+    refundStatus: null,
+    refundPayload: null,
+    refundError: null
   };
   db.orders.set(orderId, order);
 
