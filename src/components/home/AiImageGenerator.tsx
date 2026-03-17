@@ -941,7 +941,7 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
           </div>
         </section>
 
-        <section className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(340px,0.9fr)]">
+        <section className="grid gap-4 lg:gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(340px,0.9fr)]">
           <div className="rounded-[32px] border border-slate-200/80 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-7">
             <div className="mb-5 flex items-center justify-between">
               <div>
@@ -967,7 +967,7 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
               }}
               onDragLeave={() => setIsDragging(false)}
               onDrop={handleDrop}
-              className={`group flex min-h-[360px] cursor-pointer flex-col items-center justify-center rounded-[28px] border-2 border-dashed px-6 py-10 text-center transition ${
+              className={`group flex min-h-[300px] cursor-pointer flex-col items-center justify-center rounded-[28px] border-2 border-dashed px-5 py-8 text-center transition sm:min-h-[360px] sm:px-6 sm:py-10 ${
                 isDragging ? 'border-slate-900 bg-slate-50' : 'border-slate-200 bg-gradient-to-br from-slate-50 to-white hover:border-slate-300 hover:bg-slate-50'
               }`}
             >
@@ -975,8 +975,8 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
 
               {previewUrl ? (
                 <div className="flex w-full flex-col items-center gap-4">
-                  <div className={`${imageFrameClass} min-h-[340px] w-full sm:min-h-[420px]`}>
-                    <img src={previewUrl} alt="업로드 미리보기" className={`${imageClass} max-h-[308px] rounded-[18px] sm:max-h-[388px]`} />
+                  <div className={`${imageFrameClass} min-h-[240px] w-full sm:min-h-[420px]`}>
+                    <img src={previewUrl} alt="업로드 미리보기" className={`${imageClass} max-h-[220px] rounded-[18px] sm:max-h-[388px]`} />
                   </div>
                   <div className="flex w-full flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 sm:flex-row sm:justify-between">
                     <div className="min-w-0 text-center sm:text-left">
@@ -1045,13 +1045,13 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
             </div>
           </div>
 
-          <aside className="rounded-[32px] border border-slate-200/80 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-7">
+          <aside className="rounded-[32px] border border-slate-200/80 bg-white p-4 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-7">
             <div className="mb-5">
               <h2 className="text-2xl font-black tracking-tight text-slate-950">예시 미리보기</h2>
             </div>
 
             <div className="overflow-hidden rounded-[28px] bg-gradient-to-br from-rose-100 via-white to-orange-50 p-3">
-              <div className="relative min-h-[420px] rounded-[24px] bg-white/75 p-4">
+              <div className="relative min-h-[320px] rounded-[24px] bg-white/75 p-3 sm:min-h-[420px] sm:p-4">
                 <div className="absolute left-4 top-4 z-10 rounded-full border border-white/70 bg-slate-950/78 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-white">
                   ManyTool AI Picks
                 </div>
@@ -1069,7 +1069,7 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
                 >
                   {SLA_HERO_IMAGES.map((image, index) => (
                     <SwiperSlide key={image}>
-                      <div className="flex min-h-[420px] items-center justify-center">
+                      <div className="flex min-h-[320px] items-center justify-center sm:min-h-[420px]">
                         <img
                           src={image}
                           alt={`ManyTool AI promo preview ${index + 1}`}
@@ -1077,7 +1077,7 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
                           onError={(event) => {
                             event.currentTarget.src = exampleImage;
                           }}
-                          className={`${imageClass} max-h-[388px] rounded-[24px] shadow-[0_24px_50px_rgba(15,23,42,0.14)]`}
+                          className={`${imageClass} max-h-[300px] rounded-[24px] shadow-[0_24px_50px_rgba(15,23,42,0.14)] sm:max-h-[388px]`}
                         />
                       </div>
                     </SwiperSlide>
@@ -1110,10 +1110,10 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
           </div>
           <Swiper
             modules={[Autoplay, Grid]}
-            slidesPerView={2}
-            grid={{ rows: 2, fill: 'row' }}
+            slidesPerView={1.35}
+            grid={{ rows: 1, fill: 'row' }}
             spaceBetween={12}
-            loop={SLA_SUPPORT_IMAGES.length > 4}
+            loop={SLA_SUPPORT_IMAGES.length > 3}
             autoplay={{
               delay: 2600,
               disableOnInteraction: false,
@@ -1122,14 +1122,17 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
             breakpoints={{
               640: {
                 slidesPerView: 3,
+                grid: { rows: 2, fill: 'row' },
                 spaceBetween: 14
               },
               1024: {
                 slidesPerView: 4,
+                grid: { rows: 2, fill: 'row' },
                 spaceBetween: 16
               },
               1280: {
                 slidesPerView: 5,
+                grid: { rows: 2, fill: 'row' },
                 spaceBetween: 16
               }
             }}
