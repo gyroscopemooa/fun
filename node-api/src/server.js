@@ -9,7 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Webhook } from 'standardwebhooks';
 import { db } from './store.js';
 import { generateCommerceDetailPage } from './commerce/detailPage.js';
-import { generateAiImage, getDefaultStyleForMode, getPromptStyleOptions, sanitizeUserInput } from './commerce/aiImageGenerator.js';
+import { generateAiImage, getModeOptions, getProviderOptions, sanitizeUserInput } from './commerce/aiImageGenerator.js';
 import { generateCandidatesWithProvider, getImageProvider, getResolvedImageProvider, isExternalAiEnabled, normalizeRequestedProvider, resolveImageProvider } from './providers/providerRouter.js';
 
 const app = express();
@@ -154,6 +154,7 @@ app.get('/health', (_req, res) => {
 
 app.get('/config', (_req, res) => {
   const openAiReady = Boolean(process.env.OPENAI_API_KEY?.trim());
+  const xaiReady = Boolean(process.env.XAI_API_KEY?.trim());
   const removeBgReady = Boolean(process.env.REMOVE_BG_API_KEY);
   const photoroomReady = Boolean(process.env.PHOTOROOM_API_KEY && process.env.PHOTOROOM_REMOVE_BG_URL);
   const polarProducts = getPolarProductMap();
@@ -186,7 +187,8 @@ app.get('/config', (_req, res) => {
     },
     readiness: {
       openAiReady,
-      aiImageGeneratorReady: openAiReady,
+      xaiReady,
+      aiImageGeneratorReady: openAiReady || xaiReady,
       resendReady: Boolean(resend.apiKey && resend.fromEmail),
       removeBgReady,
       photoroomReady,
@@ -199,7 +201,8 @@ app.get('/config', (_req, res) => {
       remove_bg: removeBgReady && isExternalAiEnabled(),
       photoroom: photoroomReady && isExternalAiEnabled()
     },
-    aiImagePromptStyles: getPromptStyleOptions(),
+    aiImageModes: getModeOptions(),
+    aiImageProviders: getProviderOptions(),
     providerResolutionMap: providerDiagnostics,
     providerDiagnostics
   });
@@ -416,6 +419,7 @@ const getAiImageJobPayload = (job) => {
   if (!job) return null;
   return {
     id: job.id,
+    provider: job.provider ?? 'openai',
     mode: job.mode,
     status: job.status,
     createdAt: job.createdAt,
@@ -892,22 +896,27 @@ app.post('/ai-image-generator/generate', upload.single('image'), async (req, res
     if (!String(req.file.mimetype).startsWith('image/')) {
       return res.status(400).json({ error: 'only image uploads are allowed' });
     }
-    if (!process.env.OPENAI_API_KEY?.trim()) {
+    const mode = typeof req.body?.mode === 'string' ? req.body.mode.trim().toLowerCase() : '';
+    if (!['figure', 'body', 'desk', 'free'].includes(mode)) {
+      return res.status(400).json({ error: 'mode must be figure, body, desk, or free' });
+    }
+    const provider = typeof req.body?.provider === 'string' ? req.body.provider.trim().toLowerCase() : 'openai';
+    if (!['openai', 'xai'].includes(provider)) {
+      return res.status(400).json({ error: 'provider must be openai or xai' });
+    }
+    if (provider === 'openai' && !process.env.OPENAI_API_KEY?.trim()) {
       return res.status(503).json({ error: 'OPENAI_API_KEY is not configured' });
     }
-
-    const mode = typeof req.body?.mode === 'string' ? req.body.mode.trim().toLowerCase() : '';
-    if (mode !== 'figure' && mode !== 'body') {
-      return res.status(400).json({ error: 'mode must be figure or body' });
+    if (provider === 'xai' && !process.env.XAI_API_KEY?.trim()) {
+      return res.status(503).json({ error: 'XAI_API_KEY is not configured' });
     }
-    const style = typeof req.body?.style === 'string' ? req.body.style.trim().toLowerCase() : getDefaultStyleForMode(mode);
     const userInput = sanitizeUserInput(req.body?.userInput ?? '');
 
     const generationId = uuidv4();
     const job = {
       id: generationId,
+      provider,
       mode,
-      style,
       userInput,
       status: 'queued',
       createdAt: new Date().toISOString(),
@@ -926,8 +935,8 @@ app.post('/ai-image-generator/generate', upload.single('image'), async (req, res
       try {
         const generated = await generateAiImage({
           id: generationId,
+          provider,
           mode,
-          style,
           userInput,
           imageBuffer: req.file.buffer,
           mimeType: req.file.mimetype,
@@ -936,7 +945,7 @@ app.post('/ai-image-generator/generate', upload.single('image'), async (req, res
         });
         job.status = 'done';
         job.completedAt = new Date().toISOString();
-        job.style = generated.style;
+        job.provider = generated.provider;
         job.userInput = generated.userInput;
         job.prompt = generated.prompt;
         job.revisedPrompt = generated.revisedPrompt;
@@ -951,6 +960,7 @@ app.post('/ai-image-generator/generate', upload.single('image'), async (req, res
     return res.status(202).json({
       ok: true,
       jobId: generationId,
+      provider,
       mode,
       status: 'queued'
     });
