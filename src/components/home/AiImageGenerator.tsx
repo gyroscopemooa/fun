@@ -1042,6 +1042,11 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
                   ? '자유형 모드는 짧은 스타일 설명이 필요합니다. 얼굴은 유지하고 설명만 추가로 반영합니다.'
                   : '선택 사항입니다. 기본 엔진 설정은 유지하고, 짧은 추가 디테일만 더합니다.'}
               </p>
+              {!activeContent.inputRequired ? (
+                <p className="mt-1 text-[11px] leading-5 text-amber-700">
+                  ????? ?? ??? ???? ??? ??? ? ? ??? ? ????.
+                </p>
+              ) : null}
             </div>
           </div>
 
