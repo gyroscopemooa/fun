@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from 'react';
 import { AlertCircle, ImagePlus, LoaderCircle, Sparkles, UploadCloud, X } from 'lucide-react';
 
-type Mode = 'figure' | 'body' | 'travel' | 'kakao' | 'instagram' | 'hanbok' | 'outfit' | 'animation' | 'free';
+type Mode = 'figure' | 'body' | 'travel' | 'europe' | 'proofshot' | 'kakao' | 'instagram' | 'hanbok' | 'kimono' | 'outfit' | 'animation' | 'free';
 type Provider = 'openai' | 'xai';
 type GenerationPhase = 'idle' | 'payment' | 'generating' | 'done' | 'error';
 
@@ -49,7 +49,7 @@ type ConfigResponse = {
 
 const DEFAULT_PROVIDER: Provider = 'xai';
 const ENGINE_LABEL = 'ManyTool AI';
-const MODE_ORDER: Mode[] = ['figure', 'body', 'travel', 'kakao', 'instagram', 'hanbok', 'outfit', 'animation', 'free'];
+const MODE_ORDER: Mode[] = ['figure', 'body', 'travel', 'europe', 'proofshot', 'kakao', 'instagram', 'hanbok', 'kimono', 'outfit', 'animation', 'free'];
 
 const MODE_CONTENT: Record<Mode, ModeContent> = {
   figure: {
@@ -88,6 +88,30 @@ const MODE_CONTENT: Record<Mode, ModeContent> = {
     inputPlaceholder: '예: Paris street cafe',
     inputRequired: false
   },
+  europe: {
+    tabLabel: '유럽여행스타일',
+    title: 'AI 유럽여행 스타일 생성기',
+    buttonLabel: '유럽여행 스타일 생성',
+    exampleTitle: '유럽여행 스타일 예시',
+    exampleDescription: '유럽 감성의 거리, 카페, 골목 분위기로 자연스럽게 변환합니다.',
+    accentClass: 'from-blue-500 via-sky-400 to-cyan-300',
+    exampleGradient: 'from-sky-100 via-cyan-50 to-white',
+    inputLabel: '추가 디테일',
+    inputPlaceholder: '예: Paris balcony morning',
+    inputRequired: false
+  },
+  proofshot: {
+    tabLabel: '인증샷 만들기',
+    title: 'AI 인증샷 만들기',
+    buttonLabel: '인증샷 생성',
+    exampleTitle: '인증샷 예시',
+    exampleDescription: '실제 찍은 듯한 자연스러운 인증샷 분위기로 변환합니다.',
+    accentClass: 'from-indigo-500 via-violet-400 to-pink-300',
+    exampleGradient: 'from-indigo-100 via-violet-50 to-white',
+    inputLabel: '추가 디테일',
+    inputPlaceholder: '예: natural travel snapshot',
+    inputRequired: false
+  },
   kakao: {
     tabLabel: '카톡 프로필',
     title: 'AI 카톡 프로필 생성기',
@@ -122,6 +146,18 @@ const MODE_CONTENT: Record<Mode, ModeContent> = {
     exampleGradient: 'from-rose-100 via-orange-50 to-white',
     inputLabel: '추가 디테일',
     inputPlaceholder: '예: elegant modern hanbok',
+    inputRequired: false
+  },
+  kimono: {
+    tabLabel: '기모노스타일',
+    title: 'AI 기모노 스타일 생성기',
+    buttonLabel: '기모노 스타일 생성',
+    exampleTitle: '기모노 스타일 예시',
+    exampleDescription: '얼굴은 유지하고 의상을 기모노 스타일로 자연스럽게 바꿉니다.',
+    accentClass: 'from-fuchsia-500 via-rose-400 to-red-300',
+    exampleGradient: 'from-fuchsia-100 via-rose-50 to-white',
+    inputLabel: '추가 디테일',
+    inputPlaceholder: '예: elegant Kyoto kimono',
     inputRequired: false
   },
   outfit: {
@@ -180,9 +216,12 @@ const buildExamplePlaceholder = (mode: Mode) => {
     figure: { start: '#fb923c', end: '#facc15', label: 'PACKAGED FIGURE', badge: 'Retail Box' },
     body: { start: '#0ea5e9', end: '#2dd4bf', label: 'BODY PROFILE', badge: 'Studio Body' },
     travel: { start: '#10b981', end: '#22d3ee', label: 'TRAVEL SCENE', badge: 'Overseas Trip' },
+    europe: { start: '#3b82f6', end: '#22d3ee', label: 'EUROPE TRIP', badge: 'City Mood' },
+    proofshot: { start: '#6366f1', end: '#f472b6', label: 'PROOF SHOT', badge: 'Real Snapshot' },
     kakao: { start: '#facc15', end: '#fb923c', label: 'KAKAO PROFILE', badge: 'Clean Portrait' },
     instagram: { start: '#ec4899', end: '#fb923c', label: 'INSTAGRAM STYLE', badge: 'Lifestyle Shot' },
     hanbok: { start: '#ef4444', end: '#f59e0b', label: 'HANBOK STYLE', badge: 'Traditional Look' },
+    kimono: { start: '#d946ef', end: '#fb7185', label: 'KIMONO STYLE', badge: 'Kyoto Look' },
     outfit: { start: '#475569', end: '#a1a1aa', label: 'OUTFIT CHANGE', badge: 'Fashion Edit' },
     animation: { start: '#8b5cf6', end: '#ec4899', label: 'ANIMATION STYLE', badge: 'Character Art' },
     free: { start: '#ec4899', end: '#fb923c', label: 'FREE STYLE', badge: 'Custom Style' }
@@ -246,9 +285,12 @@ export default function AiImageGenerator() {
     figure: '',
     body: '',
     travel: '',
+    europe: '',
+    proofshot: '',
     kakao: '',
     instagram: '',
     hanbok: '',
+    kimono: '',
     outfit: '',
     animation: '',
     free: ''

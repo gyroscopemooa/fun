@@ -75,6 +75,28 @@ const MODE_PRESETS = {
       userInput ? `additional detail: ${userInput}` : null
     ].filter(Boolean).join(' ')
   },
+  europe: {
+    requiresUserInput: false,
+    stageTwoPrompt: (userInput) => [
+      'Create a photorealistic European travel style image based on the uploaded photo.',
+      'Preserve the original faces, identities, gender, and all individuals exactly.',
+      'Use elegant European city mood, stylish streets, cafes, balconies, or classic travel scenery.',
+      'Keep the result natural, modern, cinematic, and realistic.',
+      'Avoid illustration, toy look, plastic skin, or face distortion.',
+      userInput ? `additional detail: ${userInput}` : null
+    ].filter(Boolean).join(' ')
+  },
+  proofshot: {
+    requiresUserInput: false,
+    stageTwoPrompt: (userInput) => [
+      'Create a natural proof-shot style photo that looks like a real candid social snapshot.',
+      'Preserve the original faces, identities, gender, and all individuals exactly.',
+      'Use realistic lighting, natural pose, authentic atmosphere, and photorealistic image quality.',
+      'Make it feel like a real uploaded 인증샷, not an illustration or studio render.',
+      'Avoid toy look, over-retouching, or face distortion.',
+      userInput ? `additional detail: ${userInput}` : null
+    ].filter(Boolean).join(' ')
+  },
   kakao: {
     requiresUserInput: false,
     stageTwoPrompt: (userInput) => [
@@ -105,6 +127,17 @@ const MODE_PRESETS = {
       'Change clothing into refined traditional or modern hanbok while keeping pose and face natural.',
       'Use premium portrait lighting, graceful composition, realistic fabric detail, and cultural elegance.',
       'Avoid cartoon styling, toy look, or face distortion.',
+      userInput ? `additional detail: ${userInput}` : null
+    ].filter(Boolean).join(' ')
+  },
+  kimono: {
+    requiresUserInput: false,
+    stageTwoPrompt: (userInput) => [
+      'Create a photorealistic portrait with elegant kimono styling.',
+      'Preserve the original faces, identities, gender, and all individuals exactly.',
+      'Change clothing into refined traditional or modern kimono while keeping pose and face natural.',
+      'Use premium portrait lighting, graceful composition, realistic fabric detail, and elegant Japanese styling.',
+      'Avoid cartoon styling, toy look, plastic skin, or face distortion.',
       userInput ? `additional detail: ${userInput}` : null
     ].filter(Boolean).join(' ')
   },
