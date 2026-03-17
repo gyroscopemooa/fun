@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from 'react';
 import { AlertCircle, Download, ImagePlus, LoaderCircle, Share2, Sparkles, UploadCloud, X } from 'lucide-react';
+import { Autoplay, Pagination } from 'swiper/modules';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import 'swiper/css';
+import 'swiper/css/pagination';
 
 type Mode = 'figure' | 'body' | 'travel' | 'europe' | 'proofshot' | 'kakao' | 'instagram' | 'hanbok' | 'kimono' | 'outfit' | 'animation' | 'free';
 type Provider = 'openai' | 'xai';
@@ -375,7 +379,6 @@ export default function AiImageGenerator() {
   const [resultPrompt, setResultPrompt] = useState('');
   const [activeProvider, setActiveProvider] = useState<Provider>(DEFAULT_PROVIDER);
   const [errorMessage, setErrorMessage] = useState('');
-  const [heroSlideIndex, setHeroSlideIndex] = useState(0);
   const [paymentMode, setPaymentMode] = useState<'mock' | 'polar'>('mock');
   const [isPolarBaseReady, setIsPolarBaseReady] = useState(true);
   const [isPaid, setIsPaid] = useState(false);
@@ -390,7 +393,6 @@ export default function AiImageGenerator() {
   const activeContent = MODE_CONTENT[mode];
   const activeUserInput = userInputs[mode] ?? '';
   const exampleImage = useMemo(() => buildExamplePlaceholder(mode), [mode]);
-  const activeHeroImage = SLA_HERO_IMAGES[heroSlideIndex] ?? exampleImage;
 
   useEffect(() => {
     if (!uploadedImage) {
@@ -430,13 +432,6 @@ export default function AiImageGenerator() {
     return () => {
       cancelled = true;
     };
-  }, []);
-
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      setHeroSlideIndex((current) => (current + 1) % SLA_HERO_IMAGES.length);
-    }, 2800);
-    return () => window.clearInterval(timer);
   }, []);
 
   useEffect(() => {
@@ -846,30 +841,38 @@ export default function AiImageGenerator() {
             </div>
 
             <div className="overflow-hidden rounded-[28px] bg-gradient-to-br from-rose-100 via-white to-orange-50 p-3">
-              <div className="relative flex min-h-[420px] items-center justify-center rounded-[24px] bg-white/75 p-4">
-                <img
-                  src={activeHeroImage}
-                  alt="ManyTool AI promo preview"
-                  loading="eager"
-                  onError={(event) => {
-                    event.currentTarget.src = exampleImage;
-                  }}
-                  className={`${imageClass} max-h-[388px] rounded-[24px] shadow-[0_24px_50px_rgba(15,23,42,0.14)]`}
-                />
-                <div className="absolute left-4 top-4 rounded-full border border-white/70 bg-slate-950/78 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-white">
+              <div className="relative min-h-[420px] rounded-[24px] bg-white/75 p-4">
+                <div className="absolute left-4 top-4 z-10 rounded-full border border-white/70 bg-slate-950/78 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-white">
                   ManyTool AI Picks
                 </div>
-                <div className="absolute bottom-4 left-4 flex gap-1.5">
+                <Swiper
+                  modules={[Autoplay, Pagination]}
+                  slidesPerView={1}
+                  loop={SLA_HERO_IMAGES.length > 1}
+                  autoplay={{
+                    delay: 2800,
+                    disableOnInteraction: false,
+                    pauseOnMouseEnter: true
+                  }}
+                  pagination={{ clickable: true }}
+                  className="promo-swiper h-full"
+                >
                   {SLA_HERO_IMAGES.map((image, index) => (
-                    <button
-                      key={image}
-                      type="button"
-                      onClick={() => setHeroSlideIndex(index)}
-                      className={`h-2.5 rounded-full transition ${index === heroSlideIndex ? 'w-7 bg-slate-950' : 'w-2.5 bg-slate-300'}`}
-                      aria-label={`Show promo slide ${index + 1}`}
-                    />
+                    <SwiperSlide key={image}>
+                      <div className="flex min-h-[420px] items-center justify-center">
+                        <img
+                          src={image}
+                          alt={`ManyTool AI promo preview ${index + 1}`}
+                          loading={index === 0 ? 'eager' : 'lazy'}
+                          onError={(event) => {
+                            event.currentTarget.src = exampleImage;
+                          }}
+                          className={`${imageClass} max-h-[388px] rounded-[24px] shadow-[0_24px_50px_rgba(15,23,42,0.14)]`}
+                        />
+                      </div>
+                    </SwiperSlide>
                   ))}
-                </div>
+                </Swiper>
               </div>
             </div>
 
