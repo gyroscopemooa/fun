@@ -47,6 +47,9 @@ type ConfigResponse = {
   };
 };
 
+const DEFAULT_PROVIDER: Provider = 'xai';
+const ENGINE_LABEL = 'ManyTool AI';
+
 const MODE_CONTENT: Record<Mode, ModeContent> = {
   figure: {
     tabLabel: '피규어',
@@ -99,8 +102,8 @@ const MODE_CONTENT: Record<Mode, ModeContent> = {
 };
 
 const PROVIDER_LABELS: Record<Provider, string> = {
-  openai: 'OpenAI',
-  xai: 'Grok'
+  openai: ENGINE_LABEL,
+  xai: ENGINE_LABEL
 };
 
 const RAW_API_BASE = import.meta.env.PUBLIC_NODE_API_BASE?.trim() ?? '';
@@ -186,8 +189,7 @@ export default function AiImageGenerator() {
   const [generationPhase, setGenerationPhase] = useState<GenerationPhase>('idle');
   const [resultImageUrl, setResultImageUrl] = useState('');
   const [resultPrompt, setResultPrompt] = useState('');
-  const [resultProvider, setResultProvider] = useState<Provider>('openai');
-  const [activeProvider, setActiveProvider] = useState<Provider>('openai');
+  const [activeProvider, setActiveProvider] = useState<Provider>(DEFAULT_PROVIDER);
   const [errorMessage, setErrorMessage] = useState('');
   const [providerReadiness, setProviderReadiness] = useState<Record<Provider, boolean>>({
     openai: true,
@@ -284,7 +286,6 @@ export default function AiImageGenerator() {
     setGenerationPhase('payment');
     setResultImageUrl('');
     setResultPrompt('');
-    setResultProvider(provider);
     setErrorMessage('');
 
     try {
@@ -310,7 +311,6 @@ export default function AiImageGenerator() {
       const data = payload as GenerateResponse;
       const job = await pollAiImageJob(data.jobId);
       setResultPrompt(job.revisedPrompt || job.prompt || '');
-      setResultProvider(job.provider);
       setResultImageUrl(resolveResultUrl(job.imageUrl || ''));
       setGenerationPhase('done');
     } catch (error) {
@@ -354,7 +354,7 @@ export default function AiImageGenerator() {
           <div>
             <p className="mb-2 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 shadow-sm">
               <Sparkles className="h-3.5 w-3.5" />
-              AI Image Generator
+              {ENGINE_LABEL}
             </p>
             <h1 className="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">{activeContent.title}</h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">{activeContent.exampleDescription}</p>
@@ -489,9 +489,9 @@ export default function AiImageGenerator() {
                 </p>
               </div>
               <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Provider Compare</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">ManyTool AI</p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  같은 이미지와 같은 모드로 <strong>OpenAI</strong>와 <strong>Grok</strong>를 각각 생성해서 결과 차이를 바로 비교할 수 있습니다.
+                  ManyTool AI 엔진으로 피규어와 바디프로필 이미지를 생성합니다.
                 </p>
               </div>
             </div>
@@ -501,29 +501,20 @@ export default function AiImageGenerator() {
 
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/80 bg-white/92 px-4 py-4 backdrop-blur">
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 sm:flex-row">
-          {(['openai', 'xai'] as Provider[]).map((provider) => {
-            const ready = providerReadiness[provider];
-            const disabled = !uploadedImage || !ready;
-            return (
-              <button
-                key={provider}
-                type="button"
-                disabled={disabled}
-                onClick={() => {
-                  void handleGenerate(provider);
-                }}
-                className={`flex-1 rounded-[22px] px-6 py-4 text-base font-bold text-white shadow-[0_20px_45px_rgba(15,23,42,0.18)] transition sm:text-lg ${
-                  disabled
-                    ? 'cursor-not-allowed bg-slate-300'
-                    : provider === 'openai'
-                      ? 'bg-slate-950 hover:scale-[1.01] hover:bg-slate-800'
-                      : 'bg-gradient-to-r from-sky-600 via-cyan-500 to-blue-500 hover:scale-[1.01]'
-                }`}
-              >
-                {ready ? `${PROVIDER_LABELS[provider]}로 ${activeContent.buttonLabel}` : `${PROVIDER_LABELS[provider]} 미설정`}
-              </button>
-            );
-          })}
+          <button
+            type="button"
+            disabled={!uploadedImage || !providerReadiness[DEFAULT_PROVIDER]}
+            onClick={() => {
+              void handleGenerate(DEFAULT_PROVIDER);
+            }}
+            className={`flex-1 rounded-[22px] px-6 py-4 text-base font-bold text-white shadow-[0_20px_45px_rgba(15,23,42,0.18)] transition sm:text-lg ${
+              !uploadedImage || !providerReadiness[DEFAULT_PROVIDER]
+                ? 'cursor-not-allowed bg-slate-300'
+                : 'bg-gradient-to-r from-slate-950 via-slate-800 to-slate-700 hover:scale-[1.01]'
+            }`}
+          >
+            {providerReadiness[DEFAULT_PROVIDER] ? `${ENGINE_LABEL}로 ${activeContent.buttonLabel}` : `${ENGINE_LABEL} 준비 중`}
+          </button>
         </div>
       </div>
 
@@ -568,11 +559,11 @@ export default function AiImageGenerator() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Provider</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-900">{PROVIDER_LABELS[resultProvider]}</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Engine</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-900">{ENGINE_LABEL}</p>
                   </div>
                   <div className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-500">
-                    같은 입력으로 비교 가능
+                    One unified result flow
                   </div>
                 </div>
                 <div className="flex min-h-[360px] items-center justify-center overflow-hidden rounded-[28px] border border-slate-200 bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.14),_transparent_40%),linear-gradient(180deg,_#f8fafc_0%,_#e2e8f0_100%)] p-4">
