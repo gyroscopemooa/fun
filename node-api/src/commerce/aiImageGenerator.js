@@ -46,19 +46,20 @@ const MODE_PRESETS = {
       userInput ? `additional detail: ${userInput}` : null
     ].filter(Boolean).join(' ')
   },
-  desk: {
+  animation: {
     requiresUserInput: false,
     stageTwoPrompt: (userInput) => [
-      'realistic miniature action figure standing on a desk,',
+      'convert this person into a high-quality animation character,',
       'keep the exact same face,',
-      'no packaging,',
-      'high detail toy texture,',
-      'natural lighting,',
-      'desk environment,',
-      'small scale figure,',
-      'product photography style,',
+      'clean anime-inspired character design,',
+      'polished linework,',
+      'cinematic character illustration,',
+      'stylized but realistic facial identity,',
+      'vibrant colors,',
+      'sharp eyes,',
+      'clean shading,',
       'sharp focus,',
-      'realistic miniature style,',
+      'premium character artwork,',
       'no face distortion',
       userInput ? `additional detail: ${userInput}` : null
     ].filter(Boolean).join(' ')

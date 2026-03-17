@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from 'react';
 import { AlertCircle, ImagePlus, LoaderCircle, Sparkles, UploadCloud, X } from 'lucide-react';
 
-type Mode = 'figure' | 'body' | 'desk' | 'free';
+type Mode = 'figure' | 'body' | 'animation' | 'free';
 type Provider = 'openai' | 'xai';
 type GenerationPhase = 'idle' | 'payment' | 'generating' | 'done' | 'error';
 
@@ -52,8 +52,8 @@ const MODE_CONTENT: Record<Mode, ModeContent> = {
     tabLabel: '피규어',
     title: 'AI 액션피규어 생성기',
     buttonLabel: '피규어 생성',
-    exampleTitle: '패키지 예시',
-    exampleDescription: '사용자 얼굴을 최대한 유지한 뒤 제품 사진 같은 피규어 패키지 이미지로 변환합니다.',
+    exampleTitle: '피규어 예시',
+    exampleDescription: '사용자 얼굴을 최대한 유지한 뒤, 패키지형 액션피규어 상품 이미지로 변환합니다.',
     accentClass: 'from-orange-500 via-amber-400 to-yellow-300',
     exampleGradient: 'from-orange-100 via-amber-50 to-white',
     inputLabel: '추가 디테일',
@@ -64,7 +64,7 @@ const MODE_CONTENT: Record<Mode, ModeContent> = {
     tabLabel: '바디프로필',
     title: 'AI 바디프로필 생성기',
     buttonLabel: '바디프로필 생성',
-    exampleTitle: '스튜디오 예시',
+    exampleTitle: '바디프로필 예시',
     exampleDescription: '얼굴 선명도를 먼저 맞추고, 그다음 고급 바디프로필 스타일을 적용합니다.',
     accentClass: 'from-sky-600 via-cyan-500 to-teal-400',
     exampleGradient: 'from-cyan-100 via-white to-slate-50',
@@ -72,27 +72,27 @@ const MODE_CONTENT: Record<Mode, ModeContent> = {
     inputPlaceholder: '예: strong dramatic lighting',
     inputRequired: false
   },
-  desk: {
-    tabLabel: '데스크형',
-    title: 'AI 데스크 미니어처 생성기',
-    buttonLabel: '데스크형 생성',
-    exampleTitle: '책상 위 예시',
-    exampleDescription: '박스 없이 책상 위에 놓인 현실적인 미니어처 피규어 스타일로 변환합니다.',
-    accentClass: 'from-lime-500 via-emerald-400 to-teal-300',
-    exampleGradient: 'from-lime-100 via-white to-emerald-50',
+  animation: {
+    tabLabel: '애니메이션',
+    title: 'AI 애니메이션 캐릭터 생성기',
+    buttonLabel: '애니메이션 생성',
+    exampleTitle: '애니메이션 예시',
+    exampleDescription: '얼굴 정체성은 유지하고, 깔끔한 캐릭터 일러스트 느낌의 애니메이션 스타일로 변환합니다.',
+    accentClass: 'from-violet-500 via-fuchsia-400 to-rose-300',
+    exampleGradient: 'from-violet-100 via-fuchsia-50 to-white',
     inputLabel: '추가 디테일',
-    inputPlaceholder: '예: warm wooden desk',
+    inputPlaceholder: '예: cinematic anime hero',
     inputRequired: false
   },
   free: {
     tabLabel: '자유형',
-    title: 'AI 자유형 캐릭터 생성기',
+    title: 'AI 자유형 생성기',
     buttonLabel: '자유형 생성',
-    exampleTitle: '스타일 예시',
-    exampleDescription: '얼굴은 유지하고 짧은 스타일 설명만 추가해서 자유형 캐릭터로 변환합니다.',
+    exampleTitle: '자유형 예시',
+    exampleDescription: '얼굴은 유지하고, 50자 이내의 짧은 설명을 반영해 원하는 스타일로 변환합니다.',
     accentClass: 'from-fuchsia-500 via-rose-400 to-orange-300',
     exampleGradient: 'from-rose-100 via-white to-orange-50',
-    inputLabel: '스타일 설명',
+    inputLabel: '자유형 설명',
     inputPlaceholder: '예: cyberpunk hero',
     inputRequired: true
   }
@@ -115,7 +115,7 @@ const buildExamplePlaceholder = (mode: Mode) => {
   const paletteMap = {
     figure: { start: '#fb923c', end: '#facc15', label: 'PACKAGED FIGURE', badge: 'Retail Box' },
     body: { start: '#0ea5e9', end: '#2dd4bf', label: 'BODY PROFILE', badge: 'Studio Body' },
-    desk: { start: '#84cc16', end: '#14b8a6', label: 'DESK MINIATURE', badge: 'Desk Style' },
+    animation: { start: '#8b5cf6', end: '#ec4899', label: 'ANIMATION STYLE', badge: 'Character Art' },
     free: { start: '#ec4899', end: '#fb923c', label: 'FREE STYLE', badge: 'Custom Style' }
   } as const;
   const palette = paletteMap[mode];
@@ -324,7 +324,7 @@ export default function AiImageGenerator() {
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
         <section className="rounded-[28px] border border-white/70 bg-white/85 p-3 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {(['figure', 'body', 'desk', 'free'] as Mode[]).map((tabMode) => {
+            {(['figure', 'body', 'animation', 'free'] as Mode[]).map((tabMode) => {
               const tabContent = MODE_CONTENT[tabMode];
               const isActive = mode === tabMode;
               return (
@@ -448,7 +448,7 @@ export default function AiImageGenerator() {
               <p className="mt-2 text-xs leading-5 text-slate-500">
                 {activeContent.inputRequired
                   ? '자유형 모드는 짧은 스타일 설명이 필요합니다. 얼굴은 유지하고 설명만 추가로 반영합니다.'
-                  : '선택 사항입니다. 기본 모드 프롬프트는 유지하고, 짧은 추가 디테일만 더합니다.'}
+                  : '선택 사항입니다. 기본 엔진 설정은 유지하고, 짧은 추가 디테일만 더합니다.'}
               </p>
             </div>
           </div>
@@ -473,13 +473,13 @@ export default function AiImageGenerator() {
               <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">2-Step Pipeline</p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  1단계에서 얼굴 디테일을 먼저 보정하고, 2단계에서 최종 피규어 또는 스타일 변환을 적용합니다. 마지막 변환이 실패하면 자동으로 1회 재시도합니다.
+                  1단계에서 얼굴 디테일을 먼저 보정하고, 2단계에서 최종 스타일 변환을 적용합니다. 마지막 변환이 실패하면 자동으로 1회 재시도합니다.
                 </p>
               </div>
               <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Provider Compare</p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  같은 이미지와 같은 모드로 <strong>OpenAI</strong>와 <strong>Grok</strong>를 따로 생성해서 품질 차이를 바로 비교할 수 있습니다.
+                  같은 이미지와 같은 모드로 <strong>OpenAI</strong>와 <strong>Grok</strong>를 각각 생성해서 결과 차이를 바로 비교할 수 있습니다.
                 </p>
               </div>
             </div>
