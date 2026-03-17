@@ -62,6 +62,63 @@ const MODE_PRESETS = {
       userInput ? `additional detail: ${userInput}` : null
     ].filter(Boolean).join(' ')
   },
+  travel: {
+    requiresUserInput: false,
+    stageTwoPrompt: (userInput) => [
+      'Create a realistic overseas travel photo based on the uploaded image.',
+      'Preserve the original faces, identities, gender, and all individuals exactly.',
+      'Keep the pose natural and photorealistic.',
+      'Change the setting into a stylish overseas travel background with realistic location details.',
+      'Use cinematic travel photography, natural lighting, clean composition, and sharp focus.',
+      'Do not turn the result into illustration, toy, or AI-art style.',
+      'Keep outfits natural unless the user explicitly requests a change.',
+      userInput ? `additional detail: ${userInput}` : null
+    ].filter(Boolean).join(' ')
+  },
+  kakao: {
+    requiresUserInput: false,
+    stageTwoPrompt: (userInput) => [
+      'Create a clean and attractive KakaoTalk profile photo.',
+      'Preserve the original faces, identities, gender, and all individuals exactly.',
+      'Use flattering natural portrait lighting and a simple clean background.',
+      'Make it look friendly, polished, modern, and photorealistic.',
+      'Avoid over-stylization, toy look, or excessive editing.',
+      userInput ? `additional detail: ${userInput}` : null
+    ].filter(Boolean).join(' ')
+  },
+  instagram: {
+    requiresUserInput: false,
+    stageTwoPrompt: (userInput) => [
+      'Create a trendy Instagram-style lifestyle photo.',
+      'Preserve the original faces, identities, gender, and all individuals exactly.',
+      'Use modern lifestyle editorial styling, flattering lighting, and a polished social-media-ready aesthetic.',
+      'Keep the result photorealistic, youthful, stylish, and contemporary.',
+      'Avoid illustration, toy look, distortion, or plastic skin.',
+      userInput ? `additional detail: ${userInput}` : null
+    ].filter(Boolean).join(' ')
+  },
+  hanbok: {
+    requiresUserInput: false,
+    stageTwoPrompt: (userInput) => [
+      'Create a photorealistic portrait with elegant hanbok styling.',
+      'Preserve the original faces, identities, gender, and all individuals exactly.',
+      'Change clothing into refined traditional or modern hanbok while keeping pose and face natural.',
+      'Use premium portrait lighting, graceful composition, realistic fabric detail, and cultural elegance.',
+      'Avoid cartoon styling, toy look, or face distortion.',
+      userInput ? `additional detail: ${userInput}` : null
+    ].filter(Boolean).join(' ')
+  },
+  outfit: {
+    requiresUserInput: false,
+    stageTwoPrompt: (userInput) => [
+      'Create a photorealistic outfit change based on the uploaded image.',
+      'Preserve the original faces, identities, gender, body proportions, and all individuals exactly.',
+      'Keep the pose and background natural while changing only the clothing into a stylish modern fashion look.',
+      'Use realistic fabric, flattering fit, clean fashion photography styling, and sharp detail.',
+      'Avoid cartoon styling, toy look, plastic skin, or face distortion.',
+      userInput ? `additional detail: ${userInput}` : null
+    ].filter(Boolean).join(' ')
+  },
   animation: {
     requiresUserInput: false,
     stageTwoPrompt: (userInput) => [

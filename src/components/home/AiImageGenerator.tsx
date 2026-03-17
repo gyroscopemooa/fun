@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from 'react';
 import { AlertCircle, ImagePlus, LoaderCircle, Sparkles, UploadCloud, X } from 'lucide-react';
 
-type Mode = 'figure' | 'body' | 'animation' | 'free';
+type Mode = 'figure' | 'body' | 'travel' | 'kakao' | 'instagram' | 'hanbok' | 'outfit' | 'animation' | 'free';
 type Provider = 'openai' | 'xai';
 type GenerationPhase = 'idle' | 'payment' | 'generating' | 'done' | 'error';
 
@@ -49,6 +49,7 @@ type ConfigResponse = {
 
 const DEFAULT_PROVIDER: Provider = 'xai';
 const ENGINE_LABEL = 'ManyTool AI';
+const MODE_ORDER: Mode[] = ['figure', 'body', 'travel', 'kakao', 'instagram', 'hanbok', 'outfit', 'animation', 'free'];
 
 const MODE_CONTENT: Record<Mode, ModeContent> = {
   figure: {
@@ -73,6 +74,66 @@ const MODE_CONTENT: Record<Mode, ModeContent> = {
     exampleGradient: 'from-cyan-100 via-white to-slate-50',
     inputLabel: '추가 디테일',
     inputPlaceholder: '예: strong dramatic lighting',
+    inputRequired: false
+  },
+  travel: {
+    tabLabel: '해외여행 배경',
+    title: 'AI 해외여행 배경 생성기',
+    buttonLabel: '해외여행 사진 생성',
+    exampleTitle: '해외여행 배경 예시',
+    exampleDescription: '인물은 유지하고 배경을 해외여행 느낌으로 자연스럽게 바꿉니다.',
+    accentClass: 'from-emerald-500 via-teal-400 to-cyan-300',
+    exampleGradient: 'from-emerald-100 via-teal-50 to-white',
+    inputLabel: '추가 디테일',
+    inputPlaceholder: '예: Paris street cafe',
+    inputRequired: false
+  },
+  kakao: {
+    tabLabel: '카톡 프로필',
+    title: 'AI 카톡 프로필 생성기',
+    buttonLabel: '카톡 프로필 생성',
+    exampleTitle: '카톡 프로필 예시',
+    exampleDescription: '깔끔하고 호감 가는 카카오톡 프로필용 이미지를 만듭니다.',
+    accentClass: 'from-yellow-400 via-amber-300 to-orange-300',
+    exampleGradient: 'from-yellow-100 via-amber-50 to-white',
+    inputLabel: '추가 디테일',
+    inputPlaceholder: '예: clean smile profile',
+    inputRequired: false
+  },
+  instagram: {
+    tabLabel: '인스타 사진',
+    title: 'AI 인스타 사진 생성기',
+    buttonLabel: '인스타 사진 생성',
+    exampleTitle: '인스타 사진 예시',
+    exampleDescription: '요즘 감성의 세련된 인스타그램 스타일 사진으로 변환합니다.',
+    accentClass: 'from-pink-500 via-rose-400 to-orange-300',
+    exampleGradient: 'from-rose-100 via-pink-50 to-white',
+    inputLabel: '추가 디테일',
+    inputPlaceholder: '예: trendy lifestyle editorial',
+    inputRequired: false
+  },
+  hanbok: {
+    tabLabel: '한복스타일',
+    title: 'AI 한복 스타일 생성기',
+    buttonLabel: '한복 스타일 생성',
+    exampleTitle: '한복 스타일 예시',
+    exampleDescription: '얼굴은 유지하고 의상을 한복 스타일로 자연스럽게 바꿉니다.',
+    accentClass: 'from-red-500 via-rose-400 to-amber-300',
+    exampleGradient: 'from-rose-100 via-orange-50 to-white',
+    inputLabel: '추가 디테일',
+    inputPlaceholder: '예: elegant modern hanbok',
+    inputRequired: false
+  },
+  outfit: {
+    tabLabel: '의상변경',
+    title: 'AI 의상변경 생성기',
+    buttonLabel: '의상변경 생성',
+    exampleTitle: '의상변경 예시',
+    exampleDescription: '포즈와 얼굴은 유지하면서 옷만 세련되게 바꿉니다.',
+    accentClass: 'from-slate-700 via-slate-500 to-zinc-300',
+    exampleGradient: 'from-slate-100 via-zinc-50 to-white',
+    inputLabel: '추가 디테일',
+    inputPlaceholder: '예: luxury casual fashion',
     inputRequired: false
   },
   animation: {
@@ -118,6 +179,11 @@ const buildExamplePlaceholder = (mode: Mode) => {
   const paletteMap = {
     figure: { start: '#fb923c', end: '#facc15', label: 'PACKAGED FIGURE', badge: 'Retail Box' },
     body: { start: '#0ea5e9', end: '#2dd4bf', label: 'BODY PROFILE', badge: 'Studio Body' },
+    travel: { start: '#10b981', end: '#22d3ee', label: 'TRAVEL SCENE', badge: 'Overseas Trip' },
+    kakao: { start: '#facc15', end: '#fb923c', label: 'KAKAO PROFILE', badge: 'Clean Portrait' },
+    instagram: { start: '#ec4899', end: '#fb923c', label: 'INSTAGRAM STYLE', badge: 'Lifestyle Shot' },
+    hanbok: { start: '#ef4444', end: '#f59e0b', label: 'HANBOK STYLE', badge: 'Traditional Look' },
+    outfit: { start: '#475569', end: '#a1a1aa', label: 'OUTFIT CHANGE', badge: 'Fashion Edit' },
     animation: { start: '#8b5cf6', end: '#ec4899', label: 'ANIMATION STYLE', badge: 'Character Art' },
     free: { start: '#ec4899', end: '#fb923c', label: 'FREE STYLE', badge: 'Custom Style' }
   } as const;
@@ -179,6 +245,11 @@ export default function AiImageGenerator() {
   const [userInputs, setUserInputs] = useState<Record<Mode, string>>({
     figure: '',
     body: '',
+    travel: '',
+    kakao: '',
+    instagram: '',
+    hanbok: '',
+    outfit: '',
     animation: '',
     free: ''
   });
@@ -330,7 +401,7 @@ export default function AiImageGenerator() {
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
         <section className="rounded-[28px] border border-white/70 bg-white/85 p-3 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {(['figure', 'body', 'animation', 'free'] as Mode[]).map((tabMode) => {
+            {MODE_ORDER.map((tabMode) => {
               const tabContent = MODE_CONTENT[tabMode];
               const isActive = mode === tabMode;
               return (
