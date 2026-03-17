@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from 'react';
-import { ImagePlus, LoaderCircle, Sparkles, UploadCloud, X } from 'lucide-react';
+import { AlertCircle, ImagePlus, LoaderCircle, Sparkles, UploadCloud, X } from 'lucide-react';
 
 type Mode = 'figure' | 'body';
-type GenerationPhase = 'idle' | 'payment' | 'generating' | 'done';
+type GenerationPhase = 'idle' | 'payment' | 'generating' | 'done' | 'error';
 
 type ModeContent = {
   tabLabel: string;
@@ -12,6 +12,14 @@ type ModeContent = {
   exampleDescription: string;
   accentClass: string;
   exampleGradient: string;
+};
+
+type GenerateResponse = {
+  ok: true;
+  mode: Mode;
+  imageUrl: string;
+  prompt: string;
+  revisedPrompt: string | null;
 };
 
 const MODE_CONTENT: Record<Mode, ModeContent> = {
@@ -35,22 +43,10 @@ const MODE_CONTENT: Record<Mode, ModeContent> = {
   }
 };
 
-const RESULT_PLACEHOLDER = `data:image/svg+xml;utf8,${encodeURIComponent(`
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000">
-  <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#111827"/>
-      <stop offset="50%" stop-color="#1f2937"/>
-      <stop offset="100%" stop-color="#334155"/>
-    </linearGradient>
-  </defs>
-  <rect width="800" height="1000" fill="url(#bg)" rx="48"/>
-  <circle cx="400" cy="300" r="120" fill="#94a3b8" opacity="0.45"/>
-  <rect x="250" y="430" width="300" height="290" rx="150" fill="#cbd5e1" opacity="0.32"/>
-  <rect x="175" y="790" width="450" height="32" rx="16" fill="#f8fafc" opacity="0.65"/>
-  <rect x="240" y="845" width="320" height="20" rx="10" fill="#f8fafc" opacity="0.3"/>
-</svg>
-`)}`;
+const RAW_API_BASE = import.meta.env.PUBLIC_NODE_API_BASE?.trim() ?? '';
+const DEV_API_BASE = 'http://127.0.0.1:8787';
+const API_BASE = (RAW_API_BASE || (import.meta.env.DEV ? DEV_API_BASE : '')).replace(/\/+$/, '');
+const PAYMENT_DELAY_MS = 1400;
 
 const buildExamplePlaceholder = (mode: Mode) => {
   const palette = mode === 'figure'
@@ -77,16 +73,24 @@ const buildExamplePlaceholder = (mode: Mode) => {
   `)}`;
 };
 
-const PAYMENT_DELAY_MS = 1600;
-const GENERATION_DELAY_MS = 2200;
+const sleep = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
+
+const resolveResultUrl = (imageUrl: string) => {
+  if (/^https?:\/\//.test(imageUrl) || imageUrl.startsWith('data:')) return imageUrl;
+  if (!API_BASE) return imageUrl;
+  return `${API_BASE}${imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`}`;
+};
 
 export default function AiImageGenerator() {
   const [mode, setMode] = useState<Mode>('figure');
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [previewUrl, setPreviewUrl] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [generationPhase, setGenerationPhase] = useState<GenerationPhase>('idle');
+  const [resultImageUrl, setResultImageUrl] = useState('');
+  const [resultPrompt, setResultPrompt] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const activeContent = MODE_CONTENT[mode];
@@ -114,8 +118,7 @@ export default function AiImageGenerator() {
   };
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] ?? null;
-    updateUploadedImage(file);
+    updateUploadedImage(event.target.files?.[0] ?? null);
   };
 
   const handleDrop = (event: DragEvent<HTMLLabelElement>) => {
@@ -124,26 +127,54 @@ export default function AiImageGenerator() {
     updateUploadedImage(event.dataTransfer.files?.[0] ?? null);
   };
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     if (!uploadedImage) return;
+    if (!API_BASE) {
+      setIsModalOpen(true);
+      setGenerationPhase('error');
+      setErrorMessage('생성 API 주소가 설정되지 않았습니다. PUBLIC_NODE_API_BASE를 확인해주세요.');
+      return;
+    }
 
     setIsModalOpen(true);
     setGenerationPhase('payment');
+    setResultImageUrl('');
+    setResultPrompt('');
+    setErrorMessage('');
 
-    // TODO: replace with Polar checkout initialization.
-    window.setTimeout(() => {
+    try {
+      await sleep(PAYMENT_DELAY_MS);
       setGenerationPhase('generating');
 
-      // TODO: replace with actual image generation API request and email delivery trigger.
-      window.setTimeout(() => {
-        setGenerationPhase('done');
-      }, GENERATION_DELAY_MS);
-    }, PAYMENT_DELAY_MS);
+      const formData = new FormData();
+      formData.append('image', uploadedImage);
+      formData.append('mode', mode);
+
+      const response = await fetch(`${API_BASE}/ai-image-generator/generate`, {
+        method: 'POST',
+        body: formData
+      });
+
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok || !payload) {
+        throw new Error(payload?.error ?? '이미지 생성 요청에 실패했습니다.');
+      }
+
+      const data = payload as GenerateResponse;
+      setResultPrompt(data.revisedPrompt || data.prompt);
+      setResultImageUrl(resolveResultUrl(data.imageUrl));
+      setGenerationPhase('done');
+    } catch (error) {
+      setGenerationPhase('error');
+      setErrorMessage(error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.');
+    }
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
     setGenerationPhase('idle');
+    setErrorMessage('');
   };
 
   return (
@@ -232,11 +263,7 @@ export default function AiImageGenerator() {
               {previewUrl ? (
                 <div className="flex w-full flex-col items-center gap-4">
                   <div className="relative w-full overflow-hidden rounded-[24px] bg-slate-100">
-                    <img
-                      src={previewUrl}
-                      alt="업로드 미리보기"
-                      className="h-[340px] w-full object-cover sm:h-[420px]"
-                    />
+                    <img src={previewUrl} alt="업로드 미리보기" className="h-[340px] w-full object-cover sm:h-[420px]" />
                   </div>
                   <div className="flex w-full flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 sm:flex-row sm:justify-between">
                     <div className="min-w-0 text-center sm:text-left">
@@ -298,7 +325,7 @@ export default function AiImageGenerator() {
             <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Workflow Ready</p>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                현재는 모의 결제와 생성 상태만 구현되어 있고, 이후 Polar 결제, 생성 API, 이메일 발송을 각 단계에 연결할 수 있게 구조를 분리해 두었습니다.
+                업로드 UI는 완료되어 있고, 이제 생성 버튼이 Node API를 통해 OpenAI 이미지 편집 호출까지 실제로 수행합니다.
               </p>
             </div>
           </aside>
@@ -310,7 +337,9 @@ export default function AiImageGenerator() {
           <button
             type="button"
             disabled={!uploadedImage}
-            onClick={handleGenerate}
+            onClick={() => {
+              void handleGenerate();
+            }}
             className={`flex w-full items-center justify-center rounded-[22px] px-6 py-4 text-base font-bold text-white shadow-[0_20px_45px_rgba(15,23,42,0.18)] transition sm:text-lg ${
               uploadedImage
                 ? `bg-gradient-to-r ${activeContent.accentClass} hover:scale-[1.01]`
@@ -332,6 +361,7 @@ export default function AiImageGenerator() {
                   {generationPhase === 'payment' && '결제 진행중...'}
                   {generationPhase === 'generating' && '이미지 생성중...'}
                   {generationPhase === 'done' && '생성 완료'}
+                  {generationPhase === 'error' && '생성 실패'}
                 </h3>
               </div>
               <button
@@ -344,7 +374,7 @@ export default function AiImageGenerator() {
               </button>
             </div>
 
-            {generationPhase === 'payment' || generationPhase === 'generating' ? (
+            {(generationPhase === 'payment' || generationPhase === 'generating') && (
               <div className="flex min-h-[320px] flex-col items-center justify-center rounded-[28px] border border-slate-200 bg-slate-50 px-6 text-center">
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-950 text-white">
                   <LoaderCircle className="h-7 w-7 animate-spin" />
@@ -354,27 +384,43 @@ export default function AiImageGenerator() {
                 </p>
                 <p className="mt-3 max-w-sm text-sm leading-6 text-slate-500">
                   {generationPhase === 'payment'
-                    ? '실제 서비스에서는 이 단계에서 Polar 결제창을 연결하면 됩니다.'
-                    : '결제 완료 후 생성 API 요청과 결과 저장, 이메일 전송 흐름을 붙일 수 있습니다.'}
+                    ? '현재는 결제 단계를 모의 처리하고 있습니다. 이후 Polar 결제로 교체하면 됩니다.'
+                    : '업로드한 이미지를 기반으로 OpenAI 이미지 편집 API를 호출하고 있습니다.'}
                 </p>
               </div>
-            ) : null}
+            )}
 
-            {generationPhase === 'done' ? (
+            {generationPhase === 'done' && resultImageUrl && (
               <div className="space-y-4">
                 <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-slate-100">
-                  <img
-                    src={RESULT_PLACEHOLDER}
-                    alt="생성 결과 플레이스홀더"
-                    className="h-[360px] w-full object-cover"
-                  />
+                  <img src={resultImageUrl} alt="생성 결과" className="h-[360px] w-full object-cover" />
                 </div>
                 <div className="rounded-3xl border border-emerald-100 bg-emerald-50 px-4 py-3">
-                  <p className="text-sm font-semibold text-emerald-700">결과 이미지 플레이스홀더가 표시되었습니다.</p>
-                  <p className="mt-1 text-sm text-emerald-600">이 자리에 실제 생성 결과 URL 또는 base64 이미지를 연결하면 됩니다.</p>
+                  <p className="text-sm font-semibold text-emerald-700">생성된 결과 이미지입니다.</p>
+                  <p className="mt-1 text-sm text-emerald-600">다음 단계에서 결제 성공 후 실행, 이메일 발송, 저장소 업로드를 이어서 붙이면 됩니다.</p>
+                </div>
+                {resultPrompt ? (
+                  <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Prompt</p>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">{resultPrompt}</p>
+                  </div>
+                ) : null}
+              </div>
+            )}
+
+            {generationPhase === 'error' && (
+              <div className="rounded-[28px] border border-rose-200 bg-rose-50 p-5">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 rounded-full bg-rose-100 p-2 text-rose-600">
+                    <AlertCircle className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-rose-700">이미지 생성에 실패했습니다.</p>
+                    <p className="mt-2 text-sm leading-6 text-rose-600">{errorMessage}</p>
+                  </div>
                 </div>
               </div>
-            ) : null}
+            )}
           </div>
         </div>
       ) : null}

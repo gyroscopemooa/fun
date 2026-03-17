@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Webhook } from 'standardwebhooks';
 import { db } from './store.js';
 import { generateCommerceDetailPage } from './commerce/detailPage.js';
+import { generateAiImage } from './commerce/aiImageGenerator.js';
 import { generateCandidatesWithProvider, getImageProvider, getResolvedImageProvider, isExternalAiEnabled, normalizeRequestedProvider, resolveImageProvider } from './providers/providerRouter.js';
 
 const app = express();
@@ -185,6 +186,7 @@ app.get('/config', (_req, res) => {
     },
     readiness: {
       openAiReady,
+      aiImageGeneratorReady: openAiReady,
       resendReady: Boolean(resend.apiKey && resend.fromEmail),
       removeBgReady,
       photoroomReady,
@@ -862,6 +864,45 @@ app.post('/generate', async (req, res) => {
     job.originalUrl = `/files/originals/${path.basename(photo.originalPath)}`;
     await persistJobSnapshot(job);
     return res.status(500).json({ error: `generate failed: ${error.message}`, jobId });
+  }
+});
+
+app.post('/ai-image-generator/generate', upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file?.buffer) {
+      return res.status(400).json({ error: 'image file is required (field name: image)' });
+    }
+    if (!String(req.file.mimetype).startsWith('image/')) {
+      return res.status(400).json({ error: 'only image uploads are allowed' });
+    }
+    if (!process.env.OPENAI_API_KEY?.trim()) {
+      return res.status(503).json({ error: 'OPENAI_API_KEY is not configured' });
+    }
+
+    const mode = typeof req.body?.mode === 'string' ? req.body.mode.trim().toLowerCase() : '';
+    if (mode !== 'figure' && mode !== 'body') {
+      return res.status(400).json({ error: 'mode must be figure or body' });
+    }
+
+    const generationId = uuidv4();
+    const generated = await generateAiImage({
+      id: generationId,
+      mode,
+      imageBuffer: req.file.buffer,
+      mimeType: req.file.mimetype,
+      originalFilename: req.file.originalname,
+      outputDir: generatedDir
+    });
+
+    return res.status(201).json({
+      ok: true,
+      mode: generated.mode,
+      prompt: generated.prompt,
+      revisedPrompt: generated.revisedPrompt,
+      imageUrl: `/files/generated/${generated.fileName}`
+    });
+  } catch (error) {
+    return res.status(500).json({ error: `ai image generate failed: ${error.message}` });
   }
 });
 
