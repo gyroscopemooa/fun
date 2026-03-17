@@ -278,6 +278,24 @@ const pollAiImageJob = async (jobId: string) => {
 
 const imageFrameClass = 'flex items-center justify-center overflow-hidden rounded-[24px] bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.18),_transparent_45%),linear-gradient(180deg,_#f8fafc_0%,_#e2e8f0_100%)] p-4';
 const imageClass = 'h-auto w-auto max-w-full object-contain';
+const SLA_HERO_IMAGES = [
+  '/pic/SLA/a17927fb-1cf3-418e-9662-d6e2fb54430f-xai-free.png',
+  '/pic/SLA/b3e2be3e-af5b-4636-a490-130baf41fd5a-xai-body.png',
+  '/pic/SLA/aecbb8f7-b183-410a-b8b3-8c0d508ee6e2-xai-body.png',
+  '/pic/SLA/d5d15693-5c1c-42fb-b187-91686be119e3-xai-free.png',
+  '/pic/SLA/b2ba7846-c5f3-4fe2-865c-3e94c090a9ba-xai-free.png',
+  '/pic/SLA/898312d3-4b3e-4ac5-919a-7f79566f5685-xai-free.png'
+];
+const SLA_SUPPORT_IMAGES = [
+  '/pic/SLA/07e91bba-09fb-4d87-a9fd-3980666a7afa-xai-free.png',
+  '/pic/SLA/240c8aed-f1c4-4e78-834d-311f34134f2e-xai-free.png',
+  '/pic/SLA/3a3bbff5-807c-4526-b39e-6f5acfddc181-xai-free.png',
+  '/pic/SLA/8b6a2257-d373-48c1-b75e-15e763ab0166-xai-free.png',
+  '/pic/SLA/18164267-ff6e-481b-beb5-bafe47b66efa-xai-figure.png',
+  '/pic/SLA/665bb11b-5532-4538-8895-623d215351f4-xai-figure.png',
+  '/pic/SLA/7500c861-ef56-4627-851f-c242795b3537-xai-figure.png',
+  '/pic/SLA/e871d594-bc0a-40c9-a468-37603086497d-xai-figure.png'
+];
 
 export default function AiImageGenerator() {
   const [mode, setMode] = useState<Mode>('figure');
@@ -304,6 +322,7 @@ export default function AiImageGenerator() {
   const [resultPrompt, setResultPrompt] = useState('');
   const [activeProvider, setActiveProvider] = useState<Provider>(DEFAULT_PROVIDER);
   const [errorMessage, setErrorMessage] = useState('');
+  const [heroSlideIndex, setHeroSlideIndex] = useState(0);
   const [providerReadiness, setProviderReadiness] = useState<Record<Provider, boolean>>({
     openai: true,
     xai: true
@@ -313,6 +332,7 @@ export default function AiImageGenerator() {
   const activeContent = MODE_CONTENT[mode];
   const activeUserInput = userInputs[mode] ?? '';
   const exampleImage = useMemo(() => buildExamplePlaceholder(mode), [mode]);
+  const activeHeroImage = SLA_HERO_IMAGES[heroSlideIndex] ?? exampleImage;
 
   useEffect(() => {
     if (!uploadedImage) {
@@ -350,6 +370,13 @@ export default function AiImageGenerator() {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setHeroSlideIndex((current) => (current + 1) % SLA_HERO_IMAGES.length);
+    }, 2800);
+    return () => window.clearInterval(timer);
   }, []);
 
   const openFilePicker = () => {
@@ -580,21 +607,40 @@ export default function AiImageGenerator() {
 
           <aside className="rounded-[32px] border border-slate-200/80 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-7">
             <div className="mb-5">
-              <p className="text-sm font-semibold text-slate-500">{activeContent.exampleTitle}</p>
-              <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-950">{activeContent.tabLabel} 예시 미리보기</h2>
+              <p className="text-sm font-semibold text-rose-500">Promo Preview</p>
+              <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-950">여성·커플 중심 결과 미리보기</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">메인 프로모션은 여성 비중이 높은 컷과 커플 컷을 우선 노출하고, 다른 스타일은 아래 보조 갤러리로 분리합니다.</p>
             </div>
 
-            <div className={`overflow-hidden rounded-[28px] bg-gradient-to-br ${activeContent.exampleGradient} p-3`}>
-              <div className="flex min-h-[420px] items-center justify-center rounded-[24px] bg-white/55 p-4">
+            <div className="overflow-hidden rounded-[28px] bg-gradient-to-br from-rose-100 via-white to-orange-50 p-3">
+              <div className="relative flex min-h-[420px] items-center justify-center rounded-[24px] bg-white/75 p-4">
                 <img
-                  src={exampleImage}
-                  alt={`${activeContent.tabLabel} 예시 이미지`}
+                  src={activeHeroImage}
+                  alt="ManyTool AI promo preview"
                   className={`${imageClass} max-h-[388px] rounded-[24px] shadow-[0_24px_50px_rgba(15,23,42,0.14)]`}
                 />
+                <div className="absolute left-4 top-4 rounded-full border border-white/70 bg-slate-950/78 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-white">
+                  ManyTool AI Picks
+                </div>
+                <div className="absolute bottom-4 left-4 flex gap-1.5">
+                  {SLA_HERO_IMAGES.map((image, index) => (
+                    <button
+                      key={image}
+                      type="button"
+                      onClick={() => setHeroSlideIndex(index)}
+                      className={`h-2.5 rounded-full transition ${index === heroSlideIndex ? 'w-7 bg-slate-950' : 'w-2.5 bg-slate-300'}`}
+                      aria-label={`Show promo slide ${index + 1}`}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
 
             <div className="mt-5 space-y-3">
+              <div className="rounded-3xl border border-rose-100 bg-rose-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-500">Pink Marketing Focus</p>
+                <p className="mt-2 text-sm leading-6 text-slate-700">커플, 여성 단독, 감성 스타일 컷을 먼저 보여주고 남성 단독이나 군인 느낌 컷은 아래 보조 영역으로 내려 첫인상을 정리합니다.</p>
+              </div>
               <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">2-Step Pipeline</p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
@@ -606,6 +652,19 @@ export default function AiImageGenerator() {
                 <p className="mt-2 text-sm leading-6 text-slate-600">
                   ManyTool AI 엔진으로 피규어와 바디프로필 이미지를 생성합니다.
                 </p>
+              </div>
+              <div className="rounded-3xl border border-slate-200 bg-white p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">More Examples</p>
+                  <p className="text-[11px] font-semibold text-slate-500">남성·기타 스타일은 보조 노출</p>
+                </div>
+                <div className="grid grid-cols-4 gap-2">
+                  {SLA_SUPPORT_IMAGES.map((image, index) => (
+                    <div key={image} className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+                      <img src={image} alt={`support example ${index + 1}`} className="aspect-[3/4] h-full w-full object-cover" />
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </aside>
