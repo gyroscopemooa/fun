@@ -14,12 +14,20 @@ const MODE_PRESETS = {
       userInput
         ? `Create a realistic action figure scene that follows this request exactly: ${userInput}.`
         : 'Create a high-quality packaged action figure inside a transparent plastic retail box.',
+      'STRICT RULES:',
       'Preserve the original faces and identities exactly.',
-      'Do not change gender.',
-      'Keep all individuals if multiple people are present.',
-      'Outfits must follow the original image unless the user request explicitly changes them.',
-      'Do not introduce military clothing unless it is clearly present in the source image or explicitly requested.',
-      'Highly detailed, realistic materials, soft lighting, clean composition, sharp focus, no face distortion.'
+      'Preserve gender exactly as in the source image. Never change gender.',
+      'Keep all individuals if multiple people are present. Do not merge or remove anyone.',
+      'Maintain original facial proportions and likeness with high accuracy.',
+      'Outfits must strictly follow the original image unless the user explicitly requests a change.',
+      'Do not alter clothing style, do not add uniforms or themed outfits unless requested.',
+      'Do not introduce military clothing unless it is clearly present in the source image.',
+      'Style: realistic collectible figure style, not exaggerated toy proportions.',
+      'Use a natural pose based on the original image.',
+      'Accurate anatomy and proportions.',
+      'Visual quality: highly detailed, realistic materials, soft studio lighting, clean composition, sharp focus.',
+      'Face must remain photorealistic, not plastic-like.',
+      'No face distortion, no extra limbs, no deformation.'
     ].join(' ')
   },
   body: {
