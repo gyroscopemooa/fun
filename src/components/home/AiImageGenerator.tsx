@@ -335,6 +335,22 @@ const pollAiImageJob = async (jobId: string) => {
 
 const imageFrameClass = 'flex items-center justify-center overflow-hidden rounded-[24px] bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.18),_transparent_45%),linear-gradient(180deg,_#f8fafc_0%,_#e2e8f0_100%)] p-4';
 const imageClass = 'h-auto w-auto max-w-full object-contain';
+const SLA_ALL_IMAGES = [
+  '/pic/SLA/07e91bba-09fb-4d87-a9fd-3980666a7afa-xai-free.png',
+  '/pic/SLA/18164267-ff6e-481b-beb5-bafe47b66efa-xai-figure.png',
+  '/pic/SLA/240c8aed-f1c4-4e78-834d-311f34134f2e-xai-free.png',
+  '/pic/SLA/3a3bbff5-807c-4526-b39e-6f5acfddc181-xai-free.png',
+  '/pic/SLA/665bb11b-5532-4538-8895-623d215351f4-xai-figure.png',
+  '/pic/SLA/7500c861-ef56-4627-851f-c242795b3537-xai-figure.png',
+  '/pic/SLA/898312d3-4b3e-4ac5-919a-7f79566f5685-xai-free.png',
+  '/pic/SLA/8b6a2257-d373-48c1-b75e-15e763ab0166-xai-free.png',
+  '/pic/SLA/a17927fb-1cf3-418e-9662-d6e2fb54430f-xai-free.png',
+  '/pic/SLA/aecbb8f7-b183-410a-b8b3-8c0d508ee6e2-xai-body.png',
+  '/pic/SLA/b2ba7846-c5f3-4fe2-865c-3e94c090a9ba-xai-free.png',
+  '/pic/SLA/b3e2be3e-af5b-4636-a490-130baf41fd5a-xai-body.png',
+  '/pic/SLA/d5d15693-5c1c-42fb-b187-91686be119e3-xai-free.png',
+  '/pic/SLA/e871d594-bc0a-40c9-a468-37603086497d-xai-figure.png'
+];
 const SLA_HERO_IMAGES = [
   '/pic/SLA/a17927fb-1cf3-418e-9662-d6e2fb54430f-xai-free.png',
   '/pic/SLA/b3e2be3e-af5b-4636-a490-130baf41fd5a-xai-body.png',
@@ -343,16 +359,7 @@ const SLA_HERO_IMAGES = [
   '/pic/SLA/b2ba7846-c5f3-4fe2-865c-3e94c090a9ba-xai-free.png',
   '/pic/SLA/898312d3-4b3e-4ac5-919a-7f79566f5685-xai-free.png'
 ];
-const SLA_SUPPORT_IMAGES = [
-  '/pic/SLA/07e91bba-09fb-4d87-a9fd-3980666a7afa-xai-free.png',
-  '/pic/SLA/240c8aed-f1c4-4e78-834d-311f34134f2e-xai-free.png',
-  '/pic/SLA/3a3bbff5-807c-4526-b39e-6f5acfddc181-xai-free.png',
-  '/pic/SLA/8b6a2257-d373-48c1-b75e-15e763ab0166-xai-free.png',
-  '/pic/SLA/18164267-ff6e-481b-beb5-bafe47b66efa-xai-figure.png',
-  '/pic/SLA/665bb11b-5532-4538-8895-623d215351f4-xai-figure.png',
-  '/pic/SLA/7500c861-ef56-4627-851f-c242795b3537-xai-figure.png',
-  '/pic/SLA/e871d594-bc0a-40c9-a468-37603086497d-xai-figure.png'
-];
+const SLA_SUPPORT_IMAGES = SLA_ALL_IMAGES;
 
 export default function AiImageGenerator() {
   const [mode, setMode] = useState<Mode>('figure');
