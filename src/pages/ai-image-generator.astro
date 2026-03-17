@@ -1,0 +1,18 @@
+---
+import AiImageGenerator from '../components/home/AiImageGenerator';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout
+  title="AI 이미지 생성기 | 피규어 바디프로필 생성 | ManyTool"
+  description="사진 한 장으로 피규어 또는 바디프로필 스타일 이미지를 생성하는 AI 이미지 생성기 페이지입니다. 업로드, 모드 전환, 결제/생성 플로우를 한 페이지에서 제공합니다."
+  keywords="AI 이미지 생성기, 피규어 생성, 바디프로필 생성, AI 피규어, AI 바디프로필, 이미지 업로드"
+>
+  <Header />
+  <main>
+    <AiImageGenerator client:load />
+  </main>
+  <Footer />
+</Layout>
