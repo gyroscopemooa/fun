@@ -1101,8 +1101,11 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
               <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">ManyTool AI</p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  ManyTool AI 엔진으로 피규어와 바디프로필 이미지를 생성합니다.
+                  {activeContent.exampleDescription}
                 </p>
+                  <p className="mt-2 text-[11px] leading-5 text-slate-500">
+                    Discount code: manytool50
+                  </p>
               </div>
             </div>
           </aside>
