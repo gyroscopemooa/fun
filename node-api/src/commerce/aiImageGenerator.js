@@ -183,7 +183,35 @@ const buildStageOnePrompt = () => [
   'no extra limbs'
 ].join(' ');
 
-const buildStageTwoPrompt = (mode, userInput) => MODE_PRESETS[mode].stageTwoPrompt(userInput);
+const buildOpenAiFigurePrompt = (userInput) => [
+  userInput
+    ? `Create a modern premium collectible figure scene that follows this request exactly: ${userInput}.`
+    : 'Create a modern premium packaged collectible figure inside a transparent plastic retail box.',
+  'STRICT RULES:',
+  'Preserve the original faces and identities exactly.',
+  'Preserve gender exactly as in the source image. Never change gender.',
+  'Keep all individuals if multiple people are present. Do not merge or remove anyone.',
+  'Maintain original facial proportions and likeness with high accuracy.',
+  'Outfits must strictly follow the original image unless the user explicitly requests a change.',
+  'Do not alter clothing style, do not add uniforms or themed outfits unless requested.',
+  'Do not introduce military clothing unless it is clearly present in the source image.',
+  'Style: modern premium collectible figure aesthetic, youthful, stylish, contemporary, and visually polished.',
+  'Luxury commercial product photography with trendy contemporary packaging design and upscale collector edition presentation.',
+  'Faces should look attractive, youthful, photorealistic, and high-end while still matching the source identity exactly.',
+  'Use a natural pose based on the original image.',
+  'Accurate anatomy and proportions, not exaggerated toy proportions.',
+  'Highly detailed realistic materials, soft studio lighting, subtle rim light, clean composition, sharp focus.',
+  'Avoid old-fashioned toy catalog styling, cheap packaging aesthetics, dull colors, or dated product photography.',
+  'Face must remain photorealistic, not plastic-like.',
+  'No face distortion, no extra limbs, no deformation.'
+].join(' ');
+
+const buildStageTwoPrompt = (mode, userInput, provider = 'openai') => {
+  if (mode === 'figure' && provider === 'openai') {
+    return buildOpenAiFigurePrompt(userInput);
+  }
+  return MODE_PRESETS[mode].stageTwoPrompt(userInput);
+};
 
 const buildBodySafetyFallbackPrompt = (userInput) => [
   'Create a premium fitness editorial photoshoot based on the uploaded image.',
@@ -266,7 +294,7 @@ const generateStageOnePortrait = async ({ provider, imageBuffer, mimeType, origi
 );
 
 const generateStageTwoImage = async ({ provider, mode, portraitBuffer, userInput, retryCount = 1 }) => {
-  const prompt = buildStageTwoPrompt(mode, userInput);
+  const prompt = buildStageTwoPrompt(mode, userInput, provider);
   const fallbackPrompt = mode === 'body' ? buildBodySafetyFallbackPrompt(userInput) : null;
   let lastError = null;
 
