@@ -1044,7 +1044,7 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
               </p>
               {!activeContent.inputRequired ? (
                 <p className="mt-1 text-[11px] leading-5 text-amber-700">
-                  ????? ?? ??? ???? ??? ??? ? ? ??? ? ????.
+                  Short prompts work better. Long prompts can reduce quality.
                 </p>
               ) : null}
             </div>
