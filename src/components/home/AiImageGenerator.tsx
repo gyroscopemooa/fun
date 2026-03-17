@@ -565,6 +565,7 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
   const [isPaid, setIsPaid] = useState(false);
   const [shouldAutoGenerateAfterPayment, setShouldAutoGenerateAfterPayment] = useState(false);
   const [resultActionMessage, setResultActionMessage] = useState('');
+  const [isPromptExpanded, setIsPromptExpanded] = useState(false);
   const [providerReadiness, setProviderReadiness] = useState<Record<Provider, boolean>>({
     openai: true,
     xai: true
@@ -791,6 +792,7 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
     setGenerationPhase('payment');
     setResultImageUrl('');
     setResultPrompt('');
+    setIsPromptExpanded(false);
     setErrorMessage('');
 
     try {
@@ -835,6 +837,7 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
     setGenerationPhase('idle');
     setErrorMessage('');
     setResultActionMessage('');
+    setIsPromptExpanded(false);
   };
 
   const handleDownloadResult = async () => {
@@ -1165,8 +1168,8 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
       </div>
 
       {isModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/65 px-4">
-          <div className="w-full max-w-lg rounded-[32px] bg-white p-6 shadow-[0_40px_100px_rgba(15,23,42,0.32)] sm:p-8">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/65 px-4 py-4 sm:flex sm:items-center sm:justify-center">
+          <div className="mx-auto w-full max-w-lg max-h-[calc(100vh-2rem)] overflow-y-auto rounded-[32px] bg-white p-6 shadow-[0_40px_100px_rgba(15,23,42,0.32)] sm:p-8">
             <div className="mb-6 flex items-start justify-between gap-4">
               <div>
                 <p className="text-sm font-semibold text-slate-500">처리 상태</p>
@@ -1212,8 +1215,8 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
                     One unified result flow
                   </div>
                 </div>
-                <div className="flex min-h-[360px] items-center justify-center overflow-hidden rounded-[28px] border border-slate-200 bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.14),_transparent_40%),linear-gradient(180deg,_#f8fafc_0%,_#e2e8f0_100%)] p-4">
-                  <img src={resultImageUrl} alt="생성 결과" className={`${imageClass} max-h-[328px] rounded-[20px]`} />
+                <div className="flex min-h-[260px] sm:min-h-[360px] items-center justify-center overflow-hidden rounded-[28px] border border-slate-200 bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.14),_transparent_40%),linear-gradient(180deg,_#f8fafc_0%,_#e2e8f0_100%)] p-4">
+                  <img src={resultImageUrl} alt="생성 결과" className={`${imageClass} max-h-[240px] sm:max-h-[328px] rounded-[20px]`} />
                 </div>
                 <div className="rounded-3xl border border-emerald-100 bg-emerald-50 px-4 py-3">
                   <p className="text-sm font-semibold text-emerald-700">최종 결과 이미지입니다.</p>
@@ -1242,8 +1245,17 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
                 ) : null}
                 {resultPrompt ? (
                   <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Prompt</p>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">{resultPrompt}</p>
+                    <button
+                      type="button"
+                      onClick={() => setIsPromptExpanded((current) => !current)}
+                      className="flex w-full items-center justify-between gap-3 text-left"
+                    >
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Prompt</p>
+                      <span className="text-xs font-semibold text-slate-500">{isPromptExpanded ? 'Hide' : 'Show'}</span>
+                    </button>
+                    <p className={`mt-2 break-words text-sm leading-6 ${isPromptExpanded ? 'text-slate-600' : 'line-clamp-2 text-slate-500'}`}>
+                      {resultPrompt}
+                    </p>
                   </div>
                 ) : null}
               </div>
