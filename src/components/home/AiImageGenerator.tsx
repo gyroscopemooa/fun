@@ -1187,6 +1187,9 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
             <div className="mb-6 flex items-start justify-between gap-4">
               <div>
                 <p className="text-sm font-semibold text-slate-500">처리 상태</p>
+                <p className="mt-2 text-[11px] leading-5 text-slate-500">
+                  Discount code: manytool50
+                </p>
                 <h3 className="mt-1 text-2xl font-black tracking-tight text-slate-950">
                   {generationPhase === 'payment' && `${PROVIDER_LABELS[activeProvider]} 요청 준비 중`}
                   {generationPhase === 'generating' && `${PROVIDER_LABELS[activeProvider]} 생성 중`}
