@@ -173,7 +173,12 @@ const imageClass = 'h-auto w-auto max-w-full object-contain';
 
 export default function AiImageGenerator() {
   const [mode, setMode] = useState<Mode>('figure');
-  const [userInput, setUserInput] = useState('');
+  const [userInputs, setUserInputs] = useState<Record<Mode, string>>({
+    figure: '',
+    body: '',
+    animation: '',
+    free: ''
+  });
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState('');
   const [isDragging, setIsDragging] = useState(false);
@@ -191,6 +196,7 @@ export default function AiImageGenerator() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const activeContent = MODE_CONTENT[mode];
+  const activeUserInput = userInputs[mode] ?? '';
   const exampleImage = useMemo(() => buildExamplePlaceholder(mode), [mode]);
 
   useEffect(() => {
@@ -253,7 +259,7 @@ export default function AiImageGenerator() {
   const handleGenerate = async (provider: Provider) => {
     if (!uploadedImage) return;
 
-    const safeInput = sanitizeInputForClient(userInput);
+    const safeInput = sanitizeInputForClient(activeUserInput);
     if (activeContent.inputRequired && !safeInput) {
       setIsModalOpen(true);
       setGenerationPhase('error');
@@ -435,13 +441,19 @@ export default function AiImageGenerator() {
             <div className="mt-5 rounded-3xl border border-slate-200 bg-slate-50 p-4">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">{activeContent.inputLabel}</p>
-                <span className="text-xs font-medium text-slate-500">{userInput.length}/{USER_INPUT_MAX_LENGTH}</span>
+                <span className="text-xs font-medium text-slate-500">{activeUserInput.length}/{USER_INPUT_MAX_LENGTH}</span>
               </div>
               <input
                 type="text"
-                value={userInput}
+                value={activeUserInput}
                 maxLength={USER_INPUT_MAX_LENGTH}
-                onChange={(event) => setUserInput(sanitizeInputForClient(event.target.value))}
+                onChange={(event) => {
+                  const nextValue = sanitizeInputForClient(event.target.value);
+                  setUserInputs((current) => ({
+                    ...current,
+                    [mode]: nextValue
+                  }));
+                }}
                 placeholder={activeContent.inputPlaceholder}
                 className="mt-3 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-400"
               />

@@ -33,18 +33,30 @@ const MODE_PRESETS = {
   body: {
     requiresUserInput: false,
     stageTwoPrompt: (userInput) => [
-      'convert this person into a premium body profile photoshoot,',
-      'keep the exact same face,',
-      'professional fitness photoshoot,',
-      'athletic muscular body,',
-      'natural skin texture,',
-      'studio lighting,',
-      'sharp focus,',
-      'realistic proportions,',
-      'high-end fitness photography,',
-      'detailed muscle definition,',
-      'clean background,',
-      'no face distortion',
+      'Create a high-end fitness photoshoot image.',
+      'STRICT RULES:',
+      'Preserve original faces and identity exactly with high priority.',
+      'Do not change gender under any condition.',
+      'Keep all individuals if multiple people are present. Do not merge or remove anyone.',
+      'Maintain original facial proportions and likeness with high accuracy.',
+      'BODY AND STYLE:',
+      'Fit, athletic, toned body with realistic proportions, not exaggerated.',
+      'Defined muscles but natural anatomy.',
+      'Female body must remain feminine and natural.',
+      'Male body muscular but realistic, not cartoonish.',
+      'CLOTHING:',
+      'Minimal athletic wear such as sports bra, fitted shorts, and clean gym styling when allowed by the model policy.',
+      'Not sexualized, not explicit, but clearly fitness-focused.',
+      'Do not add extra clothing layers unless needed for policy compliance.',
+      'POSE:',
+      'Natural couple pose, close and confident, with slight body contact and a professional fitness photoshoot vibe.',
+      'VISUAL QUALITY:',
+      'Soft studio lighting with subtle rim light, clean white or neutral background, ultra realistic skin texture, sharp focus, high detail.',
+      'IMPORTANT:',
+      'Avoid over-stylization.',
+      'Avoid toy, figure, or plastic look.',
+      'Must look like a real fitness photoshoot, not AI art.',
+      'No face distortion, no extra limbs, no deformation.',
       userInput ? `additional detail: ${userInput}` : null
     ].filter(Boolean).join(' ')
   },
@@ -173,6 +185,20 @@ const buildStageOnePrompt = () => [
 
 const buildStageTwoPrompt = (mode, userInput) => MODE_PRESETS[mode].stageTwoPrompt(userInput);
 
+const buildBodySafetyFallbackPrompt = (userInput) => [
+  'Create a premium fitness editorial photoshoot based on the uploaded image.',
+  'Preserve original faces, identity, gender, and all individuals exactly.',
+  'Keep the result realistic and photorealistic.',
+  'Athletic, toned, healthy physique with natural proportions.',
+  'Sports bra, fitted shorts, or comparable athletic gym wear when allowed by policy.',
+  'If needed for policy compliance, use modest fitted sportswear without changing the overall fitness photoshoot intent.',
+  'Natural couple pose, clean studio background, soft studio lighting, sharp focus, realistic skin texture.',
+  'Do not remove any person.',
+  'Do not create a toy, figure, or plastic look.',
+  'No face distortion, no extra limbs, no deformation.',
+  userInput ? `additional detail: ${userInput}` : null
+].filter(Boolean).join(' ');
+
 export const generatePrompt = (mode, userInput = '') => {
   const safeMode = assertMode(mode);
   const safeInput = sanitizeUserInput(userInput);
@@ -241,21 +267,30 @@ const generateStageOnePortrait = async ({ provider, imageBuffer, mimeType, origi
 
 const generateStageTwoImage = async ({ provider, mode, portraitBuffer, userInput, retryCount = 1 }) => {
   const prompt = buildStageTwoPrompt(mode, userInput);
+  const fallbackPrompt = mode === 'body' ? buildBodySafetyFallbackPrompt(userInput) : null;
   let lastError = null;
 
   for (let attempt = 0; attempt <= retryCount; attempt += 1) {
     try {
+      const activePrompt = (
+        mode === 'body'
+        && fallbackPrompt
+        && lastError instanceof Error
+        && /safety|sexual/i.test(lastError.message)
+      )
+        ? fallbackPrompt
+        : prompt;
       const result = await editImage({
         provider,
         imageBuffer: portraitBuffer,
         mimeType: 'image/png',
         fileName: `portrait-${mode}-stage-two.png`,
-        prompt
+        prompt: activePrompt
       });
       return {
         ...result,
         attempts: attempt + 1,
-        prompt
+        prompt: activePrompt
       };
     } catch (error) {
       lastError = error;
