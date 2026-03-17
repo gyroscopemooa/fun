@@ -411,6 +411,22 @@ const applyJobSummaryFilters = (items, {
   return filtered;
 };
 
+const getAiImageJobPayload = (job) => {
+  if (!job) return null;
+  return {
+    id: job.id,
+    mode: job.mode,
+    status: job.status,
+    createdAt: job.createdAt,
+    startedAt: job.startedAt ?? null,
+    completedAt: job.completedAt ?? null,
+    imageUrl: job.imageUrl ?? null,
+    prompt: job.prompt ?? null,
+    revisedPrompt: job.revisedPrompt ?? null,
+    error: job.error ?? null
+  };
+};
+
 const summarizeIssueCounts = (items, extractor) => {
   const counts = new Map();
   items.forEach((item) => {
@@ -885,25 +901,64 @@ app.post('/ai-image-generator/generate', upload.single('image'), async (req, res
     }
 
     const generationId = uuidv4();
-    const generated = await generateAiImage({
+    const job = {
       id: generationId,
       mode,
-      imageBuffer: req.file.buffer,
-      mimeType: req.file.mimetype,
-      originalFilename: req.file.originalname,
-      outputDir: generatedDir
-    });
+      status: 'queued',
+      createdAt: new Date().toISOString(),
+      startedAt: null,
+      completedAt: null,
+      imageUrl: null,
+      prompt: null,
+      revisedPrompt: null,
+      error: null
+    };
+    db.aiImageJobs.set(generationId, job);
 
-    return res.status(201).json({
+    void (async () => {
+      job.status = 'processing';
+      job.startedAt = new Date().toISOString();
+      try {
+        const generated = await generateAiImage({
+          id: generationId,
+          mode,
+          imageBuffer: req.file.buffer,
+          mimeType: req.file.mimetype,
+          originalFilename: req.file.originalname,
+          outputDir: generatedDir
+        });
+        job.status = 'done';
+        job.completedAt = new Date().toISOString();
+        job.prompt = generated.prompt;
+        job.revisedPrompt = generated.revisedPrompt;
+        job.imageUrl = `/files/generated/${generated.fileName}`;
+      } catch (error) {
+        job.status = 'failed';
+        job.completedAt = new Date().toISOString();
+        job.error = error instanceof Error ? error.message : 'ai image generation failed';
+      }
+    })();
+
+    return res.status(202).json({
       ok: true,
-      mode: generated.mode,
-      prompt: generated.prompt,
-      revisedPrompt: generated.revisedPrompt,
-      imageUrl: `/files/generated/${generated.fileName}`
+      jobId: generationId,
+      mode,
+      status: 'queued'
     });
   } catch (error) {
     return res.status(500).json({ error: `ai image generate failed: ${error.message}` });
   }
+});
+
+app.get('/ai-image-generator/job/:id', (req, res) => {
+  const job = db.aiImageJobs.get(req.params.id);
+  if (!job) {
+    return res.status(404).json({ error: 'ai image job not found' });
+  }
+  return res.json({
+    ok: true,
+    job: getAiImageJobPayload(job)
+  });
 });
 
 app.post('/commerce/detail-page/generate', async (req, res) => {

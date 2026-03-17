@@ -16,10 +16,22 @@ type ModeContent = {
 
 type GenerateResponse = {
   ok: true;
+  jobId: string;
   mode: Mode;
-  imageUrl: string;
-  prompt: string;
-  revisedPrompt: string | null;
+  status: 'queued';
+};
+
+type JobResponse = {
+  ok: true;
+  job: {
+    id: string;
+    mode: Mode;
+    status: 'queued' | 'processing' | 'done' | 'failed';
+    imageUrl: string | null;
+    prompt: string | null;
+    revisedPrompt: string | null;
+    error: string | null;
+  };
 };
 
 const MODE_CONTENT: Record<Mode, ModeContent> = {
@@ -47,6 +59,8 @@ const RAW_API_BASE = import.meta.env.PUBLIC_NODE_API_BASE?.trim() ?? '';
 const DEV_API_BASE = 'http://127.0.0.1:8787';
 const API_BASE = (RAW_API_BASE || (import.meta.env.DEV ? DEV_API_BASE : '')).replace(/\/+$/, '');
 const PAYMENT_DELAY_MS = 1400;
+const JOB_POLL_MS = 2500;
+const JOB_TIMEOUT_MS = 180000;
 
 const buildExamplePlaceholder = (mode: Mode) => {
   const palette = mode === 'figure'
@@ -79,6 +93,29 @@ const resolveResultUrl = (imageUrl: string) => {
   if (/^https?:\/\//.test(imageUrl) || imageUrl.startsWith('data:')) return imageUrl;
   if (!API_BASE) return imageUrl;
   return `${API_BASE}${imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`}`;
+};
+
+const pollAiImageJob = async (jobId: string) => {
+  const startedAt = Date.now();
+
+  while ((Date.now() - startedAt) < JOB_TIMEOUT_MS) {
+    const response = await fetch(`${API_BASE}/ai-image-generator/job/${jobId}`);
+    const payload = await response.json().catch(() => null);
+
+    if (!response.ok || !payload?.job) {
+      throw new Error(payload?.error ?? '생성 상태를 불러오지 못했습니다.');
+    }
+
+    const data = payload as JobResponse;
+    if (data.job.status === 'done') return data.job;
+    if (data.job.status === 'failed') {
+      throw new Error(data.job.error || '이미지 생성에 실패했습니다.');
+    }
+
+    await sleep(JOB_POLL_MS);
+  }
+
+  throw new Error('생성이 지연되고 있습니다. 잠시 후 다시 확인해주세요.');
 };
 
 export default function AiImageGenerator() {
@@ -162,8 +199,9 @@ export default function AiImageGenerator() {
       }
 
       const data = payload as GenerateResponse;
-      setResultPrompt(data.revisedPrompt || data.prompt);
-      setResultImageUrl(resolveResultUrl(data.imageUrl));
+      const job = await pollAiImageJob(data.jobId);
+      setResultPrompt(job.revisedPrompt || job.prompt || '');
+      setResultImageUrl(resolveResultUrl(job.imageUrl || ''));
       setGenerationPhase('done');
     } catch (error) {
       setGenerationPhase('error');
