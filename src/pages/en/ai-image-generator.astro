@@ -1,0 +1,18 @@
+---
+import AiImageGenerator from '../../components/home/AiImageGenerator';
+import Footer from '../../components/Footer.astro';
+import Header from '../../components/Header.astro';
+import Layout from '../../layouts/Layout.astro';
+---
+
+<Layout
+  title="AI Image Generator | Action Figure, Fitness Photoshoot, Travel Background | ManyTool"
+  description="Generate AI action figures, fitness photoshoots, travel backgrounds, Europe-style photos, Snapchat profile images, Instagram photos, hanbok style, kimono style, and outfit changes from one uploaded photo."
+  keywords="AI image generator, AI action figure generator, AI fitness photoshoot, AI travel background, AI Europe travel style, AI Snapchat profile, AI Instagram photo, AI hanbok style, AI kimono style, AI outfit change"
+>
+  <Header />
+  <main>
+    <AiImageGenerator client:load locale="en" />
+  </main>
+  <Footer />
+</Layout>

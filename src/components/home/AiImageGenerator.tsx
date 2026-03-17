@@ -9,6 +9,7 @@ import 'swiper/css/pagination';
 type Mode = 'figure' | 'body' | 'travel' | 'europe' | 'proofshot' | 'kakao' | 'instagram' | 'hanbok' | 'kimono' | 'outfit' | 'animation' | 'free';
 type Provider = 'openai' | 'xai';
 type GenerationPhase = 'idle' | 'payment' | 'generating' | 'done' | 'error';
+type Locale = 'ko' | 'en';
 
 type ModeContent = {
   tabLabel: string;
@@ -234,6 +235,158 @@ const MODE_CONTENT: Record<Mode, ModeContent> = {
   }
 };
 
+const EN_MODE_CONTENT: Record<Mode, ModeContent> = {
+  figure: {
+    tabLabel: 'Figure',
+    title: 'AI Action Figure Generator',
+    buttonLabel: 'Generate figure',
+    exampleTitle: 'Figure example',
+    exampleDescription: 'Create premium boxed action figure images from your uploaded photo while keeping identity and overall styling cues.',
+    accentClass: 'from-orange-500 via-amber-400 to-yellow-300',
+    exampleGradient: 'from-orange-100 via-amber-50 to-white',
+    inputLabel: 'Extra prompt',
+    inputPlaceholder: 'e.g. modern premium packaging',
+    inputRequired: false
+  },
+  body: {
+    tabLabel: 'Fitness',
+    title: 'AI Fitness Photoshoot Generator',
+    buttonLabel: 'Generate fitness shot',
+    exampleTitle: 'Fitness example',
+    exampleDescription: 'Turn one photo into a modern fitness editorial image with realistic proportions and preserved identity.',
+    accentClass: 'from-sky-600 via-cyan-500 to-teal-400',
+    exampleGradient: 'from-cyan-100 via-white to-slate-50',
+    inputLabel: 'Extra prompt',
+    inputPlaceholder: 'e.g. dramatic studio lighting',
+    inputRequired: false
+  },
+  travel: {
+    tabLabel: 'Travel Background',
+    title: 'AI Travel Background Generator',
+    buttonLabel: 'Generate travel photo',
+    exampleTitle: 'Travel example',
+    exampleDescription: 'Keep the person and switch the background into an overseas travel scene.',
+    accentClass: 'from-emerald-500 via-teal-400 to-cyan-300',
+    exampleGradient: 'from-emerald-100 via-teal-50 to-white',
+    inputLabel: 'Extra prompt',
+    inputPlaceholder: 'e.g. Paris street cafe',
+    inputRequired: false
+  },
+  europe: {
+    tabLabel: 'Europe Style',
+    title: 'AI Europe Travel Style Generator',
+    buttonLabel: 'Generate Europe style',
+    exampleTitle: 'Europe style example',
+    exampleDescription: 'Recreate your image with a European city mood, street cafes, and travel aesthetics.',
+    accentClass: 'from-blue-500 via-sky-400 to-cyan-300',
+    exampleGradient: 'from-sky-100 via-cyan-50 to-white',
+    inputLabel: 'Extra prompt',
+    inputPlaceholder: 'e.g. Paris balcony morning',
+    inputRequired: false
+  },
+  proofshot: {
+    tabLabel: 'Snapshot',
+    title: 'AI Snapshot Generator',
+    buttonLabel: 'Generate snapshot',
+    exampleTitle: 'Snapshot example',
+    exampleDescription: 'Create a natural candid-style image that feels like a real proof shot or social snapshot.',
+    accentClass: 'from-indigo-500 via-violet-400 to-pink-300',
+    exampleGradient: 'from-indigo-100 via-violet-50 to-white',
+    inputLabel: 'Extra prompt',
+    inputPlaceholder: 'e.g. natural travel snapshot',
+    inputRequired: false
+  },
+  kakao: {
+    tabLabel: 'Snapchat Profile',
+    title: 'AI Snapchat Profile Generator',
+    buttonLabel: 'Generate Snapchat profile',
+    exampleTitle: 'Snapchat profile example',
+    exampleDescription: 'Create a clean, friendly profile-ready portrait for social media.',
+    accentClass: 'from-yellow-400 via-amber-300 to-orange-300',
+    exampleGradient: 'from-yellow-100 via-amber-50 to-white',
+    inputLabel: 'Extra prompt',
+    inputPlaceholder: 'e.g. clean smile portrait',
+    inputRequired: false
+  },
+  instagram: {
+    tabLabel: 'Instagram Photo',
+    title: 'AI Instagram Photo Generator',
+    buttonLabel: 'Generate Instagram photo',
+    exampleTitle: 'Instagram example',
+    exampleDescription: 'Generate trendy lifestyle-style photos that feel ready for Instagram.',
+    accentClass: 'from-pink-500 via-rose-400 to-orange-300',
+    exampleGradient: 'from-rose-100 via-pink-50 to-white',
+    inputLabel: 'Extra prompt',
+    inputPlaceholder: 'e.g. trendy lifestyle editorial',
+    inputRequired: false
+  },
+  hanbok: {
+    tabLabel: 'Hanbok Style',
+    title: 'AI Hanbok Style Generator',
+    buttonLabel: 'Generate hanbok style',
+    exampleTitle: 'Hanbok example',
+    exampleDescription: 'Keep the face and transform the outfit into an elegant hanbok-inspired look.',
+    accentClass: 'from-red-500 via-rose-400 to-amber-300',
+    exampleGradient: 'from-rose-100 via-orange-50 to-white',
+    inputLabel: 'Extra prompt',
+    inputPlaceholder: 'e.g. elegant modern hanbok',
+    inputRequired: false
+  },
+  kimono: {
+    tabLabel: 'Kimono Style',
+    title: 'AI Kimono Style Generator',
+    buttonLabel: 'Generate kimono style',
+    exampleTitle: 'Kimono example',
+    exampleDescription: 'Preserve the person and restyle the outfit into a refined kimono-inspired look.',
+    accentClass: 'from-fuchsia-500 via-rose-400 to-red-300',
+    exampleGradient: 'from-fuchsia-100 via-rose-50 to-white',
+    inputLabel: 'Extra prompt',
+    inputPlaceholder: 'e.g. elegant Kyoto kimono',
+    inputRequired: false
+  },
+  outfit: {
+    tabLabel: 'Outfit Change',
+    title: 'AI Outfit Change Generator',
+    buttonLabel: 'Generate outfit change',
+    exampleTitle: 'Outfit example',
+    exampleDescription: 'Change only the outfit while keeping the face and overall mood intact.',
+    accentClass: 'from-slate-700 via-slate-500 to-zinc-300',
+    exampleGradient: 'from-slate-100 via-zinc-50 to-white',
+    inputLabel: 'Extra prompt',
+    inputPlaceholder: 'e.g. luxury casual fashion',
+    inputRequired: false
+  },
+  animation: {
+    tabLabel: 'Animation',
+    title: 'AI Animation Generator',
+    buttonLabel: 'Generate animation style',
+    exampleTitle: 'Animation example',
+    exampleDescription: 'Turn the uploaded photo into a clean animation-style character image.',
+    accentClass: 'from-violet-500 via-fuchsia-400 to-rose-300',
+    exampleGradient: 'from-violet-100 via-fuchsia-50 to-white',
+    inputLabel: 'Extra prompt',
+    inputPlaceholder: 'e.g. cinematic anime hero',
+    inputRequired: false
+  },
+  free: {
+    tabLabel: 'Free Style',
+    title: 'AI Free Style Generator',
+    buttonLabel: 'Generate custom style',
+    exampleTitle: 'Free style example',
+    exampleDescription: 'Describe the style you want in a short prompt and apply it to the uploaded image.',
+    accentClass: 'from-fuchsia-500 via-rose-400 to-orange-300',
+    exampleGradient: 'from-rose-100 via-white to-orange-50',
+    inputLabel: 'Custom prompt',
+    inputPlaceholder: 'e.g. cyberpunk hero',
+    inputRequired: true
+  }
+};
+
+const EN_LABELS = {
+  mode: 'Mode',
+  moreExamples: 'More examples'
+} as const;
+
 const PROVIDER_LABELS: Record<Provider, string> = {
   openai: ENGINE_LABEL,
   xai: ENGINE_LABEL
@@ -377,7 +530,12 @@ const SLA_HERO_IMAGES = [
 ];
 const SLA_SUPPORT_IMAGES = SLA_ALL_IMAGES;
 
-export default function AiImageGenerator() {
+type AiImageGeneratorProps = {
+  locale?: Locale;
+};
+
+export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProps) {
+  const modeContentMap = locale === 'en' ? EN_MODE_CONTENT : MODE_CONTENT;
   const [mode, setMode] = useState<Mode>('figure');
   const [userInputs, setUserInputs] = useState<Record<Mode, string>>({
     figure: '',
@@ -413,7 +571,7 @@ export default function AiImageGenerator() {
   });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const activeContent = MODE_CONTENT[mode];
+  const activeContent = modeContentMap[mode];
   const activeUserInput = userInputs[mode] ?? '';
   const exampleImage = useMemo(() => buildExamplePlaceholder(mode), [mode]);
 
@@ -724,14 +882,14 @@ export default function AiImageGenerator() {
         <section className="rounded-[28px] border border-white/70 bg-white/85 p-3 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
           <div className="sm:hidden">
             <label className="block">
-              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Mode</span>
+              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">{EN_LABELS.mode}</span>
               <select
                 value={mode}
                 onChange={(event) => setMode(event.target.value as Mode)}
                 className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-slate-400"
               >
                 {MODE_ORDER.map((tabMode) => {
-                  const tabContent = MODE_CONTENT[tabMode];
+                  const tabContent = modeContentMap[tabMode];
                   return (
                     <option key={tabMode} value={tabMode}>
                       {tabContent.tabLabel}
@@ -744,7 +902,7 @@ export default function AiImageGenerator() {
 
           <div className="hidden gap-3 sm:grid sm:grid-cols-2 xl:grid-cols-4">
             {MODE_ORDER.map((tabMode) => {
-              const tabContent = MODE_CONTENT[tabMode];
+              const tabContent = modeContentMap[tabMode];
               const isActive = mode === tabMode;
               return (
                 <button
@@ -938,7 +1096,7 @@ export default function AiImageGenerator() {
 
         <section className="rounded-[32px] border border-slate-200/80 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-7">
           <div className="mb-4 flex items-center justify-between gap-3">
-            <h2 className="text-xl font-black tracking-tight text-slate-950">More Examples</h2>
+            <h2 className="text-xl font-black tracking-tight text-slate-950">{locale === 'en' ? EN_LABELS.moreExamples : 'More Examples'}</h2>
             <span className="text-xs font-medium text-slate-400">{SLA_SUPPORT_IMAGES.length} images</span>
           </div>
           <Swiper
