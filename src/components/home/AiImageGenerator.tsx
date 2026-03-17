@@ -243,7 +243,6 @@ const JOB_TIMEOUT_MS = 180000;
 const USER_INPUT_MAX_LENGTH = 50;
 const AI_IMAGE_PRICE_CENTS = 399;
 const AI_IMAGE_CURRENCY = 'USD';
-const AI_IMAGE_COUPON = 'manytool50';
 const AI_IMAGE_DRAFT_STORAGE_KEY = 'manytool-ai-image-draft-v1';
 
 const buildExamplePlaceholder = (mode: Mode) => {
@@ -303,11 +302,6 @@ const dataUrlToFile = async (dataUrl: string, name: string, type: string, lastMo
   const blob = await response.blob();
   return new File([blob], name, { type: type || blob.type || 'image/png', lastModified });
 };
-
-const formatUsdPrice = (amountCents: number) => new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: AI_IMAGE_CURRENCY
-}).format(amountCents / 100);
 
 const resolveResultUrl = (imageUrl: string) => {
   if (/^https?:\/\//.test(imageUrl) || imageUrl.startsWith('data:')) return imageUrl;
@@ -385,8 +379,6 @@ export default function AiImageGenerator() {
   const [paymentMode, setPaymentMode] = useState<'mock' | 'polar'>('mock');
   const [isPolarBaseReady, setIsPolarBaseReady] = useState(true);
   const [isPaid, setIsPaid] = useState(false);
-  const [baseOrderId, setBaseOrderId] = useState<string | null>(null);
-  const [paymentStatusMessage, setPaymentStatusMessage] = useState('');
   const [shouldAutoGenerateAfterPayment, setShouldAutoGenerateAfterPayment] = useState(false);
   const [resultActionMessage, setResultActionMessage] = useState('');
   const [providerReadiness, setProviderReadiness] = useState<Record<Provider, boolean>>({
@@ -491,11 +483,7 @@ export default function AiImageGenerator() {
         if (!response.ok || cancelled) return;
         if (payload?.status === 'paid') {
           setIsPaid(true);
-          setBaseOrderId(orderId);
-          setPaymentStatusMessage(`Payment completed. ${formatUsdPrice(AI_IMAGE_PRICE_CENTS)} is ready for one generation.`);
           setShouldAutoGenerateAfterPayment(true);
-        } else if (payload?.status === 'pending') {
-          setPaymentStatusMessage('Payment is still pending. Complete checkout and return here.');
         }
       } catch {
         // Keep the page usable even if order verification fails.
@@ -524,7 +512,6 @@ export default function AiImageGenerator() {
   const updateUploadedImage = (file: File | null) => {
     if (!file || !file.type.startsWith('image/')) return;
     setUploadedImage(file);
-    setPaymentStatusMessage('');
   };
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -606,10 +593,8 @@ export default function AiImageGenerator() {
         try {
           await persistDraftForCheckout();
           const checkout = await requestBaseCheckout();
-          setBaseOrderId(checkout.orderId ?? null);
           if (checkout.paid) {
             setIsPaid(true);
-            setPaymentStatusMessage(`Payment completed. ${formatUsdPrice(AI_IMAGE_PRICE_CENTS)} is ready for one generation.`);
           } else if (checkout.checkoutUrl) {
             window.location.href = checkout.checkoutUrl;
             return;
@@ -659,8 +644,6 @@ export default function AiImageGenerator() {
       setGenerationPhase('done');
       if (paymentMode === 'polar') {
         setIsPaid(false);
-        setBaseOrderId(null);
-        setPaymentStatusMessage('This payment has been used. Pay again for the next generation.');
       }
       if (typeof window !== 'undefined') {
         window.sessionStorage.removeItem(AI_IMAGE_DRAFT_STORAGE_KEY);
@@ -750,15 +733,6 @@ export default function AiImageGenerator() {
             </p>
             <h1 className="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">{activeContent.title}</h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">{activeContent.exampleDescription}</p>
-            <div className="mt-4 inline-flex flex-wrap items-center gap-2 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-slate-700">
-              <span className="font-bold text-slate-950">{formatUsdPrice(AI_IMAGE_PRICE_CENTS)}</span>
-              <span>per generation</span>
-              <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-rose-500">Coupon {AI_IMAGE_COUPON}</span>
-            </div>
-            <p className="mt-2 text-xs leading-5 text-slate-500">Discount note can stay small in the description area. The page now uses one unified price.</p>
-            {paymentStatusMessage ? (
-              <p className="mt-2 text-sm font-medium text-emerald-700">{paymentStatusMessage}</p>
-            ) : null}
           </div>
         </section>
 
@@ -868,9 +842,7 @@ export default function AiImageGenerator() {
 
           <aside className="rounded-[32px] border border-slate-200/80 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-7">
             <div className="mb-5">
-              <p className="text-sm font-semibold text-rose-500">Promo Preview</p>
-              <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-950">여성·커플 중심 결과 미리보기</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">메인 프로모션은 여성 비중이 높은 컷과 커플 컷을 우선 노출하고, 다른 스타일은 아래 보조 갤러리로 분리합니다.</p>
+              <h2 className="text-2xl font-black tracking-tight text-slate-950">예시 미리보기</h2>
             </div>
 
             <div className="overflow-hidden rounded-[28px] bg-gradient-to-br from-rose-100 via-white to-orange-50 p-3">
@@ -898,10 +870,6 @@ export default function AiImageGenerator() {
             </div>
 
             <div className="mt-5 space-y-3">
-              <div className="rounded-3xl border border-rose-100 bg-rose-50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-500">Pink Marketing Focus</p>
-                <p className="mt-2 text-sm leading-6 text-slate-700">커플, 여성 단독, 감성 스타일 컷을 먼저 보여주고 남성 단독이나 군인 느낌 컷은 아래 보조 영역으로 내려 첫인상을 정리합니다.</p>
-              </div>
               <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">2-Step Pipeline</p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
@@ -913,14 +881,6 @@ export default function AiImageGenerator() {
                 <p className="mt-2 text-sm leading-6 text-slate-600">
                   ManyTool AI 엔진으로 피규어와 바디프로필 이미지를 생성합니다.
                 </p>
-              </div>
-              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Pricing</p>
-                <p className="mt-2 text-lg font-black text-slate-950">{formatUsdPrice(AI_IMAGE_PRICE_CENTS)}</p>
-                <p className="mt-1 text-sm leading-6 text-slate-600">Single-page checkout flow. If Polar is enabled, payment is checked first and then the image is generated.</p>
-                <p className="mt-2 text-xs font-semibold text-rose-500">Discount coupon: {AI_IMAGE_COUPON}</p>
-                <p className="mt-1 text-xs text-slate-500">Set the Polar base product to the same {formatUsdPrice(AI_IMAGE_PRICE_CENTS)} price so UI and checkout stay aligned.</p>
-                {baseOrderId ? <p className="mt-2 text-xs text-slate-500">Current order: {baseOrderId}</p> : null}
               </div>
               <div className="rounded-3xl border border-slate-200 bg-white p-4">
                 <div className="mb-3 flex items-center justify-between">
