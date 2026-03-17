@@ -721,7 +721,27 @@ export default function AiImageGenerator() {
     <div className="relative min-h-screen bg-[radial-gradient(circle_at_top,_rgba(251,191,36,0.14),_transparent_28%),linear-gradient(180deg,_#fffaf5_0%,_#fff_42%,_#f8fafc_100%)] pb-40 text-slate-900">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
         <section className="rounded-[28px] border border-white/70 bg-white/85 p-3 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="sm:hidden">
+            <label className="block">
+              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Mode</span>
+              <select
+                value={mode}
+                onChange={(event) => setMode(event.target.value as Mode)}
+                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-slate-400"
+              >
+                {MODE_ORDER.map((tabMode) => {
+                  const tabContent = MODE_CONTENT[tabMode];
+                  return (
+                    <option key={tabMode} value={tabMode}>
+                      {tabContent.tabLabel}
+                    </option>
+                  );
+                })}
+              </select>
+            </label>
+          </div>
+
+          <div className="hidden gap-3 sm:grid sm:grid-cols-2 xl:grid-cols-4">
             {MODE_ORDER.map((tabMode) => {
               const tabContent = MODE_CONTENT[tabMode];
               const isActive = mode === tabMode;
