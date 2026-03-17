@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from 'react';
-import { AlertCircle, ImagePlus, LoaderCircle, Sparkles, UploadCloud, X } from 'lucide-react';
+import { AlertCircle, Download, ImagePlus, LoaderCircle, Share2, Sparkles, UploadCloud, X } from 'lucide-react';
 
 type Mode = 'figure' | 'body' | 'travel' | 'europe' | 'proofshot' | 'kakao' | 'instagram' | 'hanbok' | 'kimono' | 'outfit' | 'animation' | 'free';
 type Provider = 'openai' | 'xai';
@@ -388,6 +388,7 @@ export default function AiImageGenerator() {
   const [baseOrderId, setBaseOrderId] = useState<string | null>(null);
   const [paymentStatusMessage, setPaymentStatusMessage] = useState('');
   const [shouldAutoGenerateAfterPayment, setShouldAutoGenerateAfterPayment] = useState(false);
+  const [resultActionMessage, setResultActionMessage] = useState('');
   const [providerReadiness, setProviderReadiness] = useState<Record<Provider, boolean>>({
     openai: true,
     xai: true
@@ -674,6 +675,46 @@ export default function AiImageGenerator() {
     setIsModalOpen(false);
     setGenerationPhase('idle');
     setErrorMessage('');
+    setResultActionMessage('');
+  };
+
+  const handleDownloadResult = async () => {
+    if (!resultImageUrl) return;
+    try {
+      const response = await fetch(resultImageUrl);
+      if (!response.ok) throw new Error('download failed');
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = `manytool-ai-${mode}-${Date.now()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+      setResultActionMessage('이미지를 저장했습니다.');
+    } catch {
+      setResultActionMessage('이미지 저장에 실패했습니다. 다시 시도해 주세요.');
+    }
+  };
+
+  const handleShareResult = async () => {
+    if (!resultImageUrl || typeof window === 'undefined') return;
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: 'ManyTool AI Result',
+          text: 'ManyTool AI로 생성한 이미지입니다.',
+          url: resultImageUrl
+        });
+        setResultActionMessage('공유 시트를 열었습니다.');
+        return;
+      }
+      await navigator.clipboard.writeText(resultImageUrl);
+      setResultActionMessage('결과 이미지 링크를 복사했습니다.');
+    } catch {
+      setResultActionMessage('공유를 완료하지 못했습니다.');
+    }
   };
 
   return (
@@ -973,6 +1014,27 @@ export default function AiImageGenerator() {
                   <p className="text-sm font-semibold text-emerald-700">최종 결과 이미지입니다.</p>
                   <p className="mt-1 text-sm text-emerald-600">썸네일과 상세페이지에 같은 이미지를 사용할 수 있도록 1장만 반환합니다.</p>
                 </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => { void handleDownloadResult(); }}
+                    className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
+                  >
+                    <Download className="h-4 w-4" />
+                    저장
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { void handleShareResult(); }}
+                    className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 transition hover:bg-slate-50"
+                  >
+                    <Share2 className="h-4 w-4" />
+                    공유
+                  </button>
+                </div>
+                {resultActionMessage ? (
+                  <p className="text-center text-xs font-medium text-slate-500">{resultActionMessage}</p>
+                ) : null}
                 {resultPrompt ? (
                   <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Prompt</p>
