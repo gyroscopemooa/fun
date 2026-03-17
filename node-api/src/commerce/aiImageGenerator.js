@@ -255,6 +255,18 @@ const editWithOpenAi = async ({ imageBuffer, mimeType, fileName, prompt }) => {
   return decodeImageResult(response, 'OpenAI image edit');
 };
 
+const generateWithOpenAi = async ({ prompt }) => {
+  const response = await getOpenAiClient().images.generate({
+    model: OPENAI_IMAGE_MODEL,
+    prompt,
+    size: OUTPUT_SIZE,
+    quality: 'high',
+    output_format: 'png',
+    background: 'opaque'
+  });
+  return decodeImageResult(response, 'OpenAI image generate');
+};
+
 const editWithXai = async ({ imageBuffer, mimeType, prompt }) => {
   const response = await fetch('https://api.x.ai/v1/images/edits', {
     method: 'POST',
@@ -285,6 +297,18 @@ const editImage = async ({ provider, imageBuffer, mimeType, fileName, prompt }) 
     return editWithXai({ imageBuffer, mimeType, prompt });
   }
   throw new Error('unsupported provider');
+};
+
+const generateOpenAiBodyImage = async ({ userInput }) => {
+  const prompt = buildStageTwoPrompt('body', userInput, 'openai');
+  const result = await generateWithOpenAi({ prompt });
+  return {
+    ...result,
+    attempts: 1,
+    prompt,
+    stageOnePrompt: null,
+    stageOneRevisedPrompt: null
+  };
 };
 
 const generateStageOnePortrait = async ({ provider, imageBuffer, mimeType, originalFilename }) => (
@@ -354,6 +378,33 @@ export const generateAiImage = async ({
     getOpenAiClient();
   } else {
     getXaiClient();
+  }
+
+  if (safeProvider === 'openai' && safeMode === 'body') {
+    try {
+      const generated = await generateOpenAiBodyImage({
+        userInput: safeUserInput
+      });
+
+      const outputFileName = `${id}-${safeProvider}-${safeMode}.png`;
+      const outputPath = path.join(outputDir, outputFileName);
+      await fs.writeFile(outputPath, generated.buffer);
+
+      return {
+        provider: safeProvider,
+        mode: safeMode,
+        userInput: safeUserInput,
+        prompt: generated.prompt,
+        revisedPrompt: generated.revisedPrompt,
+        stageOnePrompt: generated.stageOnePrompt,
+        stageOneRevisedPrompt: generated.stageOneRevisedPrompt,
+        retryCount: generated.attempts,
+        fileName: outputFileName,
+        filePath: outputPath
+      };
+    } catch (error) {
+      // Fall back to the original edit pipeline when text-to-image fails or produces no usable asset.
+    }
   }
 
   const stageOne = await generateStageOnePortrait({
