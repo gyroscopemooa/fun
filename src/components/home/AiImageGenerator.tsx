@@ -387,6 +387,7 @@ export default function AiImageGenerator() {
   const [isPaid, setIsPaid] = useState(false);
   const [baseOrderId, setBaseOrderId] = useState<string | null>(null);
   const [paymentStatusMessage, setPaymentStatusMessage] = useState('');
+  const [shouldAutoGenerateAfterPayment, setShouldAutoGenerateAfterPayment] = useState(false);
   const [providerReadiness, setProviderReadiness] = useState<Record<Provider, boolean>>({
     openai: true,
     xai: true
@@ -491,6 +492,7 @@ export default function AiImageGenerator() {
           setIsPaid(true);
           setBaseOrderId(orderId);
           setPaymentStatusMessage(`Payment completed. ${formatUsdPrice(AI_IMAGE_PRICE_CENTS)} is ready for one generation.`);
+          setShouldAutoGenerateAfterPayment(true);
         } else if (payload?.status === 'pending') {
           setPaymentStatusMessage('Payment is still pending. Complete checkout and return here.');
         }
@@ -507,6 +509,12 @@ export default function AiImageGenerator() {
       cancelled = true;
     };
   }, [API_BASE]);
+
+  useEffect(() => {
+    if (!shouldAutoGenerateAfterPayment || !uploadedImage || generationPhase !== 'idle') return;
+    setShouldAutoGenerateAfterPayment(false);
+    void handleGenerate(DEFAULT_PROVIDER);
+  }, [shouldAutoGenerateAfterPayment, uploadedImage, generationPhase]);
 
   const openFilePicker = () => {
     fileInputRef.current?.click();
