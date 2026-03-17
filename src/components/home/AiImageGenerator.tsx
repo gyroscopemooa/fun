@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from 'react';
 import { AlertCircle, Download, ImagePlus, LoaderCircle, Share2, Sparkles, UploadCloud, X } from 'lucide-react';
-import { Autoplay, Pagination } from 'swiper/modules';
+import { Autoplay, Grid, Pagination } from 'swiper/modules';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
+import 'swiper/css/grid';
 import 'swiper/css/pagination';
 
 type Mode = 'figure' | 'body' | 'travel' | 'europe' | 'proofshot' | 'kakao' | 'instagram' | 'hanbok' | 'kimono' | 'outfit' | 'animation' | 'free';
@@ -940,21 +941,49 @@ export default function AiImageGenerator() {
             <h2 className="text-xl font-black tracking-tight text-slate-950">More Examples</h2>
             <span className="text-xs font-medium text-slate-400">{SLA_SUPPORT_IMAGES.length} images</span>
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
+          <Swiper
+            modules={[Autoplay, Grid]}
+            slidesPerView={2}
+            grid={{ rows: 2, fill: 'row' }}
+            spaceBetween={12}
+            loop={SLA_SUPPORT_IMAGES.length > 4}
+            autoplay={{
+              delay: 2600,
+              disableOnInteraction: false,
+              pauseOnMouseEnter: true
+            }}
+            breakpoints={{
+              640: {
+                slidesPerView: 3,
+                spaceBetween: 14
+              },
+              1024: {
+                slidesPerView: 4,
+                spaceBetween: 16
+              },
+              1280: {
+                slidesPerView: 5,
+                spaceBetween: 16
+              }
+            }}
+            className="support-swiper"
+          >
             {SLA_SUPPORT_IMAGES.map((image, index) => (
-              <div key={image} className="overflow-hidden rounded-[24px] border border-slate-200 bg-slate-50">
-                <img
-                  src={image}
-                  alt={`support example ${index + 1}`}
-                  loading="lazy"
-                  onError={(event) => {
-                    event.currentTarget.src = exampleImage;
-                  }}
-                  className="aspect-[3/4] h-full w-full object-cover"
-                />
-              </div>
+              <SwiperSlide key={image} className="pb-3">
+                <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-slate-50">
+                  <img
+                    src={image}
+                    alt={`support example ${index + 1}`}
+                    loading="lazy"
+                    onError={(event) => {
+                      event.currentTarget.src = exampleImage;
+                    }}
+                    className="aspect-[3/4] h-full w-full object-cover"
+                  />
+                </div>
+              </SwiperSlide>
             ))}
-          </div>
+          </Swiper>
         </section>
       </div>
 
