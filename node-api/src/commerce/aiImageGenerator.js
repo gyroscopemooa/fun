@@ -11,22 +11,16 @@ const MODE_PRESETS = {
   figure: {
     requiresUserInput: false,
     stageTwoPrompt: (userInput) => [
-      'convert this person into a collectible action figure,',
-      'keep the exact same face,',
-      'toy plastic texture,',
-      'realistic action figure body,',
-      'military uniform,',
-      'high detail accessories,',
-      'packaged in a premium retail box,',
-      'clear plastic blister packaging,',
-      'product photography,',
-      'studio lighting,',
-      'sharp focus,',
-      'glossy surface,',
-      '8k detail,',
-      'no face distortion',
-      userInput ? `additional detail: ${userInput}` : null
-    ].filter(Boolean).join(' ')
+      userInput
+        ? `Create a realistic action figure scene that follows this request exactly: ${userInput}.`
+        : 'Create a high-quality packaged action figure inside a transparent plastic retail box.',
+      'Preserve the original faces and identities exactly.',
+      'Do not change gender.',
+      'Keep all individuals if multiple people are present.',
+      'Outfits must follow the original image unless the user request explicitly changes them.',
+      'Do not introduce military clothing unless it is clearly present in the source image or explicitly requested.',
+      'Highly detailed, realistic materials, soft lighting, clean composition, sharp focus, no face distortion.'
+    ].join(' ')
   },
   body: {
     requiresUserInput: false,
@@ -158,17 +152,15 @@ export const getModeOptions = () => Object.keys(MODE_PRESETS);
 export const getProviderOptions = () => [...SUPPORTED_PROVIDERS];
 
 const buildStageOnePrompt = () => [
-  'ultra realistic portrait of a Korean male,',
-  'perfect symmetrical face,',
-  'sharp eyes,',
-  'natural skin texture,',
-  'real human proportions,',
-  'studio lighting,',
-  '8k detail,',
-  'highly detailed face,',
+  'Create a high-quality realistic image based on the uploaded photo,',
+  'preserve the original faces and identities exactly,',
+  'do not change gender,',
+  'keep all individuals if multiple people are present,',
+  'maintain natural skin texture and accurate anatomy,',
+  'clean composition, soft natural lighting, sharp focus,',
+  'high detail,',
   'no distortion,',
-  'no extra limbs,',
-  'correct anatomy'
+  'no extra limbs'
 ].join(' ');
 
 const buildStageTwoPrompt = (mode, userInput) => MODE_PRESETS[mode].stageTwoPrompt(userInput);
