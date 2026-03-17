@@ -2,6 +2,9 @@ import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent 
 import { AlertCircle, ImagePlus, LoaderCircle, Sparkles, UploadCloud, X } from 'lucide-react';
 
 type Mode = 'figure' | 'body';
+type FigureStyle = 'boxed' | 'desk' | 'studio';
+type BodyStyle = 'natural' | 'fitness' | 'competition';
+type Style = FigureStyle | BodyStyle;
 type GenerationPhase = 'idle' | 'payment' | 'generating' | 'done' | 'error';
 
 type ModeContent = {
@@ -12,6 +15,7 @@ type ModeContent = {
   exampleDescription: string;
   accentClass: string;
   exampleGradient: string;
+  styles: Array<{ value: Style; label: string; description: string }>;
 };
 
 type GenerateResponse = {
@@ -37,21 +41,31 @@ type JobResponse = {
 const MODE_CONTENT: Record<Mode, ModeContent> = {
   figure: {
     tabLabel: '피규어',
-    title: 'AI 피규어 생성기',
-    buttonLabel: '피규어 생성하기  6,900',
+    title: 'AI 피규어 이미지 생성기',
+    buttonLabel: '피규어 이미지 생성 6,900',
     exampleTitle: '피규어 예시',
-    exampleDescription: '업로드한 사진을 바탕으로 디테일한 컬렉터블 피규어 스타일 이미지를 생성합니다.',
+    exampleDescription: '업로드한 인물 사진을 바탕으로 수집형 피규어 콘셉트 이미지를 생성합니다.',
     accentClass: 'from-orange-500 via-amber-400 to-yellow-300',
-    exampleGradient: 'from-orange-100 via-amber-50 to-white'
+    exampleGradient: 'from-orange-100 via-amber-50 to-white',
+    styles: [
+      { value: 'boxed', label: '박스형', description: '투명 패키지와 악세서리가 포함된 피규어 박스 스타일' },
+      { value: 'desk', label: '데스크형', description: '책상 위에 올려진 미니어처 장난감 스타일' },
+      { value: 'studio', label: '스튜디오형', description: '깔끔한 배경의 제품 촬영 스타일' }
+    ]
   },
   body: {
     tabLabel: '바디프로필',
-    title: 'AI 바디프로필 생성기',
-    buttonLabel: '바디프로필 생성하기  9,900',
+    title: 'AI 바디프로필 이미지 생성기',
+    buttonLabel: '바디프로필 생성 9,900',
     exampleTitle: '바디프로필 예시',
-    exampleDescription: '스튜디오 촬영 느낌의 바디프로필 무드와 라이팅을 적용한 결과를 미리 보여줍니다.',
+    exampleDescription: '업로드한 사진을 바탕으로 스튜디오 무드의 바디프로필 이미지를 생성합니다.',
     accentClass: 'from-sky-600 via-cyan-500 to-teal-400',
-    exampleGradient: 'from-cyan-100 via-white to-slate-50'
+    exampleGradient: 'from-cyan-100 via-white to-slate-50',
+    styles: [
+      { value: 'natural', label: '내추럴', description: '자연광 느낌의 현실적인 바디프로필 스타일' },
+      { value: 'fitness', label: '피트니스', description: '짐 배경과 강한 조명을 활용한 운동 사진 스타일' },
+      { value: 'competition', label: '대회형', description: '대회장 조명과 강한 명암이 있는 무대 스타일' }
+    ]
   }
 };
 
@@ -61,6 +75,7 @@ const API_BASE = (RAW_API_BASE || (import.meta.env.DEV ? DEV_API_BASE : '')).rep
 const PAYMENT_DELAY_MS = 1400;
 const JOB_POLL_MS = 2500;
 const JOB_TIMEOUT_MS = 180000;
+const USER_INPUT_MAX_LENGTH = 50;
 
 const buildExamplePlaceholder = (mode: Mode) => {
   const palette = mode === 'figure'
@@ -95,31 +110,33 @@ const resolveResultUrl = (imageUrl: string) => {
   return `${API_BASE}${imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`}`;
 };
 
+const sanitizeInputForClient = (value: string) => value.replace(/\s+/g, ' ').trimStart().slice(0, USER_INPUT_MAX_LENGTH);
+
 const pollAiImageJob = async (jobId: string) => {
   const startedAt = Date.now();
-
   while ((Date.now() - startedAt) < JOB_TIMEOUT_MS) {
     const response = await fetch(`${API_BASE}/ai-image-generator/job/${jobId}`);
     const payload = await response.json().catch(() => null);
-
     if (!response.ok || !payload?.job) {
       throw new Error(payload?.error ?? '생성 상태를 불러오지 못했습니다.');
     }
-
     const data = payload as JobResponse;
     if (data.job.status === 'done') return data.job;
     if (data.job.status === 'failed') {
       throw new Error(data.job.error || '이미지 생성에 실패했습니다.');
     }
-
     await sleep(JOB_POLL_MS);
   }
-
   throw new Error('생성이 지연되고 있습니다. 잠시 후 다시 확인해주세요.');
 };
 
+const imageFrameClass = 'flex items-center justify-center overflow-hidden rounded-[24px] bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.18),_transparent_45%),linear-gradient(180deg,_#f8fafc_0%,_#e2e8f0_100%)] p-4';
+const imageClass = 'h-auto w-auto max-w-full object-contain';
+
 export default function AiImageGenerator() {
   const [mode, setMode] = useState<Mode>('figure');
+  const [style, setStyle] = useState<Style>('boxed');
+  const [userInput, setUserInput] = useState('');
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState('');
   const [isDragging, setIsDragging] = useState(false);
@@ -134,14 +151,16 @@ export default function AiImageGenerator() {
   const exampleImage = useMemo(() => buildExamplePlaceholder(mode), [mode]);
 
   useEffect(() => {
+    setStyle(mode === 'figure' ? 'boxed' : 'natural');
+  }, [mode]);
+
+  useEffect(() => {
     if (!uploadedImage) {
       setPreviewUrl('');
       return;
     }
-
     const nextUrl = URL.createObjectURL(uploadedImage);
     setPreviewUrl(nextUrl);
-
     return () => URL.revokeObjectURL(nextUrl);
   }, [uploadedImage]);
 
@@ -186,6 +205,8 @@ export default function AiImageGenerator() {
       const formData = new FormData();
       formData.append('image', uploadedImage);
       formData.append('mode', mode);
+      formData.append('style', style);
+      formData.append('userInput', sanitizeInputForClient(userInput));
 
       const response = await fetch(`${API_BASE}/ai-image-generator/generate`, {
         method: 'POST',
@@ -193,7 +214,6 @@ export default function AiImageGenerator() {
       });
 
       const payload = await response.json().catch(() => null);
-
       if (!response.ok || !payload) {
         throw new Error(payload?.error ?? '이미지 생성 요청에 실패했습니다.');
       }
@@ -223,22 +243,17 @@ export default function AiImageGenerator() {
             {(['figure', 'body'] as Mode[]).map((tabMode) => {
               const tabContent = MODE_CONTENT[tabMode];
               const isActive = mode === tabMode;
-
               return (
                 <button
                   key={tabMode}
                   type="button"
                   onClick={() => setMode(tabMode)}
                   className={`group relative flex-1 rounded-2xl px-5 py-4 text-sm font-semibold transition duration-200 sm:text-base ${
-                    isActive
-                      ? 'bg-slate-950 text-white shadow-lg shadow-slate-950/15'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
+                    isActive ? 'bg-slate-950 text-white shadow-lg shadow-slate-950/15' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
                   }`}
                 >
                   <span className="relative z-10">{tabContent.tabLabel}</span>
-                  {isActive ? (
-                    <span className={`absolute inset-x-4 bottom-1 h-1 rounded-full bg-gradient-to-r ${tabContent.accentClass}`} />
-                  ) : null}
+                  {isActive ? <span className={`absolute inset-x-4 bottom-1 h-1 rounded-full bg-gradient-to-r ${tabContent.accentClass}`} /> : null}
                 </button>
               );
             })}
@@ -253,7 +268,7 @@ export default function AiImageGenerator() {
             </p>
             <h1 className="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">{activeContent.title}</h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
-              사진 한 장으로 원하는 스타일의 결과물을 빠르게 확인할 수 있는 단일 플로우 UI입니다.
+              사진 한 장으로 피규어 또는 바디프로필 스타일 이미지를 생성합니다.
             </p>
           </div>
         </section>
@@ -263,7 +278,7 @@ export default function AiImageGenerator() {
             <div className="mb-5 flex items-center justify-between">
               <div>
                 <h2 className="text-xl font-bold text-slate-950">이미지 업로드</h2>
-                <p className="mt-1 text-sm text-slate-500">드래그 앤 드롭 또는 클릭해서 이미지를 선택하세요.</p>
+                <p className="mt-1 text-sm text-slate-500">드래그 앤 드롭 또는 클릭으로 이미지를 선택하세요.</p>
               </div>
               {uploadedImage ? (
                 <button
@@ -285,28 +300,20 @@ export default function AiImageGenerator() {
               onDragLeave={() => setIsDragging(false)}
               onDrop={handleDrop}
               className={`group flex min-h-[360px] cursor-pointer flex-col items-center justify-center rounded-[28px] border-2 border-dashed px-6 py-10 text-center transition ${
-                isDragging
-                  ? 'border-slate-900 bg-slate-50'
-                  : 'border-slate-200 bg-gradient-to-br from-slate-50 to-white hover:border-slate-300 hover:bg-slate-50'
+                isDragging ? 'border-slate-900 bg-slate-50' : 'border-slate-200 bg-gradient-to-br from-slate-50 to-white hover:border-slate-300 hover:bg-slate-50'
               }`}
             >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleFileChange}
-              />
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
 
               {previewUrl ? (
                 <div className="flex w-full flex-col items-center gap-4">
-                  <div className="relative w-full overflow-hidden rounded-[24px] bg-slate-100">
-                    <img src={previewUrl} alt="업로드 미리보기" className="h-[340px] w-full object-cover sm:h-[420px]" />
+                  <div className={`${imageFrameClass} min-h-[340px] w-full sm:min-h-[420px]`}>
+                    <img src={previewUrl} alt="업로드 미리보기" className={`${imageClass} max-h-[308px] rounded-[18px] sm:max-h-[388px]`} />
                   </div>
                   <div className="flex w-full flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 sm:flex-row sm:justify-between">
                     <div className="min-w-0 text-center sm:text-left">
                       <p className="truncate text-sm font-semibold text-slate-900">{uploadedImage?.name}</p>
-                      <p className="text-xs text-slate-500">다른 이미지를 선택하려면 클릭하거나 새 파일을 드롭하세요.</p>
+                      <p className="text-xs text-slate-500">다른 이미지를 선택하려면 클릭하거나 파일을 다시 드래그하세요.</p>
                     </div>
                     <button
                       type="button"
@@ -327,7 +334,7 @@ export default function AiImageGenerator() {
                   </div>
                   <h3 className="text-xl font-bold text-slate-950">이미지를 업로드하세요</h3>
                   <p className="mt-3 max-w-md text-sm leading-6 text-slate-500">
-                    정면 또는 반신 사진일수록 결과가 안정적입니다. JPG, PNG 등 일반 이미지 파일을 사용할 수 있습니다.
+                    정면 또는 반신 인물 사진일수록 결과가 안정적입니다. JPG, PNG 등 일반 이미지 파일을 지원합니다.
                   </p>
                   <button
                     type="button"
@@ -342,20 +349,62 @@ export default function AiImageGenerator() {
                 </>
               )}
             </label>
+
+            <div className="mt-5 grid gap-4">
+              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Style Preset</p>
+                <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                  {activeContent.styles.map((item) => {
+                    const isActive = style === item.value;
+                    return (
+                      <button
+                        key={item.value}
+                        type="button"
+                        onClick={() => setStyle(item.value)}
+                        className={`rounded-2xl border px-4 py-3 text-left transition ${
+                          isActive ? 'border-slate-950 bg-slate-950 text-white' : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                        }`}
+                      >
+                        <p className="text-sm font-bold">{item.label}</p>
+                        <p className={`mt-1 text-xs leading-5 ${isActive ? 'text-slate-200' : 'text-slate-500'}`}>{item.description}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Additional Detail</p>
+                  <span className="text-xs font-medium text-slate-500">{userInput.length}/{USER_INPUT_MAX_LENGTH}</span>
+                </div>
+                <input
+                  type="text"
+                  value={userInput}
+                  maxLength={USER_INPUT_MAX_LENGTH}
+                  onChange={(event) => setUserInput(sanitizeInputForClient(event.target.value))}
+                  placeholder="예: 어두운 분위기"
+                  className="mt-3 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-400"
+                />
+                <p className="mt-2 text-xs leading-5 text-slate-500">짧은 한 줄 설명만 추가로 반영됩니다. 기본 프롬프트와 스타일 프리셋은 유지됩니다.</p>
+              </div>
+            </div>
           </div>
 
           <aside className="rounded-[32px] border border-slate-200/80 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-7">
             <div className="mb-5">
               <p className="text-sm font-semibold text-slate-500">{activeContent.exampleTitle}</p>
-              <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-950">{activeContent.tabLabel} 스타일 미리보기</h2>
+              <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-950">{activeContent.tabLabel} 예시 미리보기</h2>
             </div>
 
             <div className={`overflow-hidden rounded-[28px] bg-gradient-to-br ${activeContent.exampleGradient} p-3`}>
-              <img
-                src={exampleImage}
-                alt={`${activeContent.tabLabel} 예시 이미지`}
-                className="h-[420px] w-full rounded-[24px] object-cover shadow-[0_24px_50px_rgba(15,23,42,0.14)]"
-              />
+              <div className="flex min-h-[420px] items-center justify-center rounded-[24px] bg-white/55 p-4">
+                <img
+                  src={exampleImage}
+                  alt={`${activeContent.tabLabel} 예시 이미지`}
+                  className={`${imageClass} max-h-[388px] rounded-[24px] shadow-[0_24px_50px_rgba(15,23,42,0.14)]`}
+                />
+              </div>
             </div>
 
             <p className="mt-5 text-sm leading-6 text-slate-600">{activeContent.exampleDescription}</p>
@@ -363,7 +412,7 @@ export default function AiImageGenerator() {
             <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Workflow Ready</p>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                업로드 UI는 완료되어 있고, 이제 생성 버튼이 Node API를 통해 OpenAI 이미지 편집 호출까지 실제로 수행합니다.
+                기본 프롬프트, 스타일 프리셋, 짧은 추가 디테일을 결합해서 안전하게 최종 프롬프트를 생성합니다.
               </p>
             </div>
           </aside>
@@ -379,9 +428,7 @@ export default function AiImageGenerator() {
               void handleGenerate();
             }}
             className={`flex w-full items-center justify-center rounded-[22px] px-6 py-4 text-base font-bold text-white shadow-[0_20px_45px_rgba(15,23,42,0.18)] transition sm:text-lg ${
-              uploadedImage
-                ? `bg-gradient-to-r ${activeContent.accentClass} hover:scale-[1.01]`
-                : 'cursor-not-allowed bg-slate-300'
+              uploadedImage ? `bg-gradient-to-r ${activeContent.accentClass} hover:scale-[1.01]` : 'cursor-not-allowed bg-slate-300'
             }`}
           >
             {activeContent.buttonLabel}
@@ -423,19 +470,19 @@ export default function AiImageGenerator() {
                 <p className="mt-3 max-w-sm text-sm leading-6 text-slate-500">
                   {generationPhase === 'payment'
                     ? '현재는 결제 단계를 모의 처리하고 있습니다. 이후 Polar 결제로 교체하면 됩니다.'
-                    : '업로드한 이미지를 기반으로 OpenAI 이미지 편집 API를 호출하고 있습니다.'}
+                    : '선택한 프리셋과 추가 디테일을 바탕으로 OpenAI 이미지 편집 API를 호출하고 있습니다.'}
                 </p>
               </div>
             )}
 
             {generationPhase === 'done' && resultImageUrl && (
               <div className="space-y-4">
-                <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-slate-100">
-                  <img src={resultImageUrl} alt="생성 결과" className="h-[360px] w-full object-cover" />
+                <div className="flex min-h-[360px] items-center justify-center overflow-hidden rounded-[28px] border border-slate-200 bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.14),_transparent_40%),linear-gradient(180deg,_#f8fafc_0%,_#e2e8f0_100%)] p-4">
+                  <img src={resultImageUrl} alt="생성 결과" className={`${imageClass} max-h-[328px] rounded-[20px]`} />
                 </div>
                 <div className="rounded-3xl border border-emerald-100 bg-emerald-50 px-4 py-3">
                   <p className="text-sm font-semibold text-emerald-700">생성된 결과 이미지입니다.</p>
-                  <p className="mt-1 text-sm text-emerald-600">다음 단계에서 결제 성공 후 실행, 이메일 발송, 저장소 업로드를 이어서 붙이면 됩니다.</p>
+                  <p className="mt-1 text-sm text-emerald-600">미리보기와 결과 이미지는 잘리지 않게 전체 비율을 유지해서 보여줍니다.</p>
                 </div>
                 {resultPrompt ? (
                   <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3">

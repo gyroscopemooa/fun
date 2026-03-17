@@ -9,7 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Webhook } from 'standardwebhooks';
 import { db } from './store.js';
 import { generateCommerceDetailPage } from './commerce/detailPage.js';
-import { generateAiImage } from './commerce/aiImageGenerator.js';
+import { generateAiImage, getDefaultStyleForMode, getPromptStyleOptions, sanitizeUserInput } from './commerce/aiImageGenerator.js';
 import { generateCandidatesWithProvider, getImageProvider, getResolvedImageProvider, isExternalAiEnabled, normalizeRequestedProvider, resolveImageProvider } from './providers/providerRouter.js';
 
 const app = express();
@@ -199,6 +199,7 @@ app.get('/config', (_req, res) => {
       remove_bg: removeBgReady && isExternalAiEnabled(),
       photoroom: photoroomReady && isExternalAiEnabled()
     },
+    aiImagePromptStyles: getPromptStyleOptions(),
     providerResolutionMap: providerDiagnostics,
     providerDiagnostics
   });
@@ -899,11 +900,15 @@ app.post('/ai-image-generator/generate', upload.single('image'), async (req, res
     if (mode !== 'figure' && mode !== 'body') {
       return res.status(400).json({ error: 'mode must be figure or body' });
     }
+    const style = typeof req.body?.style === 'string' ? req.body.style.trim().toLowerCase() : getDefaultStyleForMode(mode);
+    const userInput = sanitizeUserInput(req.body?.userInput ?? '');
 
     const generationId = uuidv4();
     const job = {
       id: generationId,
       mode,
+      style,
+      userInput,
       status: 'queued',
       createdAt: new Date().toISOString(),
       startedAt: null,
@@ -922,6 +927,8 @@ app.post('/ai-image-generator/generate', upload.single('image'), async (req, res
         const generated = await generateAiImage({
           id: generationId,
           mode,
+          style,
+          userInput,
           imageBuffer: req.file.buffer,
           mimeType: req.file.mimetype,
           originalFilename: req.file.originalname,
@@ -929,6 +936,8 @@ app.post('/ai-image-generator/generate', upload.single('image'), async (req, res
         });
         job.status = 'done';
         job.completedAt = new Date().toISOString();
+        job.style = generated.style;
+        job.userInput = generated.userInput;
         job.prompt = generated.prompt;
         job.revisedPrompt = generated.revisedPrompt;
         job.imageUrl = `/files/generated/${generated.fileName}`;
