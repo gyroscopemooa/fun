@@ -850,6 +850,10 @@ export default function AiImageGenerator() {
                 <img
                   src={activeHeroImage}
                   alt="ManyTool AI promo preview"
+                  loading="eager"
+                  onError={(event) => {
+                    event.currentTarget.src = exampleImage;
+                  }}
                   className={`${imageClass} max-h-[388px] rounded-[24px] shadow-[0_24px_50px_rgba(15,23,42,0.14)]`}
                 />
                 <div className="absolute left-4 top-4 rounded-full border border-white/70 bg-slate-950/78 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-white">
@@ -882,21 +886,30 @@ export default function AiImageGenerator() {
                   ManyTool AI 엔진으로 피규어와 바디프로필 이미지를 생성합니다.
                 </p>
               </div>
-              <div className="rounded-3xl border border-slate-200 bg-white p-4">
-                <div className="mb-3 flex items-center justify-between">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">More Examples</p>
-                  <p className="text-[11px] font-semibold text-slate-500">남성·기타 스타일은 보조 노출</p>
-                </div>
-                <div className="grid grid-cols-4 gap-2">
-                  {SLA_SUPPORT_IMAGES.map((image, index) => (
-                    <div key={image} className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
-                      <img src={image} alt={`support example ${index + 1}`} className="aspect-[3/4] h-full w-full object-cover" />
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
           </aside>
+        </section>
+
+        <section className="rounded-[32px] border border-slate-200/80 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-7">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="text-xl font-black tracking-tight text-slate-950">More Examples</h2>
+            <span className="text-xs font-medium text-slate-400">{SLA_SUPPORT_IMAGES.length} images</span>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
+            {SLA_SUPPORT_IMAGES.map((image, index) => (
+              <div key={image} className="overflow-hidden rounded-[24px] border border-slate-200 bg-slate-50">
+                <img
+                  src={image}
+                  alt={`support example ${index + 1}`}
+                  loading="lazy"
+                  onError={(event) => {
+                    event.currentTarget.src = exampleImage;
+                  }}
+                  className="aspect-[3/4] h-full w-full object-cover"
+                />
+              </div>
+            ))}
+          </div>
         </section>
       </div>
 
