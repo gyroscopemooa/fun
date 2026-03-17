@@ -41,10 +41,41 @@ type JobResponse = {
 };
 
 type ConfigResponse = {
+  paymentMode?: 'mock' | 'polar';
+  paymentProducts?: {
+    base?: boolean;
+  };
   readiness?: {
     openAiReady?: boolean;
     xaiReady?: boolean;
+    polarReady?: boolean;
   };
+};
+
+type CheckoutResponse = {
+  orderId?: string;
+  status?: string;
+  paymentMode?: 'mock' | 'polar';
+  amount?: number;
+  currency?: string;
+  paid?: boolean;
+  checkoutUrl?: string | null;
+  error?: string;
+};
+
+type OrderResponse = {
+  id?: string;
+  status?: string;
+  checkoutUrl?: string | null;
+};
+
+type SavedDraft = {
+  mode: Mode;
+  userInputs: Record<Mode, string>;
+  imageName: string;
+  imageType: string;
+  imageLastModified: number;
+  imageDataUrl: string;
 };
 
 const DEFAULT_PROVIDER: Provider = 'xai';
@@ -210,6 +241,10 @@ const PAYMENT_DELAY_MS = 1400;
 const JOB_POLL_MS = 2500;
 const JOB_TIMEOUT_MS = 180000;
 const USER_INPUT_MAX_LENGTH = 50;
+const AI_IMAGE_PRICE_CENTS = 399;
+const AI_IMAGE_CURRENCY = 'USD';
+const AI_IMAGE_COUPON = 'manytool50';
+const AI_IMAGE_DRAFT_STORAGE_KEY = 'manytool-ai-image-draft-v1';
 
 const buildExamplePlaceholder = (mode: Mode) => {
   const paletteMap = {
@@ -249,6 +284,30 @@ const buildExamplePlaceholder = (mode: Mode) => {
 };
 
 const sleep = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
+
+const fileToDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onload = () => {
+    if (typeof reader.result === 'string') {
+      resolve(reader.result);
+      return;
+    }
+    reject(new Error('failed to read image file'));
+  };
+  reader.onerror = () => reject(new Error('failed to read image file'));
+  reader.readAsDataURL(file);
+});
+
+const dataUrlToFile = async (dataUrl: string, name: string, type: string, lastModified: number) => {
+  const response = await fetch(dataUrl);
+  const blob = await response.blob();
+  return new File([blob], name, { type: type || blob.type || 'image/png', lastModified });
+};
+
+const formatUsdPrice = (amountCents: number) => new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: AI_IMAGE_CURRENCY
+}).format(amountCents / 100);
 
 const resolveResultUrl = (imageUrl: string) => {
   if (/^https?:\/\//.test(imageUrl) || imageUrl.startsWith('data:')) return imageUrl;
@@ -323,6 +382,11 @@ export default function AiImageGenerator() {
   const [activeProvider, setActiveProvider] = useState<Provider>(DEFAULT_PROVIDER);
   const [errorMessage, setErrorMessage] = useState('');
   const [heroSlideIndex, setHeroSlideIndex] = useState(0);
+  const [paymentMode, setPaymentMode] = useState<'mock' | 'polar'>('mock');
+  const [isPolarBaseReady, setIsPolarBaseReady] = useState(true);
+  const [isPaid, setIsPaid] = useState(false);
+  const [baseOrderId, setBaseOrderId] = useState<string | null>(null);
+  const [paymentStatusMessage, setPaymentStatusMessage] = useState('');
   const [providerReadiness, setProviderReadiness] = useState<Record<Provider, boolean>>({
     openai: true,
     xai: true
@@ -353,6 +417,8 @@ export default function AiImageGenerator() {
         const response = await fetch(`${API_BASE}/config`);
         const payload = await response.json().catch(() => null) as ConfigResponse | null;
         if (!response.ok || !payload || cancelled) return;
+        setPaymentMode(payload.paymentMode === 'polar' ? 'polar' : 'mock');
+        setIsPolarBaseReady(payload.paymentMode === 'polar' ? Boolean(payload.paymentProducts?.base) : true);
         setProviderReadiness({
           openai: Boolean(payload.readiness?.openAiReady),
           xai: Boolean(payload.readiness?.xaiReady)
@@ -379,6 +445,69 @@ export default function AiImageGenerator() {
     return () => window.clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    let cancelled = false;
+
+    void (async () => {
+      const raw = window.sessionStorage.getItem(AI_IMAGE_DRAFT_STORAGE_KEY);
+      if (!raw) return;
+      try {
+        const saved = JSON.parse(raw) as SavedDraft;
+        const restoredFile = await dataUrlToFile(
+          saved.imageDataUrl,
+          saved.imageName,
+          saved.imageType,
+          saved.imageLastModified
+        );
+        if (cancelled) return;
+        setMode(saved.mode);
+        setUserInputs((current) => ({ ...current, ...saved.userInputs }));
+        setUploadedImage(restoredFile);
+      } catch {
+        window.sessionStorage.removeItem(AI_IMAGE_DRAFT_STORAGE_KEY);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !API_BASE) return;
+    const params = new URLSearchParams(window.location.search);
+    const orderId = params.get('orderId');
+    if (!orderId) return;
+
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const response = await fetch(`${API_BASE}/order/${encodeURIComponent(orderId)}`);
+        const payload = await response.json().catch(() => null) as OrderResponse | null;
+        if (!response.ok || cancelled) return;
+        if (payload?.status === 'paid') {
+          setIsPaid(true);
+          setBaseOrderId(orderId);
+          setPaymentStatusMessage(`Payment completed. ${formatUsdPrice(AI_IMAGE_PRICE_CENTS)} is ready for one generation.`);
+        } else if (payload?.status === 'pending') {
+          setPaymentStatusMessage('Payment is still pending. Complete checkout and return here.');
+        }
+      } catch {
+        // Keep the page usable even if order verification fails.
+      } finally {
+        if (!cancelled) {
+          window.history.replaceState({}, '', window.location.pathname);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [API_BASE]);
+
   const openFilePicker = () => {
     fileInputRef.current?.click();
   };
@@ -386,6 +515,7 @@ export default function AiImageGenerator() {
   const updateUploadedImage = (file: File | null) => {
     if (!file || !file.type.startsWith('image/')) return;
     setUploadedImage(file);
+    setPaymentStatusMessage('');
   };
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -396,6 +526,41 @@ export default function AiImageGenerator() {
     event.preventDefault();
     setIsDragging(false);
     updateUploadedImage(event.dataTransfer.files?.[0] ?? null);
+  };
+
+  const persistDraftForCheckout = async () => {
+    if (typeof window === 'undefined' || !uploadedImage) return;
+    const draft: SavedDraft = {
+      mode,
+      userInputs,
+      imageName: uploadedImage.name,
+      imageType: uploadedImage.type,
+      imageLastModified: uploadedImage.lastModified,
+      imageDataUrl: await fileToDataUrl(uploadedImage)
+    };
+    window.sessionStorage.setItem(AI_IMAGE_DRAFT_STORAGE_KEY, JSON.stringify(draft));
+  };
+
+  const requestBaseCheckout = async () => {
+    const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+    const response = await fetch(`${API_BASE}/checkout`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        productType: 'base',
+        amount: AI_IMAGE_PRICE_CENTS,
+        currency: AI_IMAGE_CURRENCY,
+        successUrl: currentUrl,
+        returnUrl: currentUrl
+      })
+    });
+    const payload = await response.json().catch(() => null) as CheckoutResponse | null;
+    if (!response.ok || !payload) {
+      throw new Error(payload?.error ?? 'checkout failed');
+    }
+    return payload;
   };
 
   const handleGenerate = async (provider: Provider) => {
@@ -419,6 +584,36 @@ export default function AiImageGenerator() {
       setGenerationPhase('error');
       setErrorMessage(`${PROVIDER_LABELS[provider]} API 키가 서버에 설정되지 않았습니다.`);
       return;
+    }
+
+    if (paymentMode === 'polar') {
+      if (!isPolarBaseReady) {
+        setIsModalOpen(true);
+        setGenerationPhase('error');
+        setErrorMessage('Polar base product is not configured yet.');
+        return;
+      }
+      if (!isPaid) {
+        try {
+          await persistDraftForCheckout();
+          const checkout = await requestBaseCheckout();
+          setBaseOrderId(checkout.orderId ?? null);
+          if (checkout.paid) {
+            setIsPaid(true);
+            setPaymentStatusMessage(`Payment completed. ${formatUsdPrice(AI_IMAGE_PRICE_CENTS)} is ready for one generation.`);
+          } else if (checkout.checkoutUrl) {
+            window.location.href = checkout.checkoutUrl;
+            return;
+          } else {
+            throw new Error('checkout url is missing');
+          }
+        } catch (error) {
+          setIsModalOpen(true);
+          setGenerationPhase('error');
+          setErrorMessage(error instanceof Error ? error.message : 'Failed to start checkout.');
+          return;
+        }
+      }
     }
 
     setActiveProvider(provider);
@@ -453,6 +648,14 @@ export default function AiImageGenerator() {
       setResultPrompt(job.revisedPrompt || job.prompt || '');
       setResultImageUrl(resolveResultUrl(job.imageUrl || ''));
       setGenerationPhase('done');
+      if (paymentMode === 'polar') {
+        setIsPaid(false);
+        setBaseOrderId(null);
+        setPaymentStatusMessage('This payment has been used. Pay again for the next generation.');
+      }
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.removeItem(AI_IMAGE_DRAFT_STORAGE_KEY);
+      }
     } catch (error) {
       setGenerationPhase('error');
       setErrorMessage(error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.');
@@ -498,6 +701,15 @@ export default function AiImageGenerator() {
             </p>
             <h1 className="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">{activeContent.title}</h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">{activeContent.exampleDescription}</p>
+            <div className="mt-4 inline-flex flex-wrap items-center gap-2 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-slate-700">
+              <span className="font-bold text-slate-950">{formatUsdPrice(AI_IMAGE_PRICE_CENTS)}</span>
+              <span>per generation</span>
+              <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-rose-500">Coupon {AI_IMAGE_COUPON}</span>
+            </div>
+            <p className="mt-2 text-xs leading-5 text-slate-500">Discount note can stay small in the description area. The page now uses one unified price.</p>
+            {paymentStatusMessage ? (
+              <p className="mt-2 text-sm font-medium text-emerald-700">{paymentStatusMessage}</p>
+            ) : null}
           </div>
         </section>
 
@@ -653,6 +865,14 @@ export default function AiImageGenerator() {
                   ManyTool AI 엔진으로 피규어와 바디프로필 이미지를 생성합니다.
                 </p>
               </div>
+              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Pricing</p>
+                <p className="mt-2 text-lg font-black text-slate-950">{formatUsdPrice(AI_IMAGE_PRICE_CENTS)}</p>
+                <p className="mt-1 text-sm leading-6 text-slate-600">Single-page checkout flow. If Polar is enabled, payment is checked first and then the image is generated.</p>
+                <p className="mt-2 text-xs font-semibold text-rose-500">Discount coupon: {AI_IMAGE_COUPON}</p>
+                <p className="mt-1 text-xs text-slate-500">Set the Polar base product to the same {formatUsdPrice(AI_IMAGE_PRICE_CENTS)} price so UI and checkout stay aligned.</p>
+                {baseOrderId ? <p className="mt-2 text-xs text-slate-500">Current order: {baseOrderId}</p> : null}
+              </div>
               <div className="rounded-3xl border border-slate-200 bg-white p-4">
                 <div className="mb-3 flex items-center justify-between">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">More Examples</p>
@@ -675,12 +895,12 @@ export default function AiImageGenerator() {
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 sm:flex-row">
           <button
             type="button"
-            disabled={!uploadedImage || !providerReadiness[DEFAULT_PROVIDER]}
+            disabled={!uploadedImage || !providerReadiness[DEFAULT_PROVIDER] || (paymentMode === 'polar' && !isPolarBaseReady)}
             onClick={() => {
               void handleGenerate(DEFAULT_PROVIDER);
             }}
             className={`flex-1 rounded-[22px] px-6 py-4 text-base font-bold text-white shadow-[0_20px_45px_rgba(15,23,42,0.18)] transition sm:text-lg ${
-              !uploadedImage || !providerReadiness[DEFAULT_PROVIDER]
+              !uploadedImage || !providerReadiness[DEFAULT_PROVIDER] || (paymentMode === 'polar' && !isPolarBaseReady)
                 ? 'cursor-not-allowed bg-slate-300'
                 : 'bg-gradient-to-r from-slate-950 via-slate-800 to-slate-700 hover:scale-[1.01]'
             }`}
