@@ -106,6 +106,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       const CALORIE_DRAFT_STORAGE_KEY = 'manytool.calorieDraft.v1';
       const CALORIE_PRICE_CENTS = 99;
       const CALORIE_CURRENCY = 'USD';
+      const pageLocale = typeof window !== 'undefined' && window.location.pathname.startsWith('/en/') ? 'en' : 'ko';
 
       const fileInput = document.getElementById('calorie-image-input');
       const preview = document.getElementById('calorie-preview');
@@ -213,7 +214,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            productType: 'base',
+            productType: 'calorie',
             amount: CALORIE_PRICE_CENTS,
             currency: CALORIE_CURRENCY,
             successUrl: currentUrl,
@@ -235,6 +236,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
 
         const formData = new FormData();
         formData.append('image', selectedFile);
+        formData.append('locale', pageLocale);
 
         setButtonState('분석 중...', true);
         setStatus('AI가 음식과 칼로리를 분석하고 있습니다.');
@@ -346,7 +348,9 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           const payload = await response.json().catch(() => null);
           if (response.ok && payload) {
             paymentMode = payload.paymentMode === 'polar' ? 'polar' : 'mock';
-            isPolarBaseReady = paymentMode === 'polar' ? Boolean(payload.paymentProducts?.base) : true;
+            isPolarBaseReady = paymentMode === 'polar'
+              ? Boolean(payload.paymentProducts?.calorie || payload.paymentProducts?.base)
+              : true;
             updatePaymentNote();
           }
         } catch {

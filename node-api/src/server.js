@@ -78,6 +78,7 @@ const getResendConfig = () => ({
 
 const getPolarProductMap = () => ({
   base: getFirstEnv('POLAR_PRODUCT_BASE', 'POLAR_PRODUCT_ID'),
+  calorie: getFirstEnv('POLAR_PRODUCT_CALORIE'),
   add2: getFirstEnv('POLAR_PRODUCT_ADD2'),
   add3: getFirstEnv('POLAR_PRODUCT_ADD3'),
   add7: getFirstEnv('POLAR_PRODUCT_ADD7'),
@@ -983,7 +984,11 @@ app.post('/ai-calorie-calculator/analyze', upload.single('image'), async (req, r
     }
 
     const imageDataUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
-    const analysis = await analyzeMealCalories({ imageDataUrl });
+    const locale = typeof req.body?.locale === 'string' ? req.body.locale.trim().toLowerCase() : 'ko';
+    const analysis = await analyzeMealCalories({
+      imageDataUrl,
+      locale: locale === 'en' ? 'en' : 'ko'
+    });
 
     return res.json({
       ok: true,
