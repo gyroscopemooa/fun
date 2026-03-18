@@ -262,6 +262,9 @@ const sidebarText = locale === 'ko'
         { href: '/en/contact', label: 'Contact' }
       ]
     };
+
+const disabledSidebarPaths = new Set(['/ai-id-photo', '/ai-passport-photo', '/ai-headshot']);
+const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.replace(/^\/(en|ja)(?=\/|$)/, '') || '/'));
 ---
 
 <!doctype html>
@@ -374,15 +377,23 @@ const sidebarText = locale === 'ko'
           {sidebarText.links.map((link) => (
             <li>
               <a
-                href={link.href}
+                href={isDisabledSidebarLink(link.href) ? undefined : link.href}
+                aria-disabled={isDisabledSidebarLink(link.href) ? 'true' : 'false'}
                 class:list={[
-                  'block rounded-2xl px-4 py-3 text-sm font-semibold transition',
-                  Astro.url.pathname === link.href
-                    ? 'bg-slate-950 text-white'
-                    : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
+                  'flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-semibold transition',
+                  isDisabledSidebarLink(link.href)
+                    ? 'cursor-not-allowed bg-slate-100 text-slate-400'
+                    : Astro.url.pathname === link.href
+                      ? 'bg-slate-950 text-white'
+                      : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
                 ]}
               >
-                {link.label}
+                <span>{link.label}</span>
+                {isDisabledSidebarLink(link.href) ? (
+                  <span class="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                    {locale === 'ko' ? '준비 중' : locale === 'ja' ? '準備中' : 'Soon'}
+                  </span>
+                ) : null}
               </a>
             </li>
           ))}
