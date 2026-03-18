@@ -40,6 +40,8 @@ const clarityId = 'vwq6krnuzx';
 const googleSiteVerification = import.meta.env.PUBLIC_GOOGLE_SITE_VERIFICATION;
 const naverSiteVerification = import.meta.env.PUBLIC_NAVER_SITE_VERIFICATION ?? 'ab286ec18ea2904617f2827146d5b7fb2b5389cc';
 const adsenseClient = 'ca-pub-1009841039120964';
+const rawApiBase = (import.meta.env.PUBLIC_NODE_API_BASE ?? '').trim();
+const apiBase = rawApiBase.replace(/\/+$/, '');
 const localeTitlePrefix = locale === 'ko' ? '' : locale === 'en' ? '[EN] ' : '[JA] ';
 const localeDescSuffix = locale === 'ko'
   ? ''
@@ -203,6 +205,63 @@ const breadcrumbJsonLd = {
     item: new URL(crumb.href, siteUrl).toString()
   }))
 };
+
+const sidebarText = locale === 'ko'
+  ? {
+    title: 'ManyTool',
+    subtitle: '빠른 바로가기',
+    donate: '기부하기',
+    donateHint: '사이트 운영을 돕고 싶다면 후원해주세요.',
+    donateLoading: '결제 이동 중...',
+    donateUnavailable: '기부 상품 준비 중',
+    open: '사이드바 펼치기',
+    close: '사이드바 접기',
+    links: [
+      { href: locale === 'ko' ? '/' : `/${locale}`, label: '홈' },
+      { href: locale === 'ko' ? '/ai-image-generator' : `/${locale}/ai-image-generator`, label: 'AI 이미지 생성기' },
+      { href: locale === 'ko' ? '/ai-calorie-calculator' : `/${locale}/ai-calorie-calculator`, label: 'AI 칼로리 계산기' },
+      { href: locale === 'ko' ? '/ai-id-photo' : `/${locale}/ai-id-photo`, label: 'AI 증명사진' },
+      { href: locale === 'ko' ? '/tools/product-detail-studio' : `/${locale}/tools/product-detail-studio`, label: '상세페이지 생성기' },
+      { href: locale === 'ko' ? '/contact' : `/${locale}/contact`, label: '문의하기' }
+    ]
+  }
+  : locale === 'ja'
+    ? {
+      title: 'ManyTool',
+      subtitle: 'クイックリンク',
+      donate: '寄付する',
+      donateHint: 'サイト運営を支援したい場合はご利用ください。',
+      donateLoading: '決済ページへ移動中...',
+      donateUnavailable: '寄付商品を準備中です',
+      open: 'サイドバーを開く',
+      close: 'サイドバーを閉じる',
+      links: [
+        { href: '/ja', label: 'ホーム' },
+        { href: '/ja/ai-image-generator', label: 'AI画像生成' },
+        { href: '/ja/ai-calorie-calculator', label: 'AIカロリー計算機' },
+        { href: '/ja/ai-id-photo', label: 'AI証明写真' },
+        { href: '/ja/tools/product-detail-studio', label: '商品詳細ページ生成' },
+        { href: '/ja/contact', label: 'お問い合わせ' }
+      ]
+    }
+    : {
+      title: 'ManyTool',
+      subtitle: 'Quick Links',
+      donate: 'Donate',
+      donateHint: 'Support the site if you want to help keep it running.',
+      donateLoading: 'Redirecting to checkout...',
+      donateUnavailable: 'Donation product not ready',
+      open: 'Open sidebar',
+      close: 'Close sidebar',
+      links: [
+        { href: '/en', label: 'Home' },
+        { href: '/en/ai-image-generator', label: 'AI Image Generator' },
+        { href: '/en/ai-calorie-calculator', label: 'AI Calorie Calculator' },
+        { href: '/en/ai-id-photo', label: 'AI ID Photo' },
+        { href: '/en/tools/product-detail-studio', label: 'Product Detail Studio' },
+        { href: '/en/contact', label: 'Contact' }
+      ]
+    };
 ---
 
 <!doctype html>
@@ -297,27 +356,173 @@ const breadcrumbJsonLd = {
       </noscript>
     )}
     <SiteProviders client:load />
-    {pathNoLocale !== '/' && (
-      <nav aria-label="Breadcrumb" class="mx-auto max-w-5xl px-4 pt-3 text-xs text-slate-500">
-        <ol class="flex flex-wrap items-center gap-1">
-          {breadcrumbs.map((crumb, idx) => (
-            <li class="flex items-center gap-1">
-              {idx > 0 && <span>/</span>}
-              <a href={crumb.href} class="hover:text-slate-700 hover:underline">{crumb.name}</a>
+    <aside
+      id="manytool-sidebar"
+      class="fixed left-0 top-0 z-[70] flex h-screen w-[288px] -translate-x-0 flex-col border-r border-slate-200 bg-white/95 shadow-[0_24px_80px_rgba(15,23,42,0.16)] backdrop-blur transition-transform duration-300"
+      aria-label="ManyTool sidebar"
+      data-open="true"
+    >
+      <div class="flex items-center justify-between border-b border-slate-200 px-4 py-4">
+        <div>
+          <p class="text-base font-black tracking-tight text-slate-950">{sidebarText.title}</p>
+          <p class="mt-1 text-xs font-medium uppercase tracking-[0.18em] text-slate-400">{sidebarText.subtitle}</p>
+        </div>
+        <button
+          id="manytool-sidebar-toggle"
+          type="button"
+          class="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-lg text-slate-700 shadow-sm"
+          aria-expanded="true"
+          aria-label={sidebarText.close}
+        >
+          ‹
+        </button>
+      </div>
+
+      <nav class="flex-1 overflow-y-auto px-3 py-4">
+        <ul class="space-y-2">
+          {sidebarText.links.map((link) => (
+            <li>
+              <a
+                href={link.href}
+                class:list={[
+                  'block rounded-2xl px-4 py-3 text-sm font-semibold transition',
+                  Astro.url.pathname === link.href
+                    ? 'bg-slate-950 text-white'
+                    : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
+                ]}
+              >
+                {link.label}
+              </a>
             </li>
           ))}
-        </ol>
+        </ul>
       </nav>
-    )}
-    {freeBodyLabel && (
-      <div class="mx-auto max-w-5xl px-4 pt-3">
-        <p class="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-          {freeBodyLabel}
-        </p>
+
+      <div class="border-t border-slate-200 p-4">
+        <div class="rounded-[24px] bg-gradient-to-br from-amber-50 via-rose-50 to-sky-50 p-4">
+          <p class="text-sm font-bold text-slate-950">{sidebarText.donate}</p>
+          <p class="mt-2 text-xs leading-5 text-slate-600">{sidebarText.donateHint}</p>
+          <button
+            id="manytool-donate-button"
+            type="button"
+            class="mt-4 w-full rounded-2xl bg-slate-950 px-4 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
+          >
+            {sidebarText.donate}
+          </button>
+          <p id="manytool-donate-message" class="mt-2 text-xs text-slate-500"></p>
+        </div>
       </div>
-    )}
-    <AdSense slotName="글로벌 본문 상단" />
-    <slot />
-    <AdSense slotName="글로벌 본문 하단" />
+    </aside>
+
+    <div id="manytool-shell" class="transition-[padding] duration-300 lg:pl-[288px]">
+      {pathNoLocale !== '/' && (
+        <nav aria-label="Breadcrumb" class="mx-auto max-w-5xl px-4 pt-3 text-xs text-slate-500">
+          <ol class="flex flex-wrap items-center gap-1">
+            {breadcrumbs.map((crumb, idx) => (
+              <li class="flex items-center gap-1">
+                {idx > 0 && <span>/</span>}
+                <a href={crumb.href} class="hover:text-slate-700 hover:underline">{crumb.name}</a>
+              </li>
+            ))}
+          </ol>
+        </nav>
+      )}
+      {freeBodyLabel && (
+        <div class="mx-auto max-w-5xl px-4 pt-3">
+          <p class="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+            {freeBodyLabel}
+          </p>
+        </div>
+      )}
+      <AdSense slotName="글로벌 본문 상단" />
+      <slot />
+      <AdSense slotName="글로벌 본문 하단" />
+    </div>
+
+    <script is:inline define:vars={{ apiBase, locale, donateText: sidebarText }}>
+      const sidebarEl = document.getElementById('manytool-sidebar');
+      const shellEl = document.getElementById('manytool-shell');
+      const toggleEl = document.getElementById('manytool-sidebar-toggle');
+      const donateButtonEl = document.getElementById('manytool-donate-button');
+      const donateMessageEl = document.getElementById('manytool-donate-message');
+      const sidebarStorageKey = 'manytool.sidebar.open';
+      const defaultSidebarOpen = true;
+
+      const applySidebarState = (isOpen) => {
+        if (!sidebarEl || !toggleEl || !shellEl) return;
+        sidebarEl.dataset.open = isOpen ? 'true' : 'false';
+        sidebarEl.classList.toggle('-translate-x-[260px]', !isOpen);
+        sidebarEl.classList.toggle('translate-x-0', isOpen);
+        shellEl.classList.toggle('lg:pl-[288px]', isOpen);
+        shellEl.classList.toggle('lg:pl-[28px]', !isOpen);
+        toggleEl.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        toggleEl.setAttribute('aria-label', isOpen ? donateText.close : donateText.open);
+        toggleEl.textContent = isOpen ? '‹' : '›';
+      };
+
+      const savedSidebarState = typeof window !== 'undefined'
+        ? window.localStorage.getItem(sidebarStorageKey)
+        : null;
+      applySidebarState(savedSidebarState === null ? defaultSidebarOpen : savedSidebarState === 'true');
+
+      toggleEl?.addEventListener('click', () => {
+        const nextOpen = sidebarEl?.dataset.open !== 'true';
+        applySidebarState(nextOpen);
+        window.localStorage.setItem(sidebarStorageKey, nextOpen ? 'true' : 'false');
+      });
+
+      donateButtonEl?.addEventListener('click', async () => {
+        if (!apiBase) {
+          if (donateMessageEl) donateMessageEl.textContent = donateText.donateUnavailable;
+          return;
+        }
+
+        donateButtonEl.disabled = true;
+        donateButtonEl.textContent = donateText.donateLoading;
+        if (donateMessageEl) donateMessageEl.textContent = '';
+
+        try {
+          const configResponse = await fetch(`${apiBase}/config`);
+          const configPayload = await configResponse.json().catch(() => null);
+          const donationReady = Boolean(configPayload?.paymentProducts?.donation);
+          if (!configResponse.ok || !donationReady) {
+            throw new Error(donateText.donateUnavailable);
+          }
+
+          const currentUrl = window.location.href;
+          const checkoutResponse = await fetch(`${apiBase}/checkout`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              productType: 'donation',
+              amount: 99,
+              currency: 'USD',
+              successUrl: currentUrl,
+              returnUrl: currentUrl
+            })
+          });
+
+          const checkoutPayload = await checkoutResponse.json().catch(() => null);
+          if (!checkoutResponse.ok || !checkoutPayload) {
+            throw new Error(checkoutPayload?.error || donateText.donateUnavailable);
+          }
+
+          if (checkoutPayload.checkoutUrl) {
+            window.location.href = checkoutPayload.checkoutUrl;
+            return;
+          }
+
+          if (donateMessageEl) donateMessageEl.textContent = donateText.donateUnavailable;
+        } catch (error) {
+          if (donateMessageEl) {
+            donateMessageEl.textContent = error instanceof Error ? error.message : donateText.donateUnavailable;
+          }
+          donateButtonEl.disabled = false;
+          donateButtonEl.textContent = donateText.donate;
+        }
+      });
+    </script>
   </body>
 </html>

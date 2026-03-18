@@ -79,6 +79,7 @@ const getResendConfig = () => ({
 const getPolarProductMap = () => ({
   base: getFirstEnv('POLAR_PRODUCT_BASE', 'POLAR_PRODUCT_ID'),
   calorie: getFirstEnv('POLAR_PRODUCT_CALORIE'),
+  donation: getFirstEnv('POLAR_PRODUCT_DONATION'),
   add2: getFirstEnv('POLAR_PRODUCT_ADD2'),
   add3: getFirstEnv('POLAR_PRODUCT_ADD3'),
   add7: getFirstEnv('POLAR_PRODUCT_ADD7'),
@@ -568,6 +569,9 @@ const createPolarCheckout = async ({ order, productId, clientSessionId = null })
   if (order.productType === 'detail_page' && Number.isFinite(Number(order.amount)) && Number(order.amount) > 0) {
     payload.amount = Math.round(Number(order.amount));
     payload.metadata.page_count = String(order?.detailPageRequest?.pageCount ?? '');
+  }
+  if (order.productType === 'donation' && Number.isFinite(Number(order.amount)) && Number(order.amount) > 0) {
+    payload.amount = Math.round(Number(order.amount));
   }
   if (order.jobId) payload.metadata.job_id = order.jobId;
   if (successUrl) payload.success_url = successUrl;
