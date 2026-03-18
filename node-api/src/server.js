@@ -988,11 +988,7 @@ app.post('/ai-calorie-calculator/analyze', upload.single('image'), async (req, r
     }
 
     const imageDataUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
-    const locale = typeof req.body?.locale === 'string' ? req.body.locale.trim().toLowerCase() : 'ko';
-    const analysis = await analyzeMealCalories({
-      imageDataUrl,
-      locale: locale === 'en' ? 'en' : 'ko'
-    });
+    const analysis = await analyzeMealCalories({ imageDataUrl });
 
     return res.json({
       ok: true,

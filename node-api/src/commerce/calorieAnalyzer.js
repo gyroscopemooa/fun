@@ -69,14 +69,7 @@ const normalizeAnalysis = (payload) => ({
     : []
 });
 
-const resolveOutputLanguageInstruction = (locale) => {
-  if (locale === 'en') {
-    return 'Write all human-readable fields in natural English.';
-  }
-  return 'Write all human-readable fields in natural Korean.';
-};
-
-export const analyzeMealCalories = async ({ imageDataUrl, locale = 'ko' }) => {
+export const analyzeMealCalories = async ({ imageDataUrl }) => {
   if (typeof imageDataUrl !== 'string' || !imageDataUrl.startsWith('data:image/')) {
     throw new Error('A valid image data URL is required');
   }
@@ -98,7 +91,7 @@ export const analyzeMealCalories = async ({ imageDataUrl, locale = 'ko' }) => {
               'Identify visible food items, estimate portion size, and provide a realistic calorie estimate.',
               'Do not pretend to be medically precise. Use cautious, practical estimates.',
               'If the image is unclear, lower confidence and explain uncertainty in notes.',
-              resolveOutputLanguageInstruction(locale)
+              'Write all human-readable fields in natural English.'
             ].join(' ')
           },
           {
