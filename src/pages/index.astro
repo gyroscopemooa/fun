@@ -5,6 +5,9 @@ import SponsorBanner from '../components/SponsorBanner.astro';
 import Recommend from '../components/Recommend.astro';
 import Footer from '../components/Footer.astro';
 
+const rawApiBase = (import.meta.env.PUBLIC_NODE_API_BASE ?? '').trim();
+const apiBase = rawApiBase.replace(/\/+$/, '');
+
 const pathname = Astro.url.pathname;
 const locale = pathname.startsWith('/en/') || pathname === '/en'
   ? 'en'
@@ -30,6 +33,8 @@ const t = {
     guideTitle: 'ManyTool 사용 가이드',
     guideP1: 'ManyTool은 짧은 시간에 바로 사용할 수 있는 기능형 페이지를 중심으로 구성됩니다.',
     guideP2: '테스트, 게임, 지도, 랜덤 도구를 카드에서 바로 열고, 하단 추천 링크를 통해 연관 기능으로 이동할 수 있습니다.',
+    guideDonate: 'ManyTool 후원하기',
+    guideDonateHint: '사이트가 유용했다면 작은 후원으로 운영을 도와주세요.',
     faqTitle: '자주 묻는 질문',
     faqQ1: 'Q. ManyTool은 무료인가요?',
     faqA1: 'A. 현재 제공되는 기능은 무료로 이용할 수 있습니다.',
@@ -48,6 +53,8 @@ const t = {
     guideTitle: 'ManyTool Guide',
     guideP1: 'ManyTool is built for fast, practical pages you can use immediately.',
     guideP2: 'Open tests, games, maps, and random tools directly from cards.',
+    guideDonate: 'Support ManyTool',
+    guideDonateHint: 'If this site is useful, you can support it with a small donation.',
     faqTitle: 'FAQ',
     faqQ1: 'Q. Is ManyTool free?',
     faqA1: 'A. Yes, current features are free.',
@@ -66,6 +73,8 @@ const t = {
     guideTitle: 'ManyTool ガイド',
     guideP1: 'ManyToolはすぐ使える実用ページを中心に構成されています。',
     guideP2: 'テスト、ゲーム、マップ、ランダムツールをカードから直接開けます。',
+    guideDonate: 'ManyToolを支援する',
+    guideDonateHint: '便利だと感じたら、小さな寄付で運営を支援できます。',
     faqTitle: 'よくある質問',
     faqQ1: 'Q. ManyToolは無料ですか？',
     faqA1: 'A. 現在の機能は無料です。',
@@ -302,6 +311,17 @@ const faqJsonLd = {
           <p class="mt-2 text-slate-700">
             {t.guideP2}
           </p>
+          <div class="mt-5 rounded-2xl bg-slate-50 p-4">
+            <p class="text-sm text-slate-600">{t.guideDonateHint}</p>
+            <button
+              id="home-donate-button"
+              type="button"
+              class="mt-3 w-full rounded-2xl bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
+            >
+              {t.guideDonate}
+            </button>
+            <p id="home-donate-message" class="mt-2 text-xs text-slate-500"></p>
+          </div>
         </article>
       </section>
 
@@ -339,10 +359,12 @@ const faqJsonLd = {
 
   </main>
 
-  <script is:inline>
+  <script is:inline define:vars={{ apiBase, donateButtonLabel: t.guideDonate }}>
     const sliderRows = document.querySelectorAll('[data-slider]');
     const searchInput = document.getElementById('tool-search');
     const emptyEl = document.getElementById('search-empty');
+    const homeDonateButton = document.getElementById('home-donate-button');
+    const homeDonateMessage = document.getElementById('home-donate-message');
     
     const dayKey = () => {
       const now = new Date();
@@ -474,6 +496,52 @@ const faqJsonLd = {
 
     searchInput?.addEventListener('input', applySearch);
     applySearch();
+
+    homeDonateButton?.addEventListener('click', async () => {
+      if (!apiBase) {
+        if (homeDonateMessage) homeDonateMessage.textContent = '기부 상품을 아직 준비 중입니다.';
+        return;
+      }
+
+      homeDonateButton.disabled = true;
+      homeDonateButton.textContent = '결제 이동 중...';
+      if (homeDonateMessage) homeDonateMessage.textContent = '';
+
+      try {
+        const configResponse = await fetch(`${apiBase}/config`);
+        const configPayload = await configResponse.json().catch(() => null);
+        if (!configResponse.ok || !configPayload?.paymentProducts?.donation) {
+          throw new Error('기부 상품을 아직 준비 중입니다.');
+        }
+
+        const currentUrl = window.location.href;
+        const checkoutResponse = await fetch(`${apiBase}/checkout`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            productType: 'donation',
+            amount: 99,
+            currency: 'USD',
+            successUrl: currentUrl,
+            returnUrl: currentUrl
+          })
+        });
+        const checkoutPayload = await checkoutResponse.json().catch(() => null);
+        if (!checkoutResponse.ok || !checkoutPayload?.checkoutUrl) {
+          throw new Error(checkoutPayload?.error || '기부 결제를 시작하지 못했습니다.');
+        }
+
+        window.location.href = checkoutPayload.checkoutUrl;
+      } catch (error) {
+        if (homeDonateMessage) {
+          homeDonateMessage.textContent = error instanceof Error ? error.message : '기부 결제를 시작하지 못했습니다.';
+        }
+        homeDonateButton.disabled = false;
+        homeDonateButton.textContent = donateButtonLabel;
+      }
+    });
 
     
   </script>
