@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { parseInput } from '../utils/parseInput.js';
 import { usePhysics } from '../hooks/usePhysics.js';
 
@@ -109,12 +109,14 @@ export default function MarbleRoulette({ locale = 'ko' }) {
     }, {});
   }, [results]);
 
+  const handleSettle = useCallback((entry) => {
+    setResults((prev) => [...prev, entry]);
+  }, []);
+
   const { canvasRef, containerRef, slots, isRunning, activeMarbles, lastResult, startWeightedRound, resetRound } =
     usePhysics({
       items: parsed.items.length > 0 ? parsed.items : parseInput(DEFAULT_INPUT[locale] ?? DEFAULT_INPUT.ko).items,
-      onSettle: (entry) => {
-        setResults((prev) => [...prev, entry]);
-      }
+      onSettle: handleSettle
     });
 
   const handleStart = () => {
@@ -292,10 +294,7 @@ export default function MarbleRoulette({ locale = 'ko' }) {
                   {slots.map((slot) => (
                     <div key={`${slot.id}-preview`} className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
                       <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2">
-                          <span className="h-3 w-3 rounded-full" style={{ backgroundColor: slot.color }} />
-                          <span className="font-semibold text-white">{slot.label}</span>
-                        </div>
+                        <span className="font-semibold text-white">{slot.label}</span>
                         <span className="text-xs font-bold text-cyan-200">x{slot.weight}</span>
                       </div>
                     </div>
