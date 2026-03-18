@@ -21,6 +21,8 @@ import {
 } from '@/lib/product-detail-studio';
 import { cn } from '@/lib/utils';
 
+type Locale = 'ko' | 'en' | 'ja';
+
 type DetailPageOrder = {
   id: string;
   status: string;
@@ -52,6 +54,54 @@ const DEV_API_BASE = 'http://127.0.0.1:8787';
 const API_BASE = (RAW_API_BASE || (import.meta.env.DEV ? DEV_API_BASE : '')).replace(/\/+$/, '');
 const EXPORT_WIDTH = 860;
 const DETAIL_PAGE_DRAFT_KEY = 'manytool.detailPageDraft';
+
+const RESULT_COPY = {
+  ko: {
+    loading: '결제 완료 결과를 불러오는 중입니다.',
+    resultTitle: '상세페이지 결과',
+    resultReady: '결제 완료 결과가 준비되었습니다.',
+    createNew: '새 상세페이지 만들기',
+    continueEdit: '이어서 수정하기',
+    goHome: '메인으로',
+    continuePayment: '결제 이어서 진행',
+    preparing: '결제 결과를 준비하는 중입니다...',
+    status: '상태',
+    paidAmount: '결제 금액',
+    htmlCopied: 'HTML copied',
+    copyTextCopied: 'Copy text copied',
+    paidResult: 'Paid Result'
+  },
+  en: {
+    loading: 'Loading your paid result.',
+    resultTitle: 'Detail Page Result',
+    resultReady: 'Your paid result is ready.',
+    createNew: 'Create New Detail Page',
+    continueEdit: 'Continue Editing',
+    goHome: 'Back to Home',
+    continuePayment: 'Continue Payment',
+    preparing: 'Preparing paid result...',
+    status: 'Status',
+    paidAmount: 'Paid Amount',
+    htmlCopied: 'HTML copied',
+    copyTextCopied: 'Copy text copied',
+    paidResult: 'Paid Result'
+  },
+  ja: {
+    loading: '決済済みの結果を読み込んでいます。',
+    resultTitle: '商品詳細ページ結果',
+    resultReady: '決済済みの結果が準備できました。',
+    createNew: '新しい詳細ページを作成',
+    continueEdit: '続けて編集',
+    goHome: 'ホームへ',
+    continuePayment: '決済を続ける',
+    preparing: '決済結果を準備しています...',
+    status: '状態',
+    paidAmount: '決済金額',
+    htmlCopied: 'HTML copied',
+    copyTextCopied: 'Copy text copied',
+    paidResult: 'Paid Result'
+  }
+} as const;
 
 const buildImagesFromOrder = (images: string[]): UploadedImage[] => images.map((dataUrl, index) => ({
   id: `order-image-${index + 1}`,
@@ -89,11 +139,16 @@ const saveDetailPageDraft = ({
   }));
 };
 
-export default function ProductDetailStudioResult() {
+type ProductDetailStudioResultProps = {
+  locale?: Locale;
+};
+
+export default function ProductDetailStudioResult({ locale = 'ko' }: ProductDetailStudioResultProps) {
+  const ui = RESULT_COPY[locale];
   const [orderId, setOrderId] = useState('');
   const [order, setOrder] = useState<DetailPageOrder | null>(null);
   const [result, setResult] = useState<ProductDetailResult | null>(null);
-  const [statusMessage, setStatusMessage] = useState('결제 완료 결과를 불러오는 중입니다.');
+  const [statusMessage, setStatusMessage] = useState(ui.loading);
   const [isLoading, setIsLoading] = useState(true);
   const [isExportingSlices, setIsExportingSlices] = useState(false);
   const [isExportingFile, setIsExportingFile] = useState<'png' | 'jpg' | 'pdf' | null>(null);
@@ -154,7 +209,7 @@ export default function ProductDetailStudioResult() {
           normalizeDetailPageCount(nextOrder.detailPageRequest?.pageCount ?? 7)
         );
         setResult(normalized);
-        setStatusMessage('결제 완료 결과가 준비되었습니다.');
+        setStatusMessage(ui.resultReady);
       } catch (error) {
         if (cancelled) return;
         setStatusMessage(error instanceof Error ? error.message : '결과를 불러오지 못했습니다.');
@@ -273,21 +328,21 @@ export default function ProductDetailStudioResult() {
   return (
     <section className="mx-auto max-w-7xl px-4 py-8">
       <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Paid Result</p>
-        <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950">상세페이지 결과</h1>
+        <p className="text-xs uppercase tracking-[0.22em] text-slate-400">{ui.paidResult}</p>
+        <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950">{ui.resultTitle}</h1>
         <p className="mt-3 text-sm leading-6 text-slate-600">{statusMessage}</p>
         <div className="mt-4 flex flex-wrap gap-3 text-sm text-slate-600">
-          <span className="rounded-full bg-slate-100 px-3 py-1">상태: {order?.status ?? 'loading'}</span>
+          <span className="rounded-full bg-slate-100 px-3 py-1">{ui.status}: {order?.status ?? 'loading'}</span>
           {order?.detailPageRequest?.pricing?.total_price ? (
             <span className="rounded-full bg-slate-100 px-3 py-1">
-              결제 금액: {formatDetailPagePrice(Number(order.detailPageRequest.pricing.total_price), order.detailPageRequest.pricing.currency)} ({formatApproxKrw(Number(order.detailPageRequest.pricing.total_price))})
+              {ui.paidAmount}: {formatDetailPagePrice(Number(order.detailPageRequest.pricing.total_price), order.detailPageRequest.pricing.currency)} ({formatApproxKrw(Number(order.detailPageRequest.pricing.total_price))})
             </span>
           ) : null}
         </div>
         <div className="mt-4 flex flex-wrap gap-3">
           <Button type="button" variant="secondary" onClick={() => { window.location.href = '/tools/product-detail-studio/'; }}>
             <Store className="h-4 w-4" />
-            새 상세페이지 만들기
+            {ui.createNew}
           </Button>
           <Button
             type="button"
@@ -299,18 +354,18 @@ export default function ProductDetailStudioResult() {
             }}
           >
             <Store className="h-4 w-4" />
-            이어서 수정하기
+            {ui.continueEdit}
           </Button>
           <Button type="button" variant="ghost" onClick={() => { window.location.href = '/'; }}>
             <Home className="h-4 w-4" />
-            메인으로
+            {ui.goHome}
           </Button>
         </div>
         {order?.status === 'pending' && order.checkoutUrl ? (
           <div className="mt-4">
             <Button type="button" onClick={() => { window.location.href = order.checkoutUrl ?? ''; }}>
               <Store className="h-4 w-4" />
-              결제 이어서 진행
+              {ui.continuePayment}
             </Button>
           </div>
         ) : null}
@@ -319,7 +374,7 @@ export default function ProductDetailStudioResult() {
       {isLoading ? (
         <div className="mt-6 rounded-[1.7rem] border border-slate-200 bg-white p-8 text-center text-slate-600 shadow-sm">
           <LoaderCircle className="mx-auto h-5 w-5 animate-spin" />
-          <p className="mt-3 text-sm">Preparing paid result...</p>
+          <p className="mt-3 text-sm">{ui.preparing}</p>
         </div>
       ) : null}
 
@@ -327,11 +382,11 @@ export default function ProductDetailStudioResult() {
         <div className="mt-6 grid gap-6 xl:grid-cols-[0.34fr_1fr]">
           <div className="rounded-[1.7rem] border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex flex-wrap gap-3">
-              <Button type="button" variant="secondary" onClick={() => void onCopy(html, 'HTML copied')}>
+              <Button type="button" variant="secondary" onClick={() => void onCopy(html, ui.htmlCopied)}>
                 <Copy className="h-4 w-4" />
                 HTML
               </Button>
-              <Button type="button" variant="secondary" onClick={() => void onCopy(copyText, 'Copy text copied')}>
+              <Button type="button" variant="secondary" onClick={() => void onCopy(copyText, ui.copyTextCopied)}>
                 <Copy className="h-4 w-4" />
                 Copy Text
               </Button>

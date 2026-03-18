@@ -3,67 +3,181 @@ import Footer from '../../components/Footer.astro';
 import Header from '../../components/Header.astro';
 import ProductDetailStudio from '../../components/home/ProductDetailStudio';
 import Layout from '../../layouts/Layout.astro';
+import { detectLocale } from '../../lib/i18n';
 
-const pathname = Astro.url.pathname;
-const locale = pathname.startsWith('/en/') || pathname === '/en'
-  ? 'en'
-  : pathname.startsWith('/ja/') || pathname === '/ja'
-    ? 'ja'
-    : 'ko';
+const locale = detectLocale(Astro.url.pathname);
 
 const copy = {
   ko: {
-    title: '쇼핑몰 상세페이지 제작 툴 | 스마트스토어 상세페이지 생성기 | ManyTool',
-    description: '스마트스토어, 쿠팡, 11번가, 자사몰에 올릴 쇼핑몰 상세페이지를 빠르게 만드는 AI 상세페이지 제작 툴입니다. 상품 사진과 상품 정보만으로 판매형 상세페이지 초안, 카피, HTML, PNG, JPG, PDF 저장까지 지원합니다.',
-    keywords: '상세페이지 제작, 상세페이지 생성기, 스마트스토어 상세페이지, 쇼핑몰 상세페이지, 오픈마켓 상세페이지, 쿠팡 상세페이지, 쇼핑몰 상세페이지 제작 툴, 상세페이지 만들기, 판매용 상세페이지, 상품 상세페이지 제작, AI 상세페이지',
-    heading: '쇼핑몰·스마트스토어·오픈마켓용 상세페이지 제작 툴',
-    body: '상품 사진과 상품 정보만 넣으면 스마트스토어, 쿠팡, 11번가, 네이버 스마트스토어, 자사몰에 맞는 판매형 상세페이지 초안을 빠르게 만들 수 있습니다. ManyTool은 무료 온라인 툴도 함께 제공하는 플랫폼이며, 이 페이지는 쇼핑몰 상세페이지 제작에 집중한 상세페이지 생성 도구입니다.',
+    title: '상세페이지 생성기 | 스마트스토어 상세페이지 제작기 | ManyTool',
+    description: '스마트스토어, 쿠팡, 11번가, 자사몰에 맞는 판매형 상세페이지 초안을 상품 사진과 정보만으로 빠르게 생성합니다.',
+    keywords: '상세페이지 생성기, 스마트스토어 상세페이지, 쿠팡 상세페이지, 상품 상세페이지 제작, AI 상세페이지',
+    heading: '스마트스토어·오픈마켓용 상세페이지 생성기',
+    body: '상품 사진과 상품 정보만으로 판매형 상세페이지 초안, 카피, HTML, PNG, JPG, PDF까지 바로 정리할 수 있는 ManyTool 상세페이지 스튜디오입니다.',
     points: [
       {
-        title: '스마트스토어형 상세페이지 흐름',
-        body: '860px 기준의 긴 상세페이지 흐름으로 구성해 스마트스토어, 쿠팡, 자사몰에 올리기 쉬운 형식으로 정리합니다.'
+        title: '쇼핑몰 업로드용 긴 페이지 구성',
+        body: '860px 기준의 긴 상세페이지 레이아웃으로 정리해 스마트스토어, 쿠팡, 자사몰 업로드 흐름에 바로 맞출 수 있습니다.'
       },
       {
-        title: '쇼핑몰 판매 문구 자동 정리',
-        body: '상품명, 가격, 타깃 고객, 핵심 포인트를 바탕으로 상품 소개, 장점, 사용 장면, 구매 유도 문구를 한 번에 정리합니다.'
+        title: '판매형 카피 자동 정리',
+        body: '상품명, 가격, 타깃 고객, 강점을 바탕으로 헤드라인, 포인트, CTA를 자연스럽게 구성합니다.'
       },
       {
-        title: '저장과 재활용까지 지원',
-        body: '생성된 결과는 HTML, PNG, JPG, PDF로 저장할 수 있어 쇼핑몰 상세페이지 제작 작업과 외주 검토에도 바로 활용할 수 있습니다.'
+        title: 'HTML·이미지·PDF 저장',
+        body: '생성 결과를 HTML, PNG, JPG, PDF로 저장해 외주 검토나 실제 업로드 작업으로 바로 넘길 수 있습니다.'
       }
     ],
+    guideTitle: '상세페이지 제작 도구 안내',
+    guideBody: '이 도구는 스마트스토어 상세페이지, 쿠팡 상세페이지, 자사몰 상품 소개 페이지처럼 긴 판매형 페이지가 필요한 경우에 맞춰 설계되었습니다.',
+    relatedTitle: '자주 찾는 사용 예시',
+    related: [
+      {
+        title: '스마트스토어 상세페이지 제작',
+        body: '국내 마켓 기준의 긴 흐름과 판매 카피를 빠르게 정리하고 싶은 경우에 맞습니다.'
+      },
+      {
+        title: '자사몰용 브랜드형 페이지 초안',
+        body: '제품 사진은 있는데 브랜드 톤의 소개 흐름이 부족할 때 빠르게 초안을 만들 수 있습니다.'
+      },
+      {
+        title: '오픈마켓 업로드 전 시안 확인',
+        body: '쿠팡, 11번가, 옥션처럼 여러 채널에 올리기 전 공통 구조를 먼저 잡는 용도로 쓸 수 있습니다.'
+      },
+      {
+        title: 'ManyTool 상세페이지 실험',
+        body: '긴 상세페이지를 HTML과 이미지 형태로 동시에 받아 보고 싶은 판매자에게 적합합니다.'
+      }
+    ],
+    faqTitle: 'FAQ',
     faq: [
       {
-        q: '어떤 곳에 올릴 상세페이지를 만들 수 있나요?',
-        a: '스마트스토어, 쿠팡, 11번가, 옥션, G마켓, 자사몰 등 한국형 쇼핑몰과 오픈마켓에서 활용할 수 있는 상세페이지 초안을 만드는 데 맞춰져 있습니다.'
+        q: '어떤 쇼핑몰에 올릴 상세페이지를 만들 수 있나요?',
+        a: '스마트스토어, 쿠팡, 11번가, 자사몰 등 긴 상품 소개 페이지가 필요한 곳에 맞는 초안을 만들 수 있습니다.'
       },
       {
-        q: '상품 사진이 적어도 상세페이지 제작이 가능한가요?',
-        a: '가능합니다. 업로드한 이미지를 바탕으로 흐름을 구성하고, 부족한 부분은 판매형 카피와 섹션 구조로 보완합니다.'
+        q: '상품 사진만 있어도 시작할 수 있나요?',
+        a: '가능합니다. 업로드 이미지와 기본 상품 정보를 바탕으로 부족한 섹션은 자동으로 재구성합니다.'
       },
       {
-        q: 'ManyTool은 무료인가요?',
-        a: 'ManyTool에는 무료 온라인 툴이 많고, 상세페이지 생성 툴은 결제형 흐름으로 운영됩니다. 다만 검색과 탐색 단계에서 필요한 정보는 이 페이지에서 충분히 확인할 수 있습니다.'
+        q: '완성 결과는 어떻게 활용하나요?',
+        a: 'HTML, PNG, JPG, PDF로 저장해 외주 전달, 내부 검토, 실제 업로드 작업에 활용할 수 있습니다.'
       }
     ]
   },
   en: {
     title: 'Product Detail Studio for Smart Store and Ecommerce | ManyTool',
-    description: 'Create marketplace-ready product detail pages for Korean ecommerce channels such as Naver Smart Store, Coupang, 11st, and self-hosted stores.',
-    keywords: 'product detail studio, ecommerce detail page, Smart Store detail page, marketplace product page, AI detail page builder',
+    description: 'Generate long-form ecommerce product detail page drafts for Smart Store, Coupang, 11st, and brand stores from product images and structured product info.',
+    keywords: 'product detail studio, ecommerce detail page, smart store product page, AI detail page builder, marketplace detail page',
     heading: 'Product Detail Studio for Korean Ecommerce',
-    body: 'Build long-form product detail page drafts for Korean ecommerce channels such as Smart Store, Coupang, and 11st using product images and structured product information.',
-    points: [],
-    faq: []
+    body: 'Build a sales-focused detail page draft, copy, HTML, PNG, JPG, and PDF from product images and product information in one flow.',
+    points: [
+      {
+        title: 'Long-form ecommerce layout',
+        body: 'The output follows a vertical 860px-style layout that fits Smart Store, marketplace pages, and brand store uploads.'
+      },
+      {
+        title: 'Sales copy generation',
+        body: 'It organizes headlines, key benefits, supporting sections, and CTA text from your product info.'
+      },
+      {
+        title: 'Export-ready files',
+        body: 'Save the result as HTML, PNG, JPG, or PDF for review, outsourcing, or direct upload preparation.'
+      }
+    ],
+    guideTitle: 'What This Tool Is For',
+    guideBody: 'This tool is designed for long-form product pages used in Korean ecommerce channels such as Smart Store, Coupang, 11st, and self-hosted stores.',
+    relatedTitle: 'Common Use Cases',
+    related: [
+      {
+        title: 'Smart Store detail page draft',
+        body: 'Useful when you need a long-form sales layout tailored to Korean marketplace expectations.'
+      },
+      {
+        title: 'Brand store product story',
+        body: 'Helpful when you already have product photos but need a stronger branded narrative flow.'
+      },
+      {
+        title: 'Marketplace upload preview',
+        body: 'Good for building a common structure before uploading to multiple marketplaces.'
+      },
+      {
+        title: 'ManyTool layout experiment',
+        body: 'A practical way to compare HTML and image exports from the same detail page draft.'
+      }
+    ],
+    faqTitle: 'FAQ',
+    faq: [
+      {
+        q: 'Which stores is this built for?',
+        a: 'It is designed for long-form ecommerce pages such as Smart Store, Coupang, 11st, and brand store product pages.'
+      },
+      {
+        q: 'Can I start with only product photos?',
+        a: 'Yes. The tool uses uploaded images and core product information to draft missing sections automatically.'
+      },
+      {
+        q: 'How can I use the result?',
+        a: 'You can save the result as HTML, PNG, JPG, or PDF for review, outsourcing, or publishing workflows.'
+      }
+    ]
   },
   ja: {
-    title: '商品詳細ページ生成ツール | ManyTool',
-    description: 'スマートストア、クーパン、自社EC向けの商品詳細ページ草案を写真と商品情報から生成します。',
-    keywords: '商品詳細ページ, スマートストア, EC商品ページ, AI詳細ページ生成',
-    heading: 'ショッピングモール向け商品詳細ページ生成ツール',
-    body: '商品写真と商品情報をもとに、韓国EC向けの長い商品詳細ページ草案を素早く作成できます。',
-    points: [],
-    faq: []
+    title: '商品詳細ページ生成スタジオ | ManyTool',
+    description: '商品画像と基本情報から、Smart Store、Coupang、11st、自社EC向けの縦長商品詳細ページ草案を生成します。',
+    keywords: '商品詳細ページ, EC商品ページ, Smart Store 詳細ページ, AI商品ページ生成, 商品紹介ページ',
+    heading: '韓国EC向け 商品詳細ページスタジオ',
+    body: '商品画像と商品情報から、販売用の商品詳細ページ草案、コピー、HTML、PNG、JPG、PDFまでまとめて作成できます。',
+    points: [
+      {
+        title: '縦長ECレイアウト',
+        body: 'Smart Store や各種マーケットプレイス、自社ECに合わせやすい縦長レイアウトで整理します。'
+      },
+      {
+        title: '販売コピー自動整理',
+        body: '商品名、価格、ターゲット、訴求ポイントをもとに見出しやCTAを自動でまとめます。'
+      },
+      {
+        title: 'そのまま保存できる形式',
+        body: 'HTML、PNG、JPG、PDFとして保存できるので、確認や外注、掲載準備に使えます。'
+      }
+    ],
+    guideTitle: 'このツールの用途',
+    guideBody: 'このツールは Smart Store、Coupang、11st、自社EC など、縦長の商品紹介ページが必要なケース向けに作られています。',
+    relatedTitle: 'よくある使い方',
+    related: [
+      {
+        title: 'Smart Store 用の草案作成',
+        body: '韓国EC向けの長い販売ページ構成を素早く用意したい場合に向いています。'
+      },
+      {
+        title: '自社EC向けブランド紹介',
+        body: '写真はあるが、ブランドらしい商品紹介の流れが弱いときに便利です。'
+      },
+      {
+        title: '複数モール掲載前の下書き',
+        body: '複数のマーケットに掲載する前に、共通の骨組みを先に作る用途に使えます。'
+      },
+      {
+        title: 'ManyTool レイアウト確認',
+        body: '同じ草案を HTML と画像の両方で確認したい場合に適しています。'
+      }
+    ],
+    faqTitle: 'FAQ',
+    faq: [
+      {
+        q: 'どのショップ向けですか？',
+        a: 'Smart Store、Coupang、11st、自社ECなど、縦長の商品紹介ページが必要なケース向けです。'
+      },
+      {
+        q: '商品写真だけでも始められますか？',
+        a: 'はい。アップロード画像と基本情報をもとに不足するセクションを自動で補います。'
+      },
+      {
+        q: '結果はどう使えますか？',
+        a: 'HTML、PNG、JPG、PDFで保存でき、確認、外注、掲載準備に活用できます。'
+      }
+    ]
   }
 }[locale];
 ---
@@ -76,75 +190,46 @@ const copy = {
       <h1 class="mt-2 text-3xl font-black tracking-tight text-slate-900">{copy.heading}</h1>
       <p class="mt-3 max-w-4xl text-sm leading-7 text-slate-600">{copy.body}</p>
 
-      {locale === 'ko' ? (
-        <div class="mt-6 grid gap-4 md:grid-cols-3">
-          {copy.points.map((item) => (
-            <article class="rounded-[1.4rem] border border-slate-200 bg-slate-50 p-4">
-              <h2 class="text-base font-black text-slate-900">{item.title}</h2>
-              <p class="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
-            </article>
-          ))}
-        </div>
-      ) : null}
+      <div class="mt-6 grid gap-4 md:grid-cols-3">
+        {copy.points.map((item) => (
+          <article class="rounded-[1.4rem] border border-slate-200 bg-slate-50 p-4">
+            <h2 class="text-base font-black text-slate-900">{item.title}</h2>
+            <p class="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
+          </article>
+        ))}
+      </div>
 
-      {locale === 'ko' ? (
-        <div class="mt-6 rounded-[1.6rem] border border-slate-200 bg-slate-50 p-5">
-          <h2 class="text-lg font-black text-slate-900">상세페이지 제작 키워드 안내</h2>
-          <p class="mt-2 text-sm leading-6 text-slate-600">
-            이 도구는 스마트스토어 상세페이지, 쇼핑몰 상세페이지 제작, 쿠팡 상세페이지, 오픈마켓 상세페이지, 상품 상세페이지 만들기,
-            판매용 상세페이지 초안 작성 같은 검색 의도에 맞춰 설계된 AI 상세페이지 제작 툴입니다.
-          </p>
-        </div>
-      ) : null}
+      <div class="mt-6 rounded-[1.6rem] border border-slate-200 bg-slate-50 p-5">
+        <h2 class="text-lg font-black text-slate-900">{copy.guideTitle}</h2>
+        <p class="mt-2 text-sm leading-6 text-slate-600">{copy.guideBody}</p>
+      </div>
     </section>
 
-    <ProductDetailStudio client:load />
+    <ProductDetailStudio client:load locale={locale} />
 
-    {locale === 'ko' ? (
-      <section class="mt-8 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 class="text-2xl font-black tracking-tight text-slate-900">자주 찾는 검색 의도</h2>
-        <div class="mt-4 grid gap-4 md:grid-cols-2">
+    <section class="mt-8 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
+      <h2 class="text-2xl font-black tracking-tight text-slate-900">{copy.relatedTitle}</h2>
+      <div class="mt-4 grid gap-4 md:grid-cols-2">
+        {copy.related.map((item) => (
           <article class="rounded-[1.4rem] border border-slate-200 bg-slate-50 p-4">
-            <h3 class="text-base font-black text-slate-900">스마트스토어 상세페이지 제작</h3>
-            <p class="mt-2 text-sm leading-6 text-slate-600">
-              스마트스토어에 맞는 860px 기준 상세페이지 흐름, 판매 카피, 긴 세로형 구성까지 한 번에 정리할 수 있는 상세페이지 제작 툴을 찾는 사용자에게 적합합니다.
-            </p>
+            <h3 class="text-base font-black text-slate-900">{item.title}</h3>
+            <p class="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
           </article>
-          <article class="rounded-[1.4rem] border border-slate-200 bg-slate-50 p-4">
-            <h3 class="text-base font-black text-slate-900">쇼핑몰 상세페이지 만들기</h3>
-            <p class="mt-2 text-sm leading-6 text-slate-600">
-              상품 사진과 기본 정보만으로 쇼핑몰 상세페이지 초안, 판매 문구, 비교 포인트, 디테일 설명을 빠르게 정리해 자사몰이나 오픈마켓에 응용할 수 있습니다.
-            </p>
-          </article>
-          <article class="rounded-[1.4rem] border border-slate-200 bg-slate-50 p-4">
-            <h3 class="text-base font-black text-slate-900">오픈마켓 상세페이지 툴</h3>
-            <p class="mt-2 text-sm leading-6 text-slate-600">
-              쿠팡, 11번가, 옥션, G마켓, 네이버 스마트스토어처럼 상품 페이지 전개가 중요한 오픈마켓용 상세페이지 초안 제작에 활용할 수 있습니다.
-            </p>
-          </article>
-          <article class="rounded-[1.4rem] border border-slate-200 bg-slate-50 p-4">
-            <h3 class="text-base font-black text-slate-900">ManyTool 무료 툴과 함께 탐색</h3>
-            <p class="mt-2 text-sm leading-6 text-slate-600">
-              ManyTool은 무료 온라인 툴이 많은 플랫폼이며, 이 상세페이지 제작 도구는 쇼핑몰 운영자와 셀러를 위한 판매형 상세페이지 생성 작업에 집중합니다.
-            </p>
-          </article>
-        </div>
-      </section>
-    ) : null}
+        ))}
+      </div>
+    </section>
 
-    {locale === 'ko' ? (
-      <section class="mt-8 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 class="text-2xl font-black tracking-tight text-slate-900">FAQ</h2>
-        <div class="mt-4 space-y-4">
-          {copy.faq.map((item) => (
-            <article class="rounded-[1.3rem] border border-slate-200 bg-slate-50 p-4">
-              <h3 class="text-base font-black text-slate-900">{item.q}</h3>
-              <p class="mt-2 text-sm leading-6 text-slate-600">{item.a}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-    ) : null}
+    <section class="mt-8 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
+      <h2 class="text-2xl font-black tracking-tight text-slate-900">{copy.faqTitle}</h2>
+      <div class="mt-4 space-y-4">
+        {copy.faq.map((item) => (
+          <article class="rounded-[1.3rem] border border-slate-200 bg-slate-50 p-4">
+            <h3 class="text-base font-black text-slate-900">{item.q}</h3>
+            <p class="mt-2 text-sm leading-6 text-slate-600">{item.a}</p>
+          </article>
+        ))}
+      </div>
+    </section>
   </main>
   <Footer />
 </Layout>

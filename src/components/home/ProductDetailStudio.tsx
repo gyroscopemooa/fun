@@ -45,6 +45,8 @@ import {
 } from '@/lib/product-detail-studio';
 import { cn } from '@/lib/utils';
 
+type Locale = 'ko' | 'en' | 'ja';
+
 type StudioState = {
   theme: ThemeKey;
   result: ProductDetailResult | null;
@@ -84,14 +86,232 @@ const API_BASE = (RAW_API_BASE || (import.meta.env.DEV ? DEV_API_BASE : '')).rep
 const EXPORT_WIDTH = 860;
 const SLICE_HEIGHT = 3000;
 const SHOW_DEBUG_SCENARIOS = import.meta.env.DEV || import.meta.env.PUBLIC_DETAIL_PAGE_DEBUG === 'true';
-const INVALID_API_RESPONSE_MESSAGE = '생성 서버 응답을 처리할 수 없습니다. 잠시 후 다시 시도해주세요.';
-const MISSING_API_BASE_MESSAGE = 'API 서버 주소가 설정되지 않았습니다. 배포 환경변수를 확인해주세요.';
-const UNREACHABLE_API_MESSAGE = '생성 서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.';
-const INVALID_PRODUCTION_API_BASE_MESSAGE = '프로덕션 API 주소가 잘못 설정되었습니다. PUBLIC_NODE_API_BASE를 https://api.manytool.net 으로 설정해주세요.';
 const DETAIL_PAGE_REQUEST_PATH = '/commerce/detail-page/generate';
 const CHECKOUT_REQUEST_PATH = '/checkout';
 const DETAIL_PAGE_RESULT_PATH = '/tools/product-detail-studio/result/';
 const DETAIL_PAGE_DRAFT_KEY = 'manytool.detailPageDraft';
+
+const UI_COPY = {
+  ko: {
+    invalidApiResponse: '생성 서버 응답을 처리할 수 없습니다. 잠시 후 다시 시도해주세요.',
+    missingApiBase: 'API 서버 주소가 설정되지 않았습니다. 배포 환경변수를 확인해주세요.',
+    unreachableApi: '생성 서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.',
+    invalidProductionApiBase: '프로덕션 API 주소가 잘못 설정되었습니다. PUBLIC_NODE_API_BASE를 https://api.manytool.net 으로 설정해주세요.',
+    sample: {
+      productName: '프리미엄 세라믹 머그컵',
+      price: '29,900원 / 2컬러',
+      audience: '감성 주방 아이템을 찾는 20-30대 고객',
+      sellingPoints: '보온감, 묵직한 세라믹 질감, 선물하기 좋은 디자인',
+    },
+    loadImagesSuccess: (count: number) => `${count}장의 이미지를 불러왔습니다.`,
+    uploadFail: '이미지 업로드에 실패했습니다.',
+    uploadFirst: '먼저 상품 이미지를 업로드해주세요.',
+    generateFail: '상세페이지 생성에 실패했습니다.',
+    generatedSuccess: (count: number) => `${count}장 구성의 상세페이지가 생성되었습니다.`,
+    copyHtml: 'HTML을 복사했습니다.',
+    copyText: '카피 텍스트를 복사했습니다.',
+    saveImageFail: '이미지 저장에 실패했습니다.',
+    savePdfFail: 'PDF 저장에 실패했습니다.',
+    uploadAtLeastOne: '먼저 상품 이미지를 최소 1장 업로드해주세요.',
+    paymentProductMissing: '상세페이지 티어 결제 상품이 아직 설정되지 않았습니다.',
+    tierNotReady: (count: number) => `${count}장 티어 결제가 아직 설정되지 않았습니다.`,
+    sliceSaveFail: '슬라이스 저장에 실패했습니다.',
+    sliceSaveSuccess: (count: number) => `${count}개의 PNG 슬라이스를 저장했습니다.`,
+    clearSuccess: '입력값과 이미지를 비웠습니다.',
+    heroEyebrow: '쇼핑몰 판매형 상세페이지',
+    heroTitle: '쇼핑몰·오픈마켓·자사몰에 올릴 상세페이지를 빠르게 시작합니다.',
+    heroBody: '스마트스토어, 쿠팡, 11번가, 네이버, 옥션, 위메프, 토스, 카카오, 자사몰에 어울리는 판매형 상세페이지를 사진과 상품 정보만으로 빠르게 정리할 수 있게 구성했습니다.',
+    sectionTitle: '예뻐 보이고, 잘 팔리게 만드는 판매 흐름',
+    sectionBody: '결과물만 만드는 툴이 아니라 판매 페이지 자체에서 구매 이유가 더 잘 보이도록 구성했습니다.',
+    paletteTitle: '디자인 톤 선택',
+    inputEyebrow: 'Input',
+    inputTitle: '상품 입력',
+    productName: '상품명',
+    price: '가격 / 옵션',
+    audience: '타깃 고객',
+    pageCount: '페이지 수',
+    tierHint: '5, 7, 10, 15, 20장 티어 중에서 선택할 수 있습니다.',
+    selectedTier: 'Selected Tier',
+    selectedTierHint: '장수가 많을수록 더 흐름이 자연스럽고 설명이 풍부해집니다',
+    sellingPoints: '핵심 판매 포인트',
+    prompt: 'LLM 프롬프트',
+    sellingPointsPlaceholder: '예: 3중 보온 구조, 감성적인 컬러감, 선물하기 좋은 패키지',
+    promptPlaceholder: '예: 스마트스토어 흐름으로 7장 구성, proof 섹션은 신뢰감 있게 정리해줘',
+    imageUploadTitle: '상품 이미지 업로드',
+    imageUploadBody: '최대 30장까지 업로드할 수 있습니다. 이미지가 적어도 부족한 섹션은 자동으로 재구성합니다.',
+    chooseImages: '이미지 선택',
+    noImages: '아직 업로드한 이미지가 없습니다.',
+    selectedPages: '선택 장수',
+    perPageApprox: '장당',
+    estimated: '예상 금액',
+    usdNotice: '실제 결제는 USD 기준',
+    payAndGenerate: 'Pay and Generate',
+    clearInputs: '입력값 비우기',
+    copyTextButton: 'Copy Text',
+    termsNoticePrefix: '결제를 진행하면',
+    terms: '이용약관',
+    privacy: '개인정보 처리방침',
+    refund: '환불정책',
+    termsNoticeSuffix: '에 동의한 것으로 간주됩니다.',
+    preview: 'Preview',
+    detailPageVertical: '860px vertical detail page',
+    pages: 'pages',
+    classifiedPlaceholder: '생성 후 hero / detail / usage 자동 분류가 여기에 표시됩니다.',
+    hero: 'Hero',
+    headlinePlaceholder: '상세페이지 헤드라인이 여기에 표시됩니다.',
+    subheadlinePlaceholder: '상품명, 가격, 타깃 고객, 업로드 이미지 기준으로 상세페이지 카피가 생성됩니다.',
+    renderedPlaceholder: '생성 후 선택한 페이지 수에 맞는 긴 흐름의 상세페이지가 렌더링됩니다.',
+    seoCta: 'SEO / CTA',
+    seoPlaceholder: '생성 후 SEO title이 여기에 표시됩니다.',
+    ctaPlaceholder: '생성 후 CTA 문구가 여기에 표시됩니다.'
+  },
+  en: {
+    invalidApiResponse: 'Could not parse the generation server response. Please try again later.',
+    missingApiBase: 'API base URL is missing. Check the deployment environment variables.',
+    unreachableApi: 'Could not reach the generation server. Please try again later.',
+    invalidProductionApiBase: 'The production API base is invalid. Set PUBLIC_NODE_API_BASE to https://api.manytool.net.',
+    sample: {
+      productName: 'Premium Ceramic Mug',
+      price: '$24.90 / 2 colors',
+      audience: 'Customers in their 20s and 30s looking for cozy kitchen items',
+      sellingPoints: 'Heat retention, premium ceramic texture, gift-friendly design',
+    },
+    loadImagesSuccess: (count: number) => `Loaded ${count} image(s).`,
+    uploadFail: 'Failed to upload images.',
+    uploadFirst: 'Upload product images first.',
+    generateFail: 'Failed to generate the detail page.',
+    generatedSuccess: (count: number) => `Generated a ${count}-page detail page draft.`,
+    copyHtml: 'HTML copied.',
+    copyText: 'Copy text copied.',
+    saveImageFail: 'Failed to save the image.',
+    savePdfFail: 'Failed to save the PDF.',
+    uploadAtLeastOne: 'Upload at least one product image first.',
+    paymentProductMissing: 'The detail page payment product is not configured yet.',
+    tierNotReady: (count: number) => `The ${count}-page tier is not configured yet.`,
+    sliceSaveFail: 'Failed to save PNG slices.',
+    sliceSaveSuccess: (count: number) => `Saved ${count} PNG slice(s).`,
+    clearSuccess: 'Cleared inputs and images.',
+    heroEyebrow: 'Sales-focused ecommerce detail page',
+    heroTitle: 'Start a product detail page for marketplaces and brand stores in one flow.',
+    heroBody: 'Built for Smart Store, Coupang, 11st, Naver, Auction, Wemakeprice, Toss, Kakao, and self-hosted stores with product images and structured product info.',
+    sectionTitle: 'A sales flow that looks polished and sells more clearly',
+    sectionBody: 'This is not just a layout generator. It is designed to make buying reasons more visible across the whole page.',
+    paletteTitle: 'Choose a design tone',
+    inputEyebrow: 'Input',
+    inputTitle: 'Product Input',
+    productName: 'Product Name',
+    price: 'Price / Options',
+    audience: 'Target Audience',
+    pageCount: 'Page Count',
+    tierHint: 'Choose from 5, 7, 10, 15, or 20 page tiers.',
+    selectedTier: 'Selected Tier',
+    selectedTierHint: 'More pages usually create a smoother flow and richer explanations.',
+    sellingPoints: 'Key Selling Points',
+    prompt: 'LLM Prompt',
+    sellingPointsPlaceholder: 'Example: triple heat retention, soft neutral color, gift-friendly package',
+    promptPlaceholder: 'Example: Build a 7-page Smart Store style layout with a trustworthy proof section',
+    imageUploadTitle: 'Upload Product Images',
+    imageUploadBody: 'You can upload up to 30 images. Missing sections are reconstructed automatically when needed.',
+    chooseImages: 'Choose Images',
+    noImages: 'No images uploaded yet.',
+    selectedPages: 'Selected Pages',
+    perPageApprox: 'Per page',
+    estimated: 'Estimated',
+    usdNotice: 'Actual checkout is charged in USD',
+    payAndGenerate: 'Pay and Generate',
+    clearInputs: 'Clear Inputs',
+    copyTextButton: 'Copy Text',
+    termsNoticePrefix: 'By continuing with payment, you agree to the',
+    terms: 'Terms',
+    privacy: 'Privacy Policy',
+    refund: 'Refund Policy',
+    termsNoticeSuffix: '.',
+    preview: 'Preview',
+    detailPageVertical: '860px vertical detail page',
+    pages: 'pages',
+    classifiedPlaceholder: 'Automatic hero / detail / usage image classification will appear here after generation.',
+    hero: 'Hero',
+    headlinePlaceholder: 'Your detail page headline will appear here after generation.',
+    subheadlinePlaceholder: 'Generated copy based on product name, price, audience, and uploaded images will appear here.',
+    renderedPlaceholder: 'The long-form detail page preview for your selected page count will render here after generation.',
+    seoCta: 'SEO / CTA',
+    seoPlaceholder: 'The generated SEO title will appear here.',
+    ctaPlaceholder: 'The generated CTA copy will appear here.'
+  },
+  ja: {
+    invalidApiResponse: '生成サーバーの応答を処理できませんでした。しばらくしてから再度お試しください。',
+    missingApiBase: 'API サーバーの設定がありません。環境変数を確認してください。',
+    unreachableApi: '生成サーバーに接続できませんでした。しばらくしてから再度お試しください。',
+    invalidProductionApiBase: '本番 API の設定が正しくありません。PUBLIC_NODE_API_BASE を https://api.manytool.net に設定してください。',
+    sample: {
+      productName: 'プレミアム セラミックマグ',
+      price: '$24.90 / 2カラー',
+      audience: '雰囲気のあるキッチン雑貨を探す20〜30代',
+      sellingPoints: '保温性、上質なセラミック質感、ギフト向けデザイン',
+    },
+    loadImagesSuccess: (count: number) => `${count}枚の画像を読み込みました。`,
+    uploadFail: '画像のアップロードに失敗しました。',
+    uploadFirst: '先に商品画像をアップロードしてください。',
+    generateFail: '商品詳細ページの生成に失敗しました。',
+    generatedSuccess: (count: number) => `${count}ページ構成の詳細ページを生成しました。`,
+    copyHtml: 'HTML をコピーしました。',
+    copyText: 'コピー文をコピーしました。',
+    saveImageFail: '画像の保存に失敗しました。',
+    savePdfFail: 'PDF の保存に失敗しました。',
+    uploadAtLeastOne: '先に商品画像を1枚以上アップロードしてください。',
+    paymentProductMissing: '商品詳細ページの決済商品がまだ設定されていません。',
+    tierNotReady: (count: number) => `${count}ページのティア決済がまだ設定されていません。`,
+    sliceSaveFail: 'PNG スライスの保存に失敗しました。',
+    sliceSaveSuccess: (count: number) => `${count}個の PNG スライスを保存しました。`,
+    clearSuccess: '入力内容と画像をクリアしました。',
+    heroEyebrow: '販売向け 商品詳細ページ',
+    heroTitle: 'マーケットプレイスや自社EC向けの商品詳細ページをすばやく開始できます。',
+    heroBody: 'Smart Store、Coupang、11st、Naver、Auction、Wemakeprice、Toss、Kakao、自社ECに合う販売型の商品詳細ページを、写真と商品情報だけで整理できます。',
+    sectionTitle: '見栄えがよく、売れやすい販売フロー',
+    sectionBody: 'ただのレイアウト生成ではなく、ページ全体で購入理由が伝わりやすくなる構成を目指しています。',
+    paletteTitle: 'デザイントーンを選択',
+    inputEyebrow: 'Input',
+    inputTitle: '商品入力',
+    productName: '商品名',
+    price: '価格 / オプション',
+    audience: 'ターゲット顧客',
+    pageCount: 'ページ数',
+    tierHint: '5 / 7 / 10 / 15 / 20 ページのティアから選択できます。',
+    selectedTier: 'Selected Tier',
+    selectedTierHint: 'ページ数が多いほど流れが自然で説明も豊かになります。',
+    sellingPoints: '主な訴求ポイント',
+    prompt: 'LLM プロンプト',
+    sellingPointsPlaceholder: '例: 3重保温構造、落ち着いたカラー、ギフト向けパッケージ',
+    promptPlaceholder: '例: Smart Store 向けの7ページ構成で、信頼感のある proof セクションを入れてください',
+    imageUploadTitle: '商品画像アップロード',
+    imageUploadBody: '最大30枚までアップロードできます。画像が少ない場合でも不足セクションを自動で補います。',
+    chooseImages: '画像を選択',
+    noImages: 'まだ画像がアップロードされていません。',
+    selectedPages: '選択ページ数',
+    perPageApprox: '1ページあたり',
+    estimated: '予想金額',
+    usdNotice: '実際の決済は USD 基準です',
+    payAndGenerate: 'Pay and Generate',
+    clearInputs: '入力をクリア',
+    copyTextButton: 'Copy Text',
+    termsNoticePrefix: '決済を進めると、',
+    terms: '利用規約',
+    privacy: 'プライバシーポリシー',
+    refund: '返金ポリシー',
+    termsNoticeSuffix: 'に同意したものとみなされます。',
+    preview: 'Preview',
+    detailPageVertical: '860px vertical detail page',
+    pages: 'pages',
+    classifiedPlaceholder: '生成後に hero / detail / usage の自動分類結果がここに表示されます。',
+    hero: 'Hero',
+    headlinePlaceholder: '生成後に商品詳細ページの見出しがここに表示されます。',
+    subheadlinePlaceholder: '商品名、価格、顧客層、アップロード画像をもとに生成されたコピーがここに表示されます。',
+    renderedPlaceholder: '生成後に、選択したページ数に応じた長い商品詳細ページプレビューがここに表示されます。',
+    seoCta: 'SEO / CTA',
+    seoPlaceholder: '生成後に SEO タイトルがここに表示されます。',
+    ctaPlaceholder: '生成後に CTA 文がここに表示されます。'
+  }
+} as const;
 
 const resizeImageToDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
   const reader = new FileReader();
@@ -172,12 +392,17 @@ const saveDetailPageDraft = ({
   }));
 };
 
-export default function ProductDetailStudio() {
+type ProductDetailStudioProps = {
+  locale?: Locale;
+};
+
+export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStudioProps) {
+  const ui = UI_COPY[locale];
   const defaultFormValues: ProductDetailFormValues = {
-    productName: '프리미엄 세라믹 머그컵',
-    price: '29,900원 / 2컬러',
-    audience: '감성 주방 아이템을 찾는 20-30대 고객',
-    sellingPoints: '보온감, 묵직한 세라믹 질감, 선물하기 좋은 디자인',
+    productName: ui.sample.productName,
+    price: ui.sample.price,
+    audience: ui.sample.audience,
+    sellingPoints: ui.sample.sellingPoints,
     prompt: starterPrompts[0],
     pageCount: 7
   };
@@ -250,7 +475,7 @@ export default function ProductDetailStudio() {
     );
     if (hasInvalidProductionApiBase) {
       console.error('[ProductDetailStudio] invalid production API base:', API_BASE);
-      setApiError(INVALID_PRODUCTION_API_BASE_MESSAGE);
+      setApiError(ui.invalidProductionApiBase);
     }
   }, []);
 
@@ -321,11 +546,11 @@ export default function ProductDetailStudio() {
       setHtml('');
       setCopyText('');
       previous.forEach((image) => URL.revokeObjectURL(image.url));
-      toast.success(`${loadedImages.length}장의 이미지를 불러왔습니다.`);
+      toast.success(ui.loadImagesSuccess(loadedImages.length));
     } catch (error) {
       previous.forEach((image) => URL.revokeObjectURL(image.url));
       setImages([]);
-      toast.error(error instanceof Error ? error.message : '이미지 업로드에 실패했습니다.');
+      toast.error(error instanceof Error ? error.message : ui.uploadFail);
     } finally {
       event.target.value = '';
     }
@@ -334,19 +559,19 @@ export default function ProductDetailStudio() {
   const onGenerate = handleSubmit(async (formValues) => {
     const pageCount = normalizeDetailPageCount(formValues.pageCount);
     if (!images.length) {
-      toast.error('먼저 상품 이미지를 업로드해주세요.');
+      toast.error(ui.uploadFirst);
       return;
     }
 
     if (!API_BASE) {
-      setApiError(MISSING_API_BASE_MESSAGE);
-      toast.error(MISSING_API_BASE_MESSAGE);
+      setApiError(ui.missingApiBase);
+      toast.error(ui.missingApiBase);
       return;
     }
 
     if (hasInvalidProductionApiBase) {
-      setApiError(INVALID_PRODUCTION_API_BASE_MESSAGE);
-      toast.error(INVALID_PRODUCTION_API_BASE_MESSAGE);
+      setApiError(ui.invalidProductionApiBase);
+      toast.error(ui.invalidProductionApiBase);
       return;
     }
 
@@ -378,21 +603,21 @@ export default function ProductDetailStudio() {
       }
       const payload = rawBody ? JSON.parse(rawBody) : null;
       if (!response.ok || !payload?.result) {
-        throw new Error(payload?.error || '상세페이지 생성에 실패했습니다.');
+        throw new Error(payload?.error || ui.generateFail);
       }
 
       const nextResult = ensureResultIntegrity(payload.result as ProductDetailResult, pageCount);
       setResult(nextResult);
       setHtml(buildDetailPageHtml({ formValues, result: nextResult, images, theme }));
       setCopyText(buildPlainCopyText({ formValues, result: nextResult }));
-      toast.success(`${nextResult.page_count}장 구성의 상세페이지가 생성되었습니다.`);
+      toast.success(ui.generatedSuccess(nextResult.page_count));
     } catch (error) {
-      const fallbackMessage = '상세페이지 생성에 실패했습니다.';
+      const fallbackMessage = ui.generateFail;
       const rawMessage = error instanceof Error ? error.message : fallbackMessage;
       const message = rawMessage === 'Failed to fetch'
-        ? UNREACHABLE_API_MESSAGE
+        ? ui.unreachableApi
         : rawMessage === 'Unexpected end of JSON input'
-          ? INVALID_API_RESPONSE_MESSAGE
+          ? ui.invalidApiResponse
           : rawMessage;
       setApiError(message);
       toast.error(message);
@@ -403,25 +628,25 @@ export default function ProductDetailStudio() {
 
   const onCopyHtml = async () => {
     if (!html) {
-      toast.error('먼저 상세페이지를 생성해주세요.');
+      toast.error(ui.generateFail);
       return;
     }
     await navigator.clipboard.writeText(html);
-    toast.success('HTML을 복사했습니다.');
+    toast.success(ui.copyHtml);
   };
 
   const onCopyText = async () => {
     if (!copyText) {
-      toast.error('먼저 상세페이지를 생성해주세요.');
+      toast.error(ui.generateFail);
       return;
     }
     await navigator.clipboard.writeText(copyText);
-    toast.success('카피 텍스트를 복사했습니다.');
+    toast.success(ui.copyText);
   };
 
   const renderExportCanvas = async () => {
     if (!exportRef.current || !result) {
-      throw new Error('먼저 상세페이지를 생성해주세요.');
+      throw new Error(ui.generateFail);
     }
 
     const sourceWidth = Math.max(1, exportRef.current.getBoundingClientRect().width);
@@ -454,7 +679,7 @@ export default function ProductDetailStudio() {
 
   const onExportImage = async (format: 'png' | 'jpg') => {
     if (!result) {
-      toast.error('먼저 상세페이지를 생성해주세요.');
+      toast.error(ui.generateFail);
       return;
     }
 
@@ -469,7 +694,7 @@ export default function ProductDetailStudio() {
       );
       toast.success(`${format.toUpperCase()} 파일을 저장했습니다.`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : '이미지 저장에 실패했습니다.');
+      toast.error(error instanceof Error ? error.message : ui.saveImageFail);
     } finally {
       setIsExportingFile(null);
     }
@@ -477,7 +702,7 @@ export default function ProductDetailStudio() {
 
   const onExportPdf = async () => {
     if (!result) {
-      toast.error('먼저 상세페이지를 생성해주세요.');
+      toast.error(ui.generateFail);
       return;
     }
 
@@ -494,7 +719,7 @@ export default function ProductDetailStudio() {
       pdf.save(`${getExportFileBaseName(values.productName)}.pdf`);
       toast.success('PDF 파일을 저장했습니다.');
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'PDF 저장에 실패했습니다.');
+      toast.error(error instanceof Error ? error.message : ui.savePdfFail);
     } finally {
       setIsExportingFile(null);
     }
@@ -502,19 +727,19 @@ export default function ProductDetailStudio() {
 
   const onStartCheckout = handleSubmit(async (formValues) => {
     if (!images.length) {
-      toast.error('먼저 상품 이미지를 최소 1장 업로드해주세요.');
+      toast.error(ui.uploadAtLeastOne);
       return;
     }
 
     if (!API_BASE) {
-      setApiError(MISSING_API_BASE_MESSAGE);
-      toast.error(MISSING_API_BASE_MESSAGE);
+      setApiError(ui.missingApiBase);
+      toast.error(ui.missingApiBase);
       return;
     }
 
     if (hasInvalidProductionApiBase) {
-      setApiError(INVALID_PRODUCTION_API_BASE_MESSAGE);
-      toast.error(INVALID_PRODUCTION_API_BASE_MESSAGE);
+      setApiError(ui.invalidProductionApiBase);
+      toast.error(ui.invalidProductionApiBase);
       return;
     }
 
@@ -524,7 +749,7 @@ export default function ProductDetailStudio() {
     }
 
     if (!paymentProducts.detail_page) {
-      toast.error('상세페이지 티어 결제 상품이 아직 설정되지 않았습니다.');
+      toast.error(ui.paymentProductMissing);
       return;
     }
 
@@ -533,7 +758,7 @@ export default function ProductDetailStudio() {
       const pageCount = normalizeDetailPageCount(formValues.pageCount);
       const tierEnabled = paymentProducts.detail_page_tiers?.[pageCount];
       if (paymentProducts.detail_page_tiers && tierEnabled === false) {
-        throw new Error(`${pageCount}장 티어 결제가 아직 설정되지 않았습니다.`);
+        throw new Error(ui.tierNotReady(pageCount));
       }
       const pricing = buildDetailPagePricing(pageCount);
       saveDetailPageDraft({
@@ -601,7 +826,7 @@ export default function ProductDetailStudio() {
 
   const onExportSlices = async () => {
     if (!exportRef.current || !result) {
-      toast.error('먼저 상세페이지를 생성해주세요.');
+      toast.error(ui.generateFail);
       return;
     }
 
@@ -639,9 +864,9 @@ export default function ProductDetailStudio() {
         context.drawImage(canvas, 0, range.top, canvas.width, range.height, 0, 0, canvas.width, range.height);
         downloadDataUrl(sliceCanvas.toDataURL('image/png'), `page${index + 1}.png`);
       }
-      toast.success(`${sliceRanges.length}개의 PNG 슬라이스를 저장했습니다.`);
+      toast.success(ui.sliceSaveSuccess(sliceRanges.length));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : '슬라이스 저장에 실패했습니다.');
+      toast.error(error instanceof Error ? error.message : ui.sliceSaveFail);
     } finally {
       setIsExportingSlices(false);
     }
@@ -658,7 +883,7 @@ export default function ProductDetailStudio() {
     if (typeof window !== 'undefined') {
       window.localStorage.removeItem(DETAIL_PAGE_DRAFT_KEY);
     }
-    toast.success('입력값과 이미지를 비웠습니다.');
+    toast.success(ui.clearSuccess);
   };
 
   return (
@@ -684,14 +909,12 @@ export default function ProductDetailStudio() {
             </div>
 
             <div className="max-w-3xl">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/46">Marketplace Ready</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/46">{ui.heroEyebrow}</p>
               <h1 className="mt-3 text-4xl font-black leading-[1.04] tracking-tight text-white sm:text-[3.35rem]">
-                {'\uC1FC\uD551\uBAB0\u00B7\uC624\uD508\uB9C8\uCF13\u00B7\uC790\uC0AC\uBAB0\uC5D0 \uC62C\uB9B4 \uC0C1\uC138\uD398\uC774\uC9C0\uB97C \uBE60\uB974\uAC8C \uC81C\uC791\uD569\uB2C8\uB2E4.'}
+                {ui.heroTitle}
               </h1>
               <p className="mt-4 max-w-3xl text-[15px] leading-7 text-white/74 sm:text-[1.05rem]">
-                {'\uC2A4\uB9C8\uD2B8\uC2A4\uD1A0\uC5B4, \uCFE0\uD321, 11\uBC88\uAC00, \uB124\uC774\uBC84, \uC625\uC158, \uC704\uBA54\uD504, \uD1A0\uC2A4, \uCE74\uCE74\uC624, \uC790\uC0AC\uBAB0\uC5D0 \uBC14\uB85C \uC751\uC6A9\uD560 \uC218 \uC788\uB294'}
-                {' '}
-                {'\uD310\uB9E4\uC6A9 \uC0C1\uC138\uD398\uC774\uC9C0 \uCD08\uC548\uC744 \uC0C1\uD488 \uC0AC\uC9C4\uACFC \uC815\uBCF4\uB9CC\uC73C\uB85C \uC815\uB9AC\uD569\uB2C8\uB2E4.'}
+                {ui.heroBody}
               </p>
             </div>
 
@@ -708,10 +931,10 @@ export default function ProductDetailStudio() {
 
             <div className="max-w-2xl">
               <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
-                상품 사진과 상품 정보를 판매용 상세페이지 초안으로 바로 정리합니다.
+                {ui.heroTitle}
               </h1>
               <p className="mt-3 text-sm leading-6 text-white/72 sm:text-base">
-                업로드 이미지를 hero, detail, usage로 자동 분류하고 선택한 페이지 수에 맞춰 긴 흐름의 판매형 상세페이지를 구성합니다.
+                {ui.subheadlinePlaceholder}
               </p>
             </div>
 
@@ -719,16 +942,13 @@ export default function ProductDetailStudio() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-xs uppercase tracking-[0.22em] text-white/42">Why It Sells</p>
-                  <h2 className="mt-2 text-xl font-black tracking-tight text-white">예뻐 보이고, 잘 팔리게 만드는 판매 흐름</h2>
+              <h2 className="mt-2 text-xl font-black tracking-tight text-white">{ui.sectionTitle}</h2>
                 </div>
                 <span className="rounded-full border border-white/12 bg-white/8 px-3 py-1 text-xs font-semibold text-white/78">
                   soft conversion angle
                 </span>
               </div>
-              <p className="mt-3 max-w-3xl text-sm leading-6 text-white/76">
-                결과물만 만드는 툴이 아니라 판매 페이지 자체에서 구매 이유가 더 잘 보이도록 구성했습니다.
-                선물하기 좋은 상품인지, 집 분위기를 바꿔주는 아이템인지, 사진 몇 장만으로도 갖고 싶어 보이게 만들 수 있는지 같은 구매 포인트를 자연스럽게 전달합니다.
-              </p>
+              <p className="mt-3 max-w-3xl text-sm leading-6 text-white/76">{ui.sectionBody}</p>
               <div className="mt-4 grid gap-3 md:grid-cols-2">
                 {[
                   '작은 셀러도 브랜드처럼 보이게 하는 첫 화면 구성',
@@ -816,7 +1036,7 @@ export default function ProductDetailStudio() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-white/45">Theme</p>
-                <h2 className="mt-1 text-xl font-bold">디자인 톤 선택</h2>
+                <h2 className="mt-1 text-xl font-bold">{ui.paletteTitle}</h2>
               </div>
               <Store className="h-5 w-5 text-white/72" />
             </div>
@@ -864,27 +1084,27 @@ export default function ProductDetailStudio() {
           >
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Input</p>
-                <h2 className="mt-1 text-xl font-black tracking-tight">상품 입력</h2>
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{ui.inputEyebrow}</p>
+                <h2 className="mt-1 text-xl font-black tracking-tight">{ui.inputTitle}</h2>
               </div>
               <Wand2 className="h-5 w-5 text-slate-500" />
             </div>
 
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
               <label className="space-y-2 text-sm">
-                <span className="font-semibold">상품명</span>
+                <span className="font-semibold">{ui.productName}</span>
                 <input {...register('productName')} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-slate-400" />
               </label>
               <label className="space-y-2 text-sm">
-                <span className="font-semibold">가격 / 옵션</span>
+                <span className="font-semibold">{ui.price}</span>
                 <input {...register('price')} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-slate-400" />
               </label>
               <label className="space-y-2 text-sm">
-                <span className="font-semibold">타깃 고객</span>
+                <span className="font-semibold">{ui.audience}</span>
                 <input {...register('audience')} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-slate-400" />
               </label>
               <label className="space-y-2 text-sm">
-                <span className="font-semibold">페이지 수</span>
+                <span className="font-semibold">{ui.pageCount}</span>
                 <input type="hidden" {...register('pageCount', { valueAsNumber: true })} value={normalizedPageCount} />
                 <div className="flex flex-wrap gap-2">
                   {DETAIL_PAGE_TIER_OPTIONS.map((option) => {
@@ -910,7 +1130,7 @@ export default function ProductDetailStudio() {
                     );
                   })}
                 </div>
-                <p className="text-xs text-slate-500">5, 7, 10, 15, 20장 티어 중에서 선택할 수 있습니다.</p>
+                <p className="text-xs text-slate-500">{ui.tierHint}</p>
               </label>
             </div>
 
@@ -921,7 +1141,7 @@ export default function ProductDetailStudio() {
                   <h3 className="mt-1 text-base font-black text-slate-950">{activeTier.pageCount}장 · {activeTier.name}</h3>
                 </div>
                 <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600">
-                  장수가 많을수록 더 흐름이 자연스럽고 설명이 풍부해집니다
+                  {ui.selectedTierHint}
                 </span>
               </div>
               <p className="mt-3 text-sm leading-6 text-slate-600">{activeTier.summary}</p>
@@ -929,24 +1149,24 @@ export default function ProductDetailStudio() {
 
             <div className="mt-4">
               <label className="space-y-2 text-sm">
-                <span className="font-semibold">핵심 판매 포인트</span>
+                <span className="font-semibold">{ui.sellingPoints}</span>
                 <textarea
                   {...register('sellingPoints')}
                   rows={3}
                   className="w-full rounded-[1.4rem] border border-slate-200 bg-white px-4 py-3 text-sm leading-6 outline-none transition focus:border-slate-400"
-                  placeholder="예: 3중 보온 구조, 감성적인 컬러감, 선물하기 좋은 패키지"
+                  placeholder={ui.sellingPointsPlaceholder}
                 />
               </label>
             </div>
 
             <div className="mt-4">
               <label className="space-y-2 text-sm">
-                <span className="font-semibold">LLM 프롬프트</span>
+                <span className="font-semibold">{ui.prompt}</span>
                 <textarea
                   {...register('prompt')}
                   rows={4}
                   className="w-full rounded-[1.4rem] border border-slate-200 bg-white px-4 py-3 text-sm leading-6 outline-none transition focus:border-slate-400"
-                  placeholder="예: 스마트스토어 흐름으로 7장 구성, proof 섹션은 신뢰감 있게 정리해줘"
+                  placeholder={ui.promptPlaceholder}
                 />
               </label>
             </div>
@@ -954,12 +1174,12 @@ export default function ProductDetailStudio() {
             <div className="mt-4 rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50 p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-semibold">상품 이미지 업로드</p>
-                  <p className="mt-1 text-xs text-slate-500">최대 30장까지 업로드할 수 있습니다. 이미지가 적어도 부족한 섹션은 자동으로 재구성합니다.</p>
+                  <p className="text-sm font-semibold">{ui.imageUploadTitle}</p>
+                  <p className="mt-1 text-xs text-slate-500">{ui.imageUploadBody}</p>
                 </div>
                 <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
                   <ImagePlus className="h-4 w-4" />
-                  이미지 선택
+                  {ui.chooseImages}
                 </Button>
               </div>
               <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={(event) => { void onImagesSelected(event); }} />
@@ -970,7 +1190,7 @@ export default function ProductDetailStudio() {
                   </div>
                 )) : (
                   <div className="col-span-5 rounded-2xl bg-white px-4 py-8 text-center text-sm text-slate-400">
-                    아직 업로드한 이미지가 없습니다.
+                    {ui.noImages}
                   </div>
                 )}
               </div>
@@ -984,7 +1204,7 @@ export default function ProductDetailStudio() {
 
             <div className="hidden mt-5 items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
               <div>
-                <p className="font-semibold text-slate-900">선택 장수: {pricingSummary.page_count}장</p>
+                <p className="font-semibold text-slate-900">{ui.selectedPages}: {pricingSummary.page_count}장</p>
                 <p className="text-xs text-slate-500">장당 약 {Math.round(pricingSummary.unit_price * 1450).toLocaleString('ko-KR')}원</p>
               </div>
               <div className="text-right">
@@ -995,25 +1215,25 @@ export default function ProductDetailStudio() {
 
             <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
               <div>
-                <p className="font-semibold text-slate-900">선택 장수: {pricingSummary.page_count}장</p>
+                <p className="font-semibold text-slate-900">{ui.selectedPages}: {pricingSummary.page_count}장</p>
                 <p className="text-xs text-slate-500">장당 {formatDetailPagePrice(pricingSummary.unit_price, pricingSummary.currency)}</p>
                 <p className="text-xs text-slate-400">장당 {formatApproxKrw(pricingSummary.unit_price)} 수준</p>
               </div>
               <div className="text-right">
                 <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Estimated</p>
                 <p className="font-semibold text-slate-900">예상 금액: {formatDetailPagePrice(pricingSummary.total_price, pricingSummary.currency)}</p>
-                <p className="text-xs text-slate-400">{formatApproxKrw(pricingSummary.total_price)} / 실제 결제는 USD 기준</p>
+                <p className="text-xs text-slate-400">{formatApproxKrw(pricingSummary.total_price)} / {ui.usdNotice}</p>
               </div>
             </div>
 
             <div className="mt-5 flex flex-wrap gap-3">
               <Button type="submit" disabled={isStartingCheckout}>
                 {isStartingCheckout ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Store className="h-4 w-4" />}
-                Pay and Generate
+                {ui.payAndGenerate}
               </Button>
               <Button type="button" variant="outline" onClick={onClearInputs}>
                 <RotateCcw className="h-4 w-4" />
-                입력값 비우기
+                {ui.clearInputs}
               </Button>
               <Button type="button" variant="secondary" onClick={() => void onCopyHtml()} disabled={!html}>
                 <Copy className="h-4 w-4" />
@@ -1021,7 +1241,7 @@ export default function ProductDetailStudio() {
               </Button>
               <Button type="button" variant="secondary" onClick={() => void onCopyText()} disabled={!copyText}>
                 <Copy className="h-4 w-4" />
-                Copy Text
+                {ui.copyTextButton}
               </Button>
               <Button type="button" variant="secondary" onClick={() => void onExportImage('png')} disabled={!result || isExportingFile !== null}>
                 {isExportingFile === 'png' ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
@@ -1042,22 +1262,22 @@ export default function ProductDetailStudio() {
             </div>
 
             <p className="mt-4 text-xs leading-6 text-slate-500">
-              결제를 진행하면{' '}
-              <a href="/terms" className="font-medium text-slate-700 underline underline-offset-4">이용약관</a>,{' '}
-              <a href="/privacy" className="font-medium text-slate-700 underline underline-offset-4">개인정보 처리방침</a>,{' '}
-              <a href="/refund-policy" className="font-medium text-slate-700 underline underline-offset-4">환불정책</a>
-              에 동의한 것으로 간주됩니다.
+              {ui.termsNoticePrefix}{' '}
+              <a href="/terms" className="font-medium text-slate-700 underline underline-offset-4">{ui.terms}</a>,{' '}
+              <a href="/privacy" className="font-medium text-slate-700 underline underline-offset-4">{ui.privacy}</a>,{' '}
+              <a href="/refund-policy" className="font-medium text-slate-700 underline underline-offset-4">{ui.refund}</a>
+              {ui.termsNoticeSuffix}
             </p>
           </form>
 
           <div ref={zoomRootRef} className="rounded-[1.7rem] border border-white/10 bg-white p-5 text-slate-900 shadow-xl">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Preview</p>
-                <h2 className="mt-1 text-xl font-black tracking-tight">860px vertical detail page</h2>
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{ui.preview}</p>
+                <h2 className="mt-1 text-xl font-black tracking-tight">{ui.detailPageVertical}</h2>
               </div>
               <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                {result ? `${result.page_count} pages` : `${normalizedPageCount} pages`}
+                {result ? `${result.page_count} ${ui.pages}` : `${normalizedPageCount} ${ui.pages}`}
               </span>
             </div>
 
@@ -1069,7 +1289,7 @@ export default function ProductDetailStudio() {
                 </div>
               )) : (
                 <div className="rounded-[1.2rem] bg-white px-4 py-6 text-sm text-slate-500 md:col-span-3">
-                  생성 후 hero / detail / usage 자동 분류가 여기에 표시됩니다.
+                  {ui.classifiedPlaceholder}
                 </div>
               )}
             </div>
@@ -1077,12 +1297,12 @@ export default function ProductDetailStudio() {
             <div className="mt-5 overflow-x-auto rounded-[1.6rem] bg-slate-100 p-3">
               <div ref={exportRef} className="mx-auto w-full max-w-[860px] overflow-hidden rounded-[2rem] bg-white shadow-[0_18px_48px_rgba(15,23,42,0.12)]">
                 <div className={cn('bg-gradient-to-br px-7 pb-7 pt-8', activeTheme.heroSurface)}>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Hero</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{ui.hero}</p>
                   <h3 className="mt-3 text-[2rem] font-black leading-[1.08] tracking-tight text-slate-950">
-                    {result?.generated_copy.headline ?? `${values.productName} 상세페이지 헤드라인이 여기에 표시됩니다.`}
+                    {result?.generated_copy.headline ?? `${values.productName} - ${ui.headlinePlaceholder}`}
                   </h3>
                   <p className="mt-4 text-[15px] leading-7 text-slate-600">
-                    {result?.generated_copy.subheadline ?? '상품명, 가격, 타깃 고객, 업로드 이미지 기준으로 상세페이지 카피가 생성됩니다.'}
+                    {result?.generated_copy.subheadline ?? ui.subheadlinePlaceholder}
                   </p>
                   {renderSections[0]?.image ? (
                     <div className="mt-6 overflow-hidden rounded-[1.75rem] bg-slate-200">
@@ -1126,18 +1346,18 @@ export default function ProductDetailStudio() {
                     </section>
                   )) : (
                     <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50 px-5 py-12 text-center text-sm leading-7 text-slate-500">
-                      생성 후 선택한 페이지 수에 맞는 긴 흐름의 상세페이지가 렌더링됩니다.
+                      {ui.renderedPlaceholder}
                     </div>
                   )}
 
                   <section className="pt-6">
                     <div className="rounded-[1.8rem] bg-slate-950 px-6 py-7 text-white">
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/40">SEO / CTA</p>
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/40">{ui.seoCta}</p>
                       <h4 className="mt-2 text-[1.9rem] font-black leading-[1.15] tracking-tight">
-                        {result?.generated_copy.seo_title ?? '생성 후 SEO title이 여기에 표시됩니다.'}
+                        {result?.generated_copy.seo_title ?? ui.seoPlaceholder}
                       </h4>
                       <p className="mt-4 text-[15px] leading-7 text-white/80">
-                        {result?.generated_copy.cta ?? '생성 후 CTA 문구가 여기에 표시됩니다.'}
+                        {result?.generated_copy.cta ?? ui.ctaPlaceholder}
                       </p>
                     </div>
                   </section>
