@@ -181,9 +181,11 @@ const cards = cardSeed.map((card) => {
   return { ...card, title, desc, href: withLocale(card.href), disabled: card.disabled ?? false };
 });
 
-const rowSize = Math.min(10, cards.length);
-const makeRow = (start: number) => Array.from({ length: rowSize }, (_, idx) => cards[(start + idx) % cards.length]);
-const rows = [makeRow(0), makeRow(Math.floor(cards.length / 3)), makeRow(Math.floor((cards.length * 2) / 3))];
+const rowCount = 3;
+const rowSize = Math.ceil(cards.length / rowCount);
+const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
+  cards.slice(rowIndex * rowSize, (rowIndex + 1) * rowSize)
+).filter((row) => row.length > 0);
 const faqJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
