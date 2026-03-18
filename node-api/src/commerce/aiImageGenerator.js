@@ -152,6 +152,50 @@ const MODE_PRESETS = {
       userInput ? `additional detail: ${userInput}` : null
     ].filter(Boolean).join(' ')
   },
+  streamer: {
+    requiresUserInput: false,
+    stageTwoPrompt: (userInput) => [
+      'Create a photorealistic streamer promo image based on the uploaded photo.',
+      'Preserve the original faces, identities, gender, and all individuals exactly.',
+      'Use a polished streaming-room aesthetic with a clean desk setup, RGB ambient lighting, monitor glow, and thumbnail-ready composition.',
+      'Keep the person attractive, modern, confident, and camera-friendly without turning the image into illustration or AI art.',
+      'Avoid military styling, toy look, plastic skin, or facial distortion.',
+      userInput ? `additional detail: ${userInput}` : null
+    ].filter(Boolean).join(' ')
+  },
+  pethuman: {
+    requiresUserInput: false,
+    stageTwoPrompt: (userInput) => [
+      'Create a photorealistic humanized portrait inspired by the uploaded pet photo.',
+      'Preserve the pet identity through fur color, markings, eye color, expression, and overall personality.',
+      'Transform the pet into a believable human character while keeping the result elegant, modern, and realistic.',
+      'If multiple pets are present, keep all individuals and do not merge or remove anyone.',
+      'Avoid cartoon styling, mascot look, toy proportions, or face distortion.',
+      userInput ? `additional detail: ${userInput}` : null
+    ].filter(Boolean).join(' ')
+  },
+  hairstyle: {
+    requiresUserInput: false,
+    stageTwoPrompt: (userInput) => [
+      'Create a photorealistic hairstyle simulation based on the uploaded image.',
+      'Preserve the original faces, identities, gender, and all individuals exactly.',
+      'Change only the hairstyle while keeping face shape, pose, lighting, and overall mood natural.',
+      'Use salon-quality beauty photography, realistic hair texture, flattering shape, and clean detail.',
+      'Avoid wig-like plastic texture, cartoon styling, or facial distortion.',
+      userInput ? `additional detail: ${userInput}` : null
+    ].filter(Boolean).join(' ')
+  },
+  interior: {
+    requiresUserInput: false,
+    stageTwoPrompt: (userInput) => [
+      'Create a photorealistic interior redesign based on the uploaded room photo.',
+      'Preserve the room layout, perspective, major furniture placement, and natural structure as much as possible.',
+      'Restyle the room into a polished interior concept such as hotel, cafe, cozy studio, or premium home design.',
+      'Use realistic materials, balanced lighting, clean composition, and believable decor changes.',
+      'Avoid illustration, toy look, or unrealistic architecture deformation.',
+      userInput ? `additional detail: ${userInput}` : null
+    ].filter(Boolean).join(' ')
+  },
   animation: {
     requiresUserInput: false,
     stageTwoPrompt: (userInput) => [

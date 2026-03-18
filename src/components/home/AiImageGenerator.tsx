@@ -6,7 +6,7 @@ import 'swiper/css';
 import 'swiper/css/grid';
 import 'swiper/css/pagination';
 
-type Mode = 'figure' | 'body' | 'travel' | 'europe' | 'proofshot' | 'kakao' | 'instagram' | 'hanbok' | 'kimono' | 'outfit' | 'animation' | 'free';
+type Mode = 'figure' | 'body' | 'travel' | 'europe' | 'proofshot' | 'kakao' | 'instagram' | 'hanbok' | 'kimono' | 'outfit' | 'streamer' | 'pethuman' | 'hairstyle' | 'interior' | 'animation' | 'free';
 type Provider = 'openai' | 'xai';
 type GenerationPhase = 'idle' | 'payment' | 'generating' | 'done' | 'error';
 type Locale = 'ko' | 'en';
@@ -86,7 +86,7 @@ type SavedDraft = {
 
 const DEFAULT_PROVIDER: Provider = 'xai';
 const ENGINE_LABEL = 'ManyTool AI';
-const MODE_ORDER: Mode[] = ['figure', 'body', 'travel', 'europe', 'proofshot', 'kakao', 'instagram', 'hanbok', 'kimono', 'outfit', 'animation', 'free'];
+const MODE_ORDER: Mode[] = ['figure', 'body', 'travel', 'europe', 'proofshot', 'kakao', 'instagram', 'hanbok', 'kimono', 'outfit', 'streamer', 'pethuman', 'hairstyle', 'interior', 'animation', 'free'];
 
 const MODE_CONTENT: Record<Mode, ModeContent> = {
   figure: {
@@ -207,6 +207,54 @@ const MODE_CONTENT: Record<Mode, ModeContent> = {
     exampleGradient: 'from-slate-100 via-zinc-50 to-white',
     inputLabel: '추가 디테일',
     inputPlaceholder: '예: luxury casual fashion',
+    inputRequired: false
+  },
+  streamer: {
+    tabLabel: '?????',
+    title: 'AI ?? ???',
+    buttonLabel: '?? ??',
+    exampleTitle: '?? ??',
+    exampleDescription: '???? ????? ?? ??? ?? ???? ????? ?????.',
+    accentClass: 'from-violet-600 via-indigo-500 to-sky-400',
+    exampleGradient: 'from-violet-100 via-indigo-50 to-white',
+    inputLabel: '?? ???',
+    inputPlaceholder: '?: ??? ???? ??, RGB ??',
+    inputRequired: false
+  },
+  pethuman: {
+    tabLabel: '? ???',
+    title: 'AI ???/????/? ???',
+    buttonLabel: '? ??? ??',
+    exampleTitle: '? ??? ??',
+    exampleDescription: '???? ??? ???? ?????, ? ??? ???? ????? ?????.',
+    accentClass: 'from-amber-500 via-orange-400 to-rose-300',
+    exampleGradient: 'from-amber-100 via-orange-50 to-white',
+    inputLabel: '?? ???',
+    inputPlaceholder: '?: stylish human version of a golden retriever',
+    inputRequired: false
+  },
+  hairstyle: {
+    tabLabel: '?????',
+    title: 'AI ????? ?????',
+    buttonLabel: '????? ??',
+    exampleTitle: '????? ??',
+    exampleDescription: '??? ???? ?? ???? ???? ????? ???? ?????.',
+    accentClass: 'from-rose-500 via-pink-400 to-fuchsia-300',
+    exampleGradient: 'from-rose-100 via-pink-50 to-white',
+    inputLabel: '?? ???',
+    inputPlaceholder: '?: layered bob with soft bangs',
+    inputRequired: false
+  },
+  interior: {
+    tabLabel: '????',
+    title: 'AI ???? ?????',
+    buttonLabel: '???? ??',
+    exampleTitle: '???? ??',
+    exampleDescription: '? ? ??? ????? ??, ??, ???? ???? ?? ??? ????.',
+    accentClass: 'from-teal-600 via-emerald-500 to-lime-300',
+    exampleGradient: 'from-emerald-100 via-teal-50 to-white',
+    inputLabel: '?? ???',
+    inputPlaceholder: '?: cozy boutique hotel room',
     inputRequired: false
   },
   animation: {
@@ -356,6 +404,54 @@ const EN_MODE_CONTENT: Record<Mode, ModeContent> = {
     inputPlaceholder: 'e.g. luxury casual fashion',
     inputRequired: false
   },
+  streamer: {
+    tabLabel: 'Streamer Promo',
+    title: 'AI Streamer Promo Generator',
+    buttonLabel: 'Generate streamer promo',
+    exampleTitle: 'Streamer promo example',
+    exampleDescription: 'Create a thumbnail-ready streamer promo image with a polished streaming-room vibe.',
+    accentClass: 'from-violet-600 via-indigo-500 to-sky-400',
+    exampleGradient: 'from-violet-100 via-indigo-50 to-white',
+    inputLabel: 'Extra prompt',
+    inputPlaceholder: 'e.g. Twitch streamer room selfie',
+    inputRequired: false
+  },
+  pethuman: {
+    tabLabel: 'Pet Humanizer',
+    title: 'AI Pet Humanizer',
+    buttonLabel: 'Generate pet human',
+    exampleTitle: 'Pet human example',
+    exampleDescription: 'Turn a pet photo into a believable humanized portrait while keeping recognizable traits.',
+    accentClass: 'from-amber-500 via-orange-400 to-rose-300',
+    exampleGradient: 'from-amber-100 via-orange-50 to-white',
+    inputLabel: 'Extra prompt',
+    inputPlaceholder: 'e.g. stylish human version of a golden retriever',
+    inputRequired: false
+  },
+  hairstyle: {
+    tabLabel: 'Hair Simulator',
+    title: 'AI Hairstyle Simulator',
+    buttonLabel: 'Generate hairstyle',
+    exampleTitle: 'Hairstyle example',
+    exampleDescription: 'Change only the hairstyle while keeping the face, identity, and overall mood intact.',
+    accentClass: 'from-rose-500 via-pink-400 to-fuchsia-300',
+    exampleGradient: 'from-rose-100 via-pink-50 to-white',
+    inputLabel: 'Extra prompt',
+    inputPlaceholder: 'e.g. layered bob with soft bangs',
+    inputRequired: false
+  },
+  interior: {
+    tabLabel: 'Interior Simulator',
+    title: 'AI Interior Simulator',
+    buttonLabel: 'Generate interior',
+    exampleTitle: 'Interior example',
+    exampleDescription: 'Upload your room photo and restyle it into a hotel, cafe, or premium interior mood.',
+    accentClass: 'from-teal-600 via-emerald-500 to-lime-300',
+    exampleGradient: 'from-emerald-100 via-teal-50 to-white',
+    inputLabel: 'Extra prompt',
+    inputPlaceholder: 'e.g. cozy boutique hotel room',
+    inputRequired: false
+  },
   animation: {
     tabLabel: 'Animation',
     title: 'AI Animation Generator',
@@ -415,6 +511,10 @@ const buildExamplePlaceholder = (mode: Mode) => {
     hanbok: { start: '#ef4444', end: '#f59e0b', label: 'HANBOK STYLE', badge: 'Traditional Look' },
     kimono: { start: '#d946ef', end: '#fb7185', label: 'KIMONO STYLE', badge: 'Kyoto Look' },
     outfit: { start: '#475569', end: '#a1a1aa', label: 'OUTFIT CHANGE', badge: 'Fashion Edit' },
+    streamer: { start: '#7c3aed', end: '#38bdf8', label: 'STREAMER PROMO', badge: 'Room Selfie' },
+    pethuman: { start: '#f59e0b', end: '#fb7185', label: 'PET HUMANIZER', badge: 'Pet to Human' },
+    hairstyle: { start: '#f43f5e', end: '#d946ef', label: 'HAIR SIMULATOR', badge: 'Style Preview' },
+    interior: { start: '#0f766e', end: '#84cc16', label: 'INTERIOR DESIGN', badge: 'Room Mood' },
     animation: { start: '#8b5cf6', end: '#ec4899', label: 'ANIMATION STYLE', badge: 'Character Art' },
     free: { start: '#ec4899', end: '#fb923c', label: 'FREE STYLE', badge: 'Custom Style' }
   } as const;
@@ -548,6 +648,10 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
     hanbok: '',
     kimono: '',
     outfit: '',
+    streamer: '',
+    pethuman: '',
+    hairstyle: '',
+    interior: '',
     animation: '',
     free: ''
   });

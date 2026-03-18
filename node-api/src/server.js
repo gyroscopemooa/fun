@@ -897,8 +897,8 @@ app.post('/ai-image-generator/generate', upload.single('image'), async (req, res
       return res.status(400).json({ error: 'only image uploads are allowed' });
     }
     const mode = typeof req.body?.mode === 'string' ? req.body.mode.trim().toLowerCase() : '';
-    if (!['figure', 'body', 'travel', 'europe', 'proofshot', 'kakao', 'instagram', 'hanbok', 'kimono', 'outfit', 'animation', 'free'].includes(mode)) {
-      return res.status(400).json({ error: 'mode must be figure, body, travel, europe, proofshot, kakao, instagram, hanbok, kimono, outfit, animation, or free' });
+    if (!['figure', 'body', 'travel', 'europe', 'proofshot', 'kakao', 'instagram', 'hanbok', 'kimono', 'outfit', 'streamer', 'pethuman', 'hairstyle', 'interior', 'animation', 'free'].includes(mode)) {
+      return res.status(400).json({ error: 'mode must be figure, body, travel, europe, proofshot, kakao, instagram, hanbok, kimono, outfit, streamer, pethuman, hairstyle, interior, animation, or free' });
     }
     const provider = typeof req.body?.provider === 'string' ? req.body.provider.trim().toLowerCase() : 'openai';
     if (!['openai', 'xai'].includes(provider)) {
