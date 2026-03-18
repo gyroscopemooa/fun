@@ -1044,8 +1044,8 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
           </div>
         </section>
 
-        <section className="grid gap-4 xl:gap-6 xl:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)]">
-          <div className="rounded-[32px] border border-slate-200/80 bg-white p-4 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-6 lg:p-7">
+        <section className="grid min-w-0 gap-4 xl:gap-6 xl:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)]">
+          <div className="min-w-0 overflow-hidden rounded-[32px] border border-slate-200/80 bg-white p-4 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-6 lg:p-7">
             <div className="mb-5 flex items-center justify-between">
               <div>
                 <h2 className="text-xl font-bold text-slate-950">이미지 업로드</h2>
@@ -1070,19 +1070,19 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
               }}
               onDragLeave={() => setIsDragging(false)}
               onDrop={handleDrop}
-              className={`group flex min-h-[220px] cursor-pointer flex-col items-center justify-center rounded-[28px] border-2 border-dashed px-4 py-6 text-center transition sm:min-h-[300px] sm:px-6 sm:py-8 lg:min-h-[340px] xl:min-h-[360px] xl:py-10 ${
+              className={`group flex min-w-0 min-h-[220px] w-full cursor-pointer flex-col items-center justify-center rounded-[28px] border-2 border-dashed px-4 py-6 text-center transition sm:min-h-[300px] sm:px-6 sm:py-8 lg:min-h-[340px] xl:min-h-[360px] xl:py-10 ${
                 isDragging ? 'border-slate-900 bg-slate-50' : 'border-slate-200 bg-gradient-to-br from-slate-50 to-white hover:border-slate-300 hover:bg-slate-50'
               }`}
             >
               <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
 
               {previewUrl ? (
-                <div className="flex w-full flex-col items-center gap-4">
+                  <div className="flex min-w-0 w-full flex-col items-center gap-4">
                   <div className={`${imageFrameClass} min-h-[170px] w-full sm:min-h-[280px] lg:min-h-[340px] xl:min-h-[420px]`}>
                     <img src={previewUrl} alt="업로드 미리보기" className={`${imageClass} max-h-[170px] rounded-[18px] sm:max-h-[250px] lg:max-h-[310px] xl:max-h-[388px]`} />
                   </div>
-                  <div className="flex w-full flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 sm:flex-row sm:justify-between">
-                    <div className="min-w-0 text-center sm:text-left">
+                  <div className="flex min-w-0 w-full flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 sm:flex-row sm:justify-between">
+                    <div className="min-w-0 w-full text-center sm:text-left">
                       <p className="truncate text-sm font-semibold text-slate-900">{uploadedImage?.name}</p>
                       <p className="text-xs text-slate-500">다른 이미지를 선택하려면 클릭하거나 파일을 다시 드래그하세요.</p>
                     </div>
@@ -1153,7 +1153,7 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
             </div>
           </div>
 
-          <aside className="rounded-[32px] border border-slate-200/80 bg-white p-4 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-6 lg:p-7">
+          <aside className="min-w-0 overflow-hidden rounded-[32px] border border-slate-200/80 bg-white p-4 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-6 lg:p-7">
             <div className="mb-5">
               <h2 className="text-2xl font-black tracking-tight text-slate-950">예시 미리보기</h2>
             </div>
