@@ -358,7 +358,7 @@ const sidebarText = locale === 'ko'
     <SiteProviders client:load />
     <aside
       id="manytool-sidebar"
-      class="fixed left-0 top-0 z-[70] hidden h-screen w-[288px] -translate-x-0 flex-col border-r border-slate-200 bg-white/95 shadow-[0_24px_80px_rgba(15,23,42,0.16)] backdrop-blur transition-transform duration-300 lg:flex"
+      class="fixed left-0 top-0 z-[70] hidden h-screen w-[288px] -translate-x-0 flex-col border-r border-slate-200 bg-white/95 shadow-[0_24px_80px_rgba(15,23,42,0.16)] backdrop-blur transition-transform duration-300 xl:flex"
       aria-label="ManyTool sidebar"
       data-open="true"
     >
@@ -414,7 +414,7 @@ const sidebarText = locale === 'ko'
       </div>
     </aside>
 
-    <div id="manytool-shell" class="transition-[padding] duration-300 lg:pl-[288px]">
+    <div id="manytool-shell" class="transition-[padding] duration-300 xl:pl-[288px]">
       {pathNoLocale !== '/' && (
         <nav aria-label="Breadcrumb" class="mx-auto max-w-5xl px-4 pt-3 text-xs text-slate-500">
           <ol class="flex flex-wrap items-center gap-1">
@@ -453,8 +453,8 @@ const sidebarText = locale === 'ko'
         sidebarEl.dataset.open = isOpen ? 'true' : 'false';
         sidebarEl.classList.toggle('-translate-x-[260px]', !isOpen);
         sidebarEl.classList.toggle('translate-x-0', isOpen);
-        shellEl.classList.toggle('lg:pl-[288px]', isOpen);
-        shellEl.classList.toggle('lg:pl-[28px]', !isOpen);
+        shellEl.classList.toggle('xl:pl-[288px]', isOpen);
+        shellEl.classList.toggle('xl:pl-[28px]', !isOpen);
         toggleEl.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
         toggleEl.setAttribute('aria-label', isOpen ? donateText.close : donateText.open);
         toggleEl.textContent = isOpen ? '‹' : '›';
