@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Matter from 'matter-js';
 
-const { Engine, World, Bodies, Body, Composite, Events } = Matter;
+const { Engine, World, Bodies, Composite, Events } = Matter;
 
 const WORLD_WIDTH = 900;
 const WORLD_HEIGHT = 1280;
@@ -9,6 +9,7 @@ const WALL_THICKNESS = 30;
 const SLOT_HEIGHT = 110;
 const PEG_RADIUS = 7;
 const MARBLE_RADIUS = 11;
+const DROP_X = WORLD_WIDTH / 2;
 
 function createSlots(items) {
   const totalWeight = Math.max(1, items.reduce((sum, item) => sum + item.weight, 0));
@@ -122,14 +123,37 @@ export function usePhysics({ items, onSettle }) {
       Bodies.rectangle(WORLD_WIDTH / 2, WORLD_HEIGHT - WALL_THICKNESS / 2, WORLD_WIDTH, WALL_THICKNESS, { isStatic: true, render: { visible: false } })
     ];
 
+    const guides = [
+      Bodies.rectangle(DROP_X - 86, 108, 180, 12, {
+        isStatic: true,
+        angle: Math.PI * 0.27,
+        label: 'guide'
+      }),
+      Bodies.rectangle(DROP_X + 86, 108, 180, 12, {
+        isStatic: true,
+        angle: -Math.PI * 0.27,
+        label: 'guide'
+      }),
+      Bodies.rectangle(180, 760, 220, 10, {
+        isStatic: true,
+        angle: Math.PI * 0.14,
+        label: 'guide'
+      }),
+      Bodies.rectangle(WORLD_WIDTH - 180, 760, 220, 10, {
+        isStatic: true,
+        angle: -Math.PI * 0.14,
+        label: 'guide'
+      })
+    ];
+
     const pins = [];
-    const startY = 180;
-    const rowGap = 68;
-    const colGap = 74;
-    const rows = 10;
+    const startY = 210;
+    const rowGap = 72;
+    const colGap = 68;
+    const rows = 11;
 
     for (let row = 0; row < rows; row += 1) {
-      const count = 7 + row;
+      const count = 5 + row;
       const rowWidth = (count - 1) * colGap;
       const offsetX = (WORLD_WIDTH - rowWidth) / 2;
       const y = startY + row * rowGap;
@@ -144,6 +168,12 @@ export function usePhysics({ items, onSettle }) {
         pins.push(pin);
       }
     }
+
+    const bumpers = [
+      Bodies.circle(250, 540, 16, { isStatic: true, restitution: 0.84, label: 'bumper' }),
+      Bodies.circle(WORLD_WIDTH - 250, 540, 16, { isStatic: true, restitution: 0.84, label: 'bumper' }),
+      Bodies.circle(DROP_X, 690, 18, { isStatic: true, restitution: 0.88, label: 'bumper' })
+    ];
 
     const slotDividers = [];
     const slotSensors = [];
@@ -172,7 +202,7 @@ export function usePhysics({ items, onSettle }) {
       }
     }
 
-    World.add(engine.world, [...walls, ...pins, ...slotDividers, ...slotSensors]);
+    World.add(engine.world, [...walls, ...guides, ...pins, ...bumpers, ...slotDividers, ...slotSensors]);
     lastResultRef.current = null;
     setLastResult(null);
     setActiveMarbles(0);
@@ -208,6 +238,15 @@ export function usePhysics({ items, onSettle }) {
       ctx.lineWidth = 2;
       ctx.strokeRect(WALL_THICKNESS, WALL_THICKNESS, WORLD_WIDTH - WALL_THICKNESS * 2, WORLD_HEIGHT - WALL_THICKNESS * 2);
 
+      ctx.fillStyle = 'rgba(34, 211, 238, 0.18)';
+      ctx.fillRect(DROP_X - 38, 30, 76, 42);
+      ctx.strokeStyle = 'rgba(103, 232, 249, 0.5)';
+      ctx.strokeRect(DROP_X - 38, 30, 76, 42);
+      ctx.fillStyle = '#cffafe';
+      ctx.font = 'bold 13px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('DROP', DROP_X, 56);
+
       for (const slot of slotsRef.current) {
         const isWinner = lastResultRef.current?.index === slot.index;
         ctx.fillStyle = isWinner ? 'rgba(244, 114, 182, 0.28)' : 'rgba(15, 23, 42, 0.96)';
@@ -233,6 +272,34 @@ export function usePhysics({ items, onSettle }) {
           ctx.shadowBlur = 0;
         }
 
+        if (body.label === 'bumper') {
+          ctx.beginPath();
+          ctx.arc(body.position.x, body.position.y, body.circleRadius ?? 16, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(244, 114, 182, 0.22)';
+          ctx.shadowColor = '#f472b6';
+          ctx.shadowBlur = 18;
+          ctx.fill();
+          ctx.shadowBlur = 0;
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = '#f9a8d4';
+          ctx.stroke();
+        }
+
+        if (body.label === 'guide' || body.label === 'divider') {
+          const vertices = body.vertices;
+          ctx.beginPath();
+          ctx.moveTo(vertices[0].x, vertices[0].y);
+          for (let i = 1; i < vertices.length; i += 1) {
+            ctx.lineTo(vertices[i].x, vertices[i].y);
+          }
+          ctx.closePath();
+          ctx.fillStyle = body.label === 'guide' ? 'rgba(34, 211, 238, 0.28)' : 'rgba(56, 189, 248, 0.2)';
+          ctx.shadowColor = body.label === 'guide' ? '#22d3ee' : '#38bdf8';
+          ctx.shadowBlur = 10;
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        }
+
         if (body.label === 'marble') {
           const color = body.plugin.meta?.color ?? '#f8fafc';
           ctx.beginPath();
@@ -249,7 +316,7 @@ export function usePhysics({ items, onSettle }) {
 
       if (dropQueueRef.current.length > 0 && timestamp >= nextDropAtRef.current) {
         const next = dropQueueRef.current.shift();
-        const marble = Bodies.circle(WORLD_WIDTH / 2 + (Math.random() - 0.5) * 40, 70 + Math.random() * 12, MARBLE_RADIUS, {
+        const marble = Bodies.circle(DROP_X + (Math.random() - 0.5) * 8, 84 + Math.random() * 8, MARBLE_RADIUS, {
           restitution: 0.72,
           friction: 0.0005,
           frictionAir: 0.0025,
