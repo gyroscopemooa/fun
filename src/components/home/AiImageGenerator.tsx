@@ -1046,7 +1046,7 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
         </section>
 
         <section className="grid gap-4 lg:gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(340px,0.9fr)]">
-          <div className="rounded-[32px] border border-slate-200/80 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-7">
+          <div className="rounded-[32px] border border-slate-200/80 bg-white p-4 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-7">
             <div className="mb-5 flex items-center justify-between">
               <div>
                 <h2 className="text-xl font-bold text-slate-950">이미지 업로드</h2>
@@ -1071,7 +1071,7 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
               }}
               onDragLeave={() => setIsDragging(false)}
               onDrop={handleDrop}
-              className={`group flex min-h-[300px] cursor-pointer flex-col items-center justify-center rounded-[28px] border-2 border-dashed px-5 py-8 text-center transition sm:min-h-[360px] sm:px-6 sm:py-10 ${
+              className={`group flex min-h-[220px] cursor-pointer flex-col items-center justify-center rounded-[28px] border-2 border-dashed px-4 py-6 text-center transition sm:min-h-[360px] sm:px-6 sm:py-10 ${
                 isDragging ? 'border-slate-900 bg-slate-50' : 'border-slate-200 bg-gradient-to-br from-slate-50 to-white hover:border-slate-300 hover:bg-slate-50'
               }`}
             >
@@ -1079,8 +1079,8 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
 
               {previewUrl ? (
                 <div className="flex w-full flex-col items-center gap-4">
-                  <div className={`${imageFrameClass} min-h-[240px] w-full sm:min-h-[420px]`}>
-                    <img src={previewUrl} alt="업로드 미리보기" className={`${imageClass} max-h-[220px] rounded-[18px] sm:max-h-[388px]`} />
+                  <div className={`${imageFrameClass} min-h-[170px] w-full sm:min-h-[420px]`}>
+                    <img src={previewUrl} alt="업로드 미리보기" className={`${imageClass} max-h-[170px] rounded-[18px] sm:max-h-[388px]`} />
                   </div>
                   <div className="flex w-full flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 sm:flex-row sm:justify-between">
                     <div className="min-w-0 text-center sm:text-left">
