@@ -11,7 +11,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
 
 <Layout
   title="AI 칼로리 계산기 | 음식 사진 칼로리 추정, 식단 사진 분석 | ManyTool"
-  description="음식 사진을 업로드하면 OpenAI 비전 분석으로 음식 종류, 대략적인 분량, 총 칼로리를 추정해주는 ManyTool AI 칼로리 계산기입니다."
+  description="음식 사진을 업로드하면 AI가 음식 종류, 대략적인 분량, 총 칼로리를 빠르게 추정해주는 ManyTool AI 칼로리 계산기입니다."
 >
   <Header />
   <main class="mx-auto max-w-5xl px-4 py-8">
@@ -19,30 +19,41 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       <p class="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-600">AI Nutrition</p>
       <h1 class="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">AI 칼로리 계산기</h1>
       <p class="mt-3 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
-        음식 사진을 업로드하면 AI가 보이는 음식 종류와 대략적인 양을 바탕으로 총 칼로리를 추정합니다. 정확한 영양 진단이 아니라 빠른 참고용 추정치입니다.
+        음식 사진을 첨부하면 AI가 보이는 음식 종류와 대략적인 양을 기준으로 총 칼로리를 추정합니다.
+        병원 진단용이 아닌 빠른 참고용 추정치입니다.
       </p>
+      <p class="mt-3 text-xs text-slate-500">할인코드: manytool50</p>
       <AdSense slotName="본문 상단" />
     </section>
 
     <section class="mt-6 grid gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
       <aside class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 class="text-lg font-bold text-slate-950">사진 업로드</h2>
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-bold text-slate-950">사진 업로드</h2>
+            <p class="mt-1 text-sm leading-6 text-slate-500">식판, 디저트, 간식, 음료 사진도 첨부할 수 있습니다.</p>
+          </div>
+          <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">$3.99</span>
+        </div>
+
         <label class="mt-4 flex min-h-[260px] cursor-pointer flex-col items-center justify-center rounded-[28px] border border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center transition hover:border-slate-950 hover:bg-white">
           <input id="calorie-image-input" type="file" accept="image/*" class="hidden" />
           <div id="calorie-empty" class="space-y-3">
             <p class="text-base font-semibold text-slate-900">음식 사진 선택</p>
-            <p class="text-sm leading-6 text-slate-500">한 접시, 도시락, 간식 사진 등 음식이 잘 보이게 올려주세요.</p>
+            <p class="text-sm leading-6 text-slate-500">정면이나 위에서 찍은 사진일수록 음식 인식이 더 안정적입니다.</p>
           </div>
           <img id="calorie-preview" alt="meal preview" class="hidden max-h-[240px] rounded-[24px] object-contain shadow-sm" />
         </label>
 
         <div class="mt-4 rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-600">
           <p class="font-semibold text-slate-900">안내</p>
-          <p class="mt-2">국물, 소스, 숨은 재료, 정확한 중량은 오차가 클 수 있습니다. 병원/영양사 기준이 아닌 AI 추정값입니다.</p>
+          <p class="mt-2">국물, 소스, 드레싱, 오일, 정확한 중량은 오차가 있을 수 있습니다. 의료나 영양 처방이 아닌 AI 추정값입니다.</p>
         </div>
 
+        <p id="calorie-payment-note" class="mt-4 text-xs leading-5 text-slate-500"></p>
+
         <button id="calorie-analyze-button" class="mt-4 w-full rounded-2xl bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800">
-          칼로리 분석
+          칼로리 분석하기
         </button>
       </aside>
 
@@ -50,7 +61,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h2 class="text-lg font-bold text-slate-950">분석 결과</h2>
-            <p id="calorie-status" class="mt-1 text-sm text-slate-600">사진을 업로드하면 총 칼로리와 음식별 추정치를 보여줍니다.</p>
+            <p id="calorie-status" class="mt-1 text-sm text-slate-600">사진을 첨부하면 음식별 추정 칼로리와 총합을 보여줍니다.</p>
           </div>
           <div class="rounded-3xl bg-emerald-50 px-5 py-4">
             <p class="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Estimated Total</p>
@@ -92,6 +103,11 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
     </section>
 
     <script is:inline define:vars={{ apiBase }}>
+      const API_BASE = apiBase;
+      const CALORIE_DRAFT_STORAGE_KEY = 'manytool.calorieDraft.v1';
+      const CALORIE_PRICE_CENTS = 399;
+      const CALORIE_CURRENCY = 'USD';
+
       const fileInput = document.getElementById('calorie-image-input');
       const preview = document.getElementById('calorie-preview');
       const emptyState = document.getElementById('calorie-empty');
@@ -104,16 +120,38 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       const confidenceEl = document.getElementById('calorie-confidence');
       const notesCard = document.getElementById('calorie-notes-card');
       const notesEl = document.getElementById('calorie-notes');
+      const paymentNoteEl = document.getElementById('calorie-payment-note');
 
       let selectedFile = null;
+      let paymentMode = 'mock';
+      let isPolarBaseReady = true;
+      let isPaid = false;
+      let shouldAutoAnalyzeAfterPayment = false;
 
       const setStatus = (message) => {
         if (statusEl) statusEl.textContent = message;
       };
 
+      const setButtonState = (label, disabled) => {
+        if (!analyzeButton) return;
+        analyzeButton.textContent = label;
+        analyzeButton.disabled = disabled;
+      };
+
+      const updatePaymentNote = () => {
+        if (!paymentNoteEl) return;
+        if (paymentMode === 'polar') {
+          paymentNoteEl.textContent = '결제 후 같은 페이지로 돌아오면 자동으로 칼로리 분석이 시작됩니다.';
+          return;
+        }
+        paymentNoteEl.textContent = '현재는 테스트 모드로 바로 분석됩니다.';
+      };
+
+      updatePaymentNote();
+
       const renderEmptyTable = (message = '아직 분석된 항목이 없습니다.') => {
         if (!itemsEl) return;
-        itemsEl.innerHTML = `<tr><td colspan="4" class="px-4 py-8 text-center text-slate-400">${message}</td></tr>`;
+        itemsEl.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-slate-400">' + message + '</td></tr>';
       };
 
       const confidenceLabel = (value) => {
@@ -122,8 +160,23 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         return '낮음';
       };
 
-      fileInput?.addEventListener('change', () => {
-        const file = fileInput.files?.[0] ?? null;
+      const fileToDataUrl = (file) => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+        reader.onerror = () => reject(new Error('이미지 변환에 실패했습니다.'));
+        reader.readAsDataURL(file);
+      });
+
+      const dataUrlToFile = async (dataUrl, name, type, lastModified) => {
+        const response = await fetch(dataUrl);
+        const blob = await response.blob();
+        return new File([blob], name, {
+          type: type || blob.type || 'image/png',
+          lastModified: Number.isFinite(lastModified) ? lastModified : Date.now()
+        });
+      };
+
+      const updatePreview = (file) => {
         selectedFile = file;
         if (!file) {
           if (preview) {
@@ -140,19 +193,51 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           preview.classList.remove('hidden');
         }
         emptyState?.classList.add('hidden');
-      });
+      };
 
-      analyzeButton?.addEventListener('click', async () => {
+      const persistDraftForCheckout = async () => {
+        if (typeof window === 'undefined' || !selectedFile) return;
+        const draft = {
+          imageName: selectedFile.name,
+          imageType: selectedFile.type,
+          imageLastModified: selectedFile.lastModified,
+          imageDataUrl: await fileToDataUrl(selectedFile)
+        };
+        window.sessionStorage.setItem(CALORIE_DRAFT_STORAGE_KEY, JSON.stringify(draft));
+      };
+
+      const requestBaseCheckout = async () => {
+        const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+        const response = await fetch(`${API_BASE}/checkout`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            productType: 'base',
+            amount: CALORIE_PRICE_CENTS,
+            currency: CALORIE_CURRENCY,
+            successUrl: currentUrl,
+            returnUrl: currentUrl
+          })
+        });
+        const payload = await response.json().catch(() => null);
+        if (!response.ok || !payload) {
+          throw new Error(payload?.error || '결제 시작에 실패했습니다.');
+        }
+        return payload;
+      };
+
+      const analyzeCurrentFile = async () => {
         if (!selectedFile) {
-          setStatus('먼저 음식 사진을 업로드하세요.');
+          setStatus('먼저 음식 사진을 첨부해주세요.');
           return;
         }
 
         const formData = new FormData();
         formData.append('image', selectedFile);
 
-        analyzeButton.disabled = true;
-        analyzeButton.textContent = '분석 중...';
+        setButtonState('분석 중...', true);
         setStatus('AI가 음식과 칼로리를 분석하고 있습니다.');
         totalEl.textContent = '-';
         renderEmptyTable('분석 중...');
@@ -160,7 +245,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         notesCard?.classList.add('hidden');
 
         try {
-          const response = await fetch(`${apiBase}/ai-calorie-calculator/analyze`, {
+          const response = await fetch(`${API_BASE}/ai-calorie-calculator/analyze`, {
             method: 'POST',
             body: formData
           });
@@ -171,11 +256,11 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
 
           const analysis = payload.analysis;
           totalEl.textContent = `${Math.round(analysis.totalCalories)} kcal`;
-          setStatus('분석이 완료되었습니다. 아래 결과를 확인하세요.');
+          setStatus('분석이 완료되었습니다. 아래 결과를 확인해주세요.');
 
           if (summaryCard) summaryCard.classList.remove('hidden');
           if (summaryEl) summaryEl.textContent = analysis.summary || '요약 정보가 없습니다.';
-          if (confidenceEl) confidenceEl.textContent = `전체 신뢰도: ${confidenceLabel(analysis.confidence)}`;
+          if (confidenceEl) confidenceEl.textContent = `전체 신뢰도 ${confidenceLabel(analysis.confidence)}`;
 
           if (itemsEl) {
             if (Array.isArray(analysis.foodItems) && analysis.foodItems.length) {
@@ -198,22 +283,132 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
               notesEl.innerHTML = analysis.notes.map((note) => `<li>${note}</li>`).join('');
             }
           }
+
+          if (paymentMode === 'polar') {
+            isPaid = false;
+          }
+          if (typeof window !== 'undefined') {
+            window.sessionStorage.removeItem(CALORIE_DRAFT_STORAGE_KEY);
+          }
         } catch (error) {
-          setStatus(error.message || '분석에 실패했습니다.');
+          setStatus(error instanceof Error ? error.message : '분석에 실패했습니다.');
           renderEmptyTable('분석 결과를 불러오지 못했습니다.');
         } finally {
-          analyzeButton.disabled = false;
-          analyzeButton.textContent = '칼로리 분석';
+          setButtonState('칼로리 분석하기', false);
         }
+      };
+
+      fileInput?.addEventListener('change', () => {
+        updatePreview(fileInput.files?.[0] ?? null);
       });
+
+      analyzeButton?.addEventListener('click', async () => {
+        if (!selectedFile) {
+          setStatus('먼저 음식 사진을 첨부해주세요.');
+          return;
+        }
+
+        if (!API_BASE) {
+          setStatus('API 주소가 설정되지 않았습니다. PUBLIC_NODE_API_BASE를 확인해주세요.');
+          return;
+        }
+
+        if (paymentMode === 'polar') {
+          if (!isPolarBaseReady) {
+            setStatus('Polar base 상품이 아직 설정되지 않았습니다.');
+            return;
+          }
+          if (!isPaid) {
+            try {
+              await persistDraftForCheckout();
+              const checkout = await requestBaseCheckout();
+              if (checkout.paid) {
+                isPaid = true;
+              } else if (checkout.checkoutUrl) {
+                window.location.href = checkout.checkoutUrl;
+                return;
+              } else {
+                throw new Error('checkout url is missing');
+              }
+            } catch (error) {
+              setStatus(error instanceof Error ? error.message : '결제 시작에 실패했습니다.');
+              return;
+            }
+          }
+        }
+
+        await analyzeCurrentFile();
+      });
+
+      void (async () => {
+        if (!API_BASE) return;
+        try {
+          const response = await fetch(`${API_BASE}/config`);
+          const payload = await response.json().catch(() => null);
+          if (response.ok && payload) {
+            paymentMode = payload.paymentMode === 'polar' ? 'polar' : 'mock';
+            isPolarBaseReady = paymentMode === 'polar' ? Boolean(payload.paymentProducts?.base) : true;
+            updatePaymentNote();
+          }
+        } catch {
+          updatePaymentNote();
+        }
+      })();
+
+      void (async () => {
+        if (typeof window === 'undefined') return;
+        const raw = window.sessionStorage.getItem(CALORIE_DRAFT_STORAGE_KEY);
+        if (!raw) return;
+        try {
+          const saved = JSON.parse(raw);
+          const restoredFile = await dataUrlToFile(
+            saved.imageDataUrl,
+            saved.imageName,
+            saved.imageType,
+            saved.imageLastModified
+          );
+          updatePreview(restoredFile);
+          if (shouldAutoAnalyzeAfterPayment) {
+            shouldAutoAnalyzeAfterPayment = false;
+            await analyzeCurrentFile();
+          }
+        } catch {
+          window.sessionStorage.removeItem(CALORIE_DRAFT_STORAGE_KEY);
+        }
+      })();
+
+      void (async () => {
+        if (typeof window === 'undefined' || !API_BASE) return;
+        const params = new URLSearchParams(window.location.search);
+        const orderId = params.get('orderId');
+        if (!orderId) return;
+
+        try {
+          const response = await fetch(`${API_BASE}/order/${encodeURIComponent(orderId)}`);
+          const payload = await response.json().catch(() => null);
+          if (response.ok && payload?.status === 'paid') {
+            isPaid = true;
+            shouldAutoAnalyzeAfterPayment = true;
+          }
+        } catch {
+          // Keep the page usable even if order verification fails.
+        } finally {
+          window.history.replaceState({}, '', window.location.pathname);
+        }
+
+        if (shouldAutoAnalyzeAfterPayment && selectedFile) {
+          shouldAutoAnalyzeAfterPayment = false;
+          await analyzeCurrentFile();
+        }
+      })();
     </script>
 
-    <section class="mt-6 rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm text-sm leading-7 text-slate-600">
+    <section class="mt-6 rounded-[28px] border border-slate-200 bg-white p-6 text-sm leading-7 text-slate-600 shadow-sm">
       <h2 class="text-xl font-bold text-slate-950">참고 사항</h2>
       <ul class="mt-3 list-disc space-y-2 pl-5">
-        <li>이 도구는 의료용이나 영양 처방용이 아닌 참고용 AI 추정치입니다.</li>
-        <li>국물, 소스, 오일, 숨은 재료는 실제보다 적거나 많게 추정될 수 있습니다.</li>
-        <li>정확한 식단 관리가 필요하면 포장지 영양정보나 전문가 상담이 더 적합합니다.</li>
+        <li>의료나 영양 처방용이 아닌 참고용 AI 추정치입니다.</li>
+        <li>국물, 소스, 오일, 숨겨진 재료는 실제보다 높거나 낮게 추정될 수 있습니다.</li>
+        <li>정확한 식단 관리가 필요하면 제품 영양정보나 전문가 상담을 함께 참고하는 것이 좋습니다.</li>
       </ul>
     </section>
 
