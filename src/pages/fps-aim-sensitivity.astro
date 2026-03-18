@@ -1,0 +1,409 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import AdSense from '../components/AdSense.astro';
+import Recommend from '../components/Recommend.astro';
+---
+
+<Layout
+  title="FPS 에임 조절기 | 감도 추천, 에임 테스트, FPS 감도 찾기 | ManyTool"
+  description="현재 마우스 감도를 입력하고 10초, 20초, 30초 에임 테스트를 진행한 뒤 평균 반응속도와 명중률을 기준으로 FPS 감도를 높일지 낮출지 추천받는 도구입니다."
+>
+  <Header />
+  <main class="mx-auto max-w-5xl px-4 py-8">
+    <section class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+      <div class="max-w-3xl">
+        <p class="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-600">FPS Aim Tool</p>
+        <h1 class="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">FPS 에임 조절기</h1>
+        <p class="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
+          현재 감도를 입력하고 랜덤으로 나오는 표적을 빠르게 클릭하세요. 테스트가 끝나면 평균 명중 시간과 정확도를 기준으로 감도를 조금 올릴지, 내릴지, 유지할지 추천합니다.
+        </p>
+      </div>
+      <AdSense slotName="본문 상단" />
+    </section>
+
+    <section class="mt-6 grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
+      <aside class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 class="text-lg font-bold text-slate-950">테스트 설정</h2>
+        <div class="mt-4 space-y-4">
+          <label class="block">
+            <span class="mb-2 block text-sm font-semibold text-slate-700">현재 감도</span>
+            <input
+              id="aim-sensitivity-input"
+              type="number"
+              inputmode="decimal"
+              step="0.01"
+              min="0.01"
+              placeholder="예: 1.65"
+              class="w-full rounded-2xl border border-slate-300 px-4 py-3 text-base text-slate-900 outline-none transition focus:border-slate-950"
+            />
+          </label>
+
+          <label class="block">
+            <span class="mb-2 block text-sm font-semibold text-slate-700">테스트 시간</span>
+            <select id="aim-duration-select" class="w-full rounded-2xl border border-slate-300 px-4 py-3 text-base text-slate-900 outline-none transition focus:border-slate-950">
+              <option value="10">10초</option>
+              <option value="20" selected>20초</option>
+              <option value="30">30초</option>
+            </select>
+          </label>
+
+          <div class="rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-600">
+            <p class="font-semibold text-slate-900">판정 기준</p>
+            <p class="mt-2">느리고 안정적이면 감도 상승, 빠르지만 빗나감이 많으면 감도 하향, 둘 다 안정적이면 유지 쪽으로 추천합니다.</p>
+          </div>
+
+          <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+            <button id="aim-start-button" class="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800">
+              테스트 시작
+            </button>
+            <button id="aim-reset-button" class="rounded-2xl border border-slate-300 px-5 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50">
+              기록 초기화
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <section class="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 class="text-lg font-bold text-slate-950">에임 테스트</h2>
+            <p id="aim-status" class="mt-1 text-sm text-slate-600">감도를 입력하고 시작 버튼을 누르세요.</p>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
+            <div class="rounded-2xl bg-slate-100 px-3 py-2">
+              <p class="text-slate-500">남은 시간</p>
+              <p id="aim-timer" class="font-bold text-slate-900">20.0s</p>
+            </div>
+            <div class="rounded-2xl bg-slate-100 px-3 py-2">
+              <p class="text-slate-500">평균 명중</p>
+              <p id="aim-average" class="font-bold text-slate-900">-</p>
+            </div>
+            <div class="rounded-2xl bg-slate-100 px-3 py-2">
+              <p class="text-slate-500">명중률</p>
+              <p id="aim-accuracy" class="font-bold text-slate-900">-</p>
+            </div>
+            <div class="rounded-2xl bg-slate-100 px-3 py-2">
+              <p class="text-slate-500">빗나감</p>
+              <p id="aim-miss" class="font-bold text-slate-900">0</p>
+            </div>
+          </div>
+        </div>
+
+        <div
+          id="aim-arena"
+          class="relative mt-5 h-[420px] overflow-hidden rounded-[28px] border border-slate-200 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.16),_transparent_26%),linear-gradient(180deg,_#0f172a_0%,_#111827_100%)]"
+        >
+          <div class="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:32px_32px]"></div>
+          <div class="absolute left-4 top-4 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white/80">
+            표적이 뜨면 바로 클릭
+          </div>
+          <button
+            id="aim-target"
+            type="button"
+            class="absolute hidden h-14 w-14 -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-white bg-rose-500 shadow-[0_0_0_10px_rgba(255,255,255,0.08)] transition"
+            aria-label="aim target"
+          >
+            <span class="absolute inset-[10px] rounded-full border-2 border-white/90"></span>
+            <span class="absolute left-1/2 top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white"></span>
+          </button>
+        </div>
+
+        <div id="aim-result-card" class="mt-5 hidden rounded-[28px] border border-slate-200 bg-slate-50 p-5">
+          <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Recommendation</p>
+              <h3 id="aim-result-title" class="mt-2 text-2xl font-black tracking-tight text-slate-950">감도 유지 추천</h3>
+              <p id="aim-result-copy" class="mt-2 max-w-2xl text-sm leading-6 text-slate-600"></p>
+            </div>
+            <div class="rounded-3xl bg-white px-5 py-4 shadow-sm">
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Suggested sensitivity</p>
+              <p id="aim-result-sensitivity" class="mt-2 text-3xl font-black text-slate-950">-</p>
+              <p id="aim-result-delta" class="mt-1 text-sm font-semibold text-slate-500">-</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <section class="mt-6 rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+      <h2 class="text-xl font-bold text-slate-950">사용 방법</h2>
+      <ol class="mt-3 list-decimal space-y-2 pl-5 text-sm leading-7 text-slate-600">
+        <li>현재 FPS 감도를 입력합니다.</li>
+        <li>10초, 20초, 30초 중 원하는 테스트 시간을 고릅니다.</li>
+        <li>화면에 랜덤으로 뜨는 표적을 빠르게 클릭합니다.</li>
+        <li>평균 명중 시간과 정확도를 보고 감도 추천값을 참고합니다.</li>
+      </ol>
+
+      <div class="mt-6 grid gap-4 md:grid-cols-3">
+        <div class="rounded-2xl bg-slate-50 p-4">
+          <p class="text-sm font-semibold text-slate-900">감도 올림 추천</p>
+          <p class="mt-2 text-sm leading-6 text-slate-600">표적을 늦게 맞추고, 놓치는 편이면 에임 이동이 답답한 상태일 수 있습니다.</p>
+        </div>
+        <div class="rounded-2xl bg-slate-50 p-4">
+          <p class="text-sm font-semibold text-slate-900">감도 내림 추천</p>
+          <p class="mt-2 text-sm leading-6 text-slate-600">반응은 빠른데 빗나간 클릭이 많으면 감도가 높아 과하게 튈 수 있습니다.</p>
+        </div>
+        <div class="rounded-2xl bg-slate-50 p-4">
+          <p class="text-sm font-semibold text-slate-900">감도 유지 추천</p>
+          <p class="mt-2 text-sm leading-6 text-slate-600">반응속도와 정확도가 모두 안정적이면 현재 감도에 크게 손댈 필요가 없습니다.</p>
+        </div>
+      </div>
+    </section>
+
+    <script is:inline>
+      const sensitivityInput = document.getElementById('aim-sensitivity-input');
+      const durationSelect = document.getElementById('aim-duration-select');
+      const startButton = document.getElementById('aim-start-button');
+      const resetButton = document.getElementById('aim-reset-button');
+      const arena = document.getElementById('aim-arena');
+      const target = document.getElementById('aim-target');
+      const statusEl = document.getElementById('aim-status');
+      const timerEl = document.getElementById('aim-timer');
+      const averageEl = document.getElementById('aim-average');
+      const accuracyEl = document.getElementById('aim-accuracy');
+      const missEl = document.getElementById('aim-miss');
+      const resultCard = document.getElementById('aim-result-card');
+      const resultTitle = document.getElementById('aim-result-title');
+      const resultCopy = document.getElementById('aim-result-copy');
+      const resultSensitivity = document.getElementById('aim-result-sensitivity');
+      const resultDelta = document.getElementById('aim-result-delta');
+
+      let isRunning = false;
+      let testSeconds = 20;
+      let testStartAt = 0;
+      let rafId = 0;
+      let spawnTimeout = 0;
+      let expireTimeout = 0;
+      let targetVisible = false;
+      let targetSpawnAt = 0;
+      let totalTargets = 0;
+      let hits = 0;
+      let misses = 0;
+      let offTargetClicks = 0;
+      let hitTimes = [];
+
+      const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+      const round2 = (value) => Math.round(value * 100) / 100;
+
+      const parseSensitivity = () => {
+        const value = Number(String(sensitivityInput?.value ?? '').trim());
+        if (!Number.isFinite(value) || value <= 0) return null;
+        return value;
+      };
+
+      const updateStats = () => {
+        const average = hitTimes.length ? Math.round(hitTimes.reduce((sum, value) => sum + value, 0) / hitTimes.length) : null;
+        const accuracy = totalTargets > 0 ? Math.round((hits / totalTargets) * 100) : null;
+
+        if (averageEl) averageEl.textContent = average == null ? '-' : `${average}ms`;
+        if (accuracyEl) accuracyEl.textContent = accuracy == null ? '-' : `${accuracy}%`;
+        if (missEl) missEl.textContent = String(offTargetClicks + misses);
+      };
+
+      const hideTarget = () => {
+        if (!target) return;
+        targetVisible = false;
+        target.classList.add('hidden');
+      };
+
+      const setStatus = (message) => {
+        if (statusEl) statusEl.textContent = message;
+      };
+
+      const scheduleTarget = () => {
+        if (!arena || !target || !isRunning) return;
+
+        const arenaRect = arena.getBoundingClientRect();
+        const padding = 38;
+        const x = padding + Math.random() * Math.max(1, arenaRect.width - padding * 2);
+        const y = 72 + Math.random() * Math.max(1, arenaRect.height - 120);
+        target.style.left = `${x}px`;
+        target.style.top = `${y}px`;
+        target.classList.remove('hidden');
+        targetVisible = true;
+        targetSpawnAt = performance.now();
+        totalTargets += 1;
+
+        const lifetime = 900 + Math.random() * 550;
+        window.clearTimeout(expireTimeout);
+        expireTimeout = window.setTimeout(() => {
+          if (!targetVisible) return;
+          misses += 1;
+          hideTarget();
+          updateStats();
+          if (isRunning) {
+            spawnTimeout = window.setTimeout(scheduleTarget, 180 + Math.random() * 320);
+          }
+        }, lifetime);
+      };
+
+      const finishTest = () => {
+        isRunning = false;
+        window.cancelAnimationFrame(rafId);
+        window.clearTimeout(spawnTimeout);
+        window.clearTimeout(expireTimeout);
+        hideTarget();
+
+        const sensitivity = parseSensitivity();
+        const avgHit = hitTimes.length ? hitTimes.reduce((sum, value) => sum + value, 0) / hitTimes.length : 999;
+        const accuracy = totalTargets > 0 ? (hits / totalTargets) * 100 : 0;
+        const missPressure = totalTargets > 0 ? (offTargetClicks + misses) / totalTargets : 0;
+
+        let action = 'keep';
+        let factor = 1;
+        let title = '감도 유지 추천';
+        let copy = '반응속도와 정확도가 비교적 안정적입니다. 현재 감도를 유지하고 미세 조정만 해보는 편이 좋습니다.';
+
+        if (accuracy < 45 && avgHit > 650) {
+          action = 'up';
+          factor = 1.1;
+          title = '감도 올림 추천';
+          copy = '표적을 늦게 맞추고 놓치는 비율도 높습니다. 현재 감도가 조금 답답할 수 있어 8~10% 정도 올려보는 편이 좋습니다.';
+        } else if (accuracy < 62 && avgHit > 520) {
+          action = 'up';
+          factor = 1.05;
+          title = '감도 소폭 상승 추천';
+          copy = '전반적으로 느리게 따라가는 편입니다. 감도를 3~5% 정도만 올려서 움직임을 조금 더 가볍게 만드는 쪽이 적합합니다.';
+        } else if (avgHit < 300 && missPressure > 0.55) {
+          action = 'down';
+          factor = 0.92;
+          title = '감도 내림 추천';
+          copy = '클릭 속도는 빠른데 빗나감이 많습니다. 감도가 높아서 오버슈팅이 발생할 가능성이 있어 6~8% 정도 낮추는 편이 좋습니다.';
+        } else if (avgHit < 340 && missPressure > 0.4) {
+          action = 'down';
+          factor = 0.96;
+          title = '감도 소폭 하향 추천';
+          copy = '속도는 괜찮지만 정확도가 약간 흔들립니다. 감도를 3~4% 정도만 낮춰서 안정감을 높여보는 편이 좋습니다.';
+        }
+
+        const suggested = sensitivity == null ? null : round2(clamp(sensitivity * factor, 0.01, 999));
+        const delta = suggested == null || sensitivity == null ? null : round2(suggested - sensitivity);
+
+        if (resultCard) resultCard.classList.remove('hidden');
+        if (resultTitle) resultTitle.textContent = title;
+        if (resultCopy) {
+          resultCopy.textContent = `평균 명중 ${Math.round(avgHit)}ms, 명중률 ${Math.round(accuracy)}%, 빗나감 ${offTargetClicks + misses}회를 기준으로 판단했습니다. ${copy}`;
+        }
+        if (resultSensitivity) resultSensitivity.textContent = suggested == null ? '감도 입력 필요' : String(suggested);
+        if (resultDelta) {
+          if (suggested == null || delta == null) {
+            resultDelta.textContent = '현재 감도를 입력하면 추천값을 계산합니다.';
+          } else if (action === 'keep') {
+            resultDelta.textContent = `현재 감도 ${sensitivity} 유지 권장`;
+          } else {
+            resultDelta.textContent = `${delta > 0 ? '+' : ''}${delta} 조정`;
+          }
+        }
+
+        setStatus('테스트가 끝났습니다. 아래 추천값을 확인하세요.');
+        if (startButton) startButton.textContent = '다시 테스트';
+        updateStats();
+        if (timerEl) timerEl.textContent = '0.0s';
+      };
+
+      const tick = () => {
+        if (!isRunning) return;
+        const elapsed = (performance.now() - testStartAt) / 1000;
+        const remaining = Math.max(0, testSeconds - elapsed);
+        if (timerEl) timerEl.textContent = `${remaining.toFixed(1)}s`;
+
+        if (remaining <= 0) {
+          finishTest();
+          return;
+        }
+
+        rafId = window.requestAnimationFrame(tick);
+      };
+
+      const startTest = () => {
+        const sensitivity = parseSensitivity();
+        if (sensitivity == null) {
+          setStatus('현재 감도를 먼저 입력하세요.');
+          sensitivityInput?.focus();
+          return;
+        }
+
+        testSeconds = Number(durationSelect?.value || 20);
+        isRunning = true;
+        totalTargets = 0;
+        hits = 0;
+        misses = 0;
+        offTargetClicks = 0;
+        hitTimes = [];
+        if (resultCard) resultCard.classList.add('hidden');
+        if (startButton) startButton.textContent = '테스트 진행 중';
+
+        updateStats();
+        setStatus('표적이 뜨면 바로 클릭하세요.');
+        testStartAt = performance.now();
+        if (timerEl) timerEl.textContent = `${Number(testSeconds).toFixed(1)}s`;
+        hideTarget();
+        window.clearTimeout(spawnTimeout);
+        window.clearTimeout(expireTimeout);
+        spawnTimeout = window.setTimeout(scheduleTarget, 350);
+        rafId = window.requestAnimationFrame(tick);
+      };
+
+      const resetTest = () => {
+        isRunning = false;
+        window.cancelAnimationFrame(rafId);
+        window.clearTimeout(spawnTimeout);
+        window.clearTimeout(expireTimeout);
+        totalTargets = 0;
+        hits = 0;
+        misses = 0;
+        offTargetClicks = 0;
+        hitTimes = [];
+        hideTarget();
+        updateStats();
+        if (resultCard) resultCard.classList.add('hidden');
+        if (timerEl) timerEl.textContent = `${Number(durationSelect?.value || 20).toFixed(1)}s`;
+        if (startButton) startButton.textContent = '테스트 시작';
+        setStatus('감도를 입력하고 시작 버튼을 누르세요.');
+      };
+
+      startButton?.addEventListener('click', () => {
+        if (isRunning) return;
+        startTest();
+      });
+
+      resetButton?.addEventListener('click', resetTest);
+
+      arena?.addEventListener('click', (event) => {
+        if (!isRunning || !targetVisible) return;
+        if (event.target === target || target?.contains(event.target)) return;
+        offTargetClicks += 1;
+        updateStats();
+      });
+
+      target?.addEventListener('click', (event) => {
+        event.stopPropagation();
+        if (!isRunning || !targetVisible) return;
+
+        const elapsed = Math.round(performance.now() - targetSpawnAt);
+        hits += 1;
+        hitTimes.push(elapsed);
+        hideTarget();
+        window.clearTimeout(expireTimeout);
+        updateStats();
+
+        if (isRunning) {
+          spawnTimeout = window.setTimeout(scheduleTarget, 160 + Math.random() * 260);
+        }
+      });
+
+      durationSelect?.addEventListener('change', () => {
+        if (!isRunning && timerEl) {
+          timerEl.textContent = `${Number(durationSelect.value || 20).toFixed(1)}s`;
+        }
+      });
+
+      resetTest();
+    </script>
+
+    <Recommend />
+  </main>
+  <Footer />
+</Layout>
