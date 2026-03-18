@@ -28,6 +28,7 @@
     "clsx": "^2.1.1",
     "framer-motion": "^12.36.0",
     "html-to-image": "^1.11.13",
+    "i18next": "^25.8.18",
     "jspdf": "^4.2.0",
     "lucide-react": "^0.577.0",
     "medium-zoom": "^1.1.0",

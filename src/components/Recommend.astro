@@ -1,64 +1,49 @@
-﻿---
+---
+import { createTranslator, detectLocale, withLocalePath } from '../lib/i18n';
+
 const pathname = Astro.url.pathname;
-const locale = pathname.startsWith('/en/') || pathname === '/en'
-  ? 'en'
-  : pathname.startsWith('/ja/') || pathname === '/ja'
-    ? 'ja'
-    : 'ko';
-const localePrefix = locale === 'ko' ? '' : `/${locale}`;
-const withLocale = (path: string) => `${localePrefix}${path}`.replace(/\/{2,}/g, '/');
+const locale = detectLocale(pathname);
+const t = await createTranslator(locale);
 
 const labels = {
-  ko: {
-    title: '실시간 인기 콘텐츠',
-    top: '현재 인기 1위',
-    rankPrefix: '1위:'
-  },
-  en: {
-    title: 'Trending Now',
-    top: 'Current #1',
-    rankPrefix: '#1:'
-  },
-  ja: {
-    title: '人気コンテンツ',
-    top: '現在の1位',
-    rankPrefix: '1位:'
-  }
-}[locale];
+  title: t('recommend.title'),
+  top: t('recommend.top'),
+  rankPrefix: t('recommend.rankPrefix')
+};
 
 const items = [
-  { href: '/animal-test', ko: '동물상 테스트', en: 'Animal Face Test', ja: '動物顔テスト' },
-  { href: '/personal-color', ko: '퍼스널컬러 테스트', en: 'Personal Color Test', ja: 'パーソナルカラーテスト' },
-  { href: '/mbti-test', ko: 'MBTI 테스트', en: 'MBTI Test', ja: 'MBTIテスト' },
-  { href: '/love-compatibility', ko: '연애 궁합 테스트', en: 'Love Compatibility', ja: '恋愛相性テスト' },
-  { href: '/name-meaning', ko: '이름풀이', en: 'Name Meaning', ja: '名前診断' },
-  { href: '/name-compatibility', ko: '이름궁합', en: 'Name Match', ja: '名前相性' },
-  { href: '/reaction-test', ko: '반응속도 테스트', en: 'Reaction Test', ja: '反応速度テスト' },
-  { href: '/fps-aim-sensitivity', ko: 'FPS 에임 조절기', en: 'FPS Aim Sensitivity', ja: 'FPSエイム感度調整' },
-  { href: '/ai-calorie-calculator', ko: 'AI 칼로리 계산기', en: 'AI Calorie Calculator', ja: 'AIカロリー計算機' },
-  { href: '/ladder-game', ko: '사다리타기', en: 'Ladder Game', ja: 'あみだくじ' },
-  { href: '/today-fortune', ko: '오늘의 운세', en: 'Today Fortune', ja: '今日の運勢' },
-  { href: '/fortune-cookie-2026', ko: '올해 포츈쿠키', en: 'Year Fortune Cookie', ja: '今年のフォーチュンクッキー' },
-  { href: '/maps/hidden-cafe', ko: '숨은 카페 지도', en: 'Hidden Cafe Map', ja: '隠れカフェマップ' },
-  { href: '/maps/solo-dining', ko: '혼밥 가능 식당 공유', en: 'Solo Dining Map', ja: 'ひとりご飯マップ' },
-  { href: '/pinball', ko: '핀볼 게임', en: 'Pinball Game', ja: 'ピンボールゲーム' },
-  { href: '/random-food', ko: '랜덤 음식 추천', en: 'Random Food', ja: 'ランダム料理おすすめ' },
-  { href: '/tools/scoreboard', ko: '스트리머 점수판', en: 'Streamer Scoreboard', ja: 'ストリーマースコアボード' },
-  { href: '/face-shape-test', ko: '얼굴형테스트', en: 'Face Shape Test', ja: '顔型テスト' },
-  { href: '/nickname-generator', ko: '닉네임생성기', en: 'Nickname Generator', ja: 'ニックネーム生成' },
-  { href: '/chat-random-picker', ko: '채팅 랜덤 뽑기', en: 'Chat Random Picker', ja: 'チャット抽選' },
-  { href: '/meme-generator', ko: '밈 생성기', en: 'Meme Generator', ja: 'ミーム生成' },
-  { href: '/random-picker', ko: '랜덤뽑기', en: 'Random Picker', ja: 'ランダム抽選' },
-  { href: '/roulette', ko: '룰렛', en: 'Roulette', ja: 'ルーレット' },
-  { href: '/team-split', ko: '팀나누기', en: 'Team Split', ja: 'チーム分け' },
-  { href: '/text-counter', ko: '글자수세기', en: 'Text Counter', ja: '文字数カウンター' },
-  { href: '/daily-english-word', ko: '오늘의 영단어', en: 'Daily English Word', ja: '今日の英単語' },
-  { href: '/daily-sentence', ko: '하루 영어 한문장', en: 'Daily English Sentence', ja: '毎日の英語一文' },
-  { href: '/streamer-battle', ko: '스트리머 대결 툴', en: 'Streamer Battle Tool', ja: 'ストリーマー対決ツール' },
-  { href: '/daily-spanish', ko: '오늘의 스페인어', en: 'Daily Spanish', ja: '今日のスペイン語' },
-  { href: '/daily-japanese', ko: '오늘의 일본어', en: 'Daily Japanese', ja: '今日の日本語' },
-  { href: '/korean-study-today', ko: '오늘의 한국어공부', en: 'Daily Korean Study', ja: '今日の韓国語学習' }
-].map((item) => ({ href: withLocale(item.href), label: item[locale] }));
+  { href: '/animal-test', label: t('recommend.items.animalTest') },
+  { href: '/personal-color', label: t('recommend.items.personalColor') },
+  { href: '/mbti-test', label: t('recommend.items.mbti') },
+  { href: '/love-compatibility', label: t('recommend.items.loveCompatibility') },
+  { href: '/name-meaning', label: t('recommend.items.nameMeaning') },
+  { href: '/name-compatibility', label: t('recommend.items.nameCompatibility') },
+  { href: '/reaction-test', label: t('recommend.items.reactionTest') },
+  { href: '/fps-aim-sensitivity', label: t('recommend.items.fpsAim') },
+  { href: '/ai-calorie-calculator', label: t('recommend.items.aiCalorie') },
+  { href: '/ladder-game', label: t('recommend.items.ladderGame') },
+  { href: '/today-fortune', label: t('recommend.items.todayFortune') },
+  { href: '/fortune-cookie-2026', label: t('recommend.items.fortuneCookie') },
+  { href: '/maps/hidden-cafe', label: t('recommend.items.hiddenCafe') },
+  { href: '/maps/solo-dining', label: t('recommend.items.soloDining') },
+  { href: '/pinball', label: t('recommend.items.pinball') },
+  { href: '/random-food', label: t('recommend.items.randomFood') },
+  { href: '/tools/scoreboard', label: t('recommend.items.scoreboard') },
+  { href: '/face-shape-test', label: t('recommend.items.faceShape') },
+  { href: '/nickname-generator', label: t('recommend.items.nickname') },
+  { href: '/chat-random-picker', label: t('recommend.items.chatRandomPicker') },
+  { href: '/meme-generator', label: t('recommend.items.memeGenerator') },
+  { href: '/random-picker', label: t('recommend.items.randomPicker') },
+  { href: '/roulette', label: t('recommend.items.roulette') },
+  { href: '/team-split', label: t('recommend.items.teamSplit') },
+  { href: '/text-counter', label: t('recommend.items.textCounter') },
+  { href: '/daily-english-word', label: t('recommend.items.dailyEnglishWord') },
+  { href: '/daily-sentence', label: t('recommend.items.dailySentence') },
+  { href: '/streamer-battle', label: t('recommend.items.streamerBattle') },
+  { href: '/daily-spanish', label: t('recommend.items.dailySpanish') },
+  { href: '/daily-japanese', label: t('recommend.items.dailyJapanese') },
+  { href: '/korean-study-today', label: t('recommend.items.koreanStudy') }
+].map((item) => ({ href: withLocalePath(locale, item.href), label: item.label }));
 ---
 
 <section class="mt-10">

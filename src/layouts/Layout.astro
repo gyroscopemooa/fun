@@ -3,6 +3,7 @@ import '../styles/global.css';
 import AdSense from '../components/AdSense.astro';
 import SiteProviders from '../components/providers/SiteProviders';
 import globalCssUrl from '../styles/global.css?url';
+import { createTranslator, detectLocale, stripLocale, withLocalePath } from '../lib/i18n';
 
 interface Props {
   title?: string;
@@ -23,14 +24,11 @@ const {
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).toString();
 const ogImage = new URL(image, Astro.site ?? Astro.url.origin).toString();
 const siteUrl = Astro.site?.toString() ?? Astro.url.origin;
-const locale = Astro.url.pathname.startsWith('/en/') || Astro.url.pathname === '/en'
-  ? 'en'
-  : Astro.url.pathname.startsWith('/ja/') || Astro.url.pathname === '/ja'
-    ? 'ja'
-    : 'ko';
+const locale = detectLocale(Astro.url.pathname);
+const t = await createTranslator(locale);
 const htmlLang = locale === 'ko' ? 'ko' : locale === 'ja' ? 'ja' : 'en';
 const ogLocale = locale === 'ko' ? 'ko_KR' : locale === 'ja' ? 'ja_JP' : 'en_US';
-const pathNoLocale = Astro.url.pathname.replace(/^\/(en|ja)(?=\/|$)/, '') || '/';
+const pathNoLocale = stripLocale(Astro.url.pathname);
 const koHref = new URL(pathNoLocale, siteUrl).toString();
 const enHref = new URL(pathNoLocale === '/' ? '/en' : `/en${pathNoLocale}`, siteUrl).toString();
 const jaHref = new URL(pathNoLocale === '/' ? '/ja' : `/ja${pathNoLocale}`, siteUrl).toString();
@@ -43,19 +41,15 @@ const adsenseClient = 'ca-pub-1009841039120964';
 const rawApiBase = (import.meta.env.PUBLIC_NODE_API_BASE ?? '').trim();
 const apiBase = rawApiBase.replace(/\/+$/, '');
 const localeTitlePrefix = locale === 'ko' ? '' : locale === 'en' ? '[EN] ' : '[JA] ';
-const localeDescSuffix = locale === 'ko'
-  ? ''
-  : locale === 'en'
-    ? ' | English version of this page.'
-    : ' | 日本語ページです。';
+const localeDescSuffix = t('layout.descriptionSuffix');
 const normalizedPathLabel = pathNoLocale === '/' ? 'main' : pathNoLocale.replace(/\//g, ' ').trim();
 const segments = pathNoLocale.split('/').filter(Boolean);
 const topSlug = segments[segments.length - 1] ?? '';
 const freeLabelMap: Record<string, string> = {
-  'today-fortune': '무료 오늘의 운세',
-  'name-meaning': '무료 이름풀이',
-  'name-compatibility': '무료 이름궁합',
-  'love-compatibility': '무료 연애궁합'
+  'today-fortune': t('layout.freeBodyLabel.todayFortune'),
+  'name-meaning': t('layout.freeBodyLabel.nameMeaning'),
+  'name-compatibility': t('layout.freeBodyLabel.nameCompatibility'),
+  'love-compatibility': t('layout.freeBodyLabel.loveCompatibility')
 };
 const freeBodyLabel = locale === 'ko' ? freeLabelMap[topSlug] : undefined;
 const freeAutoPaths = new Set(['/', '/tools', '/games', '/tests', '/maps', '/online-tools']);
@@ -100,10 +94,10 @@ const labelMap: Record<string, string> = {
 };
 
 const breadcrumbs = [
-  { name: '홈', href: locale === 'ko' ? '/' : `/${locale}` },
+  { name: t('common.home'), href: withLocalePath(locale, '/') },
   ...segments.map((seg, idx) => {
     const path = `/${segments.slice(0, idx + 1).join('/')}`;
-    const localizedPath = locale === 'ko' ? path : `/${locale}${path}`;
+    const localizedPath = withLocalePath(locale, path);
     return {
       name: labelMap[seg] ?? seg,
       href: localizedPath
@@ -130,7 +124,7 @@ const softwareApplicationJsonLd = {
   name: 'ManyTool',
   applicationCategory: 'UtilityApplication',
   operatingSystem: 'Web',
-  description: '테스트, 게임, 지도, 랜덤 도구를 제공하는 온라인 툴 플랫폼',
+  description: t('layout.softwareDescription'),
   url: siteUrl
 };
 
@@ -148,34 +142,34 @@ const faqJsonLd = {
   mainEntity: [
     {
       '@type': 'Question',
-      name: 'ManyTool은 무엇인가?',
+      name: t('layout.faq.q1'),
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'ManyTool은 온라인 도구, 테스트, 게임, 지도 기능을 제공하는 웹 기반 플랫폼입니다.'
+        text: t('layout.faq.a1')
       }
     },
     {
       '@type': 'Question',
-      name: '온라인 도구란 무엇인가?',
+      name: t('layout.faq.q2'),
       acceptedAnswer: {
         '@type': 'Answer',
-        text: '브라우저에서 설치 없이 바로 사용하는 웹 기반 도구입니다.'
+        text: t('layout.faq.a2')
       }
     },
     {
       '@type': 'Question',
-      name: 'MBTI 테스트는 무엇인가?',
+      name: t('layout.faq.q3'),
       acceptedAnswer: {
         '@type': 'Answer',
-        text: '질문 응답을 기반으로 성격 유형을 분류하는 테스트입니다.'
+        text: t('layout.faq.a3')
       }
     },
     {
       '@type': 'Question',
-      name: '궁합 테스트는 어떻게 작동하는가?',
+      name: t('layout.faq.q4'),
       acceptedAnswer: {
         '@type': 'Answer',
-        text: '입력값 기반 규칙으로 궁합 점수와 결과를 계산해 보여줍니다.'
+        text: t('layout.faq.a4')
       }
     }
   ]
@@ -206,59 +200,23 @@ const breadcrumbJsonLd = {
   }))
 };
 
-const sidebarText = locale === 'ko'
-  ? {
-    title: 'ManyTool',
-    subtitle: '빠른 바로가기',
-    donate: '기부하기',
-    donateHint: '사이트 운영을 돕고 싶다면 후원해주세요.',
-    donateLoading: '결제 이동 중...',
-    donateUnavailable: '기부 상품 준비 중',
-    open: '사이드바 펼치기',
-    close: '사이드바 접기',
-    links: [
-      { href: locale === 'ko' ? '/' : `/${locale}`, label: '홈' },
-      { href: locale === 'ko' ? '/ai-image-generator' : `/${locale}/ai-image-generator`, label: 'AI 이미지 생성기' },
-      { href: locale === 'ko' ? '/ai-calorie-calculator' : `/${locale}/ai-calorie-calculator`, label: 'AI 칼로리 계산기' },
-      { href: locale === 'ko' ? '/ai-id-photo' : `/${locale}/ai-id-photo`, label: 'AI 증명사진' },
-      { href: locale === 'ko' ? '/tools/product-detail-studio' : `/${locale}/tools/product-detail-studio`, label: '상세페이지 생성기' }
-    ]
-  }
-  : locale === 'ja'
-    ? {
-      title: 'ManyTool',
-      subtitle: 'クイックリンク',
-      donate: '寄付する',
-      donateHint: 'サイト運営を支援したい場合はご利用ください。',
-      donateLoading: '決済ページへ移動中...',
-      donateUnavailable: '寄付商品を準備中です',
-      open: 'サイドバーを開く',
-      close: 'サイドバーを閉じる',
-      links: [
-        { href: '/ja', label: 'ホーム' },
-        { href: '/ja/ai-image-generator', label: 'AI画像生成' },
-        { href: '/ja/ai-calorie-calculator', label: 'AIカロリー計算機' },
-        { href: '/ja/ai-id-photo', label: 'AI証明写真' },
-        { href: '/ja/tools/product-detail-studio', label: '商品詳細ページ生成' }
-      ]
-    }
-    : {
-      title: 'ManyTool',
-      subtitle: 'Quick Links',
-      donate: 'Donate',
-      donateHint: 'Support the site if you want to help keep it running.',
-      donateLoading: 'Redirecting to checkout...',
-      donateUnavailable: 'Donation product not ready',
-      open: 'Open sidebar',
-      close: 'Close sidebar',
-      links: [
-        { href: '/en', label: 'Home' },
-        { href: '/en/ai-image-generator', label: 'AI Image Generator' },
-        { href: '/en/ai-calorie-calculator', label: 'AI Calorie Calculator' },
-        { href: '/en/ai-id-photo', label: 'AI ID Photo' },
-        { href: '/en/tools/product-detail-studio', label: 'Product Detail Studio' }
-      ]
-    };
+const sidebarText = {
+  title: t('layout.sidebar.title'),
+  subtitle: t('layout.sidebar.subtitle'),
+  donate: t('layout.sidebar.donate'),
+  donateHint: t('layout.sidebar.donateHint'),
+  donateLoading: t('layout.sidebar.donateLoading'),
+  donateUnavailable: t('layout.sidebar.donateUnavailable'),
+  open: t('layout.sidebar.open'),
+  close: t('layout.sidebar.close'),
+  links: [
+    { href: withLocalePath(locale, '/'), label: t('common.home') },
+    { href: withLocalePath(locale, '/ai-image-generator'), label: t('layout.sidebar.aiImage') },
+    { href: withLocalePath(locale, '/ai-calorie-calculator'), label: t('layout.sidebar.aiCalorie') },
+    { href: withLocalePath(locale, '/ai-id-photo'), label: t('layout.sidebar.aiIdPhoto') },
+    { href: withLocalePath(locale, '/tools/product-detail-studio'), label: t('layout.sidebar.productDetail') }
+  ]
+};
 
 const disabledSidebarPaths = new Set(['/ai-id-photo', '/ai-passport-photo', '/ai-headshot']);
 const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.replace(/^\/(en|ja)(?=\/|$)/, '') || '/'));
@@ -388,7 +346,7 @@ const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.r
                 <span>{link.label}</span>
                 {isDisabledSidebarLink(link.href) ? (
                   <span class="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                    {locale === 'ko' ? '준비 중' : locale === 'ja' ? '準備中' : 'Soon'}
+                    {t('common.soon')}
                   </span>
                 ) : null}
               </a>
