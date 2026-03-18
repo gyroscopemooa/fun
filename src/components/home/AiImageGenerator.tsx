@@ -1148,7 +1148,7 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
               </p>
               {!activeContent.inputRequired ? (
                 <p className="mt-1 text-[11px] leading-5 text-amber-700">
-                  Short prompts work better. Long prompts can reduce quality.
+                  {locale === 'en' ? 'Short prompts work better. Long prompts can reduce quality.' : '짧은 프롬프트가 더 잘 나옵니다. 긴 프롬프트는 품질이 오히려 떨어질 수 있습니다.'}
                 </p>
               ) : null}
             </div>
@@ -1207,9 +1207,9 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
                 <p className="mt-2 text-sm leading-6 text-slate-600">
                   {activeContent.exampleDescription}
                 </p>
-                  <p className="mt-2 text-[11px] leading-5 text-slate-500">
-                    Discount code: manytool50
-                  </p>
+                <p className="mt-2 text-[11px] leading-5 text-slate-500">
+                  {locale === 'en' ? 'Discount code: manytool50' : '할인코드: manytool50'}
+                </p>
               </div>
             </div>
           </aside>
@@ -1295,7 +1295,7 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
               <div>
                 <p className="text-sm font-semibold text-slate-500">처리 상태</p>
                 <p className="mt-2 text-[11px] leading-5 text-slate-500">
-                  Discount code: manytool50
+                  {locale === 'en' ? 'Discount code: manytool50' : '할인코드: manytool50'}
                 </p>
                 <h3 className="mt-1 text-2xl font-black tracking-tight text-slate-950">
                   {generationPhase === 'payment' && `${PROVIDER_LABELS[activeProvider]} 요청 준비 중`}
