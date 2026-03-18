@@ -10,6 +10,7 @@ import { Webhook } from 'standardwebhooks';
 import { db } from './store.js';
 import { generateCommerceDetailPage } from './commerce/detailPage.js';
 import { generateAiImage, getModeOptions, getProviderOptions, sanitizeUserInput } from './commerce/aiImageGenerator.js';
+import { analyzeMealCalories } from './commerce/calorieAnalyzer.js';
 import { generateCandidatesWithProvider, getImageProvider, getResolvedImageProvider, isExternalAiEnabled, normalizeRequestedProvider, resolveImageProvider } from './providers/providerRouter.js';
 
 const app = express();
@@ -966,6 +967,30 @@ app.post('/ai-image-generator/generate', upload.single('image'), async (req, res
     });
   } catch (error) {
     return res.status(500).json({ error: `ai image generate failed: ${error.message}` });
+  }
+});
+
+app.post('/ai-calorie-calculator/analyze', upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file?.buffer) {
+      return res.status(400).json({ error: 'image file is required (field name: image)' });
+    }
+    if (!String(req.file.mimetype).startsWith('image/')) {
+      return res.status(400).json({ error: 'only image uploads are allowed' });
+    }
+    if (!process.env.OPENAI_API_KEY?.trim()) {
+      return res.status(503).json({ error: 'OPENAI_API_KEY is not configured' });
+    }
+
+    const imageDataUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+    const analysis = await analyzeMealCalories({ imageDataUrl });
+
+    return res.json({
+      ok: true,
+      analysis
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message || 'analysis failed' });
   }
 });
 

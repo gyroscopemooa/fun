@@ -1,0 +1,223 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import AdSense from '../components/AdSense.astro';
+import Recommend from '../components/Recommend.astro';
+
+const rawApiBase = (import.meta.env.PUBLIC_NODE_API_BASE ?? '').trim();
+const apiBase = rawApiBase.replace(/\/+$/, '');
+---
+
+<Layout
+  title="AI 칼로리 계산기 | 음식 사진 칼로리 추정, 식단 사진 분석 | ManyTool"
+  description="음식 사진을 업로드하면 OpenAI 비전 분석으로 음식 종류, 대략적인 분량, 총 칼로리를 추정해주는 ManyTool AI 칼로리 계산기입니다."
+>
+  <Header />
+  <main class="mx-auto max-w-5xl px-4 py-8">
+    <section class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+      <p class="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-600">AI Nutrition</p>
+      <h1 class="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">AI 칼로리 계산기</h1>
+      <p class="mt-3 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
+        음식 사진을 업로드하면 AI가 보이는 음식 종류와 대략적인 양을 바탕으로 총 칼로리를 추정합니다. 정확한 영양 진단이 아니라 빠른 참고용 추정치입니다.
+      </p>
+      <AdSense slotName="본문 상단" />
+    </section>
+
+    <section class="mt-6 grid gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
+      <aside class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 class="text-lg font-bold text-slate-950">사진 업로드</h2>
+        <label class="mt-4 flex min-h-[260px] cursor-pointer flex-col items-center justify-center rounded-[28px] border border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center transition hover:border-slate-950 hover:bg-white">
+          <input id="calorie-image-input" type="file" accept="image/*" class="hidden" />
+          <div id="calorie-empty" class="space-y-3">
+            <p class="text-base font-semibold text-slate-900">음식 사진 선택</p>
+            <p class="text-sm leading-6 text-slate-500">한 접시, 도시락, 간식 사진 등 음식이 잘 보이게 올려주세요.</p>
+          </div>
+          <img id="calorie-preview" alt="meal preview" class="hidden max-h-[240px] rounded-[24px] object-contain shadow-sm" />
+        </label>
+
+        <div class="mt-4 rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-600">
+          <p class="font-semibold text-slate-900">안내</p>
+          <p class="mt-2">국물, 소스, 숨은 재료, 정확한 중량은 오차가 클 수 있습니다. 병원/영양사 기준이 아닌 AI 추정값입니다.</p>
+        </div>
+
+        <button id="calorie-analyze-button" class="mt-4 w-full rounded-2xl bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800">
+          칼로리 분석
+        </button>
+      </aside>
+
+      <section class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2 class="text-lg font-bold text-slate-950">분석 결과</h2>
+            <p id="calorie-status" class="mt-1 text-sm text-slate-600">사진을 업로드하면 총 칼로리와 음식별 추정치를 보여줍니다.</p>
+          </div>
+          <div class="rounded-3xl bg-emerald-50 px-5 py-4">
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Estimated Total</p>
+            <p id="calorie-total" class="mt-2 text-3xl font-black text-emerald-900">-</p>
+          </div>
+        </div>
+
+        <div id="calorie-summary-card" class="mt-5 hidden rounded-[24px] border border-slate-200 bg-slate-50 p-5">
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Summary</p>
+          <p id="calorie-summary" class="mt-2 text-sm leading-6 text-slate-700"></p>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <span id="calorie-confidence" class="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700"></span>
+          </div>
+        </div>
+
+        <div class="mt-5 overflow-hidden rounded-[24px] border border-slate-200">
+          <table class="min-w-full divide-y divide-slate-200 text-sm">
+            <thead class="bg-slate-50">
+              <tr>
+                <th class="px-4 py-3 text-left font-semibold text-slate-600">음식</th>
+                <th class="px-4 py-3 text-left font-semibold text-slate-600">추정 분량</th>
+                <th class="px-4 py-3 text-left font-semibold text-slate-600">칼로리</th>
+                <th class="px-4 py-3 text-left font-semibold text-slate-600">신뢰도</th>
+              </tr>
+            </thead>
+            <tbody id="calorie-items" class="divide-y divide-slate-200 bg-white">
+              <tr>
+                <td colspan="4" class="px-4 py-8 text-center text-slate-400">아직 분석된 항목이 없습니다.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div id="calorie-notes-card" class="mt-5 hidden rounded-[24px] border border-amber-200 bg-amber-50 p-5">
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">Notes</p>
+          <ul id="calorie-notes" class="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-amber-900"></ul>
+        </div>
+      </section>
+    </section>
+
+    <script is:inline define:vars={{ apiBase }}>
+      const fileInput = document.getElementById('calorie-image-input');
+      const preview = document.getElementById('calorie-preview');
+      const emptyState = document.getElementById('calorie-empty');
+      const analyzeButton = document.getElementById('calorie-analyze-button');
+      const statusEl = document.getElementById('calorie-status');
+      const totalEl = document.getElementById('calorie-total');
+      const itemsEl = document.getElementById('calorie-items');
+      const summaryCard = document.getElementById('calorie-summary-card');
+      const summaryEl = document.getElementById('calorie-summary');
+      const confidenceEl = document.getElementById('calorie-confidence');
+      const notesCard = document.getElementById('calorie-notes-card');
+      const notesEl = document.getElementById('calorie-notes');
+
+      let selectedFile = null;
+
+      const setStatus = (message) => {
+        if (statusEl) statusEl.textContent = message;
+      };
+
+      const renderEmptyTable = (message = '아직 분석된 항목이 없습니다.') => {
+        if (!itemsEl) return;
+        itemsEl.innerHTML = `<tr><td colspan="4" class="px-4 py-8 text-center text-slate-400">${message}</td></tr>`;
+      };
+
+      const confidenceLabel = (value) => {
+        if (value === 'high') return '높음';
+        if (value === 'medium') return '중간';
+        return '낮음';
+      };
+
+      fileInput?.addEventListener('change', () => {
+        const file = fileInput.files?.[0] ?? null;
+        selectedFile = file;
+        if (!file) {
+          if (preview) {
+            preview.classList.add('hidden');
+            preview.removeAttribute('src');
+          }
+          emptyState?.classList.remove('hidden');
+          return;
+        }
+
+        const objectUrl = URL.createObjectURL(file);
+        if (preview) {
+          preview.src = objectUrl;
+          preview.classList.remove('hidden');
+        }
+        emptyState?.classList.add('hidden');
+      });
+
+      analyzeButton?.addEventListener('click', async () => {
+        if (!selectedFile) {
+          setStatus('먼저 음식 사진을 업로드하세요.');
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append('image', selectedFile);
+
+        analyzeButton.disabled = true;
+        analyzeButton.textContent = '분석 중...';
+        setStatus('AI가 음식과 칼로리를 분석하고 있습니다.');
+        totalEl.textContent = '-';
+        renderEmptyTable('분석 중...');
+        summaryCard?.classList.add('hidden');
+        notesCard?.classList.add('hidden');
+
+        try {
+          const response = await fetch(`${apiBase}/ai-calorie-calculator/analyze`, {
+            method: 'POST',
+            body: formData
+          });
+          const payload = await response.json().catch(() => null);
+          if (!response.ok || !payload?.analysis) {
+            throw new Error(payload?.error || '분석에 실패했습니다.');
+          }
+
+          const analysis = payload.analysis;
+          totalEl.textContent = `${Math.round(analysis.totalCalories)} kcal`;
+          setStatus('분석이 완료되었습니다. 아래 결과를 확인하세요.');
+
+          if (summaryCard) summaryCard.classList.remove('hidden');
+          if (summaryEl) summaryEl.textContent = analysis.summary || '요약 정보가 없습니다.';
+          if (confidenceEl) confidenceEl.textContent = `전체 신뢰도: ${confidenceLabel(analysis.confidence)}`;
+
+          if (itemsEl) {
+            if (Array.isArray(analysis.foodItems) && analysis.foodItems.length) {
+              itemsEl.innerHTML = analysis.foodItems.map((item) => `
+                <tr>
+                  <td class="px-4 py-3 font-semibold text-slate-900">${item.name}</td>
+                  <td class="px-4 py-3 text-slate-600">${item.estimatedPortion}</td>
+                  <td class="px-4 py-3 text-slate-600">${Math.round(item.estimatedCalories)} kcal</td>
+                  <td class="px-4 py-3 text-slate-600">${confidenceLabel(item.confidence)}</td>
+                </tr>
+              `).join('');
+            } else {
+              renderEmptyTable('인식된 음식 항목이 없습니다.');
+            }
+          }
+
+          if (Array.isArray(analysis.notes) && analysis.notes.length) {
+            if (notesCard) notesCard.classList.remove('hidden');
+            if (notesEl) {
+              notesEl.innerHTML = analysis.notes.map((note) => `<li>${note}</li>`).join('');
+            }
+          }
+        } catch (error) {
+          setStatus(error.message || '분석에 실패했습니다.');
+          renderEmptyTable('분석 결과를 불러오지 못했습니다.');
+        } finally {
+          analyzeButton.disabled = false;
+          analyzeButton.textContent = '칼로리 분석';
+        }
+      });
+    </script>
+
+    <section class="mt-6 rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm text-sm leading-7 text-slate-600">
+      <h2 class="text-xl font-bold text-slate-950">참고 사항</h2>
+      <ul class="mt-3 list-disc space-y-2 pl-5">
+        <li>이 도구는 의료용이나 영양 처방용이 아닌 참고용 AI 추정치입니다.</li>
+        <li>국물, 소스, 오일, 숨은 재료는 실제보다 적거나 많게 추정될 수 있습니다.</li>
+        <li>정확한 식단 관리가 필요하면 포장지 영양정보나 전문가 상담이 더 적합합니다.</li>
+      </ul>
+    </section>
+
+    <Recommend />
+  </main>
+  <Footer />
+</Layout>
