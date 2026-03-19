@@ -49,12 +49,13 @@ const t = {
   donateFailed: tRaw('home.donateFailed'),
   prevCard: tRaw('home.prevCard'),
   nextCard: tRaw('home.nextCard'),
-  trendingCardsTitle: locale === 'ko' ? '지금 많이 검색되는 키워드' : locale === 'ja' ? 'いま人気のキーワード' : 'Trending Keywords',
-  trendingCardsDesc: locale === 'ko' ? '예전 사이드바처럼 빠르게 훑어볼 수 있게 정리한 Google Trends (KR) 목록입니다.' : locale === 'ja' ? '以前のサイドバーのように素早く見渡せる Google Trends (KR) リストです。' : 'A compact Google Trends (KR) list styled like the old sidebar.',
+  trendingCardsTitle: locale === 'ko' ? '실시간 인기검색어' : locale === 'ja' ? 'リアルタイム人気検索語' : 'Trending Searches',
+  trendingCardsDesc: locale === 'ko' ? 'Google Trends (KR)' : locale === 'ja' ? 'Google Trends (KR)' : 'Google Trends (KR)',
   trendingLoading: locale === 'ko' ? '불러오는 중...' : locale === 'ja' ? '読み込み中...' : 'Loading...',
   trendingError: locale === 'ko' ? '인기 키워드를 불러오지 못했습니다.' : locale === 'ja' ? 'キーワードを読み込めませんでした。' : 'Failed to load trends.',
   trendingCta: locale === 'ko' ? '검색 보기' : locale === 'ja' ? '検索を見る' : 'Search',
-  trendingMeta: locale === 'ko' ? '실시간 순위' : locale === 'ja' ? 'リアルタイム順位' : 'Live rankings'
+  trendingMeta: locale === 'ko' ? '실시간 순위' : locale === 'ja' ? 'リアルタイム順位' : 'Live rankings',
+  trendingUpdated: locale === 'ko' ? '업데이트' : locale === 'ja' ? '更新' : 'Updated'
 };
 
 const cardSeed = [
@@ -292,21 +293,6 @@ const faqJsonLd = {
       <p id="search-empty" class="hidden px-4 pb-4 text-sm text-slate-500 lg:px-10">{t.noResult}</p>
 
       <section class="px-4 pb-2 lg:px-10">
-        <article class="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.06)]">
-          <div class="border-b border-slate-200 bg-gradient-to-r from-slate-950 via-slate-900 to-sky-950 px-5 py-5 text-white lg:px-6">
-            <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-sky-200/80">{t.trendingMeta}</p>
-            <h2 class="mt-2 text-xl font-black tracking-tight">{t.trendingCardsTitle}</h2>
-            <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-200">{t.trendingCardsDesc}</p>
-          </div>
-          <div class="bg-slate-50/80 px-3 py-3 lg:px-4 lg:py-4">
-            <div id="trending-card-list" class="grid gap-3 lg:grid-cols-2">
-              <p id="trending-card-status" class="rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm text-slate-500">{t.trendingLoading}</p>
-            </div>
-          </div>
-        </article>
-      </section>
-
-      <section class="px-4 pb-2 lg:px-10">
         <article class="rounded-xl border border-slate-200 bg-white p-5">
           <h2 class="text-xl font-semibold">{t.guideTitle}</h2>
           <p class="mt-2 text-slate-700">
@@ -358,6 +344,26 @@ const faqJsonLd = {
         <Recommend />
         <AdSense slotName="추천 콘텐츠 위" />
       </section>
+
+      <section class="px-4 pb-10 lg:px-10">
+        <article class="mx-auto max-w-xl rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+            <div>
+              <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">{t.trendingMeta}</p>
+              <h2 class="mt-1 text-base font-black tracking-tight text-slate-900">{t.trendingCardsTitle}</h2>
+            </div>
+            <p class="text-[11px] text-slate-400">{t.trendingCardsDesc}</p>
+          </div>
+          <div class="px-3 py-2">
+            <div id="trending-card-list" class="space-y-1">
+              <p id="trending-card-status" class="px-2 py-3 text-sm text-slate-500">{t.trendingLoading}</p>
+            </div>
+          </div>
+          <div class="border-t border-slate-100 px-4 py-2">
+            <p id="trending-card-updated" class="text-[11px] text-slate-400"></p>
+          </div>
+        </article>
+      </section>
     </div>
     <Footer />
 
@@ -371,6 +377,7 @@ const faqJsonLd = {
     const homeDonateMessage = document.getElementById('home-donate-message');
     const trendingCardListEl = document.getElementById('trending-card-list');
     const trendingCardStatusEl = document.getElementById('trending-card-status');
+    const trendingCardUpdatedEl = document.getElementById('trending-card-updated');
     
     const dayKey = () => {
       const now = new Date();
@@ -511,22 +518,27 @@ const faqJsonLd = {
         link.href = `https://www.google.com/search?q=${encodeURIComponent(item.title)}`;
         link.target = '_blank';
         link.rel = 'nofollow noopener noreferrer';
-        link.className = 'group rounded-[22px] border border-slate-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-[0_16px_30px_rgba(15,23,42,0.08)]';
+        link.className = 'group flex items-center gap-3 rounded-xl px-2 py-2 transition hover:bg-slate-50';
         link.innerHTML = `
-          <div class="flex items-start gap-3">
-            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-slate-950 text-sm font-black text-white shadow-[0_10px_24px_rgba(15,23,42,0.22)]">#${item.rank}</div>
-            <div class="min-w-0 flex-1">
-              <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">${donateText.trendingMeta}</p>
-              <h3 class="mt-1 truncate text-base font-black tracking-tight text-slate-900 group-hover:text-sky-700">${item.title}</h3>
-              <div class="mt-3 flex items-center justify-between gap-3">
-                <p class="truncate text-xs text-slate-500">${item.traffic || ''}</p>
-                <span class="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold text-slate-600">${donateText.trendingCta}</span>
-              </div>
-            </div>
+          <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-900 text-[11px] font-bold text-white">#${item.rank}</div>
+          <div class="min-w-0 flex-1">
+            <p class="truncate text-sm font-semibold text-slate-800 group-hover:text-sky-700">${item.title}</p>
           </div>
+          <div class="shrink-0 text-[11px] text-slate-400">${item.traffic || ''}</div>
+          <div class="shrink-0 text-slate-300">›</div>
         `;
         trendingCardListEl.append(link);
       });
+    };
+
+    const renderTrendUpdated = (updatedAt) => {
+      if (!(trendingCardUpdatedEl instanceof HTMLElement)) return;
+      const d = new Date(updatedAt || Date.now());
+      if (Number.isNaN(d.getTime())) {
+        trendingCardUpdatedEl.textContent = '';
+        return;
+      }
+      trendingCardUpdatedEl.textContent = `${donateText.trendingUpdated}: ${d.toLocaleString()}`;
     };
 
     const loadTrends = async () => {
@@ -542,9 +554,11 @@ const faqJsonLd = {
         const data = await res.json();
         if (!Array.isArray(data.items) || data.items.length === 0) throw new Error('empty');
         renderTrendCards(data.items);
+        renderTrendUpdated(data.updatedAt);
         if (trendingCardStatusEl instanceof HTMLElement) trendingCardStatusEl.textContent = '';
       } catch {
         if (trendingCardStatusEl instanceof HTMLElement) trendingCardStatusEl.textContent = donateText.trendingError;
+        if (trendingCardUpdatedEl instanceof HTMLElement) trendingCardUpdatedEl.textContent = '';
       }
     };
 
