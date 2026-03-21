@@ -118,6 +118,7 @@ const sajuSchema = {
           investment_timing: { type: 'string' },
           business_timing: { type: 'string' },
           moving_timing: { type: 'string' },
+          recommended_exercise: { type: 'string' },
           career_top3: { type: 'array', items: { type: 'string' } },
           money_style: { type: 'string' },
           good_partner_type: { type: 'string' },
@@ -131,7 +132,7 @@ const sajuSchema = {
           avoid_habits: { type: 'array', items: { type: 'string' } },
           timing_howto: { type: 'string' }
         },
-        required: ['top_actions', 'avoid_choices', 'yearly_strategy', 'life_direction', 'risky_period', 'conflict_period', 'money_loss_risk', 'health_caution_period', 'love_start_timing', 'marriage_timing', 'job_change_timing', 'investment_timing', 'business_timing', 'moving_timing', 'career_top3', 'money_style', 'good_partner_type', 'avoid_partner_type', 'good_direction', 'good_region_style', 'good_colors', 'good_numbers', 'good_name_style', 'lucky_actions', 'avoid_habits', 'timing_howto']
+        required: ['top_actions', 'avoid_choices', 'yearly_strategy', 'life_direction', 'risky_period', 'conflict_period', 'money_loss_risk', 'health_caution_period', 'love_start_timing', 'marriage_timing', 'job_change_timing', 'investment_timing', 'business_timing', 'moving_timing', 'recommended_exercise', 'career_top3', 'money_style', 'good_partner_type', 'avoid_partner_type', 'good_direction', 'good_region_style', 'good_colors', 'good_numbers', 'good_name_style', 'lucky_actions', 'avoid_habits', 'timing_howto']
       },
       keywords: { type: 'array', items: { type: 'string' } },
       advice: { type: 'array', items: { type: 'string' } },
@@ -329,6 +330,7 @@ const normalizeAnalysis = (payload) => ({
     investmentTiming: typeof payload?.dosa_advisory?.investment_timing === 'string' ? payload.dosa_advisory.investment_timing.trim() : '',
     businessTiming: typeof payload?.dosa_advisory?.business_timing === 'string' ? payload.dosa_advisory.business_timing.trim() : '',
     movingTiming: typeof payload?.dosa_advisory?.moving_timing === 'string' ? payload.dosa_advisory.moving_timing.trim() : '',
+    recommendedExercise: typeof payload?.dosa_advisory?.recommended_exercise === 'string' ? payload.dosa_advisory.recommended_exercise.trim() : '',
     careerTop3: normalizeList(payload?.dosa_advisory?.career_top3, 3),
     moneyStyle: typeof payload?.dosa_advisory?.money_style === 'string' ? payload.dosa_advisory.money_style.trim() : '',
     goodPartnerType: typeof payload?.dosa_advisory?.good_partner_type === 'string' ? payload.dosa_advisory.good_partner_type.trim() : '',
@@ -400,7 +402,7 @@ export const analyzeSaju = async ({ name = '', birthDate, birthTime, calendarTyp
           '기본 운세 카테고리는 평소 사주 기본 성향 기준으로 설명하고, 기간 운세는 오늘/이번주/이번달/올해 기준으로 분리하십시오.',
           '각 점수 블록에는 basis를 넣고 이 점수가 평생 기본 성향인지, 특정 기간 흐름인지 분명하게 설명하십시오.',
           '연애운, 결혼운, 재물운, 사업운, 직업운, 학업운, 건강운, 대인관계운, 귀인운을 모두 포함하십시오.',
-          'AI 도사식 참고 인사이트도 반드시 포함하십시오. 여기에는 지금 해야 할 행동 TOP3, 피해야 할 선택 TOP3, 올해 핵심 전략, 인생 방향 추천, 올해 조율 구간, 인간관계 조율 시기, 지출 관리 포인트, 컨디션 관리 시기, 연애 시작 타이밍, 결혼 적기, 이직 타이밍, 투자 타이밍, 사업 시작 타이밍, 이동/이사 타이밍, 맞는 직업 유형 TOP3, 돈 버는 방식, 잘 맞는 인간 유형, 피해야 할 인간 유형, 좋은 방향, 좋은 지역 성향, 좋은 색상, 좋은 숫자, 좋은 이름 구조, 운을 올리는 행동, 피해야 할 습관, 운이 트이는 시기 활용법이 들어가야 합니다.',
+          'AI 도사식 참고 인사이트도 반드시 포함하십시오. 여기에는 지금 해야 할 행동 TOP3, 피해야 할 선택 TOP3, 올해 핵심 전략, 인생 방향 추천, 올해 조율 구간, 인간관계 조율 시기, 지출 관리 포인트, 컨디션 관리 시기, 연애 시작 타이밍, 결혼 적기, 이직 타이밍, 투자 타이밍, 사업 시작 타이밍, 이동/이사 타이밍, 추천 운동, 맞는 직업 유형 TOP3, 돈 버는 방식, 잘 맞는 인간 유형, 피해야 할 인간 유형, 좋은 방향, 좋은 지역 성향, 좋은 색상, 좋은 숫자, 좋은 이름 구조, 운을 올리는 행동, 피해야 할 습관, 운이 트이는 시기 활용법이 들어가야 합니다.',
           '이 참고 인사이트는 사주 구조 기준의 참고용 표현으로 쓰고, 지나친 단정 대신 부드러운 권고 톤을 유지하십시오.',
           '위험, 충돌, 손실, 건강 주의 같은 항목은 불안 조장형 표현을 피하고 조율, 관리, 점검, 속도 조절 같은 표현으로 완화하십시오.',
           '투자 타이밍, 사업 시작 타이밍, 금전 관련 표현은 확정적 권유를 절대 하지 말고 참고용 판단 포인트와 보수적 운영 원칙 위주로 쓰십시오.',
@@ -446,7 +448,7 @@ export const analyzeSaju = async ({ name = '', birthDate, birthTime, calendarTyp
             yearly_flow: '올해 전체 흐름 요약',
             fortunes: '오늘/이번주/이번달/상반기/하반기/올해 각각 점수와 구체적 설명',
             life_stages: `현재 나이 ${age}세 기준 생애 흐름. 1번은 ${lifeStageLabels.primary.title}, 2번은 ${lifeStageLabels.secondary.title}`,
-            dosa_advisory: 'AI 도사식 참고 인사이트 묶음. 타이밍/방향/색/숫자/이동/파트너/행동 조언을 긍정적이지만 과장 없이 작성. 투자와 사업은 참고용 보수 문장으로만 작성',
+            dosa_advisory: 'AI 도사식 참고 인사이트 묶음. 타이밍/방향/색/숫자/이동/운동/파트너/행동 조언을 긍정적이지만 과장 없이 작성. 투자와 사업은 참고용 보수 문장으로만 작성',
             keywords: '짧은 핵심 키워드',
             advice: '실행 가능한 조언',
             consistency_comment: '같은 입력에서 같은 결과가 유지되는 구조 해석 관점 설명',

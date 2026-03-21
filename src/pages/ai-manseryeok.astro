@@ -96,11 +96,12 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           </div>
           <nav class="space-y-2 text-sm text-white/55">
             <a href="#saju-form-section" class="flex items-center justify-between ledger-subpanel px-4 py-3 text-white"><span>입력 정보</span><span class="text-[#e9c349]">01</span></a>
-            <a href="#saju-result-anchor" class="flex items-center justify-between px-4 py-3 transition hover:bg-white/5"><span>오늘</span><span>02</span></a>
-            <a href="#fortune-grid" class="flex items-center justify-between px-4 py-3 transition hover:bg-white/5"><span>이번 주</span><span>03</span></a>
-            <a href="#fortune-grid" class="flex items-center justify-between px-4 py-3 transition hover:bg-white/5"><span>이번 달</span><span>04</span></a>
-            <a href="#life-stage-grid" class="flex items-center justify-between px-4 py-3 transition hover:bg-white/5"><span>중년</span><span>05</span></a>
-            <a href="#life-stage-grid" class="flex items-center justify-between px-4 py-3 transition hover:bg-white/5"><span>말년</span><span>06</span></a>
+            <a href="#base-categories" class="flex items-center justify-between px-4 py-3 transition hover:bg-white/5"><span>기본 운세</span><span>02</span></a>
+            <a href="#dosa-detail" class="flex items-center justify-between px-4 py-3 transition hover:bg-white/5"><span>세부 운</span><span>03</span></a>
+            <a href="#fortune-grid" class="flex items-center justify-between px-4 py-3 transition hover:bg-white/5"><span>오늘-올해</span><span>04</span></a>
+            <a href="#life-stage-grid" class="flex items-center justify-between px-4 py-3 transition hover:bg-white/5"><span>중년-말년</span><span>05</span></a>
+            <a href="#recommend-grid" class="flex items-center justify-between px-4 py-3 transition hover:bg-white/5"><span>추천</span><span>06</span></a>
+            <a href="#life-graph" class="flex items-center justify-between px-4 py-3 transition hover:bg-white/5"><span>인생 그래프</span><span>07</span></a>
           </nav>
           <div class="ledger-panel px-4 py-5 text-sm leading-6 text-white/60">
             <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#59de9b]">Report Mode</p>
@@ -382,16 +383,16 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
                     </div>
                     <p class="text-xs leading-6 text-white/45">아래 점수는 오늘 운세가 아니라 평소 사주 구조 기준입니다. 시기별 변동은 아래 기간 운세에서 따로 봅니다.</p>
                   </div>
-                  <section class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    <article class="ledger-card px-5 py-5"><div class="flex items-center justify-between gap-2"><h3 class="text-lg font-black text-white">연애운</h3><span id="love-score" class="text-sm font-black text-[#e9c349]"></span></div><p id="love-summary" class="mt-3 text-sm leading-7 text-white/58"></p><p id="love-basis" class="mt-3 text-xs leading-6 text-white/38"></p></article>
-                    <article class="ledger-card px-5 py-5"><div class="flex items-center justify-between gap-2"><h3 class="text-lg font-black text-white">결혼운</h3><span id="marriage-score" class="text-sm font-black text-[#e9c349]"></span></div><p id="marriage-summary" class="mt-3 text-sm leading-7 text-white/58"></p><p id="marriage-basis" class="mt-3 text-xs leading-6 text-white/38"></p></article>
-                    <article class="ledger-card px-5 py-5"><div class="flex items-center justify-between gap-2"><h3 class="text-lg font-black text-white">재물운</h3><span id="money-score" class="text-sm font-black text-[#e9c349]"></span></div><p id="money-summary" class="mt-3 text-sm leading-7 text-white/58"></p><p id="money-basis" class="mt-3 text-xs leading-6 text-white/38"></p></article>
-                    <article class="ledger-card px-5 py-5"><div class="flex items-center justify-between gap-2"><h3 class="text-lg font-black text-white">사업운</h3><span id="business-score" class="text-sm font-black text-[#e9c349]"></span></div><p id="business-summary" class="mt-3 text-sm leading-7 text-white/58"></p><p id="business-basis" class="mt-3 text-xs leading-6 text-white/38"></p></article>
-                    <article class="ledger-card px-5 py-5"><div class="flex items-center justify-between gap-2"><h3 class="text-lg font-black text-white">직업운</h3><span id="career-score" class="text-sm font-black text-[#e9c349]"></span></div><p id="career-summary" class="mt-3 text-sm leading-7 text-white/58"></p><p id="career-basis" class="mt-3 text-xs leading-6 text-white/38"></p><div id="work-roles" class="mt-3 flex flex-wrap gap-2"></div></article>
-                    <article class="ledger-card px-5 py-5"><div class="flex items-center justify-between gap-2"><h3 class="text-lg font-black text-white">학업운</h3><span id="study-score" class="text-sm font-black text-[#e9c349]"></span></div><p id="study-summary" class="mt-3 text-sm leading-7 text-white/58"></p><p id="study-basis" class="mt-3 text-xs leading-6 text-white/38"></p></article>
-                    <article class="ledger-card px-5 py-5"><div class="flex items-center justify-between gap-2"><h3 class="text-lg font-black text-white">건강운</h3><span id="health-score" class="text-sm font-black text-[#59de9b]"></span></div><p id="health-summary" class="mt-3 text-sm leading-7 text-white/58"></p><p id="health-basis" class="mt-3 text-xs leading-6 text-white/38"></p></article>
-                    <article class="ledger-card px-5 py-5"><div class="flex items-center justify-between gap-2"><h3 class="text-lg font-black text-white">대인관계운</h3><span id="social-score" class="text-sm font-black text-[#59de9b]"></span></div><p id="social-summary" class="mt-3 text-sm leading-7 text-white/58"></p><p id="social-basis" class="mt-3 text-xs leading-6 text-white/38"></p></article>
-                    <article class="ledger-card px-5 py-5"><div class="flex items-center justify-between gap-2"><h3 class="text-lg font-black text-white">귀인운</h3><span id="benefactor-score" class="text-sm font-black text-[#59de9b]"></span></div><p id="benefactor-summary" class="mt-3 text-sm leading-7 text-white/58"></p><p id="benefactor-basis" class="mt-3 text-xs leading-6 text-white/38"></p></article>
+                  <section id="base-categories" class="mt-6 flex snap-x gap-4 overflow-x-auto pb-2">
+                    <article class="ledger-card min-w-[280px] snap-start px-5 py-5"><div class="flex items-center justify-between gap-2"><h3 class="text-lg font-black text-white">연애운</h3><span id="love-score" class="text-sm font-black text-[#e9c349]"></span></div><p id="love-summary" class="mt-3 text-sm leading-7 text-white/58"></p><p id="love-basis" class="mt-3 text-xs leading-6 text-white/38"></p></article>
+                    <article class="ledger-card min-w-[280px] snap-start px-5 py-5"><div class="flex items-center justify-between gap-2"><h3 class="text-lg font-black text-white">결혼운</h3><span id="marriage-score" class="text-sm font-black text-[#e9c349]"></span></div><p id="marriage-summary" class="mt-3 text-sm leading-7 text-white/58"></p><p id="marriage-basis" class="mt-3 text-xs leading-6 text-white/38"></p></article>
+                    <article class="ledger-card min-w-[280px] snap-start px-5 py-5"><div class="flex items-center justify-between gap-2"><h3 class="text-lg font-black text-white">재물운</h3><span id="money-score" class="text-sm font-black text-[#e9c349]"></span></div><p id="money-summary" class="mt-3 text-sm leading-7 text-white/58"></p><p id="money-basis" class="mt-3 text-xs leading-6 text-white/38"></p></article>
+                    <article class="ledger-card min-w-[280px] snap-start px-5 py-5"><div class="flex items-center justify-between gap-2"><h3 class="text-lg font-black text-white">사업운</h3><span id="business-score" class="text-sm font-black text-[#e9c349]"></span></div><p id="business-summary" class="mt-3 text-sm leading-7 text-white/58"></p><p id="business-basis" class="mt-3 text-xs leading-6 text-white/38"></p></article>
+                    <article class="ledger-card min-w-[280px] snap-start px-5 py-5"><div class="flex items-center justify-between gap-2"><h3 class="text-lg font-black text-white">직업운</h3><span id="career-score" class="text-sm font-black text-[#e9c349]"></span></div><p id="career-summary" class="mt-3 text-sm leading-7 text-white/58"></p><p id="career-basis" class="mt-3 text-xs leading-6 text-white/38"></p><div id="work-roles" class="mt-3 flex flex-wrap gap-2"></div></article>
+                    <article class="ledger-card min-w-[280px] snap-start px-5 py-5"><div class="flex items-center justify-between gap-2"><h3 class="text-lg font-black text-white">학업운</h3><span id="study-score" class="text-sm font-black text-[#e9c349]"></span></div><p id="study-summary" class="mt-3 text-sm leading-7 text-white/58"></p><p id="study-basis" class="mt-3 text-xs leading-6 text-white/38"></p></article>
+                    <article class="ledger-card min-w-[280px] snap-start px-5 py-5"><div class="flex items-center justify-between gap-2"><h3 class="text-lg font-black text-white">건강운</h3><span id="health-score" class="text-sm font-black text-[#59de9b]"></span></div><p id="health-summary" class="mt-3 text-sm leading-7 text-white/58"></p><p id="health-basis" class="mt-3 text-xs leading-6 text-white/38"></p></article>
+                    <article class="ledger-card min-w-[280px] snap-start px-5 py-5"><div class="flex items-center justify-between gap-2"><h3 class="text-lg font-black text-white">대인관계운</h3><span id="social-score" class="text-sm font-black text-[#59de9b]"></span></div><p id="social-summary" class="mt-3 text-sm leading-7 text-white/58"></p><p id="social-basis" class="mt-3 text-xs leading-6 text-white/38"></p></article>
+                    <article class="ledger-card min-w-[280px] snap-start px-5 py-5"><div class="flex items-center justify-between gap-2"><h3 class="text-lg font-black text-white">귀인운</h3><span id="benefactor-score" class="text-sm font-black text-[#59de9b]"></span></div><p id="benefactor-summary" class="mt-3 text-sm leading-7 text-white/58"></p><p id="benefactor-basis" class="mt-3 text-xs leading-6 text-white/38"></p></article>
                   </section>
                 </div>
               </div>
@@ -498,7 +499,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
               </article>
             </section>
 
-            <section class="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_340px]" data-saju-mode="dosa">
+            <section id="dosa-detail" class="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_340px]" data-saju-mode="dosa">
               <article class="ledger-panel px-6 py-6">
                 <div class="flex flex-wrap items-center justify-between gap-4">
                   <div>
@@ -517,6 +518,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
                   <article class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-[#59de9b]">투자 타이밍</p><p id="dosa-investment-timing" class="mt-3 text-sm leading-7 text-white/68"></p></article>
                   <article class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-[#59de9b]">사업 시작 타이밍</p><p id="dosa-business-timing" class="mt-3 text-sm leading-7 text-white/68"></p></article>
                   <article class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-white/40">이동/이사 타이밍</p><p id="dosa-moving-timing" class="mt-3 text-sm leading-7 text-white/68"></p></article>
+                  <article class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-[#59de9b]">추천 운동</p><p id="dosa-recommended-exercise" class="mt-3 text-sm leading-7 text-white/68"></p></article>
                 </div>
                 <div class="mt-6 grid gap-4 md:grid-cols-2">
                   <article class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-[#e9c349]">올해 조율 구간</p><p id="dosa-risky-period" class="mt-3 text-sm leading-7 text-white/68"></p></article>
@@ -539,7 +541,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
               </aside>
             </section>
 
-            <section class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]" data-saju-mode="dosa">
+            <section id="recommend-grid" class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]" data-saju-mode="dosa">
               <article class="ledger-panel px-6 py-6">
                 <p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#e9c349]">사람과 일</p>
                 <div class="mt-4 grid gap-4 md:grid-cols-2">
@@ -564,6 +566,30 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
               <article class="ledger-panel px-6 py-6"><p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#59de9b]">구조 해석 힌트</p><ul id="rule-hints" class="mt-4 list-disc space-y-3 pl-5 text-sm leading-7 text-white/60"></ul></article>
             </section>
 
+            <section id="life-graph" class="ledger-panel px-6 py-6" data-saju-mode="analysis">
+              <div class="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#e9c349]">인생 그래프</p>
+                  <h3 class="ledger-serif mt-2 text-3xl font-black text-white">재미로 보는 인생 리듬</h3>
+                </div>
+                <p class="text-xs leading-6 text-white/42">기본 운세와 중·후반 흐름 점수를 조합한 참고용 시각화입니다. 마지막에 전체 흐름만 가볍게 보는 용도입니다.</p>
+              </div>
+              <div class="mt-8 rounded-[28px] border border-white/8 bg-[#181818] p-4 sm:p-6">
+                <svg id="life-graph-svg" viewBox="0 0 760 280" class="h-[260px] w-full">
+                  <defs>
+                    <linearGradient id="life-graph-line" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stop-color="#e9c349" />
+                      <stop offset="100%" stop-color="#59de9b" />
+                    </linearGradient>
+                  </defs>
+                  <g id="life-graph-grid"></g>
+                  <polyline id="life-graph-path" fill="none" stroke="url(#life-graph-line)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" points="" />
+                  <g id="life-graph-points"></g>
+                </svg>
+                <div id="life-graph-legend" class="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-6"></div>
+              </div>
+            </section>
+
             <section class="ledger-panel px-6 py-8 text-sm leading-7 text-white/56">
               <div class="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
                 <div>
@@ -582,9 +608,9 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
     <nav class="ledger-mobile-nav border-t border-white/10 bg-[#161616] px-3 py-2 lg:hidden">
       <div class="grid grid-cols-4 gap-2 text-center text-[11px] uppercase tracking-[0.16em] text-white/48">
         <a href="#saju-form-section" class="py-2 text-[#e9c349]">입력</a>
-        <a href="#saju-result-anchor" class="py-2">오늘</a>
-        <a href="#fortune-grid" class="py-2">월간</a>
-        <a href="#life-stage-grid" class="py-2">말년</a>
+        <a href="#base-categories" class="py-2">기본</a>
+        <a href="#fortune-grid" class="py-2">기간</a>
+        <a href="#recommend-grid" class="py-2">추천</a>
       </div>
     </nav>
 
@@ -669,6 +695,47 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         if (basisId) setText(basisId, block?.basis ?? '');
       };
       const renderTrendBar = (id, score, mirrorId) => { const node = qs(id); if (node) node.style.width = `${Math.max(8, Math.min(100, Number(score || 0)))}%`; renderScoreText(mirrorId, Number(score || 0)); };
+      const renderLifeGraph = (report, profile) => {
+        const scores = [
+          { label: '10대', value: Math.max(30, Math.min(96, (profile.elementSummary.balanceScore || 60) - 6)) },
+          { label: '20대', value: Math.max(30, Math.min(96, ((report.baseCategories.study?.score || 60) * 0.55) + ((report.baseCategories.love?.score || 60) * 0.2) + 18)) },
+          { label: '30대', value: Math.max(30, Math.min(96, ((report.baseCategories.career?.score || 60) * 0.5) + ((report.baseCategories.money?.score || 60) * 0.25) + 15)) },
+          { label: '40대', value: Math.max(30, Math.min(96, ((report.baseCategories.business?.score || 60) * 0.4) + ((report.yearlyFlow?.score || 60) * 0.3) + 18)) },
+          { label: '50대+', value: Math.max(30, Math.min(96, report.lifeStages.midlife?.score || 60)) },
+          { label: '후반', value: Math.max(30, Math.min(96, report.lifeStages.laterYears?.score || 60)) }
+        ];
+        const width = 760;
+        const height = 280;
+        const left = 36;
+        const right = 32;
+        const top = 24;
+        const bottom = 52;
+        const stepX = (width - left - right) / (scores.length - 1);
+        const toY = (value) => top + ((100 - value) / 100) * (height - top - bottom);
+        const grid = qs('life-graph-grid');
+        const path = qs('life-graph-path');
+        const points = qs('life-graph-points');
+        const legend = qs('life-graph-legend');
+        if (!grid || !path || !points || !legend) return;
+        grid.innerHTML = [20, 40, 60, 80].map((tick) => {
+          const y = toY(tick);
+          return `<line x1="${left}" y1="${y}" x2="${width - right}" y2="${y}" stroke="rgba(255,255,255,0.09)" stroke-width="1" />`;
+        }).join('');
+        const pointDefs = scores.map((item, index) => {
+          const x = left + (stepX * index);
+          const y = toY(item.value);
+          return { ...item, x, y };
+        });
+        path.setAttribute('points', pointDefs.map((item) => `${item.x},${item.y}`).join(' '));
+        points.innerHTML = pointDefs.map((item) => `
+          <g>
+            <circle cx="${item.x}" cy="${item.y}" r="6" fill="#e9c349" />
+            <text x="${item.x}" y="${height - 18}" text-anchor="middle" fill="rgba(255,255,255,0.68)" font-size="12">${item.label}</text>
+            <text x="${item.x}" y="${item.y - 14}" text-anchor="middle" fill="#59de9b" font-size="12" font-weight="700">${Math.round(item.value)}</text>
+          </g>
+        `).join('');
+        legend.innerHTML = pointDefs.map((item) => `<div class="ledger-card px-3 py-3"><p class="text-[11px] uppercase tracking-[0.16em] text-white/38">${item.label}</p><p class="mt-2 text-lg font-black text-[#e9c349]">${Math.round(item.value)}</p></div>`).join('');
+      };
       const applyViewMode = (mode) => {
         currentViewMode = mode === 'dosa' ? 'dosa' : 'analysis';
         document.querySelectorAll('[data-saju-mode]').forEach((node) => {
@@ -822,6 +889,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         setText('dosa-investment-timing', report.dosaAdvisory.investmentTiming);
         setText('dosa-business-timing', report.dosaAdvisory.businessTiming);
         setText('dosa-moving-timing', report.dosaAdvisory.movingTiming);
+        setText('dosa-recommended-exercise', report.dosaAdvisory.recommendedExercise);
         setHtml('dosa-career-top3', createBadgeList(report.dosaAdvisory.careerTop3, 'bg-[#e9c349]/10 text-[#e9c349]'));
         setText('dosa-money-style', report.dosaAdvisory.moneyStyle);
         setText('dosa-good-partner', report.dosaAdvisory.goodPartnerType);
@@ -839,6 +907,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         renderList('blindspot-list', report.blindSpots);
         renderList('advice-list', report.advice);
         renderList('rule-hints', profile.ruleHints);
+        renderLifeGraph(report, profile);
         applyViewMode(currentViewMode);
         setStatus('분석이 완료되었습니다. 결과를 아래에서 확인하세요.', '분석 완료');
       };
