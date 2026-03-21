@@ -479,7 +479,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
               </article>
             </section>
 
-            <section class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]" data-saju-mode="analysis">
+            <section class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
               <article class="ledger-panel px-6 py-6">
                 <div class="grid gap-6 lg:grid-cols-2">
                   <div>
@@ -499,14 +499,14 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
               </article>
             </section>
 
-            <section id="dosa-detail" class="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_340px]" data-saju-mode="dosa">
+            <section id="dosa-detail" class="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_340px]">
               <article class="ledger-panel px-6 py-6">
                 <div class="flex flex-wrap items-center justify-between gap-4">
                   <div>
-                    <p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#e9c349]">AI 도사 참고 인사이트</p>
+                    <p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#e9c349]">AI 도사 모드 상세</p>
                     <h3 class="ledger-serif mt-2 text-3xl font-black text-white">타이밍과 방향</h3>
                   </div>
-                  <p class="text-xs leading-6 text-white/42">이 섹션은 재미와 참고를 위한 AI 도사식 요약입니다. 기본 사주 구조를 바탕으로 쉽게 풀어 쓴 참고형 인사이트입니다.</p>
+                  <p class="text-xs leading-6 text-white/42">분석 리포트를 먼저 읽고, 마지막에 감성형 해석을 이어서 보는 상세 파트입니다.</p>
                 </div>
                 <div class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                   <article class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-[#e9c349]">올해 핵심 전략</p><p id="dosa-yearly-strategy" class="mt-3 text-sm leading-7 text-white/68"></p></article>
@@ -541,7 +541,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
               </aside>
             </section>
 
-            <section id="recommend-grid" class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]" data-saju-mode="dosa">
+            <section id="recommend-grid" class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
               <article class="ledger-panel px-6 py-6">
                 <p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#e9c349]">사람과 일</p>
                 <div class="mt-4 grid gap-4 md:grid-cols-2">
@@ -560,12 +560,36 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
               </article>
             </section>
 
+            <section id="life-graph" class="ledger-panel px-6 py-6">
+              <div class="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#e9c349]">인생 그래프</p>
+                  <h3 class="ledger-serif mt-2 text-3xl font-black text-white">재미로 보는 인생 리듬</h3>
+                </div>
+                <p class="text-xs leading-6 text-white/42">기본 운세와 중·후반 흐름 점수를 조합한 참고용 시각화입니다. 마지막에 전체 흐름만 가볍게 보는 용도입니다.</p>
+              </div>
+              <div class="mt-8 rounded-[28px] border border-white/8 bg-[#181818] p-4 sm:p-6">
+                <svg id="life-graph-svg" viewBox="0 0 760 280" class="h-[260px] w-full">
+                  <defs>
+                    <linearGradient id="life-graph-line" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stop-color="#e9c349" />
+                      <stop offset="100%" stop-color="#59de9b" />
+                    </linearGradient>
+                  </defs>
+                  <g id="life-graph-grid"></g>
+                  <polyline id="life-graph-path" fill="none" stroke="url(#life-graph-line)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" points="" />
+                  <g id="life-graph-points"></g>
+                </svg>
+                <div id="life-graph-legend" class="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-6"></div>
+              </div>
+            </section>
+
             <section class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
               <article class="ledger-panel px-6 py-6"><p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#e9c349]">운을 올리는 행동</p><ul id="advice-list" class="mt-4 list-disc space-y-3 pl-5 text-sm leading-7 text-white/60"></ul><p class="mt-6 text-[11px] uppercase tracking-[0.18em] text-[#59de9b]">피해야 할 습관</p><ul id="dosa-avoid-habits" class="mt-4 list-disc space-y-3 pl-5 text-sm leading-7 text-white/60"></ul><p class="mt-6 text-[11px] uppercase tracking-[0.18em] text-[#e9c349]">운이 트이는 행동</p><ul id="dosa-lucky-actions" class="mt-4 list-disc space-y-3 pl-5 text-sm leading-7 text-white/60"></ul></article>
               <article class="ledger-panel px-6 py-6"><p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#59de9b]">구조 해석 힌트</p><ul id="rule-hints" class="mt-4 list-disc space-y-3 pl-5 text-sm leading-7 text-white/60"></ul></article>
             </section>
 
-            <section class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]" data-saju-mode="dosa">
+            <section class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
               <article class="ledger-panel px-6 py-6">
                 <p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#e9c349]">이름 참고</p>
                 <p class="mt-4 text-sm leading-7 text-white/62">
@@ -593,30 +617,6 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
                   </a>
                 </div>
               </article>
-            </section>
-
-            <section id="life-graph" class="ledger-panel px-6 py-6" data-saju-mode="analysis">
-              <div class="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                  <p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#e9c349]">인생 그래프</p>
-                  <h3 class="ledger-serif mt-2 text-3xl font-black text-white">재미로 보는 인생 리듬</h3>
-                </div>
-                <p class="text-xs leading-6 text-white/42">기본 운세와 중·후반 흐름 점수를 조합한 참고용 시각화입니다. 마지막에 전체 흐름만 가볍게 보는 용도입니다.</p>
-              </div>
-              <div class="mt-8 rounded-[28px] border border-white/8 bg-[#181818] p-4 sm:p-6">
-                <svg id="life-graph-svg" viewBox="0 0 760 280" class="h-[260px] w-full">
-                  <defs>
-                    <linearGradient id="life-graph-line" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stop-color="#e9c349" />
-                      <stop offset="100%" stop-color="#59de9b" />
-                    </linearGradient>
-                  </defs>
-                  <g id="life-graph-grid"></g>
-                  <polyline id="life-graph-path" fill="none" stroke="url(#life-graph-line)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" points="" />
-                  <g id="life-graph-points"></g>
-                </svg>
-                <div id="life-graph-legend" class="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-6"></div>
-              </div>
             </section>
 
             <section class="ledger-panel px-6 py-8 text-sm leading-7 text-white/56">
@@ -654,7 +654,6 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       let paymentMode = 'mock';
       let currentOrderId = null;
       let currentRenderedJob = null;
-      let currentViewMode = 'analysis';
       const qs = (name) => document.getElementById(name);
       const setText = (id, value) => { const node = qs(id); if (node) node.textContent = value ?? ''; };
       const setHtml = (id, value) => { const node = qs(id); if (node) node.innerHTML = value ?? ''; };
@@ -766,15 +765,6 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         `).join('');
         legend.innerHTML = pointDefs.map((item) => `<div class="ledger-card px-3 py-3"><p class="text-[11px] uppercase tracking-[0.16em] text-white/38">${item.label}</p><p class="mt-2 text-lg font-black text-[#e9c349]">${Math.round(item.value)}</p></div>`).join('');
       };
-      const applyViewMode = (mode) => {
-        currentViewMode = mode === 'dosa' ? 'dosa' : 'analysis';
-        document.querySelectorAll('[data-saju-mode]').forEach((node) => {
-          const targetMode = node.getAttribute('data-saju-mode');
-          node.classList.toggle('hidden', Boolean(targetMode) && targetMode !== currentViewMode);
-        });
-        qs('analysis-mode-btn')?.classList.toggle('ledger-toggle-active', currentViewMode === 'analysis');
-        qs('dosa-mode-btn')?.classList.toggle('ledger-toggle-active', currentViewMode === 'dosa');
-      };
       const buildShareText = () => {
         const headline = qs('saju-headline')?.textContent?.trim() || 'AI 만세력 사주풀이 올인원 통합형';
         const summary = qs('saju-summary')?.textContent?.trim() || '';
@@ -816,7 +806,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           y += 28;
           pdf.setFont('helvetica', 'normal');
           pdf.setFontSize(10);
-          pdf.text(`Mode: ${currentViewMode === 'analysis' ? 'Analysis' : 'AI Dosa'}`, margin, y);
+          pdf.text('Mode: Full Report', margin, y);
           y += 20;
           pdf.setFontSize(11);
           lines.forEach((line) => {
@@ -938,7 +928,6 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         renderList('advice-list', report.advice);
         renderList('rule-hints', profile.ruleHints);
         renderLifeGraph(report, profile);
-        applyViewMode(currentViewMode);
         setStatus('분석이 완료되었습니다. 결과를 아래에서 확인하세요.', '분석 완료');
       };
       const verifyOrder = async (orderId) => {
@@ -978,8 +967,6 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       elements.timeUnknown?.addEventListener('change', syncTimeUi);
       elements.birthTime?.addEventListener('change', syncBranchFromTime);
       elements.timeBranch?.addEventListener('change', syncTimeFromBranch);
-      qs('analysis-mode-btn')?.addEventListener('click', () => applyViewMode('analysis'));
-      qs('dosa-mode-btn')?.addEventListener('click', () => applyViewMode('dosa'));
       qs('saju-share-btn')?.addEventListener('click', shareResult);
       qs('saju-pdf-btn')?.addEventListener('click', exportPdf);
       elements.submit?.addEventListener('click', async () => {
@@ -1009,7 +996,6 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         }
       });
       (async () => {
-        applyViewMode('analysis');
         syncCalendarUi();
         syncTimeUi();
         if (!API_BASE) {
