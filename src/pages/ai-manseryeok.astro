@@ -67,6 +67,19 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       .ledger-circle {
         background: radial-gradient(circle at center, rgba(233,195,73,0.08), rgba(233,195,73,0) 72%);
       }
+      .ledger-loader-ring {
+        width: 72px;
+        height: 72px;
+        border-radius: 999px;
+        border: 2px solid rgba(233, 195, 73, 0.14);
+        border-top-color: #e9c349;
+        border-right-color: #59de9b;
+        animation: ledger-spin 1s linear infinite;
+      }
+      @keyframes ledger-spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
       @media (max-width: 1023px) {
         .ledger-mobile-nav { position: sticky; bottom: 0; z-index: 30; }
       }
@@ -296,6 +309,30 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         </section>
         <section id="saju-result-anchor" class="px-4 pb-20 sm:px-6 lg:px-10">
           <div id="saju-empty" class="ledger-panel px-6 py-16 text-center text-sm leading-7 text-white/45">아직 분석 결과가 없습니다. 결제를 마친 뒤 이 페이지로 돌아오면 자동으로 결과가 이어집니다.</div>
+          <div id="saju-loading" class="hidden ledger-panel px-6 py-16 text-center">
+            <div class="mx-auto flex max-w-xl flex-col items-center">
+              <div class="ledger-loader-ring"></div>
+              <p id="saju-loading-stage" class="mt-8 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#e9c349]">분석 준비</p>
+              <h3 class="ledger-serif mt-4 text-3xl font-black text-white sm:text-4xl">만세력 계산과 AI 해석을 정리하는 중입니다</h3>
+              <p id="saju-loading-message" class="mt-5 max-w-lg text-sm leading-8 text-white/62">
+                입력된 생년월일시를 만세력 구조로 변환하고, 오행 분포와 기간별 흐름을 기준으로 리포트를 조합하고 있습니다.
+              </p>
+              <div class="mt-8 grid w-full gap-3 text-left sm:grid-cols-3">
+                <div class="ledger-card px-4 py-4">
+                  <p class="text-[11px] uppercase tracking-[0.18em] text-[#e9c349]">1</p>
+                  <p class="mt-2 text-sm font-semibold text-white">기본 기록 정리</p>
+                </div>
+                <div class="ledger-card px-4 py-4">
+                  <p class="text-[11px] uppercase tracking-[0.18em] text-[#59de9b]">2</p>
+                  <p class="mt-2 text-sm font-semibold text-white">오행 구조 계산</p>
+                </div>
+                <div class="ledger-card px-4 py-4">
+                  <p class="text-[11px] uppercase tracking-[0.18em] text-white/40">3</p>
+                  <p class="mt-2 text-sm font-semibold text-white">리포트 구성</p>
+                </div>
+              </div>
+            </div>
+          </div>
 
           <div id="saju-result" class="hidden space-y-8">
             <section class="grid gap-6 xl:grid-cols-[minmax(0,1.08fr)_360px]">
@@ -661,14 +698,29 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       const CHECKOUT_CURRENCY = 'USD';
       const ORDER_STORAGE_KEY = 'manytool.aiManseryeok.orderId';
       const FORM_STORAGE_KEY = 'manytool.aiManseryeok.form';
-      const elements = { name: document.getElementById('saju-name'), birthDate: document.getElementById('saju-birth-date'), birthTime: document.getElementById('saju-birth-time'), timeBranch: document.getElementById('saju-time-branch'), birthPlace: document.getElementById('saju-birth-place'), timeUnknown: document.getElementById('saju-time-unknown'), leapMonth: document.getElementById('saju-leap-month'), leapWrap: document.getElementById('saju-leap-wrap'), submit: document.getElementById('saju-submit'), statusBox: document.getElementById('saju-status-box'), stage: document.getElementById('saju-stage'), empty: document.getElementById('saju-empty'), result: document.getElementById('saju-result') };
+      const elements = { name: document.getElementById('saju-name'), birthDate: document.getElementById('saju-birth-date'), birthTime: document.getElementById('saju-birth-time'), timeBranch: document.getElementById('saju-time-branch'), birthPlace: document.getElementById('saju-birth-place'), timeUnknown: document.getElementById('saju-time-unknown'), leapMonth: document.getElementById('saju-leap-month'), leapWrap: document.getElementById('saju-leap-wrap'), submit: document.getElementById('saju-submit'), statusBox: document.getElementById('saju-status-box'), stage: document.getElementById('saju-stage'), empty: document.getElementById('saju-empty'), loading: document.getElementById('saju-loading'), loadingStage: document.getElementById('saju-loading-stage'), loadingMessage: document.getElementById('saju-loading-message'), result: document.getElementById('saju-result') };
       let paymentMode = 'mock';
       let currentOrderId = null;
       let currentRenderedJob = null;
       const qs = (name) => document.getElementById(name);
       const setText = (id, value) => { const node = qs(id); if (node) node.textContent = value ?? ''; };
       const setHtml = (id, value) => { const node = qs(id); if (node) node.innerHTML = value ?? ''; };
-      const setStatus = (message, stage = '진행 중') => { if (elements.statusBox) elements.statusBox.textContent = message; if (elements.stage) elements.stage.textContent = stage; };
+      const setLoading = (active, stage = '분석 중', message = '') => {
+        elements.loading?.classList.toggle('hidden', !active);
+        if (elements.loadingStage) elements.loadingStage.textContent = stage;
+        if (elements.loadingMessage && message) elements.loadingMessage.textContent = message;
+        if (active) {
+          elements.empty?.classList.add('hidden');
+          elements.result?.classList.add('hidden');
+        }
+      };
+      const setStatus = (message, stage = '진행 중') => {
+        if (elements.statusBox) elements.statusBox.textContent = message;
+        if (elements.stage) elements.stage.textContent = stage;
+        if (stage === '분석 완료' || stage === '공유' || stage === '저장 완료' || stage === '입력 대기' || stage === '테스트 모드') {
+          setLoading(false);
+        }
+      };
       const getCalendarType = () => { const checked = document.querySelector('input[name="calendar-type"]:checked'); return checked instanceof HTMLInputElement ? checked.value : 'solar'; };
       const getGender = () => { const checked = document.querySelector('input[name="saju-gender"]:checked'); return checked instanceof HTMLInputElement ? checked.value : 'unknown'; };
       const syncCalendarUi = () => { const isLunar = getCalendarType() === 'lunar'; elements.leapWrap?.classList.toggle('hidden', !isLunar); };
@@ -845,6 +897,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           window.history.replaceState({}, '', nextUrl);
         }
         window.localStorage.removeItem(ORDER_STORAGE_KEY);
+        setLoading(false);
         elements.empty?.classList.add('hidden');
         elements.result?.classList.remove('hidden');
         setHtml('saju-badges', createBadgeList([
@@ -959,7 +1012,14 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         }
       };
       const requestCheckout = async () => { const currentUrl = window.location.href.split('?')[0]; const response = await fetch(`${API_BASE}/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ productType: 'ai_manseryeok', amount: CHECKOUT_AMOUNT, currency: CHECKOUT_CURRENCY, successUrl: currentUrl, returnUrl: currentUrl }) }); const payload = await response.json().catch(() => null); if (!response.ok || !payload) throw new Error(payload?.error || 'checkout failed'); return payload; };
-      const runAnalysis = async (payload) => { setStatus('만세력 계산과 AI 해석을 생성하는 중입니다.', '분석 중'); const response = await fetch(`${API_BASE}/ai-manseryeok/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...payload, orderId: currentOrderId }) }); const result = await response.json().catch(() => null); if (!response.ok || !result?.job) throw new Error(result?.error || 'analysis failed'); renderResult(result.job); };
+      const runAnalysis = async (payload) => {
+        setLoading(true, '분석 중', '입력된 생년월일시를 만세력 구조로 계산하고, AI 해석과 기간별 흐름 리포트를 구성하고 있습니다.');
+        setStatus('만세력 계산과 AI 해석을 생성하는 중입니다.', '분석 중');
+        const response = await fetch(`${API_BASE}/ai-manseryeok/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...payload, orderId: currentOrderId }) });
+        const result = await response.json().catch(() => null);
+        if (!response.ok || !result?.job) throw new Error(result?.error || 'analysis failed');
+        renderResult(result.job);
+      };
       const loadJobFromQuery = async () => {
         const params = new URLSearchParams(window.location.search);
         const jobId = params.get('jobId');
@@ -986,10 +1046,12 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           const payload = buildPayload();
           savePayload(payload);
           if (!currentOrderId && paymentMode === 'polar') {
+            setLoading(true, '결제 준비', '결제 정보를 만들고 결제 확인 후 바로 만세력 분석으로 이어질 준비를 하고 있습니다.');
             setStatus('결제 정보를 생성하는 중입니다.', '결제 준비');
             const checkout = await requestCheckout();
             if (checkout.orderId) { currentOrderId = checkout.orderId; window.localStorage.setItem(ORDER_STORAGE_KEY, checkout.orderId); }
             if (checkout.paid) {
+              setLoading(true, '결제 확인', '결제가 확인되었습니다. 저장된 입력값으로 바로 사주 리포트를 이어서 생성합니다.');
               setStatus('결제가 바로 확인되었습니다. 분석을 이어갑니다.', '결제 확인');
             } else if (checkout.checkoutUrl) {
               window.location.href = checkout.checkoutUrl;
@@ -1001,6 +1063,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           elements.submit.disabled = true;
           await runAnalysis(payload);
         } catch (error) {
+          setLoading(false);
           setStatus(error instanceof Error ? error.message : '분석을 시작하지 못했습니다.', '오류');
         } finally {
           if (elements.submit instanceof HTMLButtonElement) elements.submit.disabled = false;
