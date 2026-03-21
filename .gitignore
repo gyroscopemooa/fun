@@ -17,6 +17,13 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+astro.dev*.log
+node-api/*.log
+
+# cypress artifacts
+cypress/downloads/
+cypress/screenshots/
+cypress/videos/
 
 # environment variables
 .env

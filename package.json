@@ -6,7 +6,10 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "cy:open": "cypress open",
+    "cy:run": "cypress run",
+    "cy:smoke": "cypress run --spec cypress/e2e/smoke.cy.js"
   },
   "dependencies": {
     "@astrojs/react": "^5.0.0",
