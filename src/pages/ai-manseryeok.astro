@@ -484,8 +484,69 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
               </article>
             </section>
 
+            <section class="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_340px]">
+              <article class="ledger-panel px-6 py-6">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#e9c349]">AI 도사 참고 인사이트</p>
+                    <h3 class="ledger-serif mt-2 text-3xl font-black text-white">타이밍과 방향</h3>
+                  </div>
+                  <p class="text-xs leading-6 text-white/42">이 섹션은 재미와 참고를 위한 AI 도사식 요약입니다. 기본 사주 구조를 바탕으로 쉽게 풀어 쓴 참고형 인사이트입니다.</p>
+                </div>
+                <div class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  <article class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-[#e9c349]">올해 핵심 전략</p><p id="dosa-yearly-strategy" class="mt-3 text-sm leading-7 text-white/68"></p></article>
+                  <article class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-[#59de9b]">인생 방향 추천</p><p id="dosa-life-direction" class="mt-3 text-sm leading-7 text-white/68"></p></article>
+                  <article class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-white/40">돈 버는 방식</p><p id="dosa-money-style" class="mt-3 text-sm leading-7 text-white/68"></p></article>
+                  <article class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-[#e9c349]">연애 시작 타이밍</p><p id="dosa-love-timing" class="mt-3 text-sm leading-7 text-white/68"></p></article>
+                  <article class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-[#e9c349]">결혼 적기</p><p id="dosa-marriage-timing" class="mt-3 text-sm leading-7 text-white/68"></p></article>
+                  <article class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-[#59de9b]">이직 타이밍</p><p id="dosa-job-timing" class="mt-3 text-sm leading-7 text-white/68"></p></article>
+                  <article class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-[#59de9b]">투자 타이밍</p><p id="dosa-investment-timing" class="mt-3 text-sm leading-7 text-white/68"></p></article>
+                  <article class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-[#59de9b]">사업 시작 타이밍</p><p id="dosa-business-timing" class="mt-3 text-sm leading-7 text-white/68"></p></article>
+                  <article class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-white/40">이동/이사 타이밍</p><p id="dosa-moving-timing" class="mt-3 text-sm leading-7 text-white/68"></p></article>
+                </div>
+                <div class="mt-6 grid gap-4 md:grid-cols-2">
+                  <article class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-[#e9c349]">올해 위험 구간</p><p id="dosa-risky-period" class="mt-3 text-sm leading-7 text-white/68"></p></article>
+                  <article class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-[#59de9b]">운이 트이는 시기 활용법</p><p id="dosa-timing-howto" class="mt-3 text-sm leading-7 text-white/68"></p></article>
+                  <article class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-white/40">인간관계 충돌 시기</p><p id="dosa-conflict-period" class="mt-3 text-sm leading-7 text-white/68"></p></article>
+                  <article class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-white/40">금전 손실 가능성</p><p id="dosa-money-loss-risk" class="mt-3 text-sm leading-7 text-white/68"></p></article>
+                  <article class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-white/40">건강 주의 시기</p><p id="dosa-health-caution" class="mt-3 text-sm leading-7 text-white/68"></p></article>
+                </div>
+              </article>
+
+              <aside class="space-y-6">
+                <article class="ledger-panel px-6 py-6">
+                  <p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#e9c349]">지금 해야 할 행동 TOP3</p>
+                  <ul id="dosa-top-actions" class="mt-4 list-disc space-y-3 pl-5 text-sm leading-7 text-white/62"></ul>
+                </article>
+                <article class="ledger-panel px-6 py-6">
+                  <p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#59de9b]">피해야 할 선택 TOP3</p>
+                  <ul id="dosa-avoid-choices" class="mt-4 list-disc space-y-3 pl-5 text-sm leading-7 text-white/62"></ul>
+                </article>
+              </aside>
+            </section>
+
             <section class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-              <article class="ledger-panel px-6 py-6"><p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#e9c349]">실행 조언</p><ul id="advice-list" class="mt-4 list-disc space-y-3 pl-5 text-sm leading-7 text-white/60"></ul></article>
+              <article class="ledger-panel px-6 py-6">
+                <p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#e9c349]">사람과 일</p>
+                <div class="mt-4 grid gap-4 md:grid-cols-2">
+                  <div class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-[#e9c349]">맞는 직업 유형 TOP3</p><div id="dosa-career-top3" class="mt-4 flex flex-wrap gap-2"></div></div>
+                  <div class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-[#59de9b]">잘 맞는 인간 유형</p><p id="dosa-good-partner" class="mt-3 text-sm leading-7 text-white/68"></p></div>
+                  <div class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-white/40">피해야 할 인간 유형</p><p id="dosa-avoid-partner" class="mt-3 text-sm leading-7 text-white/68"></p></div>
+                </div>
+              </article>
+              <article class="ledger-panel px-6 py-6">
+                <p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#59de9b]">환경과 운의 감각</p>
+                <div class="mt-4 grid gap-4 md:grid-cols-2">
+                  <div class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-[#e9c349]">좋은 방향</p><p id="dosa-good-direction" class="mt-3 text-sm leading-7 text-white/68"></p></div>
+                  <div class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-[#59de9b]">좋은 지역 성향</p><p id="dosa-good-region" class="mt-3 text-sm leading-7 text-white/68"></p></div>
+                  <div class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-white/40">좋은 이름 구조</p><p id="dosa-good-name" class="mt-3 text-sm leading-7 text-white/68"></p></div>
+                  <div class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-[#e9c349]">좋은 색상</p><div id="dosa-good-colors" class="mt-4 flex flex-wrap gap-2"></div><p class="mt-4 text-[11px] uppercase tracking-[0.18em] text-[#59de9b]">좋은 숫자</p><div id="dosa-good-numbers" class="mt-3 flex flex-wrap gap-2"></div></div>
+                </div>
+              </article>
+            </section>
+
+            <section class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+              <article class="ledger-panel px-6 py-6"><p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#e9c349]">운을 올리는 행동</p><ul id="advice-list" class="mt-4 list-disc space-y-3 pl-5 text-sm leading-7 text-white/60"></ul><p class="mt-6 text-[11px] uppercase tracking-[0.18em] text-[#59de9b]">피해야 할 습관</p><ul id="dosa-avoid-habits" class="mt-4 list-disc space-y-3 pl-5 text-sm leading-7 text-white/60"></ul><p class="mt-6 text-[11px] uppercase tracking-[0.18em] text-[#e9c349]">운이 트이는 행동</p><ul id="dosa-lucky-actions" class="mt-4 list-disc space-y-3 pl-5 text-sm leading-7 text-white/60"></ul></article>
               <article class="ledger-panel px-6 py-6"><p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#59de9b]">구조 해석 힌트</p><ul id="rule-hints" class="mt-4 list-disc space-y-3 pl-5 text-sm leading-7 text-white/60"></ul></article>
             </section>
 
@@ -663,6 +724,32 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         renderTrendBar('fortune-firsthalf-bar', report.fortunes.firstHalf?.score, 'fortune-firsthalf-score-side');
         renderTrendBar('fortune-secondhalf-bar', report.fortunes.secondHalf?.score, 'fortune-secondhalf-score-side');
         renderTrendBar('fortune-year-bar', report.fortunes.thisYear?.score, 'fortune-year-score-side');
+        renderList('dosa-top-actions', report.dosaAdvisory.topActions);
+        renderList('dosa-avoid-choices', report.dosaAdvisory.avoidChoices);
+        setText('dosa-yearly-strategy', report.dosaAdvisory.yearlyStrategy);
+        setText('dosa-life-direction', report.dosaAdvisory.lifeDirection);
+        setText('dosa-risky-period', report.dosaAdvisory.riskyPeriod);
+        setText('dosa-conflict-period', report.dosaAdvisory.conflictPeriod);
+        setText('dosa-money-loss-risk', report.dosaAdvisory.moneyLossRisk);
+        setText('dosa-health-caution', report.dosaAdvisory.healthCautionPeriod);
+        setText('dosa-love-timing', report.dosaAdvisory.loveStartTiming);
+        setText('dosa-marriage-timing', report.dosaAdvisory.marriageTiming);
+        setText('dosa-job-timing', report.dosaAdvisory.jobChangeTiming);
+        setText('dosa-investment-timing', report.dosaAdvisory.investmentTiming);
+        setText('dosa-business-timing', report.dosaAdvisory.businessTiming);
+        setText('dosa-moving-timing', report.dosaAdvisory.movingTiming);
+        setHtml('dosa-career-top3', createBadgeList(report.dosaAdvisory.careerTop3, 'bg-[#e9c349]/10 text-[#e9c349]'));
+        setText('dosa-money-style', report.dosaAdvisory.moneyStyle);
+        setText('dosa-good-partner', report.dosaAdvisory.goodPartnerType);
+        setText('dosa-avoid-partner', report.dosaAdvisory.avoidPartnerType);
+        setText('dosa-good-direction', report.dosaAdvisory.goodDirection);
+        setText('dosa-good-region', report.dosaAdvisory.goodRegionStyle);
+        setText('dosa-good-name', report.dosaAdvisory.goodNameStyle);
+        setHtml('dosa-good-colors', createBadgeList(report.dosaAdvisory.goodColors, 'bg-[#59de9b]/10 text-[#59de9b]'));
+        setHtml('dosa-good-numbers', createBadgeList(report.dosaAdvisory.goodNumbers, 'bg-[#e9c349]/10 text-[#e9c349]'));
+        renderList('dosa-lucky-actions', report.dosaAdvisory.luckyActions);
+        renderList('dosa-avoid-habits', report.dosaAdvisory.avoidHabits);
+        setText('dosa-timing-howto', report.dosaAdvisory.timingHowto);
         setHtml('keyword-list', createBadgeList(report.keywords, 'bg-[#e9c349]/10 text-[#e9c349]'));
         renderList('strength-list', report.strengths);
         renderList('blindspot-list', report.blindSpots);
