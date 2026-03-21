@@ -555,7 +555,6 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
                 <div class="mt-4 grid gap-4 md:grid-cols-2">
                   <div class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-[#e9c349]">좋은 방향</p><p id="dosa-good-direction" class="mt-3 text-sm leading-7 text-white/68"></p></div>
                   <div class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-[#59de9b]">좋은 지역 성향</p><p id="dosa-good-region" class="mt-3 text-sm leading-7 text-white/68"></p></div>
-                  <div class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-white/40">좋은 이름 구조</p><p id="dosa-good-name" class="mt-3 text-sm leading-7 text-white/68"></p></div>
                   <div class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-[#e9c349]">좋은 색상</p><div id="dosa-good-colors" class="mt-4 flex flex-wrap gap-2"></div><p class="mt-4 text-[11px] uppercase tracking-[0.18em] text-[#59de9b]">좋은 숫자</p><div id="dosa-good-numbers" class="mt-3 flex flex-wrap gap-2"></div></div>
                 </div>
               </article>
@@ -564,6 +563,36 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
             <section class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
               <article class="ledger-panel px-6 py-6"><p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#e9c349]">운을 올리는 행동</p><ul id="advice-list" class="mt-4 list-disc space-y-3 pl-5 text-sm leading-7 text-white/60"></ul><p class="mt-6 text-[11px] uppercase tracking-[0.18em] text-[#59de9b]">피해야 할 습관</p><ul id="dosa-avoid-habits" class="mt-4 list-disc space-y-3 pl-5 text-sm leading-7 text-white/60"></ul><p class="mt-6 text-[11px] uppercase tracking-[0.18em] text-[#e9c349]">운이 트이는 행동</p><ul id="dosa-lucky-actions" class="mt-4 list-disc space-y-3 pl-5 text-sm leading-7 text-white/60"></ul></article>
               <article class="ledger-panel px-6 py-6"><p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#59de9b]">구조 해석 힌트</p><ul id="rule-hints" class="mt-4 list-disc space-y-3 pl-5 text-sm leading-7 text-white/60"></ul></article>
+            </section>
+
+            <section class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]" data-saju-mode="dosa">
+              <article class="ledger-panel px-6 py-6">
+                <p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#e9c349]">이름 참고</p>
+                <p class="mt-4 text-sm leading-7 text-white/62">
+                  좋은 이름 구조는 현재 참고용 AI 도사 인사이트로만 제공합니다. 개명이나 성명학 해석은 별도 도구에서 더 보수적으로 다룰 예정입니다.
+                </p>
+                <div class="mt-5 rounded-[24px] border border-white/8 bg-white/5 px-4 py-4">
+                  <p class="text-[11px] uppercase tracking-[0.18em] text-white/40">AI 도사 한마디</p>
+                  <p id="dosa-good-name" class="mt-3 text-sm leading-7 text-white/72"></p>
+                </div>
+              </article>
+              <article class="ledger-panel px-6 py-6">
+                <p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#59de9b]">이름 확장 도구</p>
+                <div class="mt-4 grid gap-3">
+                  <a href="/name-insight" class="ledger-card px-4 py-4 transition hover:border-[#e9c349]/30 hover:bg-white/10">
+                    <p class="text-sm font-black text-white">이름 풀이</p>
+                    <p class="mt-2 text-xs leading-6 text-white/48">준비중. 이름 구조와 해석 흐름을 별도 페이지로 제공합니다.</p>
+                  </a>
+                  <a href="/name-change-recommendation" class="ledger-card px-4 py-4 transition hover:border-[#e9c349]/30 hover:bg-white/10">
+                    <p class="text-sm font-black text-white">개명 추천</p>
+                    <p class="mt-2 text-xs leading-6 text-white/48">준비중. 리스크가 있어 참고형 도구로 분리할 예정입니다.</p>
+                  </a>
+                  <a href="/seongmyeonghak" class="ledger-card px-4 py-4 transition hover:border-[#e9c349]/30 hover:bg-white/10">
+                    <p class="text-sm font-black text-white">성명학</p>
+                    <p class="mt-2 text-xs leading-6 text-white/48">준비중. 이름과 음양/구조를 가볍게 보는 페이지가 추가됩니다.</p>
+                  </a>
+                </div>
+              </article>
             </section>
 
             <section id="life-graph" class="ledger-panel px-6 py-6" data-saju-mode="analysis">
@@ -596,6 +625,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
                   <p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#e9c349]">Disclaimer</p>
                   <p class="mt-4">본 서비스는 참고용 콘텐츠입니다. AI 기반 성향 분석, 통계 기반 라이프 인사이트, 데이터 기반 자기이해 리포트 형식으로 제공되며 의학·법률·재정적 조언이 아닙니다.</p>
                   <p class="mt-3">결과 해석 및 활용에 대한 책임은 사용자에게 있습니다. 미래를 정확히 맞춘다고 주장하지 않으며, 자기이해와 기록 보관을 돕는 엔터테인먼트형 리포트로 이해해 주세요.</p>
+                  <p class="mt-3 text-[#59de9b]">결제 시 입력한 이메일로 리포트 링크가 함께 전송됩니다.</p>
                 </div>
                 <a href="#saju-form-section" class="bg-[#e9c349] px-5 py-4 text-xs font-black uppercase tracking-[0.22em] text-[#3c2f00] transition hover:brightness-110">새 분석 기록 보관소로 이동</a>
               </div>
