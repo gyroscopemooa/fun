@@ -148,7 +148,6 @@ export const analyzePersonalColor = async ({ imageDataUrl, notes = '' }) => {
 
   const completion = await getClient().chat.completions.create({
     model: DEFAULT_MODEL,
-    temperature: 0.1,
     messages: [
       {
         role: 'system',

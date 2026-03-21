@@ -258,7 +258,6 @@ export const analyzeSaju = async ({ name = '', birthDate, birthTime, calendarTyp
 
   const completion = await getClient().chat.completions.create({
     model: DEFAULT_MODEL,
-    temperature: 0.2,
     messages: [
       {
         role: 'system',
