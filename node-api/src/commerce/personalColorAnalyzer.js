@@ -11,7 +11,7 @@ const personalColorSchema = {
     properties: {
       summary: { type: 'string' },
       confidence: { type: 'string', enum: ['low', 'medium', 'high'] },
-      season: { type: 'string' },
+      season: { type: 'string', enum: ['봄 웜', '여름 쿨', '가을 웜', '겨울 쿨'] },
       undertone: { type: 'string' },
       chroma: { type: 'string' },
       contrast: { type: 'string' },
@@ -142,6 +142,7 @@ export const analyzePersonalColor = async ({ imageDataUrl, notes = '' }) => {
 
   const completion = await getClient().chat.completions.create({
     model: DEFAULT_MODEL,
+    temperature: 0.1,
     messages: [
       {
         role: 'system',
@@ -150,7 +151,12 @@ export const analyzePersonalColor = async ({ imageDataUrl, notes = '' }) => {
           'Return strict JSON only.',
           'Do not overclaim certainty.',
           'All human-readable fields must be written in natural Korean.',
-          'Give practical styling guidance, not medical statements.'
+          'Give practical styling guidance, not medical statements.',
+          'The main season must be one of exactly these four labels: 봄 웜, 여름 쿨, 가을 웜, 겨울 쿨.',
+          'Prioritize natural skin, eye, brow, and hair contrast over clothes, accessories, and background.',
+          'Treat heavy makeup, dyed hair, studio lighting, white balance shifts, and colored backgrounds as unreliable signals.',
+          'If evidence is mixed, keep the closest stable season and lower confidence instead of flipping to a very different season.',
+          'Do not let crop size, upper-body framing, or background color alone change warm/cool judgment.'
         ].join(' ')
       },
       {
@@ -160,9 +166,13 @@ export const analyzePersonalColor = async ({ imageDataUrl, notes = '' }) => {
             type: 'text',
             text: [
               'Analyze this face photo for personal color guidance.',
-              'Estimate season tone, undertone, chroma, and contrast.',
+              'Estimate the most likely main season, undertone, chroma, and contrast.',
               'Also provide numeric 0-100 scores for warmth, brightness, saturation, and contrast.',
-              'Use Korean personal color terminology such as 봄 웜, 여름 쿨, 가을 웜, 겨울 쿨, 저채도, 고채도, 저명도, 고명도, soft, clear when appropriate.',
+              'For season, output only one of these four exact values: 봄 웜, 여름 쿨, 가을 웜, 겨울 쿨.',
+              'Use Korean personal color terminology such as 저채도, 고채도, 저명도, 고명도, soft, clear when appropriate.',
+              'Ignore clothing color, accessories, background, red carpet walls, and crop framing as much as possible.',
+              'Base the result mainly on skin undertone, eye-hair contrast, overall facial contrast, and natural brightness/chroma.',
+              'If the image is ambiguous, keep confidence low or medium and add cautions instead of changing season aggressively.',
               'Recommend colors, makeup, hair color, and styling tips.',
               'If the image is unclear, lower confidence and mention caution.',
               notes ? `Additional note from user: ${notes}` : ''

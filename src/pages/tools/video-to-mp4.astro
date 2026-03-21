@@ -19,16 +19,28 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       <p class="text-sm font-semibold uppercase tracking-[0.2em] text-sky-600">Online Video Converter</p>
       <h1 class="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">동영상 MP4 변환기</h1>
       <p class="mt-3 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
-        온라인에서 대용량 영상을 MP4로 변환합니다. 최대 1.5GB 업로드를 지원하며 MKV, MOV, AVI, M4V 파일을 MP4로 바꿀 수 있습니다.
+        온라인에서 대용량 동영상을 MP4로 변환합니다. 최대 1.5GB 업로드를 지원하며
+        MKV, MOV, AVI, M4V 파일을 MP4로 바꿀 수 있습니다.
       </p>
     </section>
 
     <section class="mt-6 grid gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
       <aside class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
         <div class="rounded-2xl bg-slate-50 p-4">
-          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Plan</p>
-          <p class="mt-2 text-3xl font-black text-slate-950">$9.99</p>
-          <p class="mt-2 text-sm leading-6 text-slate-600">1회 변환 기준입니다. 대용량 영상 1개를 MP4로 변환합니다.</p>
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Progress</p>
+          <div class="mt-3 h-3 overflow-hidden rounded-full bg-slate-200">
+            <div id="video-progress-bar" class="h-full w-[8%] rounded-full bg-sky-500 transition-all duration-300"></div>
+          </div>
+          <div class="mt-4 flex items-center justify-between gap-3">
+            <p id="video-progress-label" class="text-sm font-semibold text-slate-900">파일 선택 대기</p>
+            <p id="video-progress-percent" class="text-sm font-black text-sky-700">0%</p>
+          </div>
+          <div class="mt-4 space-y-2 text-sm text-slate-600">
+            <div id="video-step-file" class="font-semibold text-sky-700">1. 파일 선택</div>
+            <div id="video-step-payment">2. 결제 확인</div>
+            <div id="video-step-convert">3. 변환 진행</div>
+            <div id="video-step-download">4. 다운로드</div>
+          </div>
         </div>
 
         <div class="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
@@ -102,10 +114,35 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       const jobStatus = document.getElementById('video-job-status');
       const resultMessage = document.getElementById('video-result-message');
       const downloadLink = document.getElementById('video-download-link');
+      const progressBar = document.getElementById('video-progress-bar');
+      const progressLabel = document.getElementById('video-progress-label');
+      const progressPercent = document.getElementById('video-progress-percent');
+      const stepFile = document.getElementById('video-step-file');
+      const stepPayment = document.getElementById('video-step-payment');
+      const stepConvert = document.getElementById('video-step-convert');
+      const stepDownload = document.getElementById('video-step-download');
 
       let paymentMode = 'mock';
       let converterReady = true;
       let currentOrderId = null;
+
+      const stepEls = [stepFile, stepPayment, stepConvert, stepDownload];
+
+      const updateProgress = (percent, label, stage) => {
+        if (progressBar instanceof HTMLElement) {
+          progressBar.style.width = `${Math.max(8, Math.min(100, percent))}%`;
+        }
+        if (progressLabel) progressLabel.textContent = label;
+        if (progressPercent) progressPercent.textContent = `${Math.max(0, Math.min(100, Math.round(percent)))}%`;
+        stepEls.forEach((element, index) => {
+          if (!(element instanceof HTMLElement)) return;
+          const active = index + 1 === stage;
+          const done = index + 1 < stage;
+          element.classList.toggle('font-semibold', active || done);
+          element.classList.toggle('text-sky-700', active || done);
+          element.classList.toggle('text-slate-600', !active && !done);
+        });
+      };
 
       const setCheckoutStatus = (message) => {
         if (checkoutStatus) checkoutStatus.textContent = message;
@@ -146,6 +183,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           fileLabel.textContent = `${file.name} / ${(file.size / (1024 * 1024)).toFixed(1)}MB`;
         }
         setJobStatus('변환 준비 완료');
+        updateProgress(20, '파일 선택 완료', 1);
         if (file.size > MAX_VIDEO_BYTES) {
           setResultMessage('파일 용량이 1.5GB를 초과했습니다.');
         } else {
@@ -165,6 +203,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         currentOrderId = orderId;
         if (orderId) window.localStorage.setItem(ORDER_STORAGE_KEY, orderId);
         setCheckoutStatus('결제가 확인되었습니다. 변환을 계속 진행합니다.');
+        updateProgress(45, '결제 확인 완료', 2);
       };
 
       const verifyExistingOrder = async (orderId) => {
@@ -212,10 +251,17 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           }
 
           const { job } = payload;
-          if (job.status === 'queued') setJobStatus('변환 대기 중');
-          if (job.status === 'processing') setJobStatus('동영상 변환 중');
+          if (job.status === 'queued') {
+            setJobStatus('변환 대기 중');
+            updateProgress(60, '변환 대기 중', 3);
+          }
+          if (job.status === 'processing') {
+            setJobStatus('동영상 변환 중');
+            updateProgress(80, '동영상 변환 중', 3);
+          }
           if (job.status === 'done') {
             setJobStatus('변환 완료');
+            updateProgress(100, '다운로드 준비 완료', 4);
             setResultMessage(`${job.outputName} 다운로드가 준비되었습니다.`);
             if (downloadLink instanceof HTMLAnchorElement) {
               downloadLink.href = toApiUrl(job.outputUrl);
@@ -279,6 +325,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         if (!currentOrderId && paymentMode === 'polar') {
           try {
             setCheckoutStatus('결제 정보를 생성하는 중입니다...');
+            updateProgress(30, '결제 준비 중', 2);
             const checkout = await requestCheckout();
             if (checkout.orderId) {
               currentOrderId = checkout.orderId;
@@ -307,7 +354,8 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           formData.append('video', selectedFile);
 
           setJobStatus('업로드 중');
-          setResultMessage('파일 업로드와 변환 작업 생성을 진행 중입니다.');
+          updateProgress(55, '파일 업로드 중', 3);
+          setResultMessage('파일 업로드와 변환 작업 생성이 진행 중입니다.');
           resetDownloadLink();
 
           const response = await fetch(`${API_BASE}/video/mkv-mp4/convert`, {
@@ -327,6 +375,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       });
 
       (async () => {
+        updateProgress(0, '파일 선택 대기', 1);
         if (!API_BASE) {
           converterReady = false;
           setCheckoutStatus('API 서버 주소가 설정되지 않았습니다.');
@@ -342,7 +391,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
 
           if (!config?.readiness?.videoConverterReady) {
             converterReady = false;
-            setCheckoutStatus('서버에 동영상 변환 기능이 아직 준비되지 않았습니다.');
+            setCheckoutStatus('서버의 동영상 변환 기능이 아직 준비되지 않았습니다.');
             setJobStatus('서버 준비 필요');
             syncButtons();
             return;
