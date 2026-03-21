@@ -41,6 +41,7 @@ const originalDir = path.join(rootDir, 'originals');
 const generatedDir = path.join(rootDir, 'generated');
 const reportsDir = path.join(rootDir, 'reports');
 const jobSnapshotDir = path.join(reportsDir, 'jobs');
+const aiManseryeokJobDir = path.join(reportsDir, 'ai-manseryeok');
 const videoDir = path.join(rootDir, 'video');
 const videoIncomingDir = path.join(videoDir, 'incoming');
 const videoOutputDir = path.join(videoDir, 'output');
@@ -48,8 +49,11 @@ const videoOutputDir = path.join(videoDir, 'output');
 await fs.mkdir(originalDir, { recursive: true });
 await fs.mkdir(generatedDir, { recursive: true });
 await fs.mkdir(jobSnapshotDir, { recursive: true });
+await fs.mkdir(aiManseryeokJobDir, { recursive: true });
 await fs.mkdir(videoIncomingDir, { recursive: true });
 await fs.mkdir(videoOutputDir, { recursive: true });
+
+const AI_MANSERYEOK_RETENTION_MS = 14 * 24 * 60 * 60 * 1000;
 
 const largeVideoUpload = multer({
   storage: multer.diskStorage({
@@ -868,6 +872,33 @@ const buildAiManseryeokResultPageUrl = (jobId) => {
   }
 };
 
+const getAiManseryeokJobPath = (jobId) => path.join(aiManseryeokJobDir, `${jobId}.json`);
+
+const isAiManseryeokJobExpired = (job) => {
+  const createdAt = new Date(job?.createdAt ?? 0).getTime();
+  if (!Number.isFinite(createdAt) || createdAt <= 0) return true;
+  return Date.now() - createdAt > AI_MANSERYEOK_RETENTION_MS;
+};
+
+const persistAiManseryeokJob = async (job) => {
+  if (!job?.id) return;
+  await fs.writeFile(getAiManseryeokJobPath(job.id), JSON.stringify(job, null, 2), 'utf-8');
+};
+
+const loadPersistedAiManseryeokJob = async (jobId) => {
+  try {
+    const raw = await fs.readFile(getAiManseryeokJobPath(jobId), 'utf-8');
+    const parsed = JSON.parse(raw);
+    if (isAiManseryeokJobExpired(parsed)) {
+      await fs.rm(getAiManseryeokJobPath(jobId), { force: true });
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+};
+
 const sendAiPersonalColorResultEmail = async ({ order, job }) => {
   const resend = getResendConfig();
   if (!resend.apiKey || !resend.fromEmail) throw new Error('Resend is not configured');
@@ -1619,6 +1650,7 @@ app.post('/ai-manseryeok/analyze', async (req, res) => {
     job.status = 'done';
     job.completedAt = new Date().toISOString();
     job.analysis = analysis;
+    await persistAiManseryeokJob(job);
 
     const nextOrder = {
       ...order,
@@ -1656,6 +1688,7 @@ app.post('/ai-manseryeok/analyze', async (req, res) => {
       job.status = 'failed';
       job.completedAt = new Date().toISOString();
       job.error = message;
+      await persistAiManseryeokJob(job);
     }
     if (orderIdForError) {
       const currentOrder = db.orders.get(orderIdForError);
@@ -1707,10 +1740,19 @@ app.get('/ai-personal-color/job/:id', (req, res) => {
   });
 });
 
-app.get('/ai-manseryeok/job/:id', (req, res) => {
-  const job = db.aiManseryeokJobs.get(req.params.id);
+app.get('/ai-manseryeok/job/:id', async (req, res) => {
+  let job = db.aiManseryeokJobs.get(req.params.id);
   if (!job) {
-    return res.status(404).json({ error: 'manseryeok job not found' });
+    job = await loadPersistedAiManseryeokJob(req.params.id);
+    if (job) db.aiManseryeokJobs.set(job.id, job);
+  }
+  if (!job) {
+    return res.status(404).json({ error: 'manseryeok job not found or expired' });
+  }
+  if (isAiManseryeokJobExpired(job)) {
+    db.aiManseryeokJobs.delete(job.id);
+    await fs.rm(getAiManseryeokJobPath(job.id), { force: true }).catch(() => {});
+    return res.status(410).json({ error: 'manseryeok job expired' });
   }
   return res.json({
     ok: true,
