@@ -1,0 +1,199 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+
+const cards = [
+  {
+    digit: '0',
+    label: '불교',
+    title: '모두 연기하고, 모두 모래성이다',
+    tone: 'border-slate-200 bg-[linear-gradient(180deg,#f8fafc_0%,#ffffff_100%)]',
+    accent: 'bg-slate-900 text-white',
+    summary: '나, 지구, 우주, 천상, 지하, 멀티우주, 시뮬레이션까지 전부 붙잡을 실체가 없는 흐름으로 보는 쪽.',
+    bullets: [
+      '존재는 있지만 고정 실체는 없고, 집착하면 바로 오해가 시작된다.',
+      '우주도 거대한 고정물이라기보다 조건 따라 잠깐 나타난 장면처럼 본다.',
+      '그래서 최종 태그를 붙이면 0에 가깝다.'
+    ]
+  },
+  {
+    digit: '1',
+    label: '힌두교 샹카라',
+    title: '많아 보여도 결국 하나다',
+    tone: 'border-amber-200 bg-[linear-gradient(180deg,#fffbeb_0%,#ffffff_100%)]',
+    accent: 'bg-amber-500 text-white',
+    summary: '너도 나도 우주도 신도 세계도 전부 분리된 것처럼 보이지만 본질은 하나라는 방향.',
+    bullets: [
+      '차이는 현상계에서 보이지만 바닥의 실재는 하나라는 입장이다.',
+      '상하 세계, 생명, 우주 전부가 따로 떨어진 사물이 아니라 하나의 실재 표현이다.',
+      '그래서 최종 태그를 붙이면 1에 가깝다.'
+    ]
+  },
+  {
+    digit: '2',
+    label: '그 외 종교/세계관',
+    title: '창조자와 피조물, 세계와 세계가 나뉜다',
+    tone: 'border-rose-200 bg-[linear-gradient(180deg,#fff1f2_0%,#ffffff_100%)]',
+    accent: 'bg-rose-500 text-white',
+    summary: '신과 인간, 하늘과 땅, 이승과 저승, 창조자와 피조물이 구분되는 구조를 크게 묶은 쪽.',
+    bullets: [
+      '여럿의 층과 위계가 실제로 구분된다고 보는 해석에 가깝다.',
+      '우리 세계 바깥의 세계도 있지만, 그것들이 하나로 녹아들진 않는다.',
+      '그래서 최종 태그를 붙이면 2에 가깝다.'
+    ]
+  }
+];
+
+const compareRows = [
+  {
+    axis: '우주',
+    zero: '우주도 잠정적 장면',
+    one: '우주도 하나의 실재',
+    two: '우주는 창조되거나 구분된 영역'
+  },
+  {
+    axis: '나와 타인',
+    zero: '붙잡을 자아 실체가 약하다',
+    one: '겉으로는 둘, 본질은 하나',
+    two: '구분된 개체가 유지된다'
+  },
+  {
+    axis: '위/아래 세계',
+    zero: '있어도 결국 공하고 연기',
+    one: '다 같은 하나의 펼침',
+    two: '실제로 분화된 여러 세계'
+  },
+  {
+    axis: '최종 숫자',
+    zero: '0',
+    one: '1',
+    two: '2'
+  }
+];
+
+const binaryBands = ['010101', '101010', '001100', '110011'];
+---
+
+<Layout
+  title="0·1·2 샌드박스 | 불교 0, 샹카라 1, 그 외 2 | ManyTool"
+  description="불교를 0, 샹카라식 비이원론을 1, 그 외 구분형 종교 구조를 2로 놓고 읽는 철학 샌드박스 페이지입니다."
+  keywords="불교 공 사상, 샹카라 아드바이타, 종교 비교, 철학 샌드박스, 0 1 2 세계관"
+>
+  <Header />
+  <main class="mx-auto max-w-7xl px-4 py-8 pb-20">
+    <section class="overflow-hidden rounded-[32px] border border-slate-200 bg-[radial-gradient(circle_at_top_left,#fef3c7_0%,#fff7ed_24%,#eff6ff_56%,#ffffff_82%)] p-6 shadow-sm">
+      <p class="inline-flex rounded-full bg-white/90 px-3 py-1 text-xs font-semibold tracking-[0.16em] text-slate-700">SANDBOX 2</p>
+      <h1 class="mt-3 text-3xl font-black tracking-tight text-slate-900 sm:text-5xl">0 / 1 / 2로 종교와 세계를 압축해 보기</h1>
+      <p class="mt-4 max-w-4xl text-sm leading-7 text-slate-700 sm:text-base">
+        이 페이지는 교리를 정식으로 요약하려는 문서가 아니라, 세계관을 숫자로 압축해서 장난감처럼 비교해 보는 샌드박스입니다.
+        불교는 <strong>0</strong>, 샹카라식 비이원론은 <strong>1</strong>, 그 밖에 창조자와 피조물, 여러 층위가 구분되는 종교 구조는 <strong>2</strong>로 놓고 읽습니다.
+      </p>
+
+      <div class="mt-6 grid gap-3 md:grid-cols-3">
+        <div class="rounded-2xl border border-white/70 bg-white/85 p-4">
+          <p class="text-sm font-bold text-slate-900">0</p>
+          <p class="mt-1 text-sm text-slate-600">다 있어 보여도 잡히는 고정 실체는 없다는 쪽</p>
+        </div>
+        <div class="rounded-2xl border border-white/70 bg-white/85 p-4">
+          <p class="text-sm font-bold text-slate-900">1</p>
+          <p class="mt-1 text-sm text-slate-600">다양한 세계가 보여도 본질은 하나라는 쪽</p>
+        </div>
+        <div class="rounded-2xl border border-white/70 bg-white/85 p-4">
+          <p class="text-sm font-bold text-slate-900">2</p>
+          <p class="mt-1 text-sm text-slate-600">창조자와 피조물, 세계와 세계가 실제로 나뉘는 쪽</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="mt-8 grid gap-5 xl:grid-cols-3">
+      {cards.map((card) => (
+        <article class={`rounded-[28px] border p-5 shadow-sm ${card.tone}`}>
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="text-xs font-semibold tracking-[0.16em] text-slate-500">{card.label}</p>
+              <h2 class="mt-2 text-2xl font-black text-slate-900">{card.title}</h2>
+            </div>
+            <span class={`inline-flex h-12 w-12 items-center justify-center rounded-2xl text-2xl font-black ${card.accent}`}>
+              {card.digit}
+            </span>
+          </div>
+
+          <p class="mt-4 text-sm leading-7 text-slate-700">{card.summary}</p>
+
+          <ul class="mt-4 space-y-2 text-sm text-slate-700">
+            {card.bullets.map((item) => (
+              <li class="rounded-2xl border border-white/70 bg-white/80 px-4 py-3">{item}</li>
+            ))}
+          </ul>
+        </article>
+      ))}
+    </section>
+
+    <section class="mt-8 rounded-[30px] border border-slate-200 bg-white p-5 shadow-sm">
+      <div class="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p class="text-xs font-semibold tracking-[0.16em] text-sky-600">UTILITY TABLE</p>
+          <h2 class="mt-2 text-2xl font-black text-slate-900">0 · 1 · 2 비교표</h2>
+        </div>
+        <div class="rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600">
+          지구는 010101처럼 섞여 보이지만 해석 축은 다르다
+        </div>
+      </div>
+
+      <div class="mt-5 overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead>
+            <tr class="border-b border-slate-200 text-left">
+              <th class="px-4 py-3 font-black text-slate-900">축</th>
+              <th class="px-4 py-3 font-black text-slate-900">0</th>
+              <th class="px-4 py-3 font-black text-slate-900">1</th>
+              <th class="px-4 py-3 font-black text-slate-900">2</th>
+            </tr>
+          </thead>
+          <tbody>
+            {compareRows.map((row) => (
+              <tr class="border-b border-slate-100 align-top">
+                <td class="px-4 py-4 font-semibold text-slate-900">{row.axis}</td>
+                <td class="px-4 py-4 text-slate-700">{row.zero}</td>
+                <td class="px-4 py-4 text-slate-700">{row.one}</td>
+                <td class="px-4 py-4 text-slate-700">{row.two}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="mt-8 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+      <article class="rounded-[28px] border border-indigo-100 bg-[linear-gradient(180deg,#eef2ff_0%,#ffffff_100%)] p-5 shadow-sm">
+        <p class="text-xs font-semibold tracking-[0.16em] text-indigo-600">010101 EARTH</p>
+        <h2 class="mt-2 text-2xl font-black text-slate-900">지구는 왜 010101처럼 보이냐</h2>
+        <p class="mt-3 text-sm leading-7 text-slate-700">
+          사람들은 어떤 순간엔 모든 것이 덧없다고 느끼고, 또 어떤 순간엔 우주와 내가 연결된다고 느끼고,
+          또 다른 순간엔 위계와 창조, 선악, 위/아래 세계를 분명히 나눕니다. 그래서 현실 체감은 종종
+          <strong>010101</strong>처럼 섞여 보입니다. 이 페이지는 그 혼합 감각을 숫자로 장난스럽게 정리한 것입니다.
+        </p>
+
+        <div class="mt-5 grid gap-3 sm:grid-cols-2">
+          {binaryBands.map((band) => (
+            <div class="rounded-2xl border border-white/70 bg-white/85 px-4 py-4 text-center text-xl font-black tracking-[0.32em] text-slate-900">
+              {band}
+            </div>
+          ))}
+        </div>
+      </article>
+
+      <article class="rounded-[28px] border border-emerald-100 bg-[linear-gradient(180deg,#ecfdf5_0%,#ffffff_100%)] p-5 shadow-sm">
+        <p class="text-xs font-semibold tracking-[0.16em] text-emerald-700">FUN USE</p>
+        <h2 class="mt-2 text-2xl font-black text-slate-900">이 페이지 사용법</h2>
+        <ul class="mt-4 space-y-3 text-sm leading-6 text-slate-700">
+          <li class="rounded-2xl border border-emerald-100 bg-white/85 px-4 py-3">우주, 나, 지하세계, 하늘세계, 멀티우주를 떠올린 뒤 어떤 숫자가 더 자연스러운지 골라봅니다.</li>
+          <li class="rounded-2xl border border-emerald-100 bg-white/85 px-4 py-3">0이면 붙잡히는 실체가 약한 쪽, 1이면 결국 하나라는 쪽, 2면 실제 구분이 유지되는 쪽으로 읽습니다.</li>
+          <li class="rounded-2xl border border-emerald-100 bg-white/85 px-4 py-3">정답 도구가 아니라 사고 실험용 샌드박스라서, 친구끼리 세계관 비교하는 데 쓰기 좋습니다.</li>
+        </ul>
+      </article>
+    </section>
+  </main>
+  <Footer />
+</Layout>

@@ -1,0 +1,260 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+
+const lifeStages = [
+  {
+    title: 'RNA 세계',
+    era: '초기 자기복제',
+    icon: '🧬',
+    desc: '복잡한 세포 이전, 자기복제 분자와 촉매 기능이 겹치던 초기 단계입니다.'
+  },
+  {
+    title: 'LUCA',
+    era: '공통 조상',
+    icon: '🫧',
+    desc: '모든 현생 생물이 거슬러 올라가는 마지막 보편 공통 조상으로 설정한 출발점입니다.'
+  },
+  {
+    title: '미생물 확장',
+    era: '바다와 대기 변화',
+    icon: '🦠',
+    desc: '박테리아와 고세균이 지구 화학 환경을 바꾸며 생태계의 기본 판을 깔았습니다.'
+  },
+  {
+    title: '식물과 광합성',
+    era: '산소 축적',
+    icon: '🌿',
+    desc: '광합성 계열이 늘어나며 대기 조성이 바뀌고, 더 복잡한 생명 조건이 만들어집니다.'
+  },
+  {
+    title: '바다 생물과 해삼',
+    era: '다세포 다양화',
+    icon: '🪸',
+    desc: '연체 생물, 극피동물, 해삼 같은 바다 생물이 복잡한 생물 구조를 보여주는 단계입니다.'
+  },
+  {
+    title: '포유류',
+    era: '육상 적응',
+    icon: '🐘',
+    desc: '체온 유지, 사회성, 감각기관 발달이 강화되며 생존 전략이 정교해집니다.'
+  },
+  {
+    title: '인간',
+    era: '도구와 문명',
+    icon: '🧑',
+    desc: '언어, 기록, 농업, 도시, 과학이 누적되며 단일 종이 행성 전체를 재구성하기 시작합니다.'
+  },
+  {
+    title: '우주로 나간 인류',
+    era: '행성 밖 확장',
+    icon: '🚀',
+    desc: '지구 밖으로 이동하는 순간, 생명의 전장은 한 행성 안이 아니라 우주 규모로 넓어집니다.'
+  }
+];
+
+const virusStages = [
+  {
+    title: '원시 기생 분자',
+    era: 'RNA 반대편',
+    icon: '☣️',
+    desc: '자기 힘만으로 세계를 짓기보다, 다른 복제 시스템을 빌려 퍼지는 방향의 존재로 상정했습니다.'
+  },
+  {
+    title: '초기 바이러스성 구조',
+    era: '숙주 의존',
+    icon: '🧫',
+    desc: '세포를 직접 만들기보다 숙주의 기계를 점유해 자신을 복제하는 전략이 강화됩니다.'
+  },
+  {
+    title: '해양 바이러스',
+    era: '바다 지배',
+    icon: '🌊',
+    desc: '지구 초기 생태계에서 바이러스는 미생물 집단을 흔들며 보이지 않는 지배력을 넓힙니다.'
+  },
+  {
+    title: '종 간 감염 확장',
+    era: '숙주 전환',
+    icon: '🕸️',
+    desc: '한 종에 머물지 않고 새로운 숙주로 이동하면서 생명 진화 전체에 압박을 가합니다.'
+  },
+  {
+    title: '포유류와 면역전',
+    era: '끊임없는 적응',
+    icon: '🩸',
+    desc: '면역계가 정교해질수록 바이러스도 더 빠르게 변이를 시도하며 공방이 심해집니다.'
+  },
+  {
+    title: '인간 사회 침투',
+    era: '도시와 이동',
+    icon: '🏙️',
+    desc: '인간이 거대한 연결망을 만들수록 바이러스는 더 넓고 빠르게 퍼질 경로를 확보합니다.'
+  },
+  {
+    title: '현대 종 전쟁',
+    era: '인간 vs 바이러스',
+    icon: '⚔️',
+    desc: '백신, 방역, 유전자 분석, 변이, 감염 파동이 이어지며 아직 끝나지 않은 종 간 전쟁으로 남습니다.'
+  }
+];
+
+const conflictMoments = [
+  '복제 시스템 vs 기생 시스템',
+  '세포 생태계 vs 감염 확산',
+  '다세포 생명 vs 숙주 전환',
+  '문명 네트워크 vs 팬데믹 파동',
+  '우주로 확장하는 인류 vs 끝까지 따라붙는 미생물 위협'
+];
+---
+
+<Layout
+  title="종 vs 종 샌드박스 | RNA에서 인간, 바이러스까지 | ManyTool"
+  description="RNA 세계에서 LUCA, 식물, 바다 생물, 포유류, 인간, 우주 진출까지 이어지는 생명의 흐름과 바이러스 축을 동시에 보여주는 샌드박스 페이지입니다."
+  keywords="RNA 세계, LUCA, 인간 진화, 바이러스 진화, 종 대결, 생명 타임라인, 샌드박스 페이지"
+>
+  <Header />
+  <main class="mx-auto max-w-7xl px-4 py-8 pb-20">
+    <section class="overflow-hidden rounded-[32px] border border-slate-200 bg-[radial-gradient(circle_at_top_left,#dbeafe_0%,#eff6ff_22%,#fff1f2_54%,#ffffff_82%)] p-6 shadow-sm">
+      <p class="inline-flex rounded-full bg-white/90 px-3 py-1 text-xs font-semibold tracking-[0.16em] text-sky-700">SANDBOX PAGE</p>
+      <h1 class="mt-3 text-3xl font-black tracking-tight text-slate-900 sm:text-5xl">RNA에서 우주까지, 그리고 반대편의 바이러스</h1>
+      <p class="mt-4 max-w-4xl text-sm leading-7 text-slate-700 sm:text-base">
+        한쪽은 자기복제와 진화를 밀어붙이며 LUCA, 식물, 바다 생물, 포유류, 인간, 우주 진출로 이어지고,
+        다른 한쪽은 숙주를 점유하는 바이러스 전략으로 맞섭니다. 이 페이지는 인간 vs 바이러스가 아직 현재진행형인
+        종 전쟁이라는 관점으로 정리한 ManyTool 샌드박스입니다.
+      </p>
+
+      <div class="mt-6 grid gap-3 md:grid-cols-3">
+        <div class="rounded-2xl border border-white/70 bg-white/85 p-4">
+          <p class="text-sm font-bold text-slate-900">좌측 축</p>
+          <p class="mt-1 text-sm text-slate-600">RNA, LUCA, 식물, 바다 생물, 포유류, 인간, 우주</p>
+        </div>
+        <div class="rounded-2xl border border-white/70 bg-white/85 p-4">
+          <p class="text-sm font-bold text-slate-900">우측 축</p>
+          <p class="mt-1 text-sm text-slate-600">원시 기생 분자, 바이러스 구조, 해양 확장, 현대 팬데믹</p>
+        </div>
+        <div class="rounded-2xl border border-white/70 bg-white/85 p-4">
+          <p class="text-sm font-bold text-slate-900">핵심 해석</p>
+          <p class="mt-1 text-sm text-slate-600">생명은 확장하고, 바이러스는 점유한다는 두 전략의 장기전</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="mt-8 grid gap-6 xl:grid-cols-[1fr_160px_1fr]">
+      <article class="rounded-[28px] border border-emerald-100 bg-[linear-gradient(180deg,#f0fdf4_0%,#ffffff_100%)] p-5">
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <p class="text-xs font-semibold tracking-[0.16em] text-emerald-700">LIFE TRACK</p>
+            <h2 class="mt-2 text-2xl font-black text-slate-900">종이 세계를 넓혀가는 축</h2>
+          </div>
+          <span class="rounded-full bg-white px-3 py-1 text-xs font-semibold text-emerald-700">진화 라인</span>
+        </div>
+
+        <div class="mt-5 space-y-4">
+          {lifeStages.map((stage, index) => (
+            <div class="relative rounded-3xl border border-emerald-100 bg-white/90 p-4 shadow-sm">
+              {index < lifeStages.length - 1 ? (
+                <div class="absolute left-8 top-full h-4 w-px bg-emerald-200"></div>
+              ) : null}
+              <div class="flex gap-4">
+                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-2xl">
+                  {stage.icon}
+                </div>
+                <div class="min-w-0">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <h3 class="text-lg font-black text-slate-900">{stage.title}</h3>
+                    <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">{stage.era}</span>
+                  </div>
+                  <p class="mt-2 text-sm leading-6 text-slate-700">{stage.desc}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </article>
+
+      <article class="flex flex-col items-center justify-between gap-4 rounded-[28px] border border-rose-100 bg-[linear-gradient(180deg,#fff1f2_0%,#fff7ed_100%)] p-4">
+        <div class="text-center">
+          <p class="text-xs font-semibold tracking-[0.16em] text-rose-600">CONFLICT</p>
+          <h2 class="mt-2 text-lg font-black text-slate-900">종 vs 종</h2>
+        </div>
+
+        <div class="flex w-full flex-1 flex-col justify-center gap-3">
+          {conflictMoments.map((moment) => (
+            <div class="rounded-2xl border border-rose-200 bg-white/90 px-3 py-4 text-center text-sm font-semibold leading-5 text-slate-700 shadow-sm">
+              {moment}
+            </div>
+          ))}
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-white px-3 py-4 text-center text-xs leading-5 text-slate-500">
+          인간이 우주로 가도<br />
+          바이러스 전쟁의 원리는<br />
+          끝나지 않을 수 있다는 상상
+        </div>
+      </article>
+
+      <article class="rounded-[28px] border border-rose-100 bg-[linear-gradient(180deg,#fff1f2_0%,#ffffff_100%)] p-5">
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <p class="text-xs font-semibold tracking-[0.16em] text-rose-600">VIRUS TRACK</p>
+            <h2 class="mt-2 text-2xl font-black text-slate-900">숙주를 점유하는 반대편 축</h2>
+          </div>
+          <span class="rounded-full bg-white px-3 py-1 text-xs font-semibold text-rose-600">기생 라인</span>
+        </div>
+
+        <div class="mt-5 space-y-4">
+          {virusStages.map((stage, index) => (
+            <div class="relative rounded-3xl border border-rose-100 bg-white/90 p-4 shadow-sm">
+              {index < virusStages.length - 1 ? (
+                <div class="absolute right-8 top-full h-4 w-px bg-rose-200"></div>
+              ) : null}
+              <div class="flex gap-4">
+                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-rose-50 text-2xl">
+                  {stage.icon}
+                </div>
+                <div class="min-w-0">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <h3 class="text-lg font-black text-slate-900">{stage.title}</h3>
+                    <span class="rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-600">{stage.era}</span>
+                  </div>
+                  <p class="mt-2 text-sm leading-6 text-slate-700">{stage.desc}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </article>
+    </section>
+
+    <section class="mt-8 grid gap-4 lg:grid-cols-3">
+      <article class="rounded-[26px] border border-slate-200 bg-white p-5 shadow-sm">
+        <p class="text-xs font-semibold tracking-[0.16em] text-sky-600">UTILITY NOTE</p>
+        <h3 class="mt-2 text-xl font-black text-slate-900">이 페이지를 어떻게 보나</h3>
+        <p class="mt-3 text-sm leading-6 text-slate-700">
+          실제 과학 교과서라기보다, 생명과 바이러스를 두 개의 전략으로 압축해 보는 시각화 카드입니다.
+          왼쪽은 세계를 넓히는 축, 오른쪽은 숙주를 점유하는 축으로 읽으면 됩니다.
+        </p>
+      </article>
+
+      <article class="rounded-[26px] border border-indigo-100 bg-[linear-gradient(180deg,#eef2ff_0%,#ffffff_100%)] p-5 shadow-sm">
+        <p class="text-xs font-semibold tracking-[0.16em] text-indigo-600">HUMAN PHASE</p>
+        <h3 class="mt-2 text-xl font-black text-slate-900">인간 탄생 이후의 전장</h3>
+        <p class="mt-3 text-sm leading-6 text-slate-700">
+          인간은 의학과 기술로 바이러스를 밀어내려 하고, 바이러스는 변이와 확산으로 인간 네트워크를 파고듭니다.
+          그래서 이 구도는 단순 감염병이 아니라 장기적인 종 대 종 전쟁처럼 보이게 됩니다.
+        </p>
+      </article>
+
+      <article class="rounded-[26px] border border-amber-100 bg-[linear-gradient(180deg,#fffbeb_0%,#ffffff_100%)] p-5 shadow-sm">
+        <p class="text-xs font-semibold tracking-[0.16em] text-amber-700">SPACE ENDGAME</p>
+        <h3 class="mt-2 text-xl font-black text-slate-900">우주로 가도 끝나지 않는 질문</h3>
+        <p class="mt-3 text-sm leading-6 text-slate-700">
+          인간이 지구를 벗어나도 미생물과 바이러스 관리 능력은 계속 필요합니다.
+          이 페이지의 마지막 장면은 생명의 승리가 아니라, 전장의 범위가 커진다는 상상입니다.
+        </p>
+      </article>
+    </section>
+  </main>
+  <Footer />
+</Layout>
