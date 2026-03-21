@@ -28,6 +28,9 @@ const t = {
     tRaw('home.tabs.art'),
     tRaw('home.tabs.etc')
   ],
+  favorite: locale === 'ko' ? '즐겨찾기' : locale === 'ja' ? 'お気に入り' : 'Favorites',
+  favoriteOnly: locale === 'ko' ? '즐겨찾기만' : locale === 'ja' ? 'お気に入りのみ' : 'Favorites only',
+  favoriteEmpty: locale === 'ko' ? '즐겨찾기한 카드가 없습니다.' : locale === 'ja' ? 'お気に入り登録したカードがありません。' : 'No favorite cards yet.',
   searchPlaceholder: tRaw('home.searchPlaceholder'),
   heroTitle: tRaw('home.heroTitle'),
   heroDesc: tRaw('home.heroDesc'),
@@ -59,46 +62,47 @@ const t = {
 };
 
 const cardSeed = [
-  { href: '/ai-id-photo', title: 'AI 증명사진', desc: '업로드/촬영으로 후보 3장 생성', icon: '📷', iconClass: 'bg-slate-100 text-slate-700', disabled: true },
-  { href: '/ai-passport-photo', title: 'AI 여권사진', desc: '여권 규격 후보 3장 생성', icon: '🛂', iconClass: 'bg-cyan-100 text-cyan-700', disabled: true },
-  { href: '/ai-headshot', title: 'AI 프로필사진', desc: '비즈니스/취업용 프로필 생성', icon: '🖌️', iconClass: 'bg-amber-100 text-amber-700', disabled: true },
-  { href: '/animal-test', title: '동물상 테스트', desc: '사진으로 동물상 분석', icon: '🐾', iconClass: 'bg-sky-100 text-sky-700' },
-  { href: '/pinball', title: '핀볼 게임', desc: '가볍게 즐기는 미니게임', icon: '🎮', iconClass: 'bg-emerald-100 text-emerald-700' },
-  { href: '/personal-color', title: '퍼스널컬러', desc: '얼굴 기반 색상 추천', icon: '🎨', iconClass: 'bg-amber-100 text-amber-700' },
-  { href: '/magic-book', title: '마법책', desc: '랜덤 문구 뽑기', icon: '✨', iconClass: 'bg-fuchsia-100 text-fuchsia-700' },
-  { href: '/reaction-test', title: '반응속도', desc: '클릭 속도 측정', icon: '⚡', iconClass: 'bg-rose-100 text-rose-700' },
-  { href: '/fps-aim-sensitivity', title: 'FPS 에임 조절기', desc: '현재 감도 기준 추천', icon: '🎯', iconClass: 'bg-cyan-100 text-cyan-700' },
-  { href: '/ai-calorie-calculator', title: 'AI 칼로리 계산기', desc: '음식 사진 칼로리 추정', icon: '🍱', iconClass: 'bg-emerald-100 text-emerald-700' },
-  { href: '/mbti-test', title: 'MBTI 테스트', desc: '성향 빠른 확인', icon: '🧠', iconClass: 'bg-indigo-100 text-indigo-700' },
-  { href: '/maps/fishbread', title: '전국 붕어빵 지도', desc: '지역별 붕어빵 빠른 탐색', icon: '🗺️', iconClass: 'bg-cyan-100 text-cyan-700' },
-  { href: '/maps/solo-dining', title: '혼밥 가능 식당 공유', desc: '혼밥 가능한 식당 제보/탐색', icon: '🍽️', iconClass: 'bg-orange-100 text-orange-700' },
-  { href: '/name-meaning', title: '이름풀이', desc: '이름으로 성향 키워드 보기', icon: '📝', iconClass: 'bg-blue-100 text-blue-700' },
-  { href: '/name-compatibility', title: '이름궁합', desc: '두 이름 궁합 점수 확인', icon: '💕', iconClass: 'bg-pink-100 text-pink-700' },
-  { href: '/maps/hidden-cafe', title: '숨은 카페 지도', desc: '조용한 카페 탐색', icon: '☕', iconClass: 'bg-orange-100 text-orange-700' },
-  { href: '/maps/local-eats', title: '지역 맛집 지도', desc: '동네 인기 맛집', icon: '🍜', iconClass: 'bg-red-100 text-red-700' },
-  { href: '/love-compatibility', title: '연애 궁합', desc: '두 사람 궁합 테스트', icon: '💜', iconClass: 'bg-violet-100 text-violet-700' },
-  { href: '/random-food', title: '랜덤 음식', desc: '오늘 메뉴 추천', icon: '🎲', iconClass: 'bg-yellow-100 text-yellow-700' },
-  { href: '/today-fortune', title: '오늘의 운세', desc: '오늘 운세 랜덤 확인', icon: '🔮', iconClass: 'bg-purple-100 text-purple-700' },
-  { href: '/fortune-cookie-2026', title: '올해 포츈쿠키', desc: '2026년 키워드 뽑기', icon: '🥠', iconClass: 'bg-amber-100 text-amber-700' },
-  { href: '/ladder-game', title: '사다리타기', desc: '랜덤 당첨 뽑기', icon: '🪜', iconClass: 'bg-lime-100 text-lime-700' },
-  { href: '/ai-image-generator', title: 'AI 이미지 생성기', desc: '피규어와 바디프로필 스타일 이미지 생성', icon: '🪄', iconClass: 'bg-orange-100 text-orange-700' },
-  { href: '/tools/product-detail-studio', title: 'AI 상세페이지 생성기', desc: '사진과 프롬프트로 쇼핑몰 상세페이지 초안 생성', icon: '🛍️', iconClass: 'bg-rose-100 text-rose-700' },
-  { href: '/tools/mkv-to-mp4', title: 'MKV to MP4 변환기', desc: '최대 1.5GB MKV를 MP4로 변환', icon: '🎬', iconClass: 'bg-sky-100 text-sky-700' },
-  { href: '/tools/scoreboard', title: '스트리머 점수판', desc: 'OBS용 실시간 스코어보드', icon: '📊', iconClass: 'bg-teal-100 text-teal-700' },
-  { href: '/face-shape-test', title: '얼굴형테스트', desc: '질문 기반 얼굴형 추정', icon: '🧑', iconClass: 'bg-slate-100 text-slate-700' },
-  { href: '/nickname-generator', title: '닉네임생성기', desc: '랜덤 닉네임 자동 생성', icon: '🏷️', iconClass: 'bg-lime-100 text-lime-700' },
-  { href: '/chat-random-picker', title: '채팅 랜덤 뽑기', desc: '채팅 참여자 추첨', icon: '💬', iconClass: 'bg-violet-100 text-violet-700' },
-  { href: '/meme-generator', title: '밈 생성기', desc: '이미지+텍스트 밈 제작', icon: '🖼️', iconClass: 'bg-cyan-100 text-cyan-700' },
-  { href: '/random-picker', title: '랜덤뽑기', desc: '항목 랜덤 추첨', icon: '🎯', iconClass: 'bg-slate-100 text-slate-700' },
-  { href: '/roulette', title: '룰렛', desc: '직접 입력 룰렛 돌리기', icon: '🎡', iconClass: 'bg-pink-100 text-pink-700' },
-  { href: '/team-split', title: '팀나누기', desc: '랜덤 팀 자동 배정', icon: '👥', iconClass: 'bg-green-100 text-green-700' },
-  { href: '/text-counter', title: '글자수세기', desc: '글자/단어/줄/바이트 계산', icon: '🔤', iconClass: 'bg-blue-100 text-blue-700' },
-  { href: '/daily-english-word', title: '오늘의 영단어', desc: '매일 1개 영어 단어 학습', icon: '🇺🇸', iconClass: 'bg-sky-100 text-sky-700' },
-  { href: '/daily-sentence', title: '하루 영어 한문장', desc: '매일 한 문장 학습', icon: '🗣️', iconClass: 'bg-indigo-100 text-indigo-700' },
-  { href: '/streamer-battle', title: '스트리머 대결 툴', desc: '팀 대결 점수 관리', icon: '🏆', iconClass: 'bg-amber-100 text-amber-700' },
-  { href: '/daily-spanish', title: '오늘의 스페인어', desc: '매일 1개 스페인어 표현', icon: '🇪🇸', iconClass: 'bg-rose-100 text-rose-700' },
-  { href: '/daily-japanese', title: '오늘의 일본어', desc: '매일 1개 일본어 표현', icon: '🇯🇵', iconClass: 'bg-red-100 text-red-700' },
-  { href: '/korean-study-today', title: '오늘의 한국어공부', desc: '매일 1개 한국어 포인트', icon: '🇰🇷', iconClass: 'bg-cyan-100 text-cyan-700' }
+  { href: '/ai-id-photo', title: 'AI 증명사진', desc: '업로드/촬영으로 후보 3장 생성', icon: '📷', iconClass: 'bg-slate-100 text-slate-700', disabled: true, category: 'art' },
+  { href: '/ai-passport-photo', title: 'AI 여권사진', desc: '여권 규격 후보 3장 생성', icon: '🛂', iconClass: 'bg-cyan-100 text-cyan-700', disabled: true, category: 'art' },
+  { href: '/ai-headshot', title: 'AI 프로필사진', desc: '비즈니스/취업용 프로필 생성', icon: '🖌️', iconClass: 'bg-amber-100 text-amber-700', disabled: true, category: 'art' },
+  { href: '/animal-test', title: '동물상 테스트', desc: '사진으로 동물상 분석', icon: '🐾', iconClass: 'bg-sky-100 text-sky-700', category: 'art' },
+  { href: '/pinball', title: '핀볼 게임', desc: '가볍게 즐기는 미니게임', icon: '🎮', iconClass: 'bg-emerald-100 text-emerald-700', category: 'games' },
+  { href: '/personal-color', title: '퍼스널컬러 자가진단', desc: '얼굴 기반 계절 톤 빠른 확인', icon: '🎨', iconClass: 'bg-amber-100 text-amber-700', category: 'art' },
+  { href: '/ai-personal-color', title: 'AI 퍼스널컬러 자가진단', desc: 'AI 기반 톤 분석과 컬러 추천', icon: '🌈', iconClass: 'bg-rose-100 text-rose-700', category: 'art' },
+  { href: '/magic-book', title: '마법책', desc: '랜덤 문구 뽑기', icon: '✨', iconClass: 'bg-fuchsia-100 text-fuchsia-700', category: 'games' },
+  { href: '/reaction-test', title: '반응속도', desc: '클릭 속도 측정', icon: '⚡', iconClass: 'bg-rose-100 text-rose-700', category: 'games' },
+  { href: '/fps-aim-sensitivity', title: 'FPS 에임 조절기', desc: '현재 감도 기준 추천', icon: '🎯', iconClass: 'bg-cyan-100 text-cyan-700', category: 'tools' },
+  { href: '/ai-calorie-calculator', title: 'AI 칼로리 계산기', desc: '음식 사진 칼로리 추정', icon: '🍱', iconClass: 'bg-emerald-100 text-emerald-700', category: 'tools' },
+  { href: '/mbti-test', title: 'MBTI 테스트', desc: '성향 빠른 확인', icon: '🧠', iconClass: 'bg-indigo-100 text-indigo-700', category: 'etc' },
+  { href: '/maps/fishbread', title: '전국 붕어빵 지도', desc: '지역별 붕어빵 빠른 탐색', icon: '🗺️', iconClass: 'bg-cyan-100 text-cyan-700', category: 'tools' },
+  { href: '/maps/solo-dining', title: '혼밥 가능 식당 공유', desc: '혼밥 가능한 식당 제보/탐색', icon: '🍽️', iconClass: 'bg-orange-100 text-orange-700', category: 'tools' },
+  { href: '/name-meaning', title: '이름풀이', desc: '이름으로 성향 키워드 보기', icon: '📝', iconClass: 'bg-blue-100 text-blue-700', category: 'etc' },
+  { href: '/name-compatibility', title: '이름궁합', desc: '두 이름 궁합 점수 확인', icon: '💕', iconClass: 'bg-pink-100 text-pink-700', category: 'etc' },
+  { href: '/maps/hidden-cafe', title: '숨은 카페 지도', desc: '조용한 카페 탐색', icon: '☕', iconClass: 'bg-orange-100 text-orange-700', category: 'tools' },
+  { href: '/maps/local-eats', title: '지역 맛집 지도', desc: '동네 인기 맛집', icon: '🍜', iconClass: 'bg-red-100 text-red-700', category: 'tools' },
+  { href: '/love-compatibility', title: '연애 궁합', desc: '두 사람 궁합 테스트', icon: '💜', iconClass: 'bg-violet-100 text-violet-700', category: 'etc' },
+  { href: '/random-food', title: '랜덤 음식', desc: '오늘 메뉴 추천', icon: '🎲', iconClass: 'bg-yellow-100 text-yellow-700', category: 'games' },
+  { href: '/today-fortune', title: '오늘의 운세', desc: '오늘 운세 랜덤 확인', icon: '🔮', iconClass: 'bg-purple-100 text-purple-700', category: 'etc' },
+  { href: '/fortune-cookie-2026', title: '올해 포츈쿠키', desc: '2026년 키워드 뽑기', icon: '🥠', iconClass: 'bg-amber-100 text-amber-700', category: 'games' },
+  { href: '/ladder-game', title: '사다리타기', desc: '랜덤 당첨 뽑기', icon: '🪜', iconClass: 'bg-lime-100 text-lime-700', category: 'games' },
+  { href: '/ai-image-generator', title: 'AI 이미지 생성기', desc: '피규어와 바디프로필 스타일 이미지 생성', icon: '🪄', iconClass: 'bg-orange-100 text-orange-700', category: 'art' },
+  { href: '/tools/product-detail-studio', title: 'AI 상세페이지 생성기', desc: '사진과 프롬프트로 쇼핑몰 상세페이지 초안 생성', icon: '🛍️', iconClass: 'bg-rose-100 text-rose-700', category: 'tools' },
+  { href: '/tools/video-to-mp4', title: '동영상 MP4 변환기', desc: '온라인 동영상 변환, 최대 1.5GB 영상 파일 지원', icon: '🎬', iconClass: 'bg-sky-100 text-sky-700', category: 'tools' },
+  { href: '/tools/scoreboard', title: '스트리머 점수판', desc: 'OBS용 실시간 스코어보드', icon: '📊', iconClass: 'bg-teal-100 text-teal-700', category: 'tools' },
+  { href: '/face-shape-test', title: '얼굴형테스트', desc: '질문 기반 얼굴형 추정', icon: '🧑', iconClass: 'bg-slate-100 text-slate-700', category: 'etc' },
+  { href: '/nickname-generator', title: '닉네임생성기', desc: '랜덤 닉네임 자동 생성', icon: '🏷️', iconClass: 'bg-lime-100 text-lime-700', category: 'tools' },
+  { href: '/chat-random-picker', title: '채팅 랜덤 뽑기', desc: '채팅 참여자 추첨', icon: '💬', iconClass: 'bg-violet-100 text-violet-700', category: 'tools' },
+  { href: '/meme-generator', title: '밈 생성기', desc: '이미지+텍스트 밈 제작', icon: '🖼️', iconClass: 'bg-cyan-100 text-cyan-700', category: 'art' },
+  { href: '/random-picker', title: '랜덤뽑기', desc: '항목 랜덤 추첨', icon: '🎯', iconClass: 'bg-slate-100 text-slate-700', category: 'games' },
+  { href: '/roulette', title: '룰렛', desc: '직접 입력 룰렛 돌리기', icon: '🎡', iconClass: 'bg-pink-100 text-pink-700', category: 'games' },
+  { href: '/team-split', title: '팀나누기', desc: '랜덤 팀 자동 배정', icon: '👥', iconClass: 'bg-green-100 text-green-700', category: 'games' },
+  { href: '/text-counter', title: '글자수세기', desc: '글자/단어/줄/바이트 계산', icon: '🔤', iconClass: 'bg-blue-100 text-blue-700', category: 'tools' },
+  { href: '/daily-english-word', title: '오늘의 영단어', desc: '매일 1개 영어 단어 학습', icon: '🇺🇸', iconClass: 'bg-sky-100 text-sky-700', category: 'etc' },
+  { href: '/daily-sentence', title: '하루 영어 한문장', desc: '매일 한 문장 학습', icon: '🗣️', iconClass: 'bg-indigo-100 text-indigo-700', category: 'etc' },
+  { href: '/streamer-battle', title: '스트리머 대결 툴', desc: '팀 대결 점수 관리', icon: '🏆', iconClass: 'bg-amber-100 text-amber-700', category: 'tools' },
+  { href: '/daily-spanish', title: '오늘의 스페인어', desc: '매일 1개 스페인어 표현', icon: '🇪🇸', iconClass: 'bg-rose-100 text-rose-700', category: 'etc' },
+  { href: '/daily-japanese', title: '오늘의 일본어', desc: '매일 1개 일본어 표현', icon: '🇯🇵', iconClass: 'bg-red-100 text-red-700', category: 'etc' },
+  { href: '/korean-study-today', title: '오늘의 한국어공부', desc: '매일 1개 한국어 포인트', icon: '🇰🇷', iconClass: 'bg-cyan-100 text-cyan-700', category: 'etc' }
 ];
 
 const cardTitleI18n: Record<string, { en: string; ja: string }> = {
@@ -108,6 +112,7 @@ const cardTitleI18n: Record<string, { en: string; ja: string }> = {
   '/animal-test': { en: 'Animal Face Test', ja: '動物顔テスト' },
   '/pinball': { en: 'Pinball Game', ja: 'ピンボールゲーム' },
   '/personal-color': { en: 'Personal Color Test', ja: 'パーソナルカラーテスト' },
+  '/ai-personal-color': { en: 'AI Personal Color Analysis', ja: 'AIパーソナルカラー診断' },
   '/magic-book': { en: 'Magic Book', ja: 'マジックブック' },
   '/reaction-test': { en: 'Reaction Test', ja: '反応速度テスト' },
   '/fps-aim-sensitivity': { en: 'FPS Aim Sensitivity', ja: 'FPSエイム感度調整' },
@@ -126,7 +131,7 @@ const cardTitleI18n: Record<string, { en: string; ja: string }> = {
   '/ladder-game': { en: 'Ladder Game', ja: 'あみだくじ' },
   '/ai-image-generator': { en: 'AI Image Generator', ja: 'AI画像生成' },
   '/tools/product-detail-studio': { en: 'AI Product Detail Studio', ja: 'AI商品詳細ページ生成' },
-  '/tools/mkv-to-mp4': { en: 'MKV to MP4 Converter', ja: 'MKVからMP4変換' },
+  '/tools/video-to-mp4': { en: 'Video to MP4 Converter', ja: '動画をMP4に変換' },
   '/tools/scoreboard': { en: 'Streamer Scoreboard', ja: 'ストリーマースコアボード' },
   '/face-shape-test': { en: 'Face Shape Test', ja: '顔型テスト' },
   '/nickname-generator': { en: 'Nickname Generator', ja: 'ニックネーム生成' },
@@ -155,7 +160,7 @@ const cards = cardSeed.map((card) => {
   return { ...card, title, desc, href: withLocale(card.href), disabled: card.disabled ?? false };
 });
 
-const rowCount = 3;
+const rowCount = 5;
 const rowSize = Math.ceil(cards.length / rowCount);
 const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
   cards.slice(rowIndex * rowSize, (rowIndex + 1) * rowSize)
@@ -174,18 +179,29 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
           <img src="/favicon.svg" alt="ManyTool 로고" class="h-8 w-8 rounded-lg bg-sky-100 p-1" loading="eager" decoding="async" />
           <h2 class="text-lg font-bold tracking-tight text-slate-900 sm:text-xl">ManyTool</h2>
         </a>
-        <div class="flex items-center gap-1 rounded-md border border-slate-200 bg-white p-1 text-xs">
-          {langLinks.map((lang) => (
-            <a
-              href={lang.href}
-              class:list={[
-                'rounded px-2 py-1 font-semibold',
-                lang.code === locale ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
-              ]}
-            >
-              {lang.label}
-            </a>
-          ))}
+        <div class="flex items-center gap-2">
+          <button
+            id="favorite-filter-button"
+            type="button"
+            class="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700 transition hover:bg-amber-100"
+          >
+            <span aria-hidden="true">★</span>
+            <span>{t.favoriteOnly}</span>
+            <span id="favorite-filter-count" class="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-amber-700">0</span>
+          </button>
+          <div class="flex items-center gap-1 rounded-md border border-slate-200 bg-white p-1 text-xs">
+            {langLinks.map((lang) => (
+              <a
+                href={lang.href}
+                class:list={[
+                  'rounded px-2 py-1 font-semibold',
+                  lang.code === locale ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+                ]}
+              >
+                {lang.label}
+              </a>
+            ))}
+          </div>
         </div>
       </header>
 
@@ -207,7 +223,9 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
         <div class="mt-4 flex gap-2 overflow-x-auto pb-2">
           {t.tabs.map((tab, idx) => (
             <button
+              data-tab={idx === 0 ? 'all' : idx === 1 ? 'games' : idx === 2 ? 'tools' : idx === 3 ? 'art' : 'etc'}
               class:list={[
+                'tab-chip whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition',
                 'whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium',
                 idx === 0
                   ? 'bg-sky-500 text-white'
@@ -233,6 +251,8 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
                       href={card.disabled ? undefined : card.href}
                       aria-disabled={card.disabled ? 'true' : 'false'}
                       data-card
+                      data-fav-key={card.href.replace(/^\/(en|ja)(?=\/|$)/, '') || '/'}
+                      data-category={card.category}
                       data-dup={dup}
                       data-disabled={card.disabled ? 'true' : 'false'}
                       data-search={`${card.title} ${card.desc}`.toLowerCase()}
@@ -245,11 +265,21 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
                     >
                       <div class="flex items-start justify-between gap-3">
                         <div class:list={['flex h-10 w-10 items-center justify-center rounded-lg text-base', card.iconClass]}>{card.icon}</div>
-                        {card.disabled ? (
-                          <span class="rounded-full border border-slate-200 bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                            {tRaw('common.soon')}
-                          </span>
-                        ) : null}
+                        <div class="flex items-center gap-2">
+                          <button
+                            type="button"
+                            data-favorite-toggle
+                            aria-label={t.favorite}
+                            class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-sm text-slate-400 transition hover:border-amber-300 hover:text-amber-500"
+                          >
+                            ☆
+                          </button>
+                          {card.disabled ? (
+                            <span class="rounded-full border border-slate-200 bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                              {tRaw('common.soon')}
+                            </span>
+                          ) : null}
+                        </div>
                       </div>
                       <h2 class="mt-3 text-base font-bold tracking-tight text-slate-900">{card.title}</h2>
                       <p class="mt-1 text-xs leading-relaxed text-slate-500">{card.desc}</p>
@@ -263,6 +293,7 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
         </section>
       </div>
       <p id="search-empty" class="hidden px-4 pb-4 text-sm text-slate-500 lg:px-10">{t.noResult}</p>
+      <p id="favorite-empty" class="hidden px-4 pb-4 text-sm text-slate-500 lg:px-10">{t.favoriteEmpty}</p>
 
       <section class="px-4 pb-2 lg:px-10">
         <article class="rounded-xl border border-slate-200 bg-white p-5">
@@ -345,11 +376,51 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
     const sliderRows = document.querySelectorAll('[data-slider]');
     const searchInput = document.getElementById('tool-search');
     const emptyEl = document.getElementById('search-empty');
+    const favoriteEmptyEl = document.getElementById('favorite-empty');
+    const favoriteFilterButton = document.getElementById('favorite-filter-button');
+    const favoriteFilterCount = document.getElementById('favorite-filter-count');
+    const tabButtons = document.querySelectorAll('[data-tab]');
     const homeDonateButton = document.getElementById('home-donate-button');
     const homeDonateMessage = document.getElementById('home-donate-message');
     const trendingCardListEl = document.getElementById('trending-card-list');
     const trendingCardStatusEl = document.getElementById('trending-card-status');
     const trendingCardUpdatedEl = document.getElementById('trending-card-updated');
+    const favoriteStorageKey = 'manytool.home.favorites';
+    let activeTab = 'all';
+    let favoriteOnly = false;
+
+    const readFavorites = () => {
+      try {
+        const raw = window.localStorage.getItem(favoriteStorageKey);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed.filter((item) => typeof item === 'string') : [];
+      } catch {
+        return [];
+      }
+    };
+
+    const writeFavorites = (items) => {
+      window.localStorage.setItem(favoriteStorageKey, JSON.stringify([...new Set(items)]));
+    };
+
+    const updateFavoriteButtons = () => {
+      const favorites = new Set(readFavorites());
+      document.querySelectorAll('[data-card]').forEach((cardEl) => {
+        const key = cardEl.getAttribute('data-fav-key') || '';
+        const button = cardEl.querySelector('[data-favorite-toggle]');
+        if (!(button instanceof HTMLButtonElement)) return;
+        const active = favorites.has(key);
+        button.textContent = active ? '★' : '☆';
+        button.classList.toggle('text-amber-500', active);
+        button.classList.toggle('border-amber-300', active);
+        button.classList.toggle('bg-amber-50', active);
+      });
+      if (favoriteFilterCount) favoriteFilterCount.textContent = String(favorites.size);
+      if (favoriteFilterButton instanceof HTMLButtonElement) {
+        favoriteFilterButton.classList.toggle('bg-amber-100', favoriteOnly);
+        favoriteFilterButton.classList.toggle('border-amber-300', favoriteOnly);
+      }
+    };
     
     const dayKey = () => {
       const now = new Date();
@@ -456,7 +527,9 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
     const applySearch = () => {
       if (!searchInput) return;
       const keyword = searchInput.value.trim().toLowerCase();
+      const favorites = new Set(readFavorites());
       let visibleTotal = 0;
+      let favoriteVisibleTotal = 0;
 
       sliderRows.forEach((rowEl) => {
         const cards = rowEl.querySelectorAll('[data-card]');
@@ -465,9 +538,16 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
         cards.forEach((cardEl) => {
           const haystack = cardEl.getAttribute('data-search') ?? '';
           const isPrimary = cardEl.getAttribute('data-dup') === '0';
-          const matched = (keyword === '' || haystack.includes(keyword)) && (keyword === '' || isPrimary);
+          const category = cardEl.getAttribute('data-category') ?? 'etc';
+          const favKey = cardEl.getAttribute('data-fav-key') ?? '';
+          const matchesSearch = keyword === '' || haystack.includes(keyword);
+          const matchesTab = activeTab === 'all' || category === activeTab;
+          const matchesFavorite = !favoriteOnly || favorites.has(favKey);
+          const primaryOnly = keyword !== '' || activeTab !== 'all' || favoriteOnly;
+          const matched = matchesSearch && matchesTab && matchesFavorite && (!primaryOnly || isPrimary);
           cardEl.classList.toggle('hidden', !matched);
           if (matched) rowVisible += 1;
+          if (matched && favorites.has(favKey)) favoriteVisibleTotal += 1;
         });
 
         rowEl.classList.toggle('hidden', rowVisible === 0);
@@ -477,9 +557,55 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
       if (emptyEl) {
         emptyEl.classList.toggle('hidden', visibleTotal > 0);
       }
+      if (favoriteEmptyEl) {
+        favoriteEmptyEl.classList.toggle('hidden', !(favoriteOnly && favoriteVisibleTotal === 0));
+      }
     };
 
+    document.addEventListener('click', (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const favoriteButton = target.closest('[data-favorite-toggle]');
+      if (!(favoriteButton instanceof HTMLButtonElement)) return;
+      const card = favoriteButton.closest('[data-card]');
+      if (!(card instanceof HTMLElement)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const key = card.getAttribute('data-fav-key');
+      if (!key) return;
+      const favorites = readFavorites();
+      const next = favorites.includes(key)
+        ? favorites.filter((item) => item !== key)
+        : [...favorites, key];
+      writeFavorites(next);
+      updateFavoriteButtons();
+      applySearch();
+    });
+
+    tabButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        activeTab = button.getAttribute('data-tab') ?? 'all';
+        tabButtons.forEach((item) => {
+          const active = item === button;
+          item.classList.toggle('bg-sky-500', active);
+          item.classList.toggle('text-white', active);
+          item.classList.toggle('border', !active);
+          item.classList.toggle('border-sky-100', !active);
+          item.classList.toggle('bg-white', !active);
+          item.classList.toggle('text-slate-600', !active);
+        });
+        applySearch();
+      });
+    });
+
+    favoriteFilterButton?.addEventListener('click', () => {
+      favoriteOnly = !favoriteOnly;
+      updateFavoriteButtons();
+      applySearch();
+    });
+
     searchInput?.addEventListener('input', applySearch);
+    updateFavoriteButtons();
     applySearch();
 
     const renderTrendCards = (items) => {

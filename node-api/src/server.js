@@ -12,6 +12,7 @@ import { db } from './store.js';
 import { generateCommerceDetailPage } from './commerce/detailPage.js';
 import { generateAiImage, getModeOptions, getProviderOptions, sanitizeUserInput } from './commerce/aiImageGenerator.js';
 import { analyzeMealCalories } from './commerce/calorieAnalyzer.js';
+import { analyzePersonalColor } from './commerce/personalColorAnalyzer.js';
 import { generateCandidatesWithProvider, getImageProvider, getResolvedImageProvider, isExternalAiEnabled, normalizeRequestedProvider, resolveImageProvider } from './providers/providerRouter.js';
 
 const app = express();
@@ -107,6 +108,7 @@ const getPolarProductMap = () => ({
   base: getFirstEnv('POLAR_PRODUCT_BASE', 'POLAR_PRODUCT_ID'),
   calorie: getFirstEnv('POLAR_PRODUCT_CALORIE'),
   donation: getFirstEnv('POLAR_PRODUCT_DONATION'),
+  ai_personal_color: getFirstEnv('POLAR_PRODUCT_AI_PERSONAL_COLOR'),
   video_mkv_mp4: getFirstEnv('POLAR_PRODUCT_VIDEO_MKV_MP4'),
   add2: getFirstEnv('POLAR_PRODUCT_ADD2'),
   add3: getFirstEnv('POLAR_PRODUCT_ADD3'),
@@ -220,6 +222,7 @@ app.get('/config', (_req, res) => {
       openAiReady,
       xaiReady,
       aiImageGeneratorReady: openAiReady || xaiReady,
+      aiPersonalColorReady: openAiReady,
       resendReady: Boolean(resend.apiKey && resend.fromEmail),
       removeBgReady,
       photoroomReady,
@@ -250,6 +253,22 @@ const ensureVideoOrder = async (orderId) => {
   if (order.status !== 'paid') throw new Error('payment required');
   if (order.videoJobId) {
     const existingJob = db.videoJobs.get(order.videoJobId);
+    if (existingJob && existingJob.status !== 'failed') {
+      throw new Error('this order has already been used');
+    }
+  }
+  return order;
+};
+
+const ensureAiPersonalColorOrder = async (orderId) => {
+  if (!orderId) throw new Error('orderId is required');
+  const current = db.orders.get(orderId);
+  const order = await refreshOrderFromPolarIfNeeded(current);
+  if (!order) throw new Error('order not found');
+  if (order.productType !== 'ai_personal_color') throw new Error('invalid order product type');
+  if (order.status !== 'paid') throw new Error('payment required');
+  if (order.aiPersonalColorJobId) {
+    const existingJob = db.aiPersonalColorJobs.get(order.aiPersonalColorJobId);
     if (existingJob && existingJob.status !== 'failed') {
       throw new Error('this order has already been used');
     }
@@ -334,10 +353,12 @@ app.post('/video/mkv-mp4/convert', largeVideoUpload.single('video'), async (req,
 
     const ext = path.extname(file.originalname || '').toLowerCase();
     const mime = String(file.mimetype || '').toLowerCase();
-    const isMkv = ext === '.mkv' || mime.includes('matroska') || mime === 'video/x-matroska';
-    if (!isMkv) {
+    const allowedVideoExtensions = new Set(['.mkv', '.mov', '.avi', '.m4v']);
+    const allowedVideoMimeHints = ['matroska', 'quicktime', 'x-msvideo', 'video/avi', 'video/x-m4v'];
+    const isAllowedVideo = allowedVideoExtensions.has(ext) || allowedVideoMimeHints.some((hint) => mime.includes(hint));
+    if (!isAllowedVideo) {
       await fs.rm(file.path, { force: true }).catch(() => {});
-      return res.status(400).json({ error: 'only mkv uploads are allowed' });
+      return res.status(400).json({ error: 'only mkv, mov, avi, and m4v uploads are allowed' });
     }
 
     const jobId = uuidv4();
@@ -801,6 +822,75 @@ const sendAiImageResultEmailIfNeeded = async ({ order, job }) => {
     aiImageEmailSentAt: new Date().toISOString(),
     aiImageEmailError: null,
     aiImageEmailPayload: emailPayload
+  };
+  db.orders.set(order.id, nextOrder);
+  return nextOrder;
+};
+
+const buildAiPersonalColorResultPageUrl = (jobId) => {
+  const base = getFirstEnv('PUBLIC_WEB_BASE_URL', 'WEB_BASE_URL') ?? 'https://manytool.net';
+  try {
+    const url = new URL('/ai-personal-color/', base);
+    url.searchParams.set('jobId', jobId);
+    return url.toString();
+  } catch {
+    return `https://manytool.net/ai-personal-color/?jobId=${encodeURIComponent(jobId)}`;
+  }
+};
+
+const sendAiPersonalColorResultEmail = async ({ order, job }) => {
+  const resend = getResendConfig();
+  if (!resend.apiKey || !resend.fromEmail) throw new Error('Resend is not configured');
+  if (!order?.customerEmail) throw new Error('customer email is missing');
+  if (!job?.analysis?.summary) throw new Error('personal color analysis result is missing');
+
+  const resultPageUrl = buildAiPersonalColorResultPageUrl(job.id);
+  const season = String(job.analysis.season ?? '').trim() || '퍼스널컬러 결과';
+  const response = await fetch(resendApiUrl, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${resend.apiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      from: resend.fromEmail,
+      to: [order.customerEmail],
+      subject: '[ManyTool] AI 퍼스널컬러 분석 결과가 준비되었습니다',
+      html: `
+        <div style="font-family:Arial,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;line-height:1.7;color:#0f172a;">
+          <h1 style="font-size:22px;margin:0 0 16px;">AI 퍼스널컬러 분석 결과가 준비되었습니다</h1>
+          <p style="margin:0 0 8px;"><strong>메인 톤:</strong> ${season}</p>
+          <p style="margin:0 0 14px;"><strong>요약:</strong> ${job.analysis.summary}</p>
+          <p style="margin:0 0 20px;">아래 버튼으로 결과 페이지에서 추천 컬러, 메이크업, 헤어 컬러 가이드를 다시 확인할 수 있습니다.</p>
+          <p style="margin:0 0 22px;">
+            <a href="${resultPageUrl}" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:700;">결과 페이지 열기</a>
+          </p>
+          <p style="margin:0 0 6px;color:#475569;">결과 페이지 URL</p>
+          <p style="margin:0;color:#334155;word-break:break-all;">${resultPageUrl}</p>
+        </div>
+      `
+    })
+  });
+
+  if (!response.ok) {
+    const reason = await response.text();
+    throw new Error(`resend email send failed: ${response.status} ${reason}`);
+  }
+
+  return response.json();
+};
+
+const sendAiPersonalColorResultEmailIfNeeded = async ({ order, job }) => {
+  if (!order || !job?.analysis?.summary) return order;
+  if (!order.customerEmail || order.aiPersonalColorEmailStatus === 'sent') return order;
+
+  const emailPayload = await sendAiPersonalColorResultEmail({ order, job });
+  const nextOrder = {
+    ...order,
+    aiPersonalColorEmailStatus: 'sent',
+    aiPersonalColorEmailSentAt: new Date().toISOString(),
+    aiPersonalColorEmailError: null,
+    aiPersonalColorEmailPayload: emailPayload
   };
   db.orders.set(order.id, nextOrder);
   return nextOrder;
@@ -1295,6 +1385,100 @@ app.post('/ai-calorie-calculator/analyze', upload.single('image'), async (req, r
   }
 });
 
+app.post('/ai-personal-color/analyze', upload.single('image'), async (req, res) => {
+  let job = null;
+  let orderIdForError = null;
+  try {
+    if (!req.file?.buffer) {
+      return res.status(400).json({ error: 'image file is required (field name: image)' });
+    }
+    if (!String(req.file.mimetype).startsWith('image/')) {
+      return res.status(400).json({ error: 'only image uploads are allowed' });
+    }
+    if (!process.env.OPENAI_API_KEY?.trim()) {
+      return res.status(503).json({ error: 'OPENAI_API_KEY is not configured' });
+    }
+
+    const orderId = typeof req.body?.orderId === 'string' ? req.body.orderId.trim() : '';
+    const notes = typeof req.body?.notes === 'string' ? req.body.notes.trim() : '';
+    const order = await ensureAiPersonalColorOrder(orderId);
+    orderIdForError = order.id;
+    const imageDataUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+
+    const jobId = uuidv4();
+    job = {
+      id: jobId,
+      orderId: order.id,
+      status: 'processing',
+      notes,
+      createdAt: new Date().toISOString(),
+      startedAt: new Date().toISOString(),
+      completedAt: null,
+      analysis: null,
+      error: null
+    };
+    db.aiPersonalColorJobs.set(jobId, job);
+
+    const analysis = await analyzePersonalColor({ imageDataUrl, notes });
+    job.status = 'done';
+    job.completedAt = new Date().toISOString();
+    job.analysis = analysis;
+
+    const nextOrder = {
+      ...order,
+      aiPersonalColorJobId: jobId,
+      aiPersonalColorEmailStatus: order.aiPersonalColorEmailStatus === 'sent' ? 'sent' : 'pending',
+      aiPersonalColorEmailError: null
+    };
+    db.orders.set(order.id, nextOrder);
+    try {
+      await sendAiPersonalColorResultEmailIfNeeded({ order: nextOrder, job });
+    } catch (emailError) {
+      db.orders.set(order.id, {
+        ...nextOrder,
+        aiPersonalColorEmailStatus: 'failed',
+        aiPersonalColorEmailError: emailError instanceof Error ? emailError.message : 'email send failed'
+      });
+    }
+
+    return res.json({
+      ok: true,
+      job: {
+        id: job.id,
+        orderId: job.orderId,
+        status: job.status,
+        createdAt: job.createdAt,
+        startedAt: job.startedAt,
+        completedAt: job.completedAt,
+        analysis: job.analysis
+      }
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'analysis failed';
+    if (job) {
+      job.status = 'failed';
+      job.completedAt = new Date().toISOString();
+      job.error = message;
+    }
+    if (orderIdForError) {
+      const currentOrder = db.orders.get(orderIdForError);
+      if (currentOrder) {
+        db.orders.set(orderIdForError, {
+          ...currentOrder,
+          aiPersonalColorJobId: job?.id ?? currentOrder.aiPersonalColorJobId ?? null,
+          aiPersonalColorEmailStatus: currentOrder.aiPersonalColorEmailStatus ?? 'failed',
+          aiPersonalColorEmailError: message
+        });
+      }
+    }
+    if (message === 'order not found') return res.status(404).json({ error: message });
+    if (message === 'invalid order product type') return res.status(400).json({ error: message });
+    if (message === 'payment required') return res.status(402).json({ error: message });
+    if (message === 'this order has already been used') return res.status(409).json({ error: message });
+    return res.status(500).json({ error: message });
+  }
+});
+
 app.get('/ai-image-generator/job/:id', (req, res) => {
   const job = db.aiImageJobs.get(req.params.id);
   if (!job) {
@@ -1303,6 +1487,26 @@ app.get('/ai-image-generator/job/:id', (req, res) => {
   return res.json({
     ok: true,
     job: getAiImageJobPayload(job)
+  });
+});
+
+app.get('/ai-personal-color/job/:id', (req, res) => {
+  const job = db.aiPersonalColorJobs.get(req.params.id);
+  if (!job) {
+    return res.status(404).json({ error: 'personal color job not found' });
+  }
+  return res.json({
+    ok: true,
+    job: {
+      id: job.id,
+      orderId: job.orderId,
+      status: job.status,
+      createdAt: job.createdAt,
+      startedAt: job.startedAt ?? null,
+      completedAt: job.completedAt ?? null,
+      analysis: job.analysis ?? null,
+      error: job.error ?? null
+    }
   });
 });
 
@@ -1703,6 +1907,7 @@ app.post('/checkout', async (req, res) => {
     jobId,
     videoJobId: null,
     aiImageJobId: null,
+    aiPersonalColorJobId: null,
     provider,
     status: paymentMode === 'mock' ? 'paid' : 'pending',
     paymentMode,
@@ -1729,6 +1934,10 @@ app.post('/checkout', async (req, res) => {
     aiImageEmailSentAt: null,
     aiImageEmailError: null,
     aiImageEmailPayload: null,
+    aiPersonalColorEmailStatus: null,
+    aiPersonalColorEmailSentAt: null,
+    aiPersonalColorEmailError: null,
+    aiPersonalColorEmailPayload: null,
     refundId: null,
     refundStatus: null,
     refundPayload: null,

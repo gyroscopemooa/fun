@@ -2,6 +2,7 @@ const photos = new Map();
 const jobs = new Map();
 const orders = new Map();
 const aiImageJobs = new Map();
+const aiPersonalColorJobs = new Map();
 const videoJobs = new Map();
 
 export const db = {
@@ -9,5 +10,6 @@ export const db = {
   jobs,
   orders,
   aiImageJobs,
+  aiPersonalColorJobs,
   videoJobs
 };

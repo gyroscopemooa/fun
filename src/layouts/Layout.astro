@@ -74,6 +74,7 @@ const labelMap: Record<string, string> = {
   'content-disclaimer': '면책 고지',
   'animal-test': '동물상 테스트',
   'personal-color': '퍼스널컬러 테스트',
+  'ai-personal-color': 'AI 퍼스널컬러 자가진단',
   'magic-book': '마법책',
   pinball: '핀볼',
   'random-food': '랜덤 음식 추천',
@@ -212,6 +213,10 @@ const sidebarText = {
   links: [
     { href: withLocalePath(locale, '/'), label: t('common.home') },
     { href: withLocalePath(locale, '/ai-image-generator'), label: t('layout.sidebar.aiImage') },
+    {
+      href: withLocalePath(locale, '/ai-personal-color'),
+      label: locale === 'ko' ? 'AI 퍼스널컬러 자가진단' : locale === 'ja' ? 'AIパーソナルカラー診断' : 'AI Personal Color Analysis'
+    },
     { href: withLocalePath(locale, '/ai-calorie-calculator'), label: t('layout.sidebar.aiCalorie') },
     { href: withLocalePath(locale, '/ai-id-photo'), label: t('layout.sidebar.aiIdPhoto') },
     {
