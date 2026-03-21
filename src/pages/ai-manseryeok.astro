@@ -60,6 +60,10 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         inset: 0 auto 0 0;
         background: linear-gradient(90deg, #e9c349, #59de9b);
       }
+      .ledger-toggle-active {
+        background: #e9c349;
+        color: #3c2f00;
+      }
       .ledger-circle {
         background: radial-gradient(circle at center, rgba(233,195,73,0.08), rgba(233,195,73,0) 72%);
       }
@@ -298,7 +302,17 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
                 </div>
                 <p id="saju-summary" class="mt-5 max-w-4xl text-base leading-8 text-white/68"></p>
                 <p id="saju-personality" class="mt-4 max-w-4xl text-sm leading-8 text-white/56"></p>
-                <div class="mt-6 grid gap-4 lg:grid-cols-3">
+                <div class="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-white/8 pt-6">
+                  <div class="flex flex-wrap gap-2">
+                    <button id="analysis-mode-btn" type="button" class="rounded-full border border-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-white/78 transition hover:border-[#e9c349]/50">분석 모드</button>
+                    <button id="dosa-mode-btn" type="button" class="rounded-full border border-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-white/78 transition hover:border-[#e9c349]/50">AI 도사 모드</button>
+                  </div>
+                  <div class="flex flex-wrap gap-2">
+                    <button id="saju-share-btn" type="button" class="rounded-full border border-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-white/78 transition hover:border-[#59de9b]/50">공유</button>
+                    <button id="saju-pdf-btn" type="button" class="rounded-full border border-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-white/78 transition hover:border-[#e9c349]/50">PDF 저장</button>
+                  </div>
+                </div>
+                <div class="mt-6 grid gap-4 lg:grid-cols-3" data-saju-mode="dosa">
                   <article class="ledger-card px-4 py-4">
                     <p class="text-[11px] uppercase tracking-[0.18em] text-[#e9c349]">AI 도사 한마디</p>
                     <p id="easy-dosa-line" class="mt-3 text-sm leading-7 text-white/72"></p>
@@ -314,7 +328,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
                 </div>
               </article>
 
-              <aside class="space-y-4">
+              <aside class="space-y-4" data-saju-mode="analysis">
                 <div class="ledger-panel px-6 py-6">
                   <p class="ledger-label text-[11px] uppercase tracking-[0.18em] text-white/40">해석 점수</p>
                   <div class="mt-5 grid gap-4">
@@ -326,7 +340,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
               </aside>
             </section>
 
-            <section class="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
+            <section class="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]" data-saju-mode="analysis">
               <article class="ledger-panel px-6 py-6">
                 <div class="flex items-center justify-between gap-4">
                   <div>
@@ -464,7 +478,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
               </article>
             </section>
 
-            <section class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+            <section class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]" data-saju-mode="analysis">
               <article class="ledger-panel px-6 py-6">
                 <div class="grid gap-6 lg:grid-cols-2">
                   <div>
@@ -484,7 +498,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
               </article>
             </section>
 
-            <section class="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_340px]">
+            <section class="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_340px]" data-saju-mode="dosa">
               <article class="ledger-panel px-6 py-6">
                 <div class="flex flex-wrap items-center justify-between gap-4">
                   <div>
@@ -505,11 +519,11 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
                   <article class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-white/40">이동/이사 타이밍</p><p id="dosa-moving-timing" class="mt-3 text-sm leading-7 text-white/68"></p></article>
                 </div>
                 <div class="mt-6 grid gap-4 md:grid-cols-2">
-                  <article class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-[#e9c349]">올해 위험 구간</p><p id="dosa-risky-period" class="mt-3 text-sm leading-7 text-white/68"></p></article>
+                  <article class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-[#e9c349]">올해 조율 구간</p><p id="dosa-risky-period" class="mt-3 text-sm leading-7 text-white/68"></p></article>
                   <article class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-[#59de9b]">운이 트이는 시기 활용법</p><p id="dosa-timing-howto" class="mt-3 text-sm leading-7 text-white/68"></p></article>
-                  <article class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-white/40">인간관계 충돌 시기</p><p id="dosa-conflict-period" class="mt-3 text-sm leading-7 text-white/68"></p></article>
-                  <article class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-white/40">금전 손실 가능성</p><p id="dosa-money-loss-risk" class="mt-3 text-sm leading-7 text-white/68"></p></article>
-                  <article class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-white/40">건강 주의 시기</p><p id="dosa-health-caution" class="mt-3 text-sm leading-7 text-white/68"></p></article>
+                  <article class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-white/40">인간관계 조율 시기</p><p id="dosa-conflict-period" class="mt-3 text-sm leading-7 text-white/68"></p></article>
+                  <article class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-white/40">지출 관리 포인트</p><p id="dosa-money-loss-risk" class="mt-3 text-sm leading-7 text-white/68"></p></article>
+                  <article class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-white/40">컨디션 관리 시기</p><p id="dosa-health-caution" class="mt-3 text-sm leading-7 text-white/68"></p></article>
                 </div>
               </article>
 
@@ -525,7 +539,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
               </aside>
             </section>
 
-            <section class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+            <section class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]" data-saju-mode="dosa">
               <article class="ledger-panel px-6 py-6">
                 <p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#e9c349]">사람과 일</p>
                 <div class="mt-4 grid gap-4 md:grid-cols-2">
@@ -583,6 +597,8 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       const elements = { name: document.getElementById('saju-name'), birthDate: document.getElementById('saju-birth-date'), birthTime: document.getElementById('saju-birth-time'), timeBranch: document.getElementById('saju-time-branch'), birthPlace: document.getElementById('saju-birth-place'), timeUnknown: document.getElementById('saju-time-unknown'), leapMonth: document.getElementById('saju-leap-month'), leapWrap: document.getElementById('saju-leap-wrap'), submit: document.getElementById('saju-submit'), statusBox: document.getElementById('saju-status-box'), stage: document.getElementById('saju-stage'), empty: document.getElementById('saju-empty'), result: document.getElementById('saju-result') };
       let paymentMode = 'mock';
       let currentOrderId = null;
+      let currentRenderedJob = null;
+      let currentViewMode = 'analysis';
       const qs = (name) => document.getElementById(name);
       const setText = (id, value) => { const node = qs(id); if (node) node.textContent = value ?? ''; };
       const setHtml = (id, value) => { const node = qs(id); if (node) node.innerHTML = value ?? ''; };
@@ -653,11 +669,79 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         if (basisId) setText(basisId, block?.basis ?? '');
       };
       const renderTrendBar = (id, score, mirrorId) => { const node = qs(id); if (node) node.style.width = `${Math.max(8, Math.min(100, Number(score || 0)))}%`; renderScoreText(mirrorId, Number(score || 0)); };
+      const applyViewMode = (mode) => {
+        currentViewMode = mode === 'dosa' ? 'dosa' : 'analysis';
+        document.querySelectorAll('[data-saju-mode]').forEach((node) => {
+          const targetMode = node.getAttribute('data-saju-mode');
+          node.classList.toggle('hidden', Boolean(targetMode) && targetMode !== currentViewMode);
+        });
+        qs('analysis-mode-btn')?.classList.toggle('ledger-toggle-active', currentViewMode === 'analysis');
+        qs('dosa-mode-btn')?.classList.toggle('ledger-toggle-active', currentViewMode === 'dosa');
+      };
+      const buildShareText = () => {
+        const headline = qs('saju-headline')?.textContent?.trim() || 'AI 만세력 사주풀이 올인원 통합형';
+        const summary = qs('saju-summary')?.textContent?.trim() || '';
+        return `${headline}\n${summary}\n${window.location.href}`;
+      };
+      const shareResult = async () => {
+        if (!currentRenderedJob) return;
+        const title = qs('saju-headline')?.textContent?.trim() || 'AI 만세력 사주풀이';
+        const text = buildShareText();
+        try {
+          if (navigator.share) {
+            await navigator.share({ title, text, url: window.location.href });
+            setStatus('공유 시트를 열었습니다.', '공유');
+            return;
+          }
+          await navigator.clipboard.writeText(text);
+          setStatus('결과 링크와 요약을 클립보드에 복사했습니다.', '공유');
+        } catch (error) {
+          setStatus(error instanceof Error ? error.message : '공유를 완료하지 못했습니다.', '오류');
+        }
+      };
+      const exportPdf = async () => {
+        if (!currentRenderedJob || !elements.result) return;
+        try {
+          setStatus('PDF 파일을 준비하는 중입니다.', '저장 중');
+          const { jsPDF } = await import('jspdf');
+          const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+          const pageWidth = pdf.internal.pageSize.getWidth();
+          const pageHeight = pdf.internal.pageSize.getHeight();
+          const margin = 40;
+          const lineHeight = 18;
+          const activeBlocks = Array.from(elements.result.querySelectorAll(':scope > section, :scope > article')).filter((node) => !node.classList.contains('hidden'));
+          const textContent = activeBlocks.map((node) => node.textContent?.replace(/\s+/g, ' ').trim()).filter(Boolean).join('\n\n');
+          const lines = pdf.splitTextToSize(textContent || 'AI 만세력 사주풀이 결과', pageWidth - (margin * 2));
+          let y = margin;
+          pdf.setFont('helvetica', 'bold');
+          pdf.setFontSize(18);
+          pdf.text('AI Manseryeok Saju Report', margin, y);
+          y += 28;
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(10);
+          pdf.text(`Mode: ${currentViewMode === 'analysis' ? 'Analysis' : 'AI Dosa'}`, margin, y);
+          y += 20;
+          pdf.setFontSize(11);
+          lines.forEach((line) => {
+            if (y > pageHeight - margin) {
+              pdf.addPage();
+              y = margin;
+            }
+            pdf.text(line, margin, y);
+            y += lineHeight;
+          });
+          pdf.save(`manytool-saju-report-${Date.now()}.pdf`);
+          setStatus('PDF 저장이 완료되었습니다.', '저장 완료');
+        } catch (error) {
+          setStatus(error instanceof Error ? error.message : 'PDF 저장을 완료하지 못했습니다.', '오류');
+        }
+      };
       const renderResult = (job) => {
         const analysis = job?.analysis;
         const profile = analysis?.profile;
         const report = analysis?.report;
         if (!profile || !report) return;
+        currentRenderedJob = job;
         if (job?.id) {
           const nextUrl = `${window.location.pathname}?jobId=${encodeURIComponent(job.id)}`;
           window.history.replaceState({}, '', nextUrl);
@@ -755,6 +839,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         renderList('blindspot-list', report.blindSpots);
         renderList('advice-list', report.advice);
         renderList('rule-hints', profile.ruleHints);
+        applyViewMode(currentViewMode);
         setStatus('분석이 완료되었습니다. 결과를 아래에서 확인하세요.', '분석 완료');
       };
       const verifyOrder = async (orderId) => {
@@ -794,6 +879,10 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       elements.timeUnknown?.addEventListener('change', syncTimeUi);
       elements.birthTime?.addEventListener('change', syncBranchFromTime);
       elements.timeBranch?.addEventListener('change', syncTimeFromBranch);
+      qs('analysis-mode-btn')?.addEventListener('click', () => applyViewMode('analysis'));
+      qs('dosa-mode-btn')?.addEventListener('click', () => applyViewMode('dosa'));
+      qs('saju-share-btn')?.addEventListener('click', shareResult);
+      qs('saju-pdf-btn')?.addEventListener('click', exportPdf);
       elements.submit?.addEventListener('click', async () => {
         if (!(elements.submit instanceof HTMLButtonElement)) return;
         try {
@@ -821,6 +910,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         }
       });
       (async () => {
+        applyViewMode('analysis');
         syncCalendarUi();
         syncTimeUi();
         if (!API_BASE) {
