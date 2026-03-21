@@ -624,10 +624,39 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         renderList('rule-hints', profile.ruleHints);
         setStatus('분석이 완료되었습니다. 결과를 아래에서 확인하세요.', '분석 완료');
       };
-      const verifyOrder = async (orderId) => { if (!orderId || !API_BASE) return false; const response = await fetch(`${API_BASE}/order/${encodeURIComponent(orderId)}`); const payload = await response.json().catch(() => null); if (!response.ok || !payload) return false; if (payload.status === 'paid') { currentOrderId = orderId; window.localStorage.setItem(ORDER_STORAGE_KEY, orderId); setStatus('결제가 확인되었습니다. 입력값으로 정밀분석을 이어갑니다.', '결제 확인'); return true; } return false; };
+      const verifyOrder = async (orderId) => {
+        if (!orderId || !API_BASE) return false;
+        try {
+          const response = await fetch(`${API_BASE}/order/${encodeURIComponent(orderId)}`);
+          const payload = await response.json().catch(() => null);
+          if (!response.ok || !payload) return false;
+          if (payload.status === 'paid') {
+            currentOrderId = orderId;
+            window.localStorage.setItem(ORDER_STORAGE_KEY, orderId);
+            setStatus('결제가 확인되었습니다. 입력값으로 정밀분석을 이어갑니다.', '결제 확인');
+            return true;
+          }
+          return false;
+        } catch {
+          return false;
+        }
+      };
       const requestCheckout = async () => { const currentUrl = window.location.href.split('?')[0]; const response = await fetch(`${API_BASE}/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ productType: 'ai_manseryeok', amount: CHECKOUT_AMOUNT, currency: CHECKOUT_CURRENCY, successUrl: currentUrl, returnUrl: currentUrl }) }); const payload = await response.json().catch(() => null); if (!response.ok || !payload) throw new Error(payload?.error || 'checkout failed'); return payload; };
       const runAnalysis = async (payload) => { setStatus('만세력 계산과 AI 해석을 생성하는 중입니다.', '분석 중'); const response = await fetch(`${API_BASE}/ai-manseryeok/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...payload, orderId: currentOrderId }) }); const result = await response.json().catch(() => null); if (!response.ok || !result?.job) throw new Error(result?.error || 'analysis failed'); renderResult(result.job); };
-      const loadJobFromQuery = async () => { const params = new URLSearchParams(window.location.search); const jobId = params.get('jobId'); if (!jobId || !API_BASE) return false; const response = await fetch(`${API_BASE}/ai-manseryeok/job/${encodeURIComponent(jobId)}`); const payload = await response.json().catch(() => null); if (!response.ok || !payload?.job) return false; renderResult(payload.job); return true; };
+      const loadJobFromQuery = async () => {
+        const params = new URLSearchParams(window.location.search);
+        const jobId = params.get('jobId');
+        if (!jobId || !API_BASE) return false;
+        try {
+          const response = await fetch(`${API_BASE}/ai-manseryeok/job/${encodeURIComponent(jobId)}`);
+          const payload = await response.json().catch(() => null);
+          if (!response.ok || !payload?.job) return false;
+          renderResult(payload.job);
+          return true;
+        } catch {
+          return false;
+        }
+      };
       document.querySelectorAll('input[name="calendar-type"]').forEach((node) => node.addEventListener('change', syncCalendarUi));
       elements.timeUnknown?.addEventListener('change', syncTimeUi);
       elements.birthTime?.addEventListener('change', syncBranchFromTime);
@@ -666,10 +695,11 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           if (elements.submit instanceof HTMLButtonElement) elements.submit.disabled = true;
           return;
         }
-        const renderedFromJob = await loadJobFromQuery();
-        if (renderedFromJob) return;
         try {
+          const renderedFromJob = await loadJobFromQuery();
+          if (renderedFromJob) return;
           const configResponse = await fetch(`${API_BASE}/config`);
+          if (!configResponse.ok) throw new Error('config request failed');
           const config = await configResponse.json().catch(() => null);
           paymentMode = config?.paymentMode === 'polar' ? 'polar' : 'mock';
           if (!config?.readiness?.aiManseryeokReady) {
