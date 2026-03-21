@@ -23,9 +23,10 @@ const scoredBlock = {
   additionalProperties: false,
   properties: {
     score: { type: 'number' },
-    summary: { type: 'string' }
+    summary: { type: 'string' },
+    basis: { type: 'string' }
   },
-  required: ['score', 'summary']
+  required: ['score', 'summary', 'basis']
 };
 
 const sajuSchema = {
@@ -37,22 +38,45 @@ const sajuSchema = {
     properties: {
       headline: { type: 'string' },
       summary: { type: 'string' },
-      personality: { type: 'string' },
-      strengths: { type: 'array', items: { type: 'string' } },
-      blind_spots: { type: 'array', items: { type: 'string' } },
-      money: scoredBlock,
-      relationship: scoredBlock,
-      work: {
+      easy_reading: {
         type: 'object',
         additionalProperties: false,
         properties: {
-          score: { type: 'number' },
-          summary: { type: 'string' },
-          suitable_roles: { type: 'array', items: { type: 'string' } }
+          dosa_line: { type: 'string' },
+          elemental_story: { type: 'string' },
+          timing_note: { type: 'string' }
         },
-        required: ['score', 'summary', 'suitable_roles']
+        required: ['dosa_line', 'elemental_story', 'timing_note']
       },
-      health: scoredBlock,
+      personality: { type: 'string' },
+      strengths: { type: 'array', items: { type: 'string' } },
+      blind_spots: { type: 'array', items: { type: 'string' } },
+      base_categories: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          love: scoredBlock,
+          marriage: scoredBlock,
+          money: scoredBlock,
+          business: scoredBlock,
+          career: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+              score: { type: 'number' },
+              summary: { type: 'string' },
+              basis: { type: 'string' },
+              suitable_roles: { type: 'array', items: { type: 'string' } }
+            },
+            required: ['score', 'summary', 'basis', 'suitable_roles']
+          },
+          study: scoredBlock,
+          health: scoredBlock,
+          social: scoredBlock,
+          benefactor: scoredBlock
+        },
+        required: ['love', 'marriage', 'money', 'business', 'career', 'study', 'health', 'social', 'benefactor']
+      },
       yearly_flow: scoredBlock,
       fortunes: {
         type: 'object',
@@ -85,13 +109,11 @@ const sajuSchema = {
     required: [
       'headline',
       'summary',
+      'easy_reading',
       'personality',
       'strengths',
       'blind_spots',
-      'money',
-      'relationship',
-      'work',
-      'health',
+      'base_categories',
       'yearly_flow',
       'fortunes',
       'life_stages',
@@ -133,7 +155,8 @@ const normalizeList = (items, limit = 6) => (
 
 const normalizeScoredBlock = (payload) => ({
   score: clamp(Number(payload?.score ?? 0)),
-  summary: typeof payload?.summary === 'string' ? payload.summary.trim() : ''
+  summary: typeof payload?.summary === 'string' ? payload.summary.trim() : '',
+  basis: typeof payload?.basis === 'string' ? payload.basis.trim() : ''
 });
 
 const parseBirthDate = (birthDate) => {
@@ -154,6 +177,34 @@ const parseBirthTime = (birthTime, timeUnknown) => {
 };
 
 const formatDate = ({ year, month, day }) => `${year}.${String(month).padStart(2, '0')}.${String(day).padStart(2, '0')}`;
+
+const getAge = ({ year, month, day }) => {
+  const now = new Date();
+  let age = now.getFullYear() - year;
+  const currentMonth = now.getMonth() + 1;
+  const currentDay = now.getDate();
+  if (currentMonth < month || (currentMonth === month && currentDay < day)) age -= 1;
+  return Math.max(0, age);
+};
+
+const getLifeStageLabels = (age) => {
+  if (age >= 70) {
+    return {
+      primary: { eyebrow: '후반 인생 흐름', title: '후반 인생의 리듬', description: '현재 나이대 기준으로 생활 리듬, 건강 관리, 관계 정리, 자산 배분의 안정성을 중심으로 읽습니다.' },
+      secondary: { eyebrow: '말년의 안목', title: '긴 안목의 마무리', description: '장기적으로 무엇을 줄이고 무엇을 남길지, 귀인과 가족 관계를 어떻게 정리할지에 초점을 둡니다.' }
+    };
+  }
+  if (age >= 50) {
+    return {
+      primary: { eyebrow: '중년의 상승', title: '중년의 비상', description: '커리어, 자산, 관계 네트워크가 실제로 압축되는 구간을 중심으로 해석합니다.' },
+      secondary: { eyebrow: '후반 인생 준비', title: '말년의 시계', description: '이후 흐름은 건강, 생활 리듬, 관계 정리, 자산 배분의 균형을 중심으로 읽습니다.' }
+    };
+  }
+  return {
+    primary: { eyebrow: '성장기의 확장', title: '앞으로 커지는 운의 축', description: '앞으로 어떤 영역을 키워야 성장 폭이 커지는지, 연애·직업·학업의 확장 포인트를 중심으로 봅니다.' },
+    secondary: { eyebrow: '후반 인생 예고', title: '나중에 강해지는 축', description: '중장기적으로 어떤 자산과 인간관계가 남는지, 후반 인생의 강점을 미리 보여주는 구간입니다.' }
+  };
+};
 
 const countElements = (detail) => {
   const counts = Object.fromEntries(ELEMENT_ORDER.map((element) => [element, 0]));
@@ -192,17 +243,30 @@ const deriveMetaScores = ({ structure, timeKnown, calendarType, isLeapMonth }) =
 const normalizeAnalysis = (payload) => ({
   headline: typeof payload?.headline === 'string' ? payload.headline.trim() : '',
   summary: typeof payload?.summary === 'string' ? payload.summary.trim() : '',
+  easyReading: {
+    dosaLine: typeof payload?.easy_reading?.dosa_line === 'string' ? payload.easy_reading.dosa_line.trim() : '',
+    elementalStory: typeof payload?.easy_reading?.elemental_story === 'string' ? payload.easy_reading.elemental_story.trim() : '',
+    timingNote: typeof payload?.easy_reading?.timing_note === 'string' ? payload.easy_reading.timing_note.trim() : ''
+  },
   personality: typeof payload?.personality === 'string' ? payload.personality.trim() : '',
   strengths: normalizeList(payload?.strengths),
   blindSpots: normalizeList(payload?.blind_spots),
-  money: normalizeScoredBlock(payload?.money),
-  relationship: normalizeScoredBlock(payload?.relationship),
-  work: {
-    score: clamp(Number(payload?.work?.score ?? 0)),
-    summary: typeof payload?.work?.summary === 'string' ? payload.work.summary.trim() : '',
-    suitableRoles: normalizeList(payload?.work?.suitable_roles)
+  baseCategories: {
+    love: normalizeScoredBlock(payload?.base_categories?.love),
+    marriage: normalizeScoredBlock(payload?.base_categories?.marriage),
+    money: normalizeScoredBlock(payload?.base_categories?.money),
+    business: normalizeScoredBlock(payload?.base_categories?.business),
+    career: {
+      score: clamp(Number(payload?.base_categories?.career?.score ?? 0)),
+      summary: typeof payload?.base_categories?.career?.summary === 'string' ? payload.base_categories.career.summary.trim() : '',
+      basis: typeof payload?.base_categories?.career?.basis === 'string' ? payload.base_categories.career.basis.trim() : '',
+      suitableRoles: normalizeList(payload?.base_categories?.career?.suitable_roles)
+    },
+    study: normalizeScoredBlock(payload?.base_categories?.study),
+    health: normalizeScoredBlock(payload?.base_categories?.health),
+    social: normalizeScoredBlock(payload?.base_categories?.social),
+    benefactor: normalizeScoredBlock(payload?.base_categories?.benefactor)
   },
-  health: normalizeScoredBlock(payload?.health),
   yearlyFlow: normalizeScoredBlock(payload?.yearly_flow),
   fortunes: {
     today: normalizeScoredBlock(payload?.fortunes?.today),
@@ -229,6 +293,8 @@ export const analyzeSaju = async ({ name = '', birthDate, birthTime, calendarTyp
   const isLunar = calendarType === 'lunar';
   const solarDate = isLunar ? lunarToSolar(date.year, date.month, date.day, Boolean(isLeapMonth)) : date;
   const lunarDate = isLunar ? { ...date, isLeapMonth: Boolean(isLeapMonth) } : solarToLunar(date.year, date.month, date.day);
+  const age = getAge(solarDate);
+  const lifeStageLabels = getLifeStageLabels(age);
 
   const detail = calculateFourPillars({
     year: date.year,
@@ -267,8 +333,12 @@ export const analyzeSaju = async ({ name = '', birthDate, birthTime, calendarTyp
           '모든 출력은 자연스러운 한국어로 작성하십시오.',
           '운세를 사실처럼 단정하지 말고 경향, 흐름, 가능성이라는 표현을 사용하십시오.',
           '결과는 프리미엄 리포트처럼 자세하지만 반복은 줄이고 실제 행동 조언을 포함하십시오.',
+          '쉬운 해석 파트도 반드시 포함하십시오. AI 도사가 말하듯 은유적이지만 이해하기 쉬운 한마디가 있어야 합니다.',
           '오늘, 이번주, 이번달, 올해, 상반기, 하반기 운세는 재구매를 유도하는 짧은 문장이 아니라 각 기간의 초점과 리스크를 구체적으로 설명하십시오.',
-          '중년과 말년 해석은 자산, 관계, 생활리듬, 커리어 전환 가능성을 포함해 납득감 있게 서술하십시오.',
+          '기본 운세 카테고리는 평소 사주 기본 성향 기준으로 설명하고, 기간 운세는 오늘/이번주/이번달/올해 기준으로 분리하십시오.',
+          '각 점수 블록에는 basis를 넣고 이 점수가 평생 기본 성향인지, 특정 기간 흐름인지 분명하게 설명하십시오.',
+          '연애운, 결혼운, 재물운, 사업운, 직업운, 학업운, 건강운, 대인관계운, 귀인운을 모두 포함하십시오.',
+          '생애 흐름은 현재 나이를 반영해 표현을 조절하고 자산, 관계, 생활리듬, 커리어 전환 가능성을 포함해 납득감 있게 서술하십시오.',
           '일관성, 신뢰도, 정확도 코멘트는 과학적 검증이 아니라 입력 완전성과 구조 해석 안정성 기준으로 설명하십시오.'
         ].join(' ')
       },
@@ -280,6 +350,7 @@ export const analyzeSaju = async ({ name = '', birthDate, birthTime, calendarTyp
             solarDate: formatDate(solarDate),
             lunarDate: `${formatDate(lunarDate)}${lunarDate.isLeapMonth ? ' (윤달)' : ' (평달)'}`,
             calendarType,
+            age,
             birthTime: time.known ? `${String(time.hour).padStart(2, '0')}:${String(time.minute).padStart(2, '0')}` : '모름',
             timeKnown: time.known,
             pillars: pillarText,
@@ -301,16 +372,14 @@ export const analyzeSaju = async ({ name = '', birthDate, birthTime, calendarTyp
           responseGuide: {
             headline: '핵심 분위기를 한 줄로 요약',
             summary: '전체 사주 구조 요약',
+            easy_reading: 'AI 도사 한마디, 오행 비유, 언제 의미가 커지는지 쉬운 설명',
             personality: '성향, 판단 방식, 감정 처리 방식',
             strengths: '강점 3~5개',
             blind_spots: '주의할 점 3~5개',
-            money: '재물운 점수와 설명',
-            relationship: '관계운 점수와 설명',
-            work: '직업/적성 점수와 설명 및 어울리는 역할',
-            health: '생활 리듬/컨디션 관리 관점의 점수와 설명',
+            base_categories: '연애운/결혼운/재물운/사업운/직업운/학업운/건강운/대인관계운/귀인운을 평소 사주 기본 성향 기준 점수와 설명으로 작성. career에는 suitable_roles 포함',
             yearly_flow: '올해 전체 흐름 요약',
             fortunes: '오늘/이번주/이번달/상반기/하반기/올해 각각 점수와 구체적 설명',
-            life_stages: '중년/말년 흐름과 포인트',
+            life_stages: `현재 나이 ${age}세 기준 생애 흐름. 1번은 ${lifeStageLabels.primary.title}, 2번은 ${lifeStageLabels.secondary.title}`,
             keywords: '짧은 핵심 키워드',
             advice: '실행 가능한 조언',
             consistency_comment: '같은 입력에서 같은 결과가 유지되는 구조 해석 관점 설명',
@@ -338,6 +407,8 @@ export const analyzeSaju = async ({ name = '', birthDate, birthTime, calendarTyp
       birthTime: time.known ? `${String(time.hour).padStart(2, '0')}:${String(time.minute).padStart(2, '0')}` : '모름',
       timeKnown: time.known,
       pillars: { korean: pillarText, hanja: hanjaText },
+      age,
+      lifeStageLabels,
       dayMaster,
       elementSummary: {
         items: structure.items,
