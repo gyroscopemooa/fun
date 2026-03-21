@@ -20,6 +20,7 @@ type Analysis = {
   summary?: string;
   confidence?: string;
   season?: string;
+  secondaryTone?: string;
   undertone?: string;
   chroma?: string;
   contrast?: string;
@@ -51,6 +52,12 @@ declare global {
 }
 
 const initialSummary = '아직 분석 결과가 없습니다. 사진을 준비하고 분석 시작을 누르면 대표 톤과 상세 리포트가 여기에 표시됩니다.';
+
+const confidenceLabelMap: Record<string, string> = {
+  low: '낮음',
+  medium: '보통',
+  high: '높음'
+};
 
 export function PersonalColorResultPanel() {
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
@@ -97,6 +104,11 @@ export function PersonalColorResultPanel() {
             <h3 className="mt-3 text-2xl font-black tracking-tight text-slate-900">
               {analysis?.season || '대표 톤 분석 대기 중'}
             </h3>
+            {analysis?.secondaryTone ? (
+              <p className="mt-2 text-sm font-semibold text-rose-700">
+                세부 톤: {analysis.secondaryTone}
+              </p>
+            ) : null}
             <p className="mt-2 text-sm leading-6 text-slate-700">
               {analysis?.summary || initialSummary}
             </p>
@@ -104,7 +116,7 @@ export function PersonalColorResultPanel() {
           <div className="flex flex-wrap gap-2">
             {analysis?.confidence ? (
               <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700">
-                신뢰도 {analysis.confidence}
+                신뢰도 {confidenceLabelMap[analysis.confidence] || analysis.confidence}
               </span>
             ) : null}
             {analysis?.undertone ? (
