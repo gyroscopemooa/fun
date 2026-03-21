@@ -113,7 +113,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
               <div>
                 <p class="ledger-label text-[11px] uppercase tracking-[0.24em] text-[#59de9b]">기록 해석 · Korean Saju Palja · No. 2026</p>
                 <h1 class="ledger-serif mt-5 max-w-4xl text-4xl font-black leading-[1.08] tracking-tight text-white sm:text-6xl">
-                  당신의 <span class="text-[#e9c349] italic">운명 좌표</span>를<br />발견하세요
+                  AI 만세력 <span class="text-[#e9c349] italic">사주풀이</span><br />올인원 통합형
                 </h1>
                 <p class="mt-5 max-w-2xl text-base leading-8 text-white/62">
                   생년월일시를 기반으로 만세력 구조를 계산하고, 오늘과 이번주, 이번달, 상반기, 하반기, 올해의 흐름을 한 장의 프리미엄 리포트로 정리합니다.
@@ -205,10 +205,39 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
                 </div>
               </div>
 
-              <div class="mt-10 grid gap-8 md:grid-cols-[1fr_auto] md:items-end">
+              <div class="mt-8 grid gap-8 md:grid-cols-[1fr_1fr]">
                 <div>
-                  <span class="ledger-label text-[10px] uppercase tracking-[0.2em] text-white/40">출생지 기준</span>
-                  <div class="mt-5 border-b border-white/15 pb-4 text-sm text-white/70">대한민국 서울 기준으로 해석합니다.</div>
+                  <span class="ledger-label text-[10px] uppercase tracking-[0.2em] text-white/40">전통 시각 선택</span>
+                  <select id="saju-time-branch" class="ledger-field text-base">
+                    <option value="">자시~해시 선택</option>
+                    <option value="23:30">자시 (23:00~00:59)</option>
+                    <option value="01:30">축시 (01:00~02:59)</option>
+                    <option value="03:30">인시 (03:00~04:59)</option>
+                    <option value="05:30">묘시 (05:00~06:59)</option>
+                    <option value="07:30">진시 (07:00~08:59)</option>
+                    <option value="09:30">사시 (09:00~10:59)</option>
+                    <option value="11:30">오시 (11:00~12:59)</option>
+                    <option value="13:30">미시 (13:00~14:59)</option>
+                    <option value="15:30">신시 (15:00~16:59)</option>
+                    <option value="17:30">유시 (17:00~18:59)</option>
+                    <option value="19:30">술시 (19:00~20:59)</option>
+                    <option value="21:30">해시 (21:00~22:59)</option>
+                  </select>
+                </div>
+                <label class="block">
+                  <span class="ledger-label text-[10px] uppercase tracking-[0.2em] text-white/40">출생지</span>
+                  <input id="saju-birth-place" type="text" placeholder="예: 서울, 부산, 도쿄" class="ledger-field text-lg" />
+                </label>
+              </div>
+
+              <div class="mt-8 grid gap-8 md:grid-cols-[1fr_auto] md:items-end">
+                <div>
+                  <span class="ledger-label text-[10px] uppercase tracking-[0.2em] text-white/40">성별</span>
+                  <div class="mt-4 flex flex-wrap gap-2">
+                    <label class="ledger-chip inline-flex items-center gap-2 px-4 py-3 text-sm text-white"><input type="radio" name="saju-gender" value="male" />남성</label>
+                    <label class="ledger-chip inline-flex items-center gap-2 px-4 py-3 text-sm text-white"><input type="radio" name="saju-gender" value="female" />여성</label>
+                    <label class="ledger-chip inline-flex items-center gap-2 px-4 py-3 text-sm text-white"><input type="radio" name="saju-gender" value="unknown" checked />선택 안 함</label>
+                  </div>
                 </div>
                 <label class="inline-flex items-center gap-3 text-sm text-white/70">
                   <input id="saju-time-unknown" type="checkbox" class="h-4 w-4 rounded border-white/20 bg-transparent text-[#e9c349] focus:ring-[#e9c349]" />
@@ -226,7 +255,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
                   </ul>
                 </div>
                 <div class="space-y-4">
-                  <button id="saju-submit" class="w-full bg-[#e9c349] px-5 py-5 text-sm font-black uppercase tracking-[0.24em] text-[#3c2f00] transition hover:brightness-110 disabled:cursor-not-allowed disabled:brightness-75">분석 기록 보관소로 이동하기 ($29.88)</button>
+                  <button id="saju-submit" class="w-full bg-[#e9c349] px-5 py-5 text-sm font-black uppercase tracking-[0.24em] text-[#3c2f00] transition hover:brightness-110 disabled:cursor-not-allowed disabled:brightness-75">풀이 시작 ($29.88)</button>
                   <div id="saju-status-box" class="ledger-subpanel px-4 py-4 text-sm leading-6 text-white/70">생년월일과 시간을 입력한 뒤 버튼을 누르면 결제 또는 분석이 진행됩니다.</div>
                   <div class="flex items-center justify-between text-[11px] uppercase tracking-[0.18em] text-white/40"><span id="saju-stage">입력 대기</span><span>secure archive</span></div>
                 </div>
@@ -462,7 +491,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       const CHECKOUT_CURRENCY = 'USD';
       const ORDER_STORAGE_KEY = 'manytool.aiManseryeok.orderId';
       const FORM_STORAGE_KEY = 'manytool.aiManseryeok.form';
-      const elements = { name: document.getElementById('saju-name'), birthDate: document.getElementById('saju-birth-date'), birthTime: document.getElementById('saju-birth-time'), timeUnknown: document.getElementById('saju-time-unknown'), leapMonth: document.getElementById('saju-leap-month'), leapWrap: document.getElementById('saju-leap-wrap'), submit: document.getElementById('saju-submit'), statusBox: document.getElementById('saju-status-box'), stage: document.getElementById('saju-stage'), empty: document.getElementById('saju-empty'), result: document.getElementById('saju-result') };
+      const elements = { name: document.getElementById('saju-name'), birthDate: document.getElementById('saju-birth-date'), birthTime: document.getElementById('saju-birth-time'), timeBranch: document.getElementById('saju-time-branch'), birthPlace: document.getElementById('saju-birth-place'), timeUnknown: document.getElementById('saju-time-unknown'), leapMonth: document.getElementById('saju-leap-month'), leapWrap: document.getElementById('saju-leap-wrap'), submit: document.getElementById('saju-submit'), statusBox: document.getElementById('saju-status-box'), stage: document.getElementById('saju-stage'), empty: document.getElementById('saju-empty'), result: document.getElementById('saju-result') };
       let paymentMode = 'mock';
       let currentOrderId = null;
       const qs = (name) => document.getElementById(name);
@@ -470,24 +499,61 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       const setHtml = (id, value) => { const node = qs(id); if (node) node.innerHTML = value ?? ''; };
       const setStatus = (message, stage = '진행 중') => { if (elements.statusBox) elements.statusBox.textContent = message; if (elements.stage) elements.stage.textContent = stage; };
       const getCalendarType = () => { const checked = document.querySelector('input[name="calendar-type"]:checked'); return checked instanceof HTMLInputElement ? checked.value : 'solar'; };
+      const getGender = () => { const checked = document.querySelector('input[name="saju-gender"]:checked'); return checked instanceof HTMLInputElement ? checked.value : 'unknown'; };
       const syncCalendarUi = () => { const isLunar = getCalendarType() === 'lunar'; elements.leapWrap?.classList.toggle('hidden', !isLunar); };
-      const syncTimeUi = () => { if (!(elements.birthTime instanceof HTMLInputElement) || !(elements.timeUnknown instanceof HTMLInputElement)) return; elements.birthTime.disabled = elements.timeUnknown.checked; };
+      const syncTimeUi = () => {
+        if (!(elements.birthTime instanceof HTMLInputElement) || !(elements.timeUnknown instanceof HTMLInputElement)) return;
+        const disabled = elements.timeUnknown.checked;
+        elements.birthTime.disabled = disabled;
+        if (elements.timeBranch instanceof HTMLSelectElement) elements.timeBranch.disabled = disabled;
+      };
+      const syncBranchFromTime = () => {
+        if (!(elements.birthTime instanceof HTMLInputElement) || !(elements.timeBranch instanceof HTMLSelectElement)) return;
+        const value = elements.birthTime.value;
+        if (!value) return;
+        const options = Array.from(elements.timeBranch.options).map((option) => option.value);
+        if (options.includes(value)) elements.timeBranch.value = value;
+      };
+      const syncTimeFromBranch = () => {
+        if (!(elements.birthTime instanceof HTMLInputElement) || !(elements.timeBranch instanceof HTMLSelectElement)) return;
+        if (elements.timeBranch.value) elements.birthTime.value = elements.timeBranch.value;
+      };
       const buildPayload = () => {
         const payload = {
           name: elements.name instanceof HTMLInputElement ? elements.name.value.trim() : '',
           birthDate: elements.birthDate instanceof HTMLInputElement ? elements.birthDate.value : '',
           birthTime: elements.birthTime instanceof HTMLInputElement ? elements.birthTime.value : '',
+          birthPlace: elements.birthPlace instanceof HTMLInputElement ? elements.birthPlace.value.trim() : '',
+          gender: getGender(),
           calendarType: getCalendarType(),
           isLeapMonth: elements.leapMonth instanceof HTMLInputElement ? elements.leapMonth.checked : false,
           timeUnknown: elements.timeUnknown instanceof HTMLInputElement ? elements.timeUnknown.checked : false
         };
+        if (!payload.birthTime && elements.timeBranch instanceof HTMLSelectElement && elements.timeBranch.value) {
+          payload.birthTime = elements.timeBranch.value;
+        }
         if (!payload.birthDate) throw new Error('생년월일을 입력해 주세요.');
         if (!payload.timeUnknown && !payload.birthTime) throw new Error('출생 시간을 입력하거나 시간 모름을 체크해 주세요.');
         return payload;
       };
       const savePayload = (payload) => window.sessionStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(payload));
       const restorePayload = () => { try { const raw = window.sessionStorage.getItem(FORM_STORAGE_KEY); return raw ? JSON.parse(raw) : null; } catch { return null; } };
-      const applyPayload = (payload) => { if (!payload) return; if (elements.name instanceof HTMLInputElement) elements.name.value = payload.name || ''; if (elements.birthDate instanceof HTMLInputElement) elements.birthDate.value = payload.birthDate || ''; if (elements.birthTime instanceof HTMLInputElement) elements.birthTime.value = payload.birthTime || ''; if (elements.timeUnknown instanceof HTMLInputElement) elements.timeUnknown.checked = Boolean(payload.timeUnknown); if (elements.leapMonth instanceof HTMLInputElement) elements.leapMonth.checked = Boolean(payload.isLeapMonth); const radio = document.querySelector(`input[name="calendar-type"][value="${payload.calendarType === 'lunar' ? 'lunar' : 'solar'}"]`); if (radio instanceof HTMLInputElement) radio.checked = true; syncCalendarUi(); syncTimeUi(); };
+      const applyPayload = (payload) => {
+        if (!payload) return;
+        if (elements.name instanceof HTMLInputElement) elements.name.value = payload.name || '';
+        if (elements.birthDate instanceof HTMLInputElement) elements.birthDate.value = payload.birthDate || '';
+        if (elements.birthTime instanceof HTMLInputElement) elements.birthTime.value = payload.birthTime || '';
+        if (elements.timeBranch instanceof HTMLSelectElement) elements.timeBranch.value = payload.birthTime || '';
+        if (elements.birthPlace instanceof HTMLInputElement) elements.birthPlace.value = payload.birthPlace || '';
+        if (elements.timeUnknown instanceof HTMLInputElement) elements.timeUnknown.checked = Boolean(payload.timeUnknown);
+        if (elements.leapMonth instanceof HTMLInputElement) elements.leapMonth.checked = Boolean(payload.isLeapMonth);
+        const radio = document.querySelector(`input[name="calendar-type"][value="${payload.calendarType === 'lunar' ? 'lunar' : 'solar'}"]`);
+        if (radio instanceof HTMLInputElement) radio.checked = true;
+        const genderRadio = document.querySelector(`input[name="saju-gender"][value="${payload.gender || 'unknown'}"]`);
+        if (genderRadio instanceof HTMLInputElement) genderRadio.checked = true;
+        syncCalendarUi();
+        syncTimeUi();
+      };
       const createBadgeList = (items, className = 'bg-white/6 text-white/72') => (items || []).filter(Boolean).map((item) => `<span class="${className} px-3 py-2 text-xs font-semibold">${item}</span>`).join('');
       const renderList = (id, items) => setHtml(id, (items || []).map((item) => `<li>${item}</li>`).join(''));
       const renderBars = (items) => (items || []).map((item) => `<div><div class="mb-2 flex items-center justify-between text-sm"><span class="font-semibold text-white/72">${item.label}</span><span class="text-white/38">${item.count} / 8</span></div><div class="ledger-bar"><span style="width:${Math.max(10, item.ratio)}%"></span></div></div>`).join('');
@@ -564,6 +630,8 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       const loadJobFromQuery = async () => { const params = new URLSearchParams(window.location.search); const jobId = params.get('jobId'); if (!jobId || !API_BASE) return false; const response = await fetch(`${API_BASE}/ai-manseryeok/job/${encodeURIComponent(jobId)}`); const payload = await response.json().catch(() => null); if (!response.ok || !payload?.job) return false; renderResult(payload.job); return true; };
       document.querySelectorAll('input[name="calendar-type"]').forEach((node) => node.addEventListener('change', syncCalendarUi));
       elements.timeUnknown?.addEventListener('change', syncTimeUi);
+      elements.birthTime?.addEventListener('change', syncBranchFromTime);
+      elements.timeBranch?.addEventListener('change', syncTimeFromBranch);
       elements.submit?.addEventListener('click', async () => {
         if (!(elements.submit instanceof HTMLButtonElement)) return;
         try {
@@ -610,9 +678,8 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
             return;
           }
           if (paymentMode === 'polar' && !config?.paymentProducts?.ai_manseryeok) {
-            setStatus('AI 만세력 결제 상품이 아직 설정되지 않았습니다.', '상품 설정 필요');
-            if (elements.submit instanceof HTMLButtonElement) elements.submit.disabled = true;
-            return;
+            paymentMode = 'mock';
+            setStatus('결제 상품이 아직 연결되지 않아 현재는 테스트 모드로 바로 풀이합니다.', '테스트 모드');
           }
           const savedPayload = restorePayload();
           if (savedPayload) applyPayload(savedPayload);
@@ -622,8 +689,10 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           if (restored && savedPayload) {
             if (elements.submit instanceof HTMLButtonElement) elements.submit.disabled = true;
             try { await runAnalysis(savedPayload); } finally { if (elements.submit instanceof HTMLButtonElement) elements.submit.disabled = false; }
-          } else {
+          } else if (paymentMode !== 'mock') {
             setStatus(paymentMode === 'mock' ? 'mock 모드에서는 바로 분석됩니다.' : '입력값을 저장한 뒤 결제 페이지로 이동합니다.', '입력 대기');
+          } else {
+            setStatus('테스트 모드에서는 결제 없이 바로 풀이를 확인할 수 있습니다.', '테스트 모드');
           }
         } catch {
           setStatus('초기 설정을 불러오지 못했습니다.', '설정 확인');
