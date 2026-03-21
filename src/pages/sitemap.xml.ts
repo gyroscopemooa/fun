@@ -27,6 +27,7 @@ const paths = [
   '/animal-test',
   '/personal-color',
   '/ai-personal-color',
+  '/ai-manseryeok',
   '/magic-book',
   '/pinball',
   '/pinball-game',

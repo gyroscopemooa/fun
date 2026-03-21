@@ -69,6 +69,7 @@ const cardSeed = [
   { href: '/pinball', title: '핀볼 게임', desc: '가볍게 즐기는 미니게임', icon: '🎮', iconClass: 'bg-emerald-100 text-emerald-700', category: 'games' },
   { href: '/personal-color', title: '퍼스널컬러 자가진단', desc: '얼굴 기반 계절 톤 빠른 확인', icon: '🎨', iconClass: 'bg-amber-100 text-amber-700', category: 'art' },
   { href: '/ai-personal-color', title: 'AI 퍼스널컬러 자가진단', desc: 'AI 기반 톤 분석과 컬러 추천', icon: '🌈', iconClass: 'bg-rose-100 text-rose-700', category: 'art' },
+  { href: '/ai-manseryeok', title: 'AI 만세력 사주팔자 정밀분석', desc: '생년월일시 기반 만세력과 상세 사주 해석', icon: '☯️', iconClass: 'bg-amber-100 text-amber-700', category: 'etc' },
   { href: '/magic-book', title: '마법책', desc: '랜덤 문구 뽑기', icon: '✨', iconClass: 'bg-fuchsia-100 text-fuchsia-700', category: 'games' },
   { href: '/reaction-test', title: '반응속도', desc: '클릭 속도 측정', icon: '⚡', iconClass: 'bg-rose-100 text-rose-700', category: 'games' },
   { href: '/fps-aim-sensitivity', title: 'FPS 에임 조절기', desc: '현재 감도 기준 추천', icon: '🎯', iconClass: 'bg-cyan-100 text-cyan-700', category: 'tools' },
@@ -115,6 +116,7 @@ const cardTitleI18n: Record<string, { en: string; ja: string }> = {
   '/pinball': { en: 'Pinball Game', ja: 'ピンボールゲーム' },
   '/personal-color': { en: 'Personal Color Test', ja: 'パーソナルカラーテスト' },
   '/ai-personal-color': { en: 'AI Personal Color Analysis', ja: 'AIパーソナルカラー診断' },
+  '/ai-manseryeok': { en: 'Korean Saju Palja', ja: 'AI四柱推命精密分析' },
   '/magic-book': { en: 'Magic Book', ja: 'マジックブック' },
   '/reaction-test': { en: 'Reaction Test', ja: '反応速度テスト' },
   '/fps-aim-sensitivity': { en: 'FPS Aim Sensitivity', ja: 'FPSエイム感度調整' },
@@ -178,31 +180,32 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
 >
   <main class="min-h-screen bg-slate-100">
     <div class="mx-auto max-w-6xl">
-      <header class="flex items-center justify-between border-b border-sky-100 px-4 py-3 lg:px-10">
-        <a href={withLocale('/')} class="flex items-center gap-3">
-          <img src="/favicon.svg" alt="ManyTool 로고" class="h-8 w-8 rounded-lg bg-sky-100 p-1" loading="eager" decoding="async" />
-          <h2 class="text-lg font-bold tracking-tight text-slate-900 sm:text-xl">ManyTool</h2>
+      <header class="flex items-center justify-between gap-2 border-b border-sky-100 px-4 py-3 lg:px-10">
+        <a href={withLocale('/')} class="flex min-w-0 items-center gap-2">
+          <img src="/favicon.svg" alt="ManyTool 로고" class="h-7 w-7 rounded-lg bg-sky-100 p-1 sm:h-8 sm:w-8" loading="eager" decoding="async" />
+          <h2 class="truncate text-base font-bold tracking-tight text-slate-900 sm:text-xl">ManyTool</h2>
         </a>
-        <div class="flex items-center gap-2">
+        <div class="flex shrink-0 items-center gap-1 sm:gap-2">
           <button
             id="favorite-filter-button"
             type="button"
-            class="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700 transition hover:bg-amber-100"
+            class="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-1.5 text-[11px] font-semibold text-amber-700 transition hover:bg-amber-100 sm:gap-2 sm:px-3 sm:py-2 sm:text-xs"
           >
             <span aria-hidden="true">★</span>
-            <span>{t.favoriteOnly}</span>
+            <span class="hidden sm:inline">{t.favoriteOnly}</span>
             <span id="favorite-filter-count" class="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-amber-700">0</span>
           </button>
-          <div class="flex items-center gap-1 rounded-md border border-slate-200 bg-white p-1 text-xs">
+          <div class="flex items-center gap-0.5 rounded-md border border-slate-200 bg-white p-0.5 text-[11px] sm:gap-1 sm:p-1 sm:text-xs">
             {langLinks.map((lang) => (
               <a
                 href={lang.href}
                 class:list={[
-                  'rounded px-2 py-1 font-semibold',
+                  'rounded px-1.5 py-1 font-semibold sm:px-2',
                   lang.code === locale ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
                 ]}
               >
-                {lang.label}
+                <span class="sm:hidden">{lang.code.toUpperCase()}</span>
+                <span class="hidden sm:inline">{lang.label}</span>
               </a>
             ))}
           </div>

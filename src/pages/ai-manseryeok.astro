@@ -1,0 +1,635 @@
+﻿---
+import Layout from '../layouts/Layout.astro';
+
+const rawApiBase = (import.meta.env.PUBLIC_NODE_API_BASE ?? '').trim();
+const apiBase = rawApiBase.replace(/\/+$/, '');
+---
+
+<Layout
+  title="AI 만세력 사주팔자 정밀분석 | Korean Saju Palja Premium Report | ManyTool"
+  description="AI 기반 성향 분석, 통계 기반 라이프 인사이트, 데이터 기반 자기이해 리포트를 제공하는 Korean Saju Palja 프리미엄 분석 페이지입니다. 오늘, 이번주, 이번달, 상반기, 하반기, 올해와 중년·말년 흐름까지 정리합니다."
+  keywords="AI 만세력, Korean Saju Palja, 사주팔자 정밀분석, AI 기반 성향 분석, 통계 기반 라이프 인사이트, 데이터 기반 자기 이해 리포트, 오늘 운세, 이번주 운세, 이번달 운세"
+  canonical="https://manytool.net/ai-manseryeok"
+>
+  <main class="ledger-shell min-h-screen bg-[#131313] text-[#e5e2e1]">
+    <style>
+      :global(body) {
+        background: #131313;
+        color: #e5e2e1;
+      }
+      .ledger-shell {
+        font-family: 'Manrope', 'Noto Sans KR', sans-serif;
+        background:
+          radial-gradient(circle at 12% 18%, rgba(233, 195, 73, 0.12), transparent 24%),
+          radial-gradient(circle at 78% 22%, rgba(89, 222, 155, 0.08), transparent 22%),
+          #131313;
+      }
+      .ledger-serif { font-family: 'Noto Serif KR', 'Noto Serif', serif; }
+      .ledger-label { font-family: 'Inter', 'Manrope', sans-serif; }
+      .ledger-panel { background: rgba(28, 27, 27, 0.92); }
+      .ledger-subpanel { background: rgba(39, 38, 38, 0.92); }
+      .ledger-gold-line {
+        background: linear-gradient(90deg, rgba(233,195,73,0.1), rgba(233,195,73,0.9), rgba(233,195,73,0.1));
+      }
+      .ledger-field {
+        border: 0;
+        border-bottom: 1px solid rgba(142,145,150,0.35);
+        background: transparent;
+        color: #e5e2e1;
+        width: 100%;
+        padding: 0.9rem 0;
+        outline: none;
+        transition: border-color .18s ease, box-shadow .18s ease;
+      }
+      .ledger-field:focus {
+        border-bottom-color: #e9c349;
+        box-shadow: 0 1px 0 0 #e9c349;
+      }
+      .ledger-chip { background: rgba(53,53,52,0.9); }
+      .ledger-metric { background: rgba(32,31,31,0.95); }
+      .ledger-card { background: rgba(32,31,31,0.96); }
+      .ledger-card-alt { background: rgba(42,42,42,0.96); }
+      .ledger-bar {
+        position: relative;
+        overflow: hidden;
+        background: rgba(53,53,52,0.65);
+        height: 9px;
+      }
+      .ledger-bar > span {
+        position: absolute;
+        inset: 0 auto 0 0;
+        background: linear-gradient(90deg, #e9c349, #59de9b);
+      }
+      .ledger-circle {
+        background: radial-gradient(circle at center, rgba(233,195,73,0.08), rgba(233,195,73,0) 72%);
+      }
+      @media (max-width: 1023px) {
+        .ledger-mobile-nav { position: sticky; bottom: 0; z-index: 30; }
+      }
+    </style>
+
+    <div class="border-b border-white/10">
+      <div class="mx-auto flex max-w-[1440px] items-center justify-between px-4 py-4 sm:px-6">
+        <a href="/" class="ledger-serif text-lg font-black tracking-tight text-[#e9c349] sm:text-2xl">MANYTOOL.NET</a>
+        <div class="hidden items-center gap-8 text-sm font-semibold text-white/60 md:flex">
+          <a href="/" class="transition hover:text-white">홈으로</a>
+          <a href="/tools" class="transition hover:text-white">프리미엄 서비스</a>
+          <a href="/what-is-manytool" class="transition hover:text-white">소개</a>
+        </div>
+        <div class="flex items-center gap-3 text-[#e9c349]">
+          <a href="/en/ai-manseryeok" class="rounded-full p-2 transition hover:bg-[#e9c349]/10" aria-label="English version">🌐</a>
+          <a href="/" class="rounded-full p-2 transition hover:bg-[#e9c349]/10" aria-label="Back to home">⌂</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="mx-auto grid max-w-[1440px] gap-0 lg:grid-cols-[240px_minmax(0,1fr)]">
+      <aside class="hidden min-h-[calc(100vh-73px)] border-r border-white/8 px-5 py-8 lg:block">
+        <div class="space-y-8 sticky top-[88px]">
+          <div>
+            <p class="ledger-label text-[11px] uppercase tracking-[0.24em] text-[#e9c349]">운명 탐색</p>
+            <div class="mt-4 h-px w-full ledger-gold-line"></div>
+          </div>
+          <nav class="space-y-2 text-sm text-white/55">
+            <a href="#saju-form-section" class="flex items-center justify-between ledger-subpanel px-4 py-3 text-white"><span>입력 정보</span><span class="text-[#e9c349]">01</span></a>
+            <a href="#saju-result-anchor" class="flex items-center justify-between px-4 py-3 transition hover:bg-white/5"><span>오늘</span><span>02</span></a>
+            <a href="#fortune-grid" class="flex items-center justify-between px-4 py-3 transition hover:bg-white/5"><span>이번 주</span><span>03</span></a>
+            <a href="#fortune-grid" class="flex items-center justify-between px-4 py-3 transition hover:bg-white/5"><span>이번 달</span><span>04</span></a>
+            <a href="#life-stage-grid" class="flex items-center justify-between px-4 py-3 transition hover:bg-white/5"><span>중년</span><span>05</span></a>
+            <a href="#life-stage-grid" class="flex items-center justify-between px-4 py-3 transition hover:bg-white/5"><span>말년</span><span>06</span></a>
+          </nav>
+          <div class="ledger-panel px-4 py-5 text-sm leading-6 text-white/60">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#59de9b]">Report Mode</p>
+            <p class="mt-3">AI 기반 성향 분석과 통계 기반 라이프 인사이트를 조합한 자기이해 리포트 형식입니다.</p>
+          </div>
+          <a href="#saju-form-section" class="block bg-[#e9c349] px-4 py-4 text-center text-xs font-black uppercase tracking-[0.22em] text-[#3c2f00] transition hover:brightness-110">정밀 분석 시작</a>
+        </div>
+      </aside>
+
+      <div>
+        <section class="px-4 py-8 sm:px-6 lg:px-10 lg:py-12">
+          <div class="grid gap-8 xl:grid-cols-[minmax(0,1.1fr)_360px]">
+            <div class="space-y-8">
+              <div>
+                <p class="ledger-label text-[11px] uppercase tracking-[0.24em] text-[#59de9b]">기록 해석 · Korean Saju Palja · No. 2026</p>
+                <h1 class="ledger-serif mt-5 max-w-4xl text-4xl font-black leading-[1.08] tracking-tight text-white sm:text-6xl">
+                  당신의 <span class="text-[#e9c349] italic">운명 좌표</span>를<br />발견하세요
+                </h1>
+                <p class="mt-5 max-w-2xl text-base leading-8 text-white/62">
+                  생년월일시를 기반으로 만세력 구조를 계산하고, 오늘과 이번주, 이번달, 상반기, 하반기, 올해의 흐름을 한 장의 프리미엄 리포트로 정리합니다.
+                  미래 예언이 아니라 참고용 라이프 인사이트와 데이터 기반 자기이해 도구로 설계했습니다.
+                </p>
+              </div>
+
+              <div class="grid gap-4 md:grid-cols-3">
+                <div class="space-y-3">
+                  <div class="ledger-serif text-3xl italic text-[#e9c349]">01.</div>
+                  <h2 class="text-sm font-bold uppercase tracking-[0.18em] text-[#e9c349]">AI 기반 성향 분석</h2>
+                  <p class="text-sm leading-7 text-white/55">사주 구조와 오행 분포를 바탕으로 성향, 판단 패턴, 생활 리듬을 정리합니다.</p>
+                </div>
+                <div class="space-y-3">
+                  <div class="ledger-serif text-3xl italic text-[#59de9b]">02.</div>
+                  <h2 class="text-sm font-bold uppercase tracking-[0.18em] text-[#59de9b]">통계 기반 라이프 인사이트</h2>
+                  <p class="text-sm leading-7 text-white/55">기간별 흐름을 읽기 쉽게 나누고 재물, 관계, 일상 리듬의 변화를 점수와 해설로 보여줍니다.</p>
+                </div>
+                <div class="space-y-3">
+                  <div class="ledger-serif text-3xl italic text-white/50">03.</div>
+                  <h2 class="text-sm font-bold uppercase tracking-[0.18em] text-white/70">데이터 기반 자기이해 리포트</h2>
+                  <p class="text-sm leading-7 text-white/55">같은 입력에는 같은 구조가 유지되며, 시간 정보 유무에 따라 신뢰도와 입력 정확도를 분리해 표시합니다.</p>
+                </div>
+              </div>
+            </div>
+
+            <aside class="ledger-panel px-6 py-7 text-sm leading-7 text-white/62 xl:mt-8">
+              <p class="ledger-serif text-lg font-bold text-[#e9c349]">기록된 경험</p>
+              <div class="mt-6 space-y-7">
+                <article>
+                  <div class="text-[#e9c349]">★★★★★</div>
+                  <p class="mt-2 italic">“사주풀이처럼 단정적으로 말하지 않고, 구조와 흐름을 읽는 보고서처럼 보여줘서 오히려 더 신뢰감이 있었습니다.”</p>
+                  <p class="mt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#e9c349]">Analyst Review</p>
+                </article>
+                <article>
+                  <div class="text-[#e9c349]">★★★★★</div>
+                  <p class="mt-2 italic">“오늘, 이번주, 올해를 나눠서 읽게 해두니 재구매가 아니라도 다시 확인할 이유가 생겼습니다.”</p>
+                  <p class="mt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#e9c349]">Premium User</p>
+                </article>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section id="saju-form-section" class="px-4 pb-6 sm:px-6 lg:px-10">
+          <div class="grid gap-8 xl:grid-cols-[minmax(0,1fr)_340px]">
+            <div class="ledger-panel px-5 py-6 sm:px-8 sm:py-8">
+              <div class="flex flex-wrap items-end justify-between gap-4">
+                <div>
+                  <p class="ledger-label text-[11px] uppercase tracking-[0.24em] text-[#e9c349]">1 단계 · 기록 입력</p>
+                  <h2 class="ledger-serif mt-3 text-3xl font-black tracking-tight text-white sm:text-5xl">당신의 <span class="text-[#e9c349] italic">운명 좌표</span>를 입력하세요</h2>
+                </div>
+                <div class="min-w-[180px]">
+                  <div class="flex justify-between text-[11px] uppercase tracking-[0.18em] text-white/40"><span>입력 준비</span><span>65% 가독성</span></div>
+                  <div class="mt-3 h-[2px] bg-white/10"><div class="h-full w-[65%] bg-[#e9c349]"></div></div>
+                </div>
+              </div>
+
+              <p class="mt-5 max-w-3xl text-sm leading-7 text-white/58">
+                본 서비스는 참고용 자기이해 리포트입니다. AI 기반 성향 분석과 통계 기반 라이프 인사이트를 제공하며, 의학·법률·재정적 조언이나 미래 보장을 의미하지 않습니다.
+              </p>
+
+              <div class="mt-8 grid gap-8 md:grid-cols-2">
+                <label class="block">
+                  <span class="ledger-label text-[10px] uppercase tracking-[0.2em] text-white/40">이름 또는 닉네임</span>
+                  <input id="saju-name" type="text" placeholder="예: JI-HO PARK" class="ledger-field text-lg" />
+                </label>
+                <div>
+                  <span class="ledger-label text-[10px] uppercase tracking-[0.2em] text-white/40">달력 기준</span>
+                  <div class="mt-5 flex flex-wrap gap-2">
+                    <label class="ledger-chip inline-flex items-center gap-2 px-4 py-3 text-sm text-white"><input type="radio" name="calendar-type" value="solar" checked />양력</label>
+                    <label class="ledger-chip inline-flex items-center gap-2 px-4 py-3 text-sm text-white"><input type="radio" name="calendar-type" value="lunar" />음력</label>
+                    <label id="saju-leap-wrap" class="ledger-chip hidden inline-flex items-center gap-2 px-4 py-3 text-sm text-white"><input id="saju-leap-month" type="checkbox" />윤달</label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-10 grid gap-8 md:grid-cols-[1.2fr_0.8fr]">
+                <label class="block">
+                  <span class="ledger-label text-[10px] uppercase tracking-[0.2em] text-white/40">생년월일</span>
+                  <input id="saju-birth-date" type="date" class="ledger-field text-lg" />
+                </label>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="ledger-label text-[10px] uppercase tracking-[0.2em] text-white/40">출생 시간</span>
+                    <span class="text-xs text-[#e9c349]">시주 반영</span>
+                  </div>
+                  <input id="saju-birth-time" type="time" class="ledger-field text-lg" />
+                </div>
+              </div>
+
+              <div class="mt-10 grid gap-8 md:grid-cols-[1fr_auto] md:items-end">
+                <div>
+                  <span class="ledger-label text-[10px] uppercase tracking-[0.2em] text-white/40">출생지 기준</span>
+                  <div class="mt-5 border-b border-white/15 pb-4 text-sm text-white/70">대한민국 서울 기준으로 해석합니다.</div>
+                </div>
+                <label class="inline-flex items-center gap-3 text-sm text-white/70">
+                  <input id="saju-time-unknown" type="checkbox" class="h-4 w-4 rounded border-white/20 bg-transparent text-[#e9c349] focus:ring-[#e9c349]" />
+                  출생 시간을 모름
+                </label>
+              </div>
+
+              <div class="mt-10 grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+                <div class="ledger-subpanel px-5 py-5 text-sm leading-7 text-white/60">
+                  <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#59de9b]">결제 전 안내</p>
+                  <ul class="mt-3 space-y-2">
+                    <li>AI 기반 성향 분석 / 통계 기반 라이프 인사이트 / 데이터 기반 자기이해 리포트 형식으로 제공됩니다.</li>
+                    <li>본 서비스는 참고용 콘텐츠이며 의학·법률·재정적 조언이 아닙니다.</li>
+                    <li>결과 해석 및 활용 책임은 사용자에게 있습니다.</li>
+                  </ul>
+                </div>
+                <div class="space-y-4">
+                  <button id="saju-submit" class="w-full bg-[#e9c349] px-5 py-5 text-sm font-black uppercase tracking-[0.24em] text-[#3c2f00] transition hover:brightness-110 disabled:cursor-not-allowed disabled:brightness-75">분석 기록 보관소로 이동하기 ($29.88)</button>
+                  <div id="saju-status-box" class="ledger-subpanel px-4 py-4 text-sm leading-6 text-white/70">생년월일과 시간을 입력한 뒤 버튼을 누르면 결제 또는 분석이 진행됩니다.</div>
+                  <div class="flex items-center justify-between text-[11px] uppercase tracking-[0.18em] text-white/40"><span id="saju-stage">입력 대기</span><span>secure archive</span></div>
+                </div>
+              </div>
+            </div>
+
+            <aside class="space-y-4">
+              <div class="ledger-panel px-5 py-6">
+                <p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#e9c349]">상품 구성</p>
+                <div class="mt-5 space-y-4 text-sm text-white/64">
+                  <p>오늘 / 이번주 / 이번달</p>
+                  <p>상반기 / 하반기 / 올해</p>
+                  <p>중년 / 말년 분석</p>
+                  <p>재물운 / 관계운 / 적성 / 생활 리듬</p>
+                </div>
+                <div class="mt-8 text-6xl ledger-serif italic text-[#e9c349]">2026</div>
+              </div>
+              <div class="ledger-panel px-5 py-6 text-sm leading-7 text-white/60">
+                <p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#59de9b]">정책 가드</p>
+                <p class="mt-4">정확도나 미래 예측을 과장하지 않고 참고용 정보, 엔터테인먼트, 자기이해 도구로 명확히 안내합니다.</p>
+              </div>
+            </aside>
+          </div>
+        </section>
+        <section id="saju-result-anchor" class="px-4 pb-20 sm:px-6 lg:px-10">
+          <div id="saju-empty" class="ledger-panel px-6 py-16 text-center text-sm leading-7 text-white/45">아직 분석 결과가 없습니다. 결제를 마친 뒤 이 페이지로 돌아오면 자동으로 결과가 이어집니다.</div>
+
+          <div id="saju-result" class="hidden space-y-8">
+            <section class="grid gap-6 xl:grid-cols-[minmax(0,1.08fr)_360px]">
+              <article class="ledger-panel px-6 py-7 sm:px-8">
+                <div class="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#59de9b]">핵심 해석</p>
+                    <h2 id="saju-headline" class="ledger-serif mt-3 text-3xl font-black tracking-tight text-white sm:text-5xl"></h2>
+                  </div>
+                  <div class="space-y-3 text-right">
+                    <div id="saju-name-badge" class="hidden bg-white/5 px-3 py-2 text-xs font-semibold text-[#e9c349]"></div>
+                    <div id="saju-badges" class="flex flex-wrap justify-end gap-2"></div>
+                  </div>
+                </div>
+                <p id="saju-summary" class="mt-5 max-w-4xl text-base leading-8 text-white/68"></p>
+                <p id="saju-personality" class="mt-4 max-w-4xl text-sm leading-8 text-white/56"></p>
+              </article>
+
+              <aside class="space-y-4">
+                <div class="ledger-panel px-6 py-6">
+                  <p class="ledger-label text-[11px] uppercase tracking-[0.18em] text-white/40">해석 점수</p>
+                  <div class="mt-5 grid gap-4">
+                    <div class="ledger-metric px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-white/35">일관성</p><p id="saju-consistency-score" class="mt-2 text-4xl font-black text-[#e9c349]"></p><p id="saju-consistency-comment" class="mt-2 text-sm leading-6 text-white/55"></p></div>
+                    <div class="ledger-metric px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-white/35">신뢰도</p><p id="saju-reliability-score" class="mt-2 text-4xl font-black text-[#e9c349]"></p><p id="saju-reliability-comment" class="mt-2 text-sm leading-6 text-white/55"></p></div>
+                    <div class="ledger-metric px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-white/35">입력 정확도</p><p id="saju-accuracy-score" class="mt-2 text-4xl font-black text-[#e9c349]"></p><p id="saju-accuracy-comment" class="mt-2 text-sm leading-6 text-white/55"></p></div>
+                  </div>
+                </div>
+              </aside>
+            </section>
+
+            <section class="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
+              <article class="ledger-panel px-6 py-6">
+                <div class="flex items-center justify-between gap-4">
+                  <div>
+                    <p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#e9c349]">사주 구조</p>
+                    <h3 class="mt-2 text-xl font-black text-white">만세력 4주</h3>
+                  </div>
+                  <span id="saju-birth-meta" class="text-right text-[11px] uppercase tracking-[0.14em] text-white/40"></span>
+                </div>
+                <div class="mt-5 grid gap-3">
+                  <div class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-white/35">연주</p><p id="pillar-year" class="mt-2 text-2xl font-black text-white"></p><p id="pillar-year-hanja" class="mt-1 text-sm text-white/45"></p></div>
+                  <div class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-white/35">월주</p><p id="pillar-month" class="mt-2 text-2xl font-black text-white"></p><p id="pillar-month-hanja" class="mt-1 text-sm text-white/45"></p></div>
+                  <div class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-white/35">일주</p><p id="pillar-day" class="mt-2 text-2xl font-black text-white"></p><p id="pillar-day-hanja" class="mt-1 text-sm text-white/45"></p></div>
+                  <div class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-white/35">시주</p><p id="pillar-hour" class="mt-2 text-2xl font-black text-white"></p><p id="pillar-hour-hanja" class="mt-1 text-sm text-white/45"></p></div>
+                </div>
+              </article>
+
+              <div class="space-y-6">
+                <article class="ledger-panel px-6 py-6">
+                  <div class="flex items-center justify-between gap-4">
+                    <div>
+                      <p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#59de9b]">오행 구조</p>
+                      <h3 class="mt-2 text-xl font-black text-white">오행 분포</h3>
+                    </div>
+                    <div id="saju-day-master" class="bg-[#e9c349]/12 px-3 py-2 text-xs font-semibold text-[#e9c349]"></div>
+                  </div>
+                  <div id="element-bars" class="mt-6 space-y-4"></div>
+                  <div class="mt-6 grid gap-4 md:grid-cols-3">
+                    <div class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-[#59de9b]">강한 축</p><p id="element-dominant" class="mt-2 text-sm font-semibold text-white"></p></div>
+                    <div class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-white/40">약한 축</p><p id="element-lacking" class="mt-2 text-sm font-semibold text-white"></p></div>
+                    <div class="ledger-card px-4 py-4"><p class="text-[11px] uppercase tracking-[0.18em] text-[#e9c349]">균형 점수</p><p id="element-balance" class="mt-2 text-sm font-semibold text-white"></p></div>
+                  </div>
+                </article>
+
+                <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  <article class="ledger-card px-5 py-5"><div class="flex items-center justify-between gap-2"><h3 class="text-lg font-black text-white">재물운</h3><span id="money-score" class="text-sm font-black text-[#e9c349]"></span></div><p id="money-summary" class="mt-3 text-sm leading-7 text-white/58"></p></article>
+                  <article class="ledger-card px-5 py-5"><div class="flex items-center justify-between gap-2"><h3 class="text-lg font-black text-white">관계운</h3><span id="relationship-score" class="text-sm font-black text-[#e9c349]"></span></div><p id="relationship-summary" class="mt-3 text-sm leading-7 text-white/58"></p></article>
+                  <article class="ledger-card px-5 py-5"><div class="flex items-center justify-between gap-2"><h3 class="text-lg font-black text-white">직업/적성</h3><span id="work-score" class="text-sm font-black text-[#e9c349]"></span></div><p id="work-summary" class="mt-3 text-sm leading-7 text-white/58"></p><div id="work-roles" class="mt-3 flex flex-wrap gap-2"></div></article>
+                  <article class="ledger-card px-5 py-5"><div class="flex items-center justify-between gap-2"><h3 class="text-lg font-black text-white">생활 리듬</h3><span id="health-score" class="text-sm font-black text-[#59de9b]"></span></div><p id="health-summary" class="mt-3 text-sm leading-7 text-white/58"></p></article>
+                </section>
+              </div>
+            </section>
+
+            <section id="fortune-grid" class="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_340px]">
+              <article class="ledger-panel px-6 py-6">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#e9c349]">운세 흐름</p>
+                    <h3 class="ledger-serif mt-2 text-3xl font-black text-white">오늘부터 올해까지</h3>
+                  </div>
+                  <div class="ledger-circle flex h-[150px] w-[150px] items-center justify-center border border-[#e9c349]/25">
+                    <div class="text-center">
+                      <p id="yearly-score" class="text-5xl font-black text-[#e9c349]"></p>
+                      <p class="mt-2 text-[11px] uppercase tracking-[0.18em] text-white/40">연간 흐름 지표</p>
+                    </div>
+                  </div>
+                </div>
+                <p id="yearly-summary" class="mt-6 text-sm leading-8 text-white/60"></p>
+                <div class="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  <div class="ledger-card px-4 py-4"><div class="flex items-center justify-between gap-2"><p class="font-black text-white">오늘의 예언</p><span id="fortune-today-score" class="text-xs font-black text-[#e9c349]"></span></div><p id="fortune-today-summary" class="mt-3 text-sm leading-6 text-white/58"></p></div>
+                  <div class="ledger-card px-4 py-4"><div class="flex items-center justify-between gap-2"><p class="font-black text-white">이번 주 운세</p><span id="fortune-week-score" class="text-xs font-black text-[#e9c349]"></span></div><p id="fortune-week-summary" class="mt-3 text-sm leading-6 text-white/58"></p></div>
+                  <div class="ledger-card px-4 py-4"><div class="flex items-center justify-between gap-2"><p class="font-black text-white">이번 달 흐름</p><span id="fortune-month-score" class="text-xs font-black text-[#e9c349]"></span></div><p id="fortune-month-summary" class="mt-3 text-sm leading-6 text-white/58"></p></div>
+                  <div class="ledger-card-alt px-4 py-4"><div class="flex items-center justify-between gap-2"><p class="font-black text-white">상반기</p><span id="fortune-firsthalf-score" class="text-xs font-black text-[#59de9b]"></span></div><p id="fortune-firsthalf-summary" class="mt-3 text-sm leading-6 text-white/58"></p></div>
+                  <div class="ledger-card-alt px-4 py-4"><div class="flex items-center justify-between gap-2"><p class="font-black text-white">하반기</p><span id="fortune-secondhalf-score" class="text-xs font-black text-[#59de9b]"></span></div><p id="fortune-secondhalf-summary" class="mt-3 text-sm leading-6 text-white/58"></p></div>
+                  <div class="ledger-card-alt px-4 py-4"><div class="flex items-center justify-between gap-2"><p class="font-black text-white">올해 결산</p><span id="fortune-year-score" class="text-xs font-black text-[#59de9b]"></span></div><p id="fortune-year-summary" class="mt-3 text-sm leading-6 text-white/58"></p></div>
+                </div>
+              </article>
+
+              <aside class="ledger-panel px-6 py-6">
+                <p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#59de9b]">운세 트렌드 분석</p>
+                <div class="mt-6 space-y-4">
+                  <div>
+                    <div class="mb-2 flex items-center justify-between text-xs text-white/45"><span>오늘</span><span id="fortune-today-score-side"></span></div>
+                    <div class="ledger-bar"><span id="fortune-today-bar" style="width:0%"></span></div>
+                  </div>
+                  <div>
+                    <div class="mb-2 flex items-center justify-between text-xs text-white/45"><span>이번 주</span><span id="fortune-week-score-side"></span></div>
+                    <div class="ledger-bar"><span id="fortune-week-bar" style="width:0%"></span></div>
+                  </div>
+                  <div>
+                    <div class="mb-2 flex items-center justify-between text-xs text-white/45"><span>이번 달</span><span id="fortune-month-score-side"></span></div>
+                    <div class="ledger-bar"><span id="fortune-month-bar" style="width:0%"></span></div>
+                  </div>
+                  <div>
+                    <div class="mb-2 flex items-center justify-between text-xs text-white/45"><span>상반기</span><span id="fortune-firsthalf-score-side"></span></div>
+                    <div class="ledger-bar"><span id="fortune-firsthalf-bar" style="width:0%"></span></div>
+                  </div>
+                  <div>
+                    <div class="mb-2 flex items-center justify-between text-xs text-white/45"><span>하반기</span><span id="fortune-secondhalf-score-side"></span></div>
+                    <div class="ledger-bar"><span id="fortune-secondhalf-bar" style="width:0%"></span></div>
+                  </div>
+                  <div>
+                    <div class="mb-2 flex items-center justify-between text-xs text-white/45"><span>올해</span><span id="fortune-year-score-side"></span></div>
+                    <div class="ledger-bar"><span id="fortune-year-bar" style="width:0%"></span></div>
+                  </div>
+                </div>
+              </aside>
+            </section>
+            <section id="life-stage-grid" class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+              <article class="ledger-panel px-6 py-6">
+                <p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#e9c349]">중년의 상승</p>
+                <div class="mt-4 flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <h3 class="ledger-serif text-3xl font-black text-white">중년의 비상</h3>
+                    <p class="mt-3 text-sm leading-7 text-white/58">커리어, 자산, 관계 네트워크가 실제로 압축되는 구간을 중심으로 해석합니다.</p>
+                  </div>
+                  <span id="life-midlife-score" class="bg-[#e9c349]/12 px-4 py-2 text-sm font-black text-[#e9c349]"></span>
+                </div>
+                <p id="life-midlife-summary" class="mt-5 text-sm leading-8 text-white/62"></p>
+              </article>
+
+              <article class="ledger-panel px-6 py-6">
+                <p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#59de9b]">반년의 지혜</p>
+                <div class="mt-4 flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <h3 class="ledger-serif text-3xl font-black text-white">말년의 시계</h3>
+                    <p class="mt-3 text-sm leading-7 text-white/58">말년은 건강, 생활 리듬, 관계 정리, 자산 배분의 균형을 중심으로 읽습니다.</p>
+                  </div>
+                  <span id="life-later-score" class="bg-[#59de9b]/12 px-4 py-2 text-sm font-black text-[#59de9b]"></span>
+                </div>
+                <p id="life-later-summary" class="mt-5 text-sm leading-8 text-white/62"></p>
+              </article>
+            </section>
+
+            <section class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+              <article class="ledger-panel px-6 py-6">
+                <div class="grid gap-6 lg:grid-cols-2">
+                  <div>
+                    <p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#59de9b]">운명의 해석</p>
+                    <ul id="strength-list" class="mt-4 list-disc space-y-3 pl-5 text-sm leading-7 text-white/60"></ul>
+                  </div>
+                  <div>
+                    <p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#e9c349]">실천적 경계</p>
+                    <ul id="blindspot-list" class="mt-4 list-disc space-y-3 pl-5 text-sm leading-7 text-white/60"></ul>
+                  </div>
+                </div>
+              </article>
+
+              <article class="ledger-panel px-6 py-6">
+                <p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-white/40">핵심 키워드</p>
+                <div id="keyword-list" class="mt-4 flex flex-wrap gap-2"></div>
+              </article>
+            </section>
+
+            <section class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+              <article class="ledger-panel px-6 py-6"><p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#e9c349]">실행 조언</p><ul id="advice-list" class="mt-4 list-disc space-y-3 pl-5 text-sm leading-7 text-white/60"></ul></article>
+              <article class="ledger-panel px-6 py-6"><p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#59de9b]">구조 해석 힌트</p><ul id="rule-hints" class="mt-4 list-disc space-y-3 pl-5 text-sm leading-7 text-white/60"></ul></article>
+            </section>
+
+            <section class="ledger-panel px-6 py-8 text-sm leading-7 text-white/56">
+              <div class="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
+                <div>
+                  <p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#e9c349]">Disclaimer</p>
+                  <p class="mt-4">본 서비스는 참고용 콘텐츠입니다. AI 기반 성향 분석, 통계 기반 라이프 인사이트, 데이터 기반 자기이해 리포트 형식으로 제공되며 의학·법률·재정적 조언이 아닙니다.</p>
+                  <p class="mt-3">결과 해석 및 활용에 대한 책임은 사용자에게 있습니다. 미래를 정확히 맞춘다고 주장하지 않으며, 자기이해와 기록 보관을 돕는 엔터테인먼트형 리포트로 이해해 주세요.</p>
+                </div>
+                <a href="#saju-form-section" class="bg-[#e9c349] px-5 py-4 text-xs font-black uppercase tracking-[0.22em] text-[#3c2f00] transition hover:brightness-110">새 분석 기록 보관소로 이동</a>
+              </div>
+            </section>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <nav class="ledger-mobile-nav border-t border-white/10 bg-[#161616] px-3 py-2 lg:hidden">
+      <div class="grid grid-cols-4 gap-2 text-center text-[11px] uppercase tracking-[0.16em] text-white/48">
+        <a href="#saju-form-section" class="py-2 text-[#e9c349]">입력</a>
+        <a href="#saju-result-anchor" class="py-2">오늘</a>
+        <a href="#fortune-grid" class="py-2">월간</a>
+        <a href="#life-stage-grid" class="py-2">말년</a>
+      </div>
+    </nav>
+
+    <script is:inline define:vars={{ apiBase }}>
+      const API_BASE = apiBase || (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost' ? 'http://127.0.0.1:8787' : '');
+      const CHECKOUT_AMOUNT = 2988;
+      const CHECKOUT_CURRENCY = 'USD';
+      const ORDER_STORAGE_KEY = 'manytool.aiManseryeok.orderId';
+      const FORM_STORAGE_KEY = 'manytool.aiManseryeok.form';
+      const elements = { name: document.getElementById('saju-name'), birthDate: document.getElementById('saju-birth-date'), birthTime: document.getElementById('saju-birth-time'), timeUnknown: document.getElementById('saju-time-unknown'), leapMonth: document.getElementById('saju-leap-month'), leapWrap: document.getElementById('saju-leap-wrap'), submit: document.getElementById('saju-submit'), statusBox: document.getElementById('saju-status-box'), stage: document.getElementById('saju-stage'), empty: document.getElementById('saju-empty'), result: document.getElementById('saju-result') };
+      let paymentMode = 'mock';
+      let currentOrderId = null;
+      const qs = (name) => document.getElementById(name);
+      const setText = (id, value) => { const node = qs(id); if (node) node.textContent = value ?? ''; };
+      const setHtml = (id, value) => { const node = qs(id); if (node) node.innerHTML = value ?? ''; };
+      const setStatus = (message, stage = '진행 중') => { if (elements.statusBox) elements.statusBox.textContent = message; if (elements.stage) elements.stage.textContent = stage; };
+      const getCalendarType = () => { const checked = document.querySelector('input[name="calendar-type"]:checked'); return checked instanceof HTMLInputElement ? checked.value : 'solar'; };
+      const syncCalendarUi = () => { const isLunar = getCalendarType() === 'lunar'; elements.leapWrap?.classList.toggle('hidden', !isLunar); };
+      const syncTimeUi = () => { if (!(elements.birthTime instanceof HTMLInputElement) || !(elements.timeUnknown instanceof HTMLInputElement)) return; elements.birthTime.disabled = elements.timeUnknown.checked; };
+      const buildPayload = () => {
+        const payload = {
+          name: elements.name instanceof HTMLInputElement ? elements.name.value.trim() : '',
+          birthDate: elements.birthDate instanceof HTMLInputElement ? elements.birthDate.value : '',
+          birthTime: elements.birthTime instanceof HTMLInputElement ? elements.birthTime.value : '',
+          calendarType: getCalendarType(),
+          isLeapMonth: elements.leapMonth instanceof HTMLInputElement ? elements.leapMonth.checked : false,
+          timeUnknown: elements.timeUnknown instanceof HTMLInputElement ? elements.timeUnknown.checked : false
+        };
+        if (!payload.birthDate) throw new Error('생년월일을 입력해 주세요.');
+        if (!payload.timeUnknown && !payload.birthTime) throw new Error('출생 시간을 입력하거나 시간 모름을 체크해 주세요.');
+        return payload;
+      };
+      const savePayload = (payload) => window.sessionStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(payload));
+      const restorePayload = () => { try { const raw = window.sessionStorage.getItem(FORM_STORAGE_KEY); return raw ? JSON.parse(raw) : null; } catch { return null; } };
+      const applyPayload = (payload) => { if (!payload) return; if (elements.name instanceof HTMLInputElement) elements.name.value = payload.name || ''; if (elements.birthDate instanceof HTMLInputElement) elements.birthDate.value = payload.birthDate || ''; if (elements.birthTime instanceof HTMLInputElement) elements.birthTime.value = payload.birthTime || ''; if (elements.timeUnknown instanceof HTMLInputElement) elements.timeUnknown.checked = Boolean(payload.timeUnknown); if (elements.leapMonth instanceof HTMLInputElement) elements.leapMonth.checked = Boolean(payload.isLeapMonth); const radio = document.querySelector(`input[name="calendar-type"][value="${payload.calendarType === 'lunar' ? 'lunar' : 'solar'}"]`); if (radio instanceof HTMLInputElement) radio.checked = true; syncCalendarUi(); syncTimeUi(); };
+      const createBadgeList = (items, className = 'bg-white/6 text-white/72') => (items || []).filter(Boolean).map((item) => `<span class="${className} px-3 py-2 text-xs font-semibold">${item}</span>`).join('');
+      const renderList = (id, items) => setHtml(id, (items || []).map((item) => `<li>${item}</li>`).join(''));
+      const renderBars = (items) => (items || []).map((item) => `<div><div class="mb-2 flex items-center justify-between text-sm"><span class="font-semibold text-white/72">${item.label}</span><span class="text-white/38">${item.count} / 8</span></div><div class="ledger-bar"><span style="width:${Math.max(10, item.ratio)}%"></span></div></div>`).join('');
+      const renderScoreText = (id, score) => setText(id, typeof score === 'number' ? `${score}점` : '');
+      const renderScorePair = (scoreId, summaryId, block) => { renderScoreText(scoreId, block?.score); setText(summaryId, block?.summary ?? ''); };
+      const renderTrendBar = (id, score, mirrorId) => { const node = qs(id); if (node) node.style.width = `${Math.max(8, Math.min(100, Number(score || 0)))}%`; renderScoreText(mirrorId, Number(score || 0)); };
+      const renderResult = (job) => {
+        const analysis = job?.analysis;
+        const profile = analysis?.profile;
+        const report = analysis?.report;
+        if (!profile || !report) return;
+        if (job?.id) {
+          const nextUrl = `${window.location.pathname}?jobId=${encodeURIComponent(job.id)}`;
+          window.history.replaceState({}, '', nextUrl);
+        }
+        window.localStorage.removeItem(ORDER_STORAGE_KEY);
+        elements.empty?.classList.add('hidden');
+        elements.result?.classList.remove('hidden');
+        setHtml('saju-badges', createBadgeList([
+          profile.calendarType === 'lunar' ? '음력 기준 입력' : '양력 기준 입력',
+          profile.timeKnown ? `출생 시간 ${profile.birthTime}` : '출생 시간 모름',
+          `오행 균형 ${profile.elementSummary.balanceScore}점`,
+          '참고용 라이프 인사이트'
+        ]));
+        setText('saju-headline', report.headline);
+        setText('saju-summary', report.summary);
+        setText('saju-personality', report.personality);
+        const nameBadge = qs('saju-name-badge');
+        if (nameBadge) { const hasName = Boolean(profile.name); nameBadge.classList.toggle('hidden', !hasName); nameBadge.textContent = hasName ? profile.name : ''; }
+        renderScoreText('saju-consistency-score', profile.metaScores.consistencyScore);
+        setText('saju-consistency-comment', report.consistencyComment);
+        renderScoreText('saju-reliability-score', profile.metaScores.reliabilityScore);
+        setText('saju-reliability-comment', report.reliabilityComment);
+        renderScoreText('saju-accuracy-score', profile.metaScores.accuracyScore);
+        setText('saju-accuracy-comment', report.accuracyComment);
+        setText('saju-birth-meta', `${profile.solarDate.year}.${String(profile.solarDate.month).padStart(2, '0')}.${String(profile.solarDate.day).padStart(2, '0')} / ${profile.lunarDate.year}.${String(profile.lunarDate.month).padStart(2, '0')}.${String(profile.lunarDate.day).padStart(2, '0')}${profile.lunarDate.isLeapMonth ? ' 윤달' : ''}`);
+        setText('pillar-year', profile.pillars.korean.year); setText('pillar-month', profile.pillars.korean.month); setText('pillar-day', profile.pillars.korean.day); setText('pillar-hour', profile.pillars.korean.hour);
+        setText('pillar-year-hanja', profile.pillars.hanja.year.hanja); setText('pillar-month-hanja', profile.pillars.hanja.month.hanja); setText('pillar-day-hanja', profile.pillars.hanja.day.hanja); setText('pillar-hour-hanja', profile.pillars.hanja.hour.hanja);
+        setText('saju-day-master', `일간 ${profile.dayMaster}`);
+        setHtml('element-bars', renderBars(profile.elementSummary.items));
+        setText('element-dominant', profile.elementSummary.dominant.join(', '));
+        setText('element-lacking', profile.elementSummary.lacking.join(', '));
+        setText('element-balance', `${profile.elementSummary.balanceScore}점`);
+        renderScorePair('money-score', 'money-summary', report.money);
+        renderScorePair('relationship-score', 'relationship-summary', report.relationship);
+        renderScoreText('work-score', report.work.score); setText('work-summary', report.work.summary);
+        setHtml('work-roles', createBadgeList(report.work.suitableRoles, 'bg-[#59de9b]/10 text-[#59de9b]'));
+        renderScorePair('health-score', 'health-summary', report.health);
+        renderScorePair('yearly-score', 'yearly-summary', report.yearlyFlow);
+        renderScorePair('fortune-today-score', 'fortune-today-summary', report.fortunes.today);
+        renderScorePair('fortune-week-score', 'fortune-week-summary', report.fortunes.thisWeek);
+        renderScorePair('fortune-month-score', 'fortune-month-summary', report.fortunes.thisMonth);
+        renderScorePair('fortune-firsthalf-score', 'fortune-firsthalf-summary', report.fortunes.firstHalf);
+        renderScorePair('fortune-secondhalf-score', 'fortune-secondhalf-summary', report.fortunes.secondHalf);
+        renderScorePair('fortune-year-score', 'fortune-year-summary', report.fortunes.thisYear);
+        renderScorePair('life-midlife-score', 'life-midlife-summary', report.lifeStages.midlife);
+        renderScorePair('life-later-score', 'life-later-summary', report.lifeStages.laterYears);
+        renderTrendBar('fortune-today-bar', report.fortunes.today?.score, 'fortune-today-score-side');
+        renderTrendBar('fortune-week-bar', report.fortunes.thisWeek?.score, 'fortune-week-score-side');
+        renderTrendBar('fortune-month-bar', report.fortunes.thisMonth?.score, 'fortune-month-score-side');
+        renderTrendBar('fortune-firsthalf-bar', report.fortunes.firstHalf?.score, 'fortune-firsthalf-score-side');
+        renderTrendBar('fortune-secondhalf-bar', report.fortunes.secondHalf?.score, 'fortune-secondhalf-score-side');
+        renderTrendBar('fortune-year-bar', report.fortunes.thisYear?.score, 'fortune-year-score-side');
+        setHtml('keyword-list', createBadgeList(report.keywords, 'bg-[#e9c349]/10 text-[#e9c349]'));
+        renderList('strength-list', report.strengths);
+        renderList('blindspot-list', report.blindSpots);
+        renderList('advice-list', report.advice);
+        renderList('rule-hints', profile.ruleHints);
+        setStatus('분석이 완료되었습니다. 결과를 아래에서 확인하세요.', '분석 완료');
+      };
+      const verifyOrder = async (orderId) => { if (!orderId || !API_BASE) return false; const response = await fetch(`${API_BASE}/order/${encodeURIComponent(orderId)}`); const payload = await response.json().catch(() => null); if (!response.ok || !payload) return false; if (payload.status === 'paid') { currentOrderId = orderId; window.localStorage.setItem(ORDER_STORAGE_KEY, orderId); setStatus('결제가 확인되었습니다. 입력값으로 정밀분석을 이어갑니다.', '결제 확인'); return true; } return false; };
+      const requestCheckout = async () => { const currentUrl = window.location.href.split('?')[0]; const response = await fetch(`${API_BASE}/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ productType: 'ai_manseryeok', amount: CHECKOUT_AMOUNT, currency: CHECKOUT_CURRENCY, successUrl: currentUrl, returnUrl: currentUrl }) }); const payload = await response.json().catch(() => null); if (!response.ok || !payload) throw new Error(payload?.error || 'checkout failed'); return payload; };
+      const runAnalysis = async (payload) => { setStatus('만세력 계산과 AI 해석을 생성하는 중입니다.', '분석 중'); const response = await fetch(`${API_BASE}/ai-manseryeok/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...payload, orderId: currentOrderId }) }); const result = await response.json().catch(() => null); if (!response.ok || !result?.job) throw new Error(result?.error || 'analysis failed'); renderResult(result.job); };
+      const loadJobFromQuery = async () => { const params = new URLSearchParams(window.location.search); const jobId = params.get('jobId'); if (!jobId || !API_BASE) return false; const response = await fetch(`${API_BASE}/ai-manseryeok/job/${encodeURIComponent(jobId)}`); const payload = await response.json().catch(() => null); if (!response.ok || !payload?.job) return false; renderResult(payload.job); return true; };
+      document.querySelectorAll('input[name="calendar-type"]').forEach((node) => node.addEventListener('change', syncCalendarUi));
+      elements.timeUnknown?.addEventListener('change', syncTimeUi);
+      elements.submit?.addEventListener('click', async () => {
+        if (!(elements.submit instanceof HTMLButtonElement)) return;
+        try {
+          const payload = buildPayload();
+          savePayload(payload);
+          if (!currentOrderId && paymentMode === 'polar') {
+            setStatus('결제 정보를 생성하는 중입니다.', '결제 준비');
+            const checkout = await requestCheckout();
+            if (checkout.orderId) { currentOrderId = checkout.orderId; window.localStorage.setItem(ORDER_STORAGE_KEY, checkout.orderId); }
+            if (checkout.paid) {
+              setStatus('결제가 바로 확인되었습니다. 분석을 이어갑니다.', '결제 확인');
+            } else if (checkout.checkoutUrl) {
+              window.location.href = checkout.checkoutUrl;
+              return;
+            } else {
+              throw new Error('checkout url is missing');
+            }
+          }
+          elements.submit.disabled = true;
+          await runAnalysis(payload);
+        } catch (error) {
+          setStatus(error instanceof Error ? error.message : '분석을 시작하지 못했습니다.', '오류');
+        } finally {
+          if (elements.submit instanceof HTMLButtonElement) elements.submit.disabled = false;
+        }
+      });
+      (async () => {
+        syncCalendarUi();
+        syncTimeUi();
+        if (!API_BASE) {
+          setStatus('API 서버 주소가 설정되지 않았습니다.', '설정 필요');
+          if (elements.submit instanceof HTMLButtonElement) elements.submit.disabled = true;
+          return;
+        }
+        const renderedFromJob = await loadJobFromQuery();
+        if (renderedFromJob) return;
+        try {
+          const configResponse = await fetch(`${API_BASE}/config`);
+          const config = await configResponse.json().catch(() => null);
+          paymentMode = config?.paymentMode === 'polar' ? 'polar' : 'mock';
+          if (!config?.readiness?.aiManseryeokReady) {
+            setStatus('사주 분석 API가 아직 준비되지 않았습니다.', '설정 필요');
+            if (elements.submit instanceof HTMLButtonElement) elements.submit.disabled = true;
+            return;
+          }
+          if (paymentMode === 'polar' && !config?.paymentProducts?.ai_manseryeok) {
+            setStatus('AI 만세력 결제 상품이 아직 설정되지 않았습니다.', '상품 설정 필요');
+            if (elements.submit instanceof HTMLButtonElement) elements.submit.disabled = true;
+            return;
+          }
+          const savedPayload = restorePayload();
+          if (savedPayload) applyPayload(savedPayload);
+          const params = new URLSearchParams(window.location.search);
+          const savedOrderId = params.get('orderId') || window.localStorage.getItem(ORDER_STORAGE_KEY);
+          const restored = savedOrderId ? await verifyOrder(savedOrderId) : false;
+          if (restored && savedPayload) {
+            if (elements.submit instanceof HTMLButtonElement) elements.submit.disabled = true;
+            try { await runAnalysis(savedPayload); } finally { if (elements.submit instanceof HTMLButtonElement) elements.submit.disabled = false; }
+          } else {
+            setStatus(paymentMode === 'mock' ? 'mock 모드에서는 바로 분석됩니다.' : '입력값을 저장한 뒤 결제 페이지로 이동합니다.', '입력 대기');
+          }
+        } catch {
+          setStatus('초기 설정을 불러오지 못했습니다.', '설정 확인');
+          if (elements.submit instanceof HTMLButtonElement) elements.submit.disabled = true;
+        }
+      })();
+    </script>
+  </main>
+</Layout>

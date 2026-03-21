@@ -13,6 +13,7 @@ import { generateCommerceDetailPage } from './commerce/detailPage.js';
 import { generateAiImage, getModeOptions, getProviderOptions, sanitizeUserInput } from './commerce/aiImageGenerator.js';
 import { analyzeMealCalories } from './commerce/calorieAnalyzer.js';
 import { analyzePersonalColor } from './commerce/personalColorAnalyzer.js';
+import { analyzeSaju } from './commerce/sajuAnalyzer.js';
 import { generateCandidatesWithProvider, getImageProvider, getResolvedImageProvider, isExternalAiEnabled, normalizeRequestedProvider, resolveImageProvider } from './providers/providerRouter.js';
 
 const app = express();
@@ -109,6 +110,7 @@ const getPolarProductMap = () => ({
   calorie: getFirstEnv('POLAR_PRODUCT_CALORIE'),
   donation: getFirstEnv('POLAR_PRODUCT_DONATION'),
   ai_personal_color: getFirstEnv('POLAR_PRODUCT_AI_PERSONAL_COLOR'),
+  ai_manseryeok: getFirstEnv('POLAR_PRODUCT_AI_MANSERYEOK'),
   video_mkv_mp4: getFirstEnv('POLAR_PRODUCT_VIDEO_MKV_MP4'),
   add2: getFirstEnv('POLAR_PRODUCT_ADD2'),
   add3: getFirstEnv('POLAR_PRODUCT_ADD3'),
@@ -223,6 +225,7 @@ app.get('/config', (_req, res) => {
       xaiReady,
       aiImageGeneratorReady: openAiReady || xaiReady,
       aiPersonalColorReady: openAiReady,
+      aiManseryeokReady: openAiReady,
       resendReady: Boolean(resend.apiKey && resend.fromEmail),
       removeBgReady,
       photoroomReady,
@@ -269,6 +272,22 @@ const ensureAiPersonalColorOrder = async (orderId) => {
   if (order.status !== 'paid') throw new Error('payment required');
   if (order.aiPersonalColorJobId) {
     const existingJob = db.aiPersonalColorJobs.get(order.aiPersonalColorJobId);
+    if (existingJob && existingJob.status !== 'failed') {
+      throw new Error('this order has already been used');
+    }
+  }
+  return order;
+};
+
+const ensureAiManseryeokOrder = async (orderId) => {
+  if (!orderId) throw new Error('orderId is required');
+  const current = db.orders.get(orderId);
+  const order = await refreshOrderFromPolarIfNeeded(current);
+  if (!order) throw new Error('order not found');
+  if (order.productType !== 'ai_manseryeok') throw new Error('invalid order product type');
+  if (order.status !== 'paid') throw new Error('payment required');
+  if (order.aiManseryeokJobId) {
+    const existingJob = db.aiManseryeokJobs.get(order.aiManseryeokJobId);
     if (existingJob && existingJob.status !== 'failed') {
       throw new Error('this order has already been used');
     }
@@ -838,6 +857,17 @@ const buildAiPersonalColorResultPageUrl = (jobId) => {
   }
 };
 
+const buildAiManseryeokResultPageUrl = (jobId) => {
+  const base = getFirstEnv('PUBLIC_WEB_BASE_URL', 'WEB_BASE_URL') ?? 'https://manytool.net';
+  try {
+    const url = new URL('/ai-manseryeok/', base);
+    url.searchParams.set('jobId', jobId);
+    return url.toString();
+  } catch {
+    return `https://manytool.net/ai-manseryeok/?jobId=${encodeURIComponent(jobId)}`;
+  }
+};
+
 const sendAiPersonalColorResultEmail = async ({ order, job }) => {
   const resend = getResendConfig();
   if (!resend.apiKey || !resend.fromEmail) throw new Error('Resend is not configured');
@@ -891,6 +921,65 @@ const sendAiPersonalColorResultEmailIfNeeded = async ({ order, job }) => {
     aiPersonalColorEmailSentAt: new Date().toISOString(),
     aiPersonalColorEmailError: null,
     aiPersonalColorEmailPayload: emailPayload
+  };
+  db.orders.set(order.id, nextOrder);
+  return nextOrder;
+};
+
+const sendAiManseryeokResultEmail = async ({ order, job }) => {
+  const resend = getResendConfig();
+  if (!resend.apiKey || !resend.fromEmail) throw new Error('Resend is not configured');
+  if (!order?.customerEmail) throw new Error('customer email is missing');
+  if (!job?.analysis?.report?.summary) throw new Error('manseryeok analysis result is missing');
+
+  const resultPageUrl = buildAiManseryeokResultPageUrl(job.id);
+  const headline = String(job.analysis.report.headline ?? '').trim() || 'AI 만세력 사주팔자 정밀분석 결과';
+
+  const response = await fetch(resendApiUrl, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${resend.apiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      from: resend.fromEmail,
+      to: [order.customerEmail],
+      subject: '[ManyTool] AI 만세력 사주팔자 정밀분석 결과가 준비되었습니다',
+      html: `
+        <div style="font-family:Arial,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;line-height:1.7;color:#0f172a;">
+          <h1 style="font-size:22px;margin:0 0 16px;">AI 만세력 사주팔자 정밀분석 결과가 준비되었습니다</h1>
+          <p style="margin:0 0 8px;"><strong>핵심 요약</strong> ${headline}</p>
+          <p style="margin:0 0 14px;"><strong>해석 요약:</strong> ${job.analysis.report.summary}</p>
+          <p style="margin:0 0 20px;">아래 버튼으로 이동하면 만세력 구성, 오행 분포, 해석 일관성, 재물운/관계운/직업 흐름까지 다시 확인할 수 있습니다.</p>
+          <p style="margin:0 0 22px;">
+            <a href="${resultPageUrl}" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:700;">결과 페이지 열기</a>
+          </p>
+          <p style="margin:0 0 6px;color:#475569;">결과 페이지 URL</p>
+          <p style="margin:0;color:#334155;word-break:break-all;">${resultPageUrl}</p>
+        </div>
+      `
+    })
+  });
+
+  if (!response.ok) {
+    const reason = await response.text();
+    throw new Error(`resend email send failed: ${response.status} ${reason}`);
+  }
+
+  return response.json();
+};
+
+const sendAiManseryeokResultEmailIfNeeded = async ({ order, job }) => {
+  if (!order || !job?.analysis?.report?.summary) return order;
+  if (!order.customerEmail || order.aiManseryeokEmailStatus === 'sent') return order;
+
+  const emailPayload = await sendAiManseryeokResultEmail({ order, job });
+  const nextOrder = {
+    ...order,
+    aiManseryeokEmailStatus: 'sent',
+    aiManseryeokEmailSentAt: new Date().toISOString(),
+    aiManseryeokEmailError: null,
+    aiManseryeokEmailPayload: emailPayload
   };
   db.orders.set(order.id, nextOrder);
   return nextOrder;
@@ -1479,6 +1568,114 @@ app.post('/ai-personal-color/analyze', upload.single('image'), async (req, res) 
   }
 });
 
+app.post('/ai-manseryeok/analyze', async (req, res) => {
+  let job = null;
+  let orderIdForError = null;
+  try {
+    if (!process.env.OPENAI_API_KEY?.trim()) {
+      return res.status(503).json({ error: 'OPENAI_API_KEY is not configured' });
+    }
+
+    const orderId = typeof req.body?.orderId === 'string' ? req.body.orderId.trim() : '';
+    const birthDate = typeof req.body?.birthDate === 'string' ? req.body.birthDate.trim() : '';
+    const birthTime = typeof req.body?.birthTime === 'string' ? req.body.birthTime.trim() : '';
+    const calendarType = req.body?.calendarType === 'lunar' ? 'lunar' : 'solar';
+    const isLeapMonth = Boolean(req.body?.isLeapMonth);
+    const timeUnknown = Boolean(req.body?.timeUnknown);
+    const name = typeof req.body?.name === 'string' ? req.body.name.trim() : '';
+
+    if (!birthDate) {
+      return res.status(400).json({ error: 'birthDate is required' });
+    }
+    if (!timeUnknown && !birthTime) {
+      return res.status(400).json({ error: 'birthTime is required when timeUnknown is false' });
+    }
+
+    const order = await ensureAiManseryeokOrder(orderId);
+    orderIdForError = order.id;
+
+    const jobId = uuidv4();
+    job = {
+      id: jobId,
+      orderId: order.id,
+      status: 'processing',
+      createdAt: new Date().toISOString(),
+      startedAt: new Date().toISOString(),
+      completedAt: null,
+      analysis: null,
+      error: null
+    };
+    db.aiManseryeokJobs.set(jobId, job);
+
+    const analysis = await analyzeSaju({
+      name,
+      birthDate,
+      birthTime,
+      calendarType,
+      isLeapMonth,
+      timeUnknown
+    });
+
+    job.status = 'done';
+    job.completedAt = new Date().toISOString();
+    job.analysis = analysis;
+
+    const nextOrder = {
+      ...order,
+      aiManseryeokJobId: jobId,
+      aiManseryeokEmailStatus: order.aiManseryeokEmailStatus === 'sent' ? 'sent' : 'pending',
+      aiManseryeokEmailError: null
+    };
+    db.orders.set(order.id, nextOrder);
+
+    try {
+      await sendAiManseryeokResultEmailIfNeeded({ order: nextOrder, job });
+    } catch (emailError) {
+      db.orders.set(order.id, {
+        ...nextOrder,
+        aiManseryeokEmailStatus: 'failed',
+        aiManseryeokEmailError: emailError instanceof Error ? emailError.message : 'email send failed'
+      });
+    }
+
+    return res.json({
+      ok: true,
+      job: {
+        id: job.id,
+        orderId: job.orderId,
+        status: job.status,
+        createdAt: job.createdAt,
+        startedAt: job.startedAt,
+        completedAt: job.completedAt,
+        analysis: job.analysis
+      }
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'analysis failed';
+    if (job) {
+      job.status = 'failed';
+      job.completedAt = new Date().toISOString();
+      job.error = message;
+    }
+    if (orderIdForError) {
+      const currentOrder = db.orders.get(orderIdForError);
+      if (currentOrder) {
+        db.orders.set(orderIdForError, {
+          ...currentOrder,
+          aiManseryeokJobId: job?.id ?? currentOrder.aiManseryeokJobId ?? null,
+          aiManseryeokEmailStatus: currentOrder.aiManseryeokEmailStatus ?? 'failed',
+          aiManseryeokEmailError: message
+        });
+      }
+    }
+    if (message === 'order not found') return res.status(404).json({ error: message });
+    if (message === 'invalid order product type') return res.status(400).json({ error: message });
+    if (message === 'payment required') return res.status(402).json({ error: message });
+    if (message === 'this order has already been used') return res.status(409).json({ error: message });
+    return res.status(500).json({ error: message });
+  }
+});
+
 app.get('/ai-image-generator/job/:id', (req, res) => {
   const job = db.aiImageJobs.get(req.params.id);
   if (!job) {
@@ -1494,6 +1691,26 @@ app.get('/ai-personal-color/job/:id', (req, res) => {
   const job = db.aiPersonalColorJobs.get(req.params.id);
   if (!job) {
     return res.status(404).json({ error: 'personal color job not found' });
+  }
+  return res.json({
+    ok: true,
+    job: {
+      id: job.id,
+      orderId: job.orderId,
+      status: job.status,
+      createdAt: job.createdAt,
+      startedAt: job.startedAt ?? null,
+      completedAt: job.completedAt ?? null,
+      analysis: job.analysis ?? null,
+      error: job.error ?? null
+    }
+  });
+});
+
+app.get('/ai-manseryeok/job/:id', (req, res) => {
+  const job = db.aiManseryeokJobs.get(req.params.id);
+  if (!job) {
+    return res.status(404).json({ error: 'manseryeok job not found' });
   }
   return res.json({
     ok: true,
@@ -1908,6 +2125,7 @@ app.post('/checkout', async (req, res) => {
     videoJobId: null,
     aiImageJobId: null,
     aiPersonalColorJobId: null,
+    aiManseryeokJobId: null,
     provider,
     status: paymentMode === 'mock' ? 'paid' : 'pending',
     paymentMode,
@@ -1938,6 +2156,10 @@ app.post('/checkout', async (req, res) => {
     aiPersonalColorEmailSentAt: null,
     aiPersonalColorEmailError: null,
     aiPersonalColorEmailPayload: null,
+    aiManseryeokEmailStatus: null,
+    aiManseryeokEmailSentAt: null,
+    aiManseryeokEmailError: null,
+    aiManseryeokEmailPayload: null,
     refundId: null,
     refundStatus: null,
     refundPayload: null,
