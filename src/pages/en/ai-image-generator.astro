@@ -3,6 +3,25 @@ import AiImageGenerator from '../../components/home/AiImageGenerator';
 import Footer from '../../components/Footer.astro';
 import Header from '../../components/Header.astro';
 import Layout from '../../layouts/Layout.astro';
+
+const seoLinks = [
+  { href: '/en/ai-image-generator/figure', label: 'AI Action Figure Generator' },
+  { href: '/en/ai-image-generator/body-profile', label: 'AI Fitness Photoshoot Generator' },
+  { href: '/en/ai-image-generator/travel-background', label: 'AI Travel Background Generator' },
+  { href: '/en/ai-image-generator/europe-style', label: 'AI Europe Travel Style Generator' },
+  { href: '/en/ai-image-generator/snapshot', label: 'AI Snapshot Generator' },
+  { href: '/en/ai-image-generator/kakao-profile', label: 'AI Social Profile Generator' },
+  { href: '/en/ai-image-generator/instagram-photo', label: 'AI Instagram Photo Generator' },
+  { href: '/en/ai-image-generator/hanbok', label: 'AI Hanbok Style Generator' },
+  { href: '/en/ai-image-generator/kimono', label: 'AI Kimono Style Generator' },
+  { href: '/en/ai-image-generator/outfit-change', label: 'AI Outfit Change Generator' },
+  { href: '/en/ai-image-generator/streamer-promo', label: 'AI Streamer Promo Generator' },
+  { href: '/en/ai-image-generator/pet-humanizer', label: 'AI Pet Humanizer' },
+  { href: '/en/ai-image-generator/hairstyle', label: 'AI Hairstyle Simulator' },
+  { href: '/en/ai-image-generator/interior', label: 'AI Interior Simulator' },
+  { href: '/en/ai-image-generator/animation', label: 'AI Animation Generator' },
+  { href: '/en/ai-image-generator/free-style', label: 'AI Free Style Generator' }
+];
 ---
 
 <Layout
@@ -12,6 +31,19 @@ import Layout from '../../layouts/Layout.astro';
 >
   <Header />
   <main>
+    <section class="mx-auto max-w-6xl px-4 pt-8">
+      <div class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 class="text-xl font-black tracking-tight text-slate-900">Dedicated Style Pages</h2>
+        <p class="mt-2 text-sm leading-6 text-slate-600">These direct URLs help search engines and users reach specific AI image styles faster.</p>
+        <div class="mt-4 flex flex-wrap gap-3">
+          {seoLinks.map((item) => (
+            <a href={item.href} class="rounded-full border border-slate-300 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-900 hover:bg-white hover:text-slate-950">
+              {item.label}
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
     <AiImageGenerator client:load locale="en" />
   </main>
   <Footer />

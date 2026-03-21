@@ -1,0 +1,321 @@
+---
+import Footer from '../../components/Footer.astro';
+import Header from '../../components/Header.astro';
+import Layout from '../../layouts/Layout.astro';
+
+const rawApiBase = (import.meta.env.PUBLIC_NODE_API_BASE ?? '').trim();
+const apiBase = rawApiBase.replace(/\/+$/, '');
+---
+
+<Layout
+  title="MKV to MP4 변환기 | 최대 1.5GB 업로드 | ManyTool"
+  description="FFmpeg 기반 MKV to MP4 변환기입니다. 결제 후 최대 1.5GB MKV 파일을 업로드해 MP4로 변환할 수 있습니다."
+  keywords="mkv to mp4, mkv mp4 변환, 비디오 변환기, ffmpeg mp4, large file video converter"
+>
+  <Header />
+  <main class="mx-auto max-w-5xl px-4 py-8">
+    <section class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+      <p class="text-sm font-semibold uppercase tracking-[0.2em] text-sky-600">Video Converter</p>
+      <h1 class="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">MKV to MP4 변환기</h1>
+      <p class="mt-3 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
+        FFmpeg 기반으로 MKV 파일을 MP4로 변환합니다. 최대 1.5GB 업로드를 지원하며 결제 완료 후 업로드와 변환을 진행할 수 있습니다.
+      </p>
+    </section>
+
+    <section class="mt-6 grid gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
+      <aside class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="rounded-2xl bg-slate-50 p-4">
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Plan</p>
+          <p class="mt-2 text-3xl font-black text-slate-950">$9.99</p>
+          <p class="mt-2 text-sm leading-6 text-slate-600">1회 변환 기준입니다. MKV 원본 1개를 MP4로 변환합니다.</p>
+        </div>
+
+        <button id="video-checkout-button" class="mt-4 w-full rounded-2xl bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800">
+          결제하고 사용하기
+        </button>
+        <p id="video-checkout-status" class="mt-3 text-xs leading-5 text-slate-500">결제 완료 후 업로드가 열립니다.</p>
+
+        <div class="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
+          <p class="font-semibold text-slate-900">제한</p>
+          <ul class="mt-2 list-disc space-y-1 pl-5">
+            <li>최대 업로드: 1.5GB</li>
+            <li>입력 형식: MKV</li>
+            <li>출력 형식: MP4</li>
+            <li>결제 1회당 1개 파일 변환</li>
+          </ul>
+        </div>
+      </aside>
+
+      <section class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2 class="text-lg font-bold text-slate-950">업로드 및 변환</h2>
+            <p class="mt-1 text-sm text-slate-600">결제 상태가 확인되면 MKV 업로드와 변환을 시작할 수 있습니다.</p>
+          </div>
+          <div class="rounded-3xl bg-sky-50 px-5 py-4">
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">Status</p>
+            <p id="video-job-status" class="mt-2 text-xl font-black text-sky-900">결제 필요</p>
+          </div>
+        </div>
+
+        <label class="mt-5 flex min-h-[240px] cursor-pointer flex-col items-center justify-center rounded-[28px] border border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center transition hover:border-slate-950 hover:bg-white">
+          <input id="video-file-input" type="file" accept=".mkv,video/x-matroska,video/*" class="hidden" disabled />
+          <div class="space-y-3">
+            <p class="text-base font-semibold text-slate-900">MKV 파일 선택</p>
+            <p id="video-file-label" class="text-sm leading-6 text-slate-500">결제 완료 후 최대 1.5GB MKV 파일을 업로드할 수 있습니다.</p>
+          </div>
+        </label>
+
+        <button id="video-convert-button" class="mt-4 w-full rounded-2xl bg-sky-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-sky-500 disabled:cursor-not-allowed disabled:bg-slate-300" disabled>
+          MP4 변환 시작
+        </button>
+
+        <div class="mt-5 rounded-[24px] border border-slate-200 bg-slate-50 p-5">
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Result</p>
+          <p id="video-result-message" class="mt-2 text-sm leading-6 text-slate-700">아직 변환 결과가 없습니다.</p>
+          <a id="video-download-link" href="#" class="mt-4 hidden inline-flex rounded-2xl bg-slate-950 px-5 py-3 text-sm font-bold text-white" download>
+            MP4 다운로드
+          </a>
+        </div>
+      </section>
+    </section>
+
+    <script is:inline define:vars={{ apiBase }}>
+      const API_BASE = apiBase || (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'
+        ? 'http://127.0.0.1:8787'
+        : '');
+      const CHECKOUT_AMOUNT = 999;
+      const CHECKOUT_CURRENCY = 'USD';
+      const ORDER_STORAGE_KEY = 'manytool.videoMkvMp4.orderId';
+      const MAX_VIDEO_BYTES = Math.floor(1.5 * 1024 * 1024 * 1024);
+
+      const checkoutButton = document.getElementById('video-checkout-button');
+      const checkoutStatus = document.getElementById('video-checkout-status');
+      const fileInput = document.getElementById('video-file-input');
+      const fileLabel = document.getElementById('video-file-label');
+      const convertButton = document.getElementById('video-convert-button');
+      const jobStatus = document.getElementById('video-job-status');
+      const resultMessage = document.getElementById('video-result-message');
+      const downloadLink = document.getElementById('video-download-link');
+
+      let paymentMode = 'mock';
+      let canUseConverter = false;
+      let currentOrderId = null;
+
+      const setCheckoutStatus = (message) => {
+        if (checkoutStatus) checkoutStatus.textContent = message;
+      };
+
+      const setJobStatus = (message) => {
+        if (jobStatus) jobStatus.textContent = message;
+      };
+
+      const setResultMessage = (message) => {
+        if (resultMessage) resultMessage.textContent = message;
+      };
+
+      const toApiUrl = (value) => {
+        if (!value) return '#';
+        if (value.startsWith('http://') || value.startsWith('https://')) return value;
+        return API_BASE ? `${API_BASE}${value}` : value;
+      };
+
+      const resetDownloadLink = () => {
+        if (downloadLink instanceof HTMLAnchorElement) {
+          downloadLink.href = '#';
+          downloadLink.classList.add('hidden');
+        }
+      };
+
+      const syncButtons = () => {
+        const hasFile = Boolean(fileInput instanceof HTMLInputElement && fileInput.files && fileInput.files.length > 0);
+        if (fileInput instanceof HTMLInputElement) fileInput.disabled = !canUseConverter;
+        if (convertButton instanceof HTMLButtonElement) convertButton.disabled = !(canUseConverter && hasFile);
+      };
+
+      const setPaidState = (orderId) => {
+        currentOrderId = orderId;
+        canUseConverter = true;
+        if (orderId) window.localStorage.setItem(ORDER_STORAGE_KEY, orderId);
+        setCheckoutStatus('결제가 확인되었습니다. 이제 MKV 파일을 업로드할 수 있습니다.');
+        setJobStatus('업로드 대기 중');
+        syncButtons();
+      };
+
+      const verifyExistingOrder = async (orderId) => {
+        if (!orderId || !API_BASE) return false;
+        try {
+          const response = await fetch(`${API_BASE}/order/${encodeURIComponent(orderId)}`);
+          const payload = await response.json().catch(() => null);
+          if (!response.ok || !payload) return false;
+          if (payload.status === 'paid') {
+            setPaidState(orderId);
+            return true;
+          }
+          return false;
+        } catch {
+          return false;
+        }
+      };
+
+      const pollJob = async (jobId) => {
+        while (true) {
+          const response = await fetch(`${API_BASE}/video/mkv-mp4/job/${encodeURIComponent(jobId)}`);
+          const payload = await response.json().catch(() => null);
+          if (!response.ok || !payload?.job) {
+            throw new Error(payload?.error || '작업 상태를 불러오지 못했습니다.');
+          }
+
+          const { job } = payload;
+          if (job.status === 'queued') setJobStatus('변환 대기 중');
+          if (job.status === 'processing') setJobStatus('FFmpeg 변환 중');
+          if (job.status === 'done') {
+            setJobStatus('변환 완료');
+            setResultMessage(`${job.outputName} 다운로드가 준비되었습니다.`);
+            if (downloadLink instanceof HTMLAnchorElement) {
+              downloadLink.href = toApiUrl(job.outputUrl);
+              downloadLink.classList.remove('hidden');
+            }
+            return;
+          }
+          if (job.status === 'failed') {
+            throw new Error(job.error || '변환에 실패했습니다.');
+          }
+
+          await new Promise((resolve) => window.setTimeout(resolve, 2500));
+        }
+      };
+
+      if (fileInput instanceof HTMLInputElement) {
+        fileInput.addEventListener('change', () => {
+          const file = fileInput.files?.[0] ?? null;
+          if (fileLabel) {
+            fileLabel.textContent = file
+              ? `${file.name} / ${(file.size / (1024 * 1024)).toFixed(1)}MB`
+              : '결제 완료 후 최대 1.5GB MKV 파일을 업로드할 수 있습니다.';
+          }
+
+          if (file && file.size > MAX_VIDEO_BYTES) {
+            setResultMessage('파일 용량이 1.5GB를 초과했습니다.');
+          }
+
+          syncButtons();
+        });
+      }
+
+      checkoutButton?.addEventListener('click', async () => {
+        if (!API_BASE) {
+          setCheckoutStatus('API 서버 주소가 설정되지 않았습니다.');
+          return;
+        }
+
+        try {
+          setCheckoutStatus('결제 정보를 생성하는 중입니다...');
+          const currentUrl = window.location.href.split('?')[0];
+          const response = await fetch(`${API_BASE}/checkout`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              productType: 'video_mkv_mp4',
+              amount: CHECKOUT_AMOUNT,
+              currency: CHECKOUT_CURRENCY,
+              successUrl: currentUrl,
+              returnUrl: currentUrl
+            })
+          });
+          const payload = await response.json().catch(() => null);
+          if (!response.ok || !payload) {
+            throw new Error(payload?.error || 'checkout failed');
+          }
+
+          if (payload.orderId) {
+            currentOrderId = payload.orderId;
+            window.localStorage.setItem(ORDER_STORAGE_KEY, payload.orderId);
+          }
+          if (payload.paid) {
+            setPaidState(payload.orderId);
+            return;
+          }
+          if (payload.checkoutUrl) {
+            window.location.href = payload.checkoutUrl;
+            return;
+          }
+          throw new Error('checkout url is missing');
+        } catch (error) {
+          setCheckoutStatus(error instanceof Error ? error.message : '결제를 시작하지 못했습니다.');
+        }
+      });
+
+      convertButton?.addEventListener('click', async () => {
+        if (!(fileInput instanceof HTMLInputElement) || !fileInput.files?.[0] || !currentOrderId) return;
+
+        const selectedFile = fileInput.files[0];
+        if (selectedFile.size > MAX_VIDEO_BYTES) {
+          setJobStatus('실패');
+          setResultMessage('파일 용량이 1.5GB를 초과했습니다.');
+          return;
+        }
+
+        try {
+          const formData = new FormData();
+          formData.append('orderId', currentOrderId);
+          formData.append('video', selectedFile);
+
+          setJobStatus('업로드 중');
+          setResultMessage('파일 업로드와 변환 작업 생성을 진행 중입니다.');
+          resetDownloadLink();
+
+          const response = await fetch(`${API_BASE}/video/mkv-mp4/convert`, {
+            method: 'POST',
+            body: formData
+          });
+          const payload = await response.json().catch(() => null);
+          if (!response.ok || !payload?.jobId) {
+            throw new Error(payload?.error || '변환 작업을 시작하지 못했습니다.');
+          }
+
+          await pollJob(payload.jobId);
+        } catch (error) {
+          setJobStatus('실패');
+          setResultMessage(error instanceof Error ? error.message : '변환에 실패했습니다.');
+        }
+      });
+
+      (async () => {
+        if (!API_BASE) {
+          setCheckoutStatus('API 서버 주소가 설정되지 않았습니다.');
+          return;
+        }
+
+        try {
+          const configResponse = await fetch(`${API_BASE}/config`);
+          const config = await configResponse.json().catch(() => null);
+          paymentMode = config?.paymentMode === 'polar' ? 'polar' : 'mock';
+
+          if (!config?.readiness?.videoConverterReady) {
+            setCheckoutStatus('서버에 FFmpeg가 준비되지 않았습니다.');
+            checkoutButton?.setAttribute('disabled', 'disabled');
+            return;
+          }
+          if (paymentMode === 'polar' && !config?.paymentProducts?.video_mkv_mp4) {
+            setCheckoutStatus('Polar 비디오 변환 상품이 아직 설정되지 않았습니다.');
+            checkoutButton?.setAttribute('disabled', 'disabled');
+            return;
+          }
+
+          const savedOrderId = window.localStorage.getItem(ORDER_STORAGE_KEY);
+          const restored = await verifyExistingOrder(savedOrderId);
+          if (!restored) {
+            setCheckoutStatus(paymentMode === 'mock'
+              ? 'mock 결제로 바로 테스트할 수 있습니다.'
+              : '결제 완료 후 업로드가 열립니다.');
+          }
+          syncButtons();
+        } catch {
+          setCheckoutStatus('초기 설정을 불러오지 못했습니다.');
+        }
+      })();
+    </script>
+  </main>
+  <Footer />
+</Layout>

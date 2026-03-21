@@ -5,7 +5,8 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
 import 'swiper/css/pagination';
 
-type Mode = 'figure' | 'body' | 'travel' | 'europe' | 'proofshot' | 'kakao' | 'instagram' | 'hanbok' | 'kimono' | 'outfit' | 'streamer' | 'pethuman' | 'hairstyle' | 'interior' | 'animation' | 'free';
+export type AiImageMode = 'figure' | 'body' | 'travel' | 'europe' | 'proofshot' | 'kakao' | 'instagram' | 'hanbok' | 'kimono' | 'outfit' | 'streamer' | 'pethuman' | 'hairstyle' | 'interior' | 'animation' | 'free';
+type Mode = AiImageMode;
 type Provider = 'openai' | 'xai';
 type GenerationPhase = 'idle' | 'payment' | 'generating' | 'done' | 'error';
 type Locale = 'ko' | 'en';
@@ -631,11 +632,12 @@ const SLA_SUPPORT_IMAGES = SLA_ALL_IMAGES;
 
 type AiImageGeneratorProps = {
   locale?: Locale;
+  initialMode?: Mode;
 };
 
-export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProps) {
+export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure' }: AiImageGeneratorProps) {
   const modeContentMap = locale === 'en' ? EN_MODE_CONTENT : MODE_CONTENT;
-  const [mode, setMode] = useState<Mode>('figure');
+  const [mode, setMode] = useState<Mode>(initialMode);
   const [userInputs, setUserInputs] = useState<Record<Mode, string>>({
     figure: '',
     body: '',
@@ -666,6 +668,7 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
   const [paymentMode, setPaymentMode] = useState<'mock' | 'polar'>('mock');
   const [isPolarBaseReady, setIsPolarBaseReady] = useState(true);
   const [isPaid, setIsPaid] = useState(false);
+  const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
   const [shouldAutoGenerateAfterPayment, setShouldAutoGenerateAfterPayment] = useState(false);
   const [resultActionMessage, setResultActionMessage] = useState('');
   const [isPromptExpanded, setIsPromptExpanded] = useState(false);
@@ -763,10 +766,41 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
         if (!response.ok || cancelled) return;
         if (payload?.status === 'paid') {
           setIsPaid(true);
+          setCurrentOrderId(orderId);
           setShouldAutoGenerateAfterPayment(true);
         }
       } catch {
         // Keep the page usable even if order verification fails.
+      } finally {
+        if (!cancelled) {
+          window.history.replaceState({}, '', window.location.pathname);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [API_BASE]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !API_BASE) return;
+    const params = new URLSearchParams(window.location.search);
+    const jobId = params.get('jobId');
+    if (!jobId) return;
+
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const job = await pollAiImageJob(jobId);
+        if (cancelled) return;
+        setResultPrompt(job.revisedPrompt || job.prompt || '');
+        setResultImageUrl(resolveResultUrl(job.imageUrl || ''));
+        setIsModalOpen(true);
+        setGenerationPhase('done');
+      } catch {
+        // Ignore invalid result links and keep the page usable.
       } finally {
         if (!cancelled) {
           window.history.replaceState({}, '', window.location.pathname);
@@ -875,6 +909,7 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
           const checkout = await requestBaseCheckout();
           if (checkout.paid) {
             setIsPaid(true);
+            setCurrentOrderId(checkout.orderId ?? null);
           } else if (checkout.checkoutUrl) {
             window.location.href = checkout.checkoutUrl;
             return;
@@ -907,6 +942,9 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
       formData.append('provider', provider);
       formData.append('mode', mode);
       formData.append('userInput', safeInput);
+      if (currentOrderId) {
+        formData.append('orderId', currentOrderId);
+      }
 
       const response = await fetch(`${API_BASE}/ai-image-generator/generate`, {
         method: 'POST',
@@ -925,6 +963,7 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
       setGenerationPhase('done');
       if (paymentMode === 'polar') {
         setIsPaid(false);
+        setCurrentOrderId(null);
       }
       if (typeof window !== 'undefined') {
         window.sessionStorage.removeItem(AI_IMAGE_DRAFT_STORAGE_KEY);
@@ -977,6 +1016,45 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
       }
       await navigator.clipboard.writeText(resultImageUrl);
       setResultActionMessage('결과 이미지 링크를 복사했습니다.');
+    } catch {
+      setResultActionMessage('공유를 완료하지 못했습니다.');
+    }
+  };
+
+  const handleShareResultV2 = async () => {
+    if (!resultImageUrl || typeof window === 'undefined') return;
+    const sharePageUrl = window.location.href;
+    const shareText = `ManyTool AI result\nPage: ${sharePageUrl}\nImage: ${resultImageUrl}`;
+    try {
+      if (navigator.share) {
+        try {
+          const response = await fetch(resultImageUrl);
+          if (!response.ok) throw new Error('share download failed');
+          const blob = await response.blob();
+          const extension = blob.type === 'image/jpeg' ? 'jpg' : 'png';
+          const file = new File([blob], `manytool-ai-${mode}.${extension}`, { type: blob.type || 'image/png' });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              title: 'ManyTool AI Result',
+              text: `ManyTool AI generated image\n${sharePageUrl}`,
+              files: [file]
+            });
+            setResultActionMessage('공유 시트를 열었습니다.');
+            return;
+          }
+        } catch {
+          // Fall back to page link sharing.
+        }
+        await navigator.share({
+          title: 'ManyTool AI Result',
+          text: shareText,
+          url: sharePageUrl
+        });
+        setResultActionMessage('공유 시트를 열었습니다.');
+        return;
+      }
+      await navigator.clipboard.writeText(shareText);
+      setResultActionMessage('페이지 링크와 결과 이미지 링크를 복사했습니다.');
     } catch {
       setResultActionMessage('공유를 완료하지 못했습니다.');
     }
@@ -1361,7 +1439,7 @@ export default function AiImageGenerator({ locale = 'ko' }: AiImageGeneratorProp
                   </button>
                   <button
                     type="button"
-                    onClick={() => { void handleShareResult(); }}
+                    onClick={() => { void handleShareResultV2(); }}
                     className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 transition hover:bg-slate-50"
                   >
                     <Share2 className="h-4 w-4" />

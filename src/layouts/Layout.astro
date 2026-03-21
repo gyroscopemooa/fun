@@ -214,7 +214,10 @@ const sidebarText = {
     { href: withLocalePath(locale, '/ai-image-generator'), label: t('layout.sidebar.aiImage') },
     { href: withLocalePath(locale, '/ai-calorie-calculator'), label: t('layout.sidebar.aiCalorie') },
     { href: withLocalePath(locale, '/ai-id-photo'), label: t('layout.sidebar.aiIdPhoto') },
-    { href: withLocalePath(locale, '/tools/product-detail-studio'), label: t('layout.sidebar.productDetail') }
+    {
+      href: withLocalePath(locale, '/tools/product-detail-studio'),
+      label: locale === 'ko' ? 'AI 상세페이지 생성기' : locale === 'ja' ? 'AI商品詳細ページ生成' : 'AI Product Detail Studio'
+    }
   ]
 };
 

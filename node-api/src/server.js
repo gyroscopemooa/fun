@@ -2,6 +2,7 @@ import 'dotenv/config';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
+import { spawn, spawnSync } from 'node:child_process';
 import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
@@ -20,6 +21,16 @@ const paymentMode = process.env.PAYMENT_MODE ?? 'mock';
 const polarServer = process.env.POLAR_SERVER === 'sandbox' ? 'https://sandbox-api.polar.sh' : 'https://api.polar.sh';
 const polarCheckoutUrl = `${polarServer}/v1/checkouts`;
 const resendApiUrl = 'https://api.resend.com/emails';
+const ffmpegBinary = (process.env.FFMPEG_PATH ?? 'ffmpeg').trim() || 'ffmpeg';
+const VIDEO_MAX_BYTES = Math.floor(1.5 * 1024 * 1024 * 1024);
+const ffmpegReady = (() => {
+  try {
+    const result = spawnSync(ffmpegBinary, ['-version'], { stdio: 'ignore' });
+    return result.status === 0;
+  } catch {
+    return false;
+  }
+})();
 
 const thisFile = fileURLToPath(import.meta.url);
 const thisDir = path.dirname(thisFile);
@@ -28,10 +39,26 @@ const originalDir = path.join(rootDir, 'originals');
 const generatedDir = path.join(rootDir, 'generated');
 const reportsDir = path.join(rootDir, 'reports');
 const jobSnapshotDir = path.join(reportsDir, 'jobs');
+const videoDir = path.join(rootDir, 'video');
+const videoIncomingDir = path.join(videoDir, 'incoming');
+const videoOutputDir = path.join(videoDir, 'output');
 
 await fs.mkdir(originalDir, { recursive: true });
 await fs.mkdir(generatedDir, { recursive: true });
 await fs.mkdir(jobSnapshotDir, { recursive: true });
+await fs.mkdir(videoIncomingDir, { recursive: true });
+await fs.mkdir(videoOutputDir, { recursive: true });
+
+const largeVideoUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, videoIncomingDir),
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname || '').toLowerCase() || '.mkv';
+      cb(null, `${Date.now()}-${uuidv4()}${ext}`);
+    }
+  }),
+  limits: { fileSize: VIDEO_MAX_BYTES }
+});
 
 const allowedOrigins = new Set([
   'https://manytool.net',
@@ -80,6 +107,7 @@ const getPolarProductMap = () => ({
   base: getFirstEnv('POLAR_PRODUCT_BASE', 'POLAR_PRODUCT_ID'),
   calorie: getFirstEnv('POLAR_PRODUCT_CALORIE'),
   donation: getFirstEnv('POLAR_PRODUCT_DONATION'),
+  video_mkv_mp4: getFirstEnv('POLAR_PRODUCT_VIDEO_MKV_MP4'),
   add2: getFirstEnv('POLAR_PRODUCT_ADD2'),
   add3: getFirstEnv('POLAR_PRODUCT_ADD3'),
   add7: getFirstEnv('POLAR_PRODUCT_ADD7'),
@@ -196,7 +224,9 @@ app.get('/config', (_req, res) => {
       removeBgReady,
       photoroomReady,
       polarReady: Boolean(process.env.POLAR_ACCESS_TOKEN) && (polarBaseReady || detailPageTiersReady),
-      polarAddonReady
+      polarAddonReady,
+      ffmpegReady,
+      videoConverterReady: ffmpegReady
     },
     providerAvailability: {
       auto: true,
@@ -209,6 +239,156 @@ app.get('/config', (_req, res) => {
     providerResolutionMap: providerDiagnostics,
     providerDiagnostics
   });
+});
+
+const ensureVideoOrder = async (orderId) => {
+  if (!orderId) throw new Error('orderId is required');
+  const current = db.orders.get(orderId);
+  const order = await refreshOrderFromPolarIfNeeded(current);
+  if (!order) throw new Error('order not found');
+  if (order.productType !== 'video_mkv_mp4') throw new Error('invalid order product type');
+  if (order.status !== 'paid') throw new Error('payment required');
+  if (order.videoJobId) {
+    const existingJob = db.videoJobs.get(order.videoJobId);
+    if (existingJob && existingJob.status !== 'failed') {
+      throw new Error('this order has already been used');
+    }
+  }
+  return order;
+};
+
+const toVideoJobPayload = (job) => ({
+  id: job.id,
+  orderId: job.orderId,
+  status: job.status,
+  createdAt: job.createdAt,
+  startedAt: job.startedAt ?? null,
+  completedAt: job.completedAt ?? null,
+  inputName: job.inputName,
+  inputSize: job.inputSize,
+  outputUrl: job.outputUrl ?? null,
+  outputName: job.outputName ?? null,
+  error: job.error ?? null
+});
+
+const waitForFfmpeg = (args) => new Promise((resolve, reject) => {
+  const child = spawn(ffmpegBinary, args, { stdio: ['ignore', 'ignore', 'pipe'] });
+  let stderr = '';
+  child.stderr.on('data', (chunk) => {
+    stderr += chunk.toString();
+  });
+  child.on('error', reject);
+  child.on('close', (code) => {
+    if (code === 0) {
+      resolve();
+      return;
+    }
+    reject(new Error(stderr.trim() || `ffmpeg exited with code ${code}`));
+  });
+});
+
+const runMkvToMp4Job = async (jobId) => {
+  const job = db.videoJobs.get(jobId);
+  if (!job) return;
+  job.status = 'processing';
+  job.startedAt = new Date().toISOString();
+  db.videoJobs.set(jobId, job);
+
+  const copyArgs = ['-y', '-i', job.inputPath, '-c', 'copy', '-movflags', '+faststart', job.outputPath];
+  const reencodeArgs = ['-y', '-i', job.inputPath, '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '23', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', job.outputPath];
+
+  try {
+    await waitForFfmpeg(copyArgs);
+  } catch {
+    try {
+      await fs.rm(job.outputPath, { force: true });
+    } catch {
+      // ignore stale output cleanup failure
+    }
+    await waitForFfmpeg(reencodeArgs);
+  }
+
+  const next = {
+    ...job,
+    status: 'done',
+    completedAt: new Date().toISOString(),
+    outputUrl: `/files/video/output/${path.basename(job.outputPath)}`
+  };
+  db.videoJobs.set(jobId, next);
+};
+
+app.post('/video/mkv-mp4/convert', largeVideoUpload.single('video'), async (req, res) => {
+  if (!ffmpegReady) {
+    if (req.file?.path) {
+      await fs.rm(req.file.path, { force: true }).catch(() => {});
+    }
+    return res.status(503).json({ error: 'ffmpeg is not configured on the server' });
+  }
+
+  try {
+    const order = await ensureVideoOrder(req.body?.orderId ?? req.query?.orderId ?? null);
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ error: 'video file is required' });
+    }
+
+    const ext = path.extname(file.originalname || '').toLowerCase();
+    const mime = String(file.mimetype || '').toLowerCase();
+    const isMkv = ext === '.mkv' || mime.includes('matroska') || mime === 'video/x-matroska';
+    if (!isMkv) {
+      await fs.rm(file.path, { force: true }).catch(() => {});
+      return res.status(400).json({ error: 'only mkv uploads are allowed' });
+    }
+
+    const jobId = uuidv4();
+    const outputName = `${path.parse(file.filename).name}.mp4`;
+    const outputPath = path.join(videoOutputDir, outputName);
+    const job = {
+      id: jobId,
+      orderId: order.id,
+      status: 'queued',
+      createdAt: new Date().toISOString(),
+      startedAt: null,
+      completedAt: null,
+      inputPath: file.path,
+      inputName: file.originalname,
+      inputSize: file.size,
+      outputPath,
+      outputName,
+      outputUrl: null,
+      error: null
+    };
+
+    db.videoJobs.set(jobId, job);
+    db.orders.set(order.id, { ...order, videoJobId: jobId });
+
+    void runMkvToMp4Job(jobId).catch(async (error) => {
+      const current = db.videoJobs.get(jobId);
+      if (!current) return;
+      db.videoJobs.set(jobId, {
+        ...current,
+        status: 'failed',
+        completedAt: new Date().toISOString(),
+        error: error instanceof Error ? error.message : 'conversion failed'
+      });
+      await fs.rm(outputPath, { force: true }).catch(() => {});
+    });
+
+    return res.status(202).json({ ok: true, jobId, job: toVideoJobPayload(job) });
+  } catch (error) {
+    if (req.file?.path) {
+      await fs.rm(req.file.path, { force: true }).catch(() => {});
+    }
+    return res.status(400).json({ error: error instanceof Error ? error.message : 'failed to start conversion' });
+  }
+});
+
+app.get('/video/mkv-mp4/job/:id', (req, res) => {
+  const job = db.videoJobs.get(req.params.id);
+  if (!job) {
+    return res.status(404).json({ error: 'job not found' });
+  }
+  return res.json({ ok: true, job: toVideoJobPayload(job) });
 });
 
 const getPolarProductIdByType = (productType) => {
@@ -537,6 +717,90 @@ const sendDetailPageResultEmailIfNeeded = async (order) => {
     emailSentAt: new Date().toISOString(),
     emailError: null,
     emailPayload
+  };
+  db.orders.set(order.id, nextOrder);
+  return nextOrder;
+};
+
+const buildAiImageResultPageUrl = (jobId) => {
+  const base = getFirstEnv('PUBLIC_WEB_BASE_URL', 'WEB_BASE_URL') ?? 'https://manytool.net';
+  try {
+    const url = new URL('/ai-image-generator/', base);
+    url.searchParams.set('jobId', jobId);
+    return url.toString();
+  } catch {
+    return `https://manytool.net/ai-image-generator/?jobId=${encodeURIComponent(jobId)}`;
+  }
+};
+
+const buildAbsoluteFileUrl = (relativePath) => {
+  const base = getFirstEnv('PUBLIC_API_BASE_URL', 'API_BASE_URL') ?? 'https://api.manytool.net';
+  try {
+    return new URL(relativePath, base).toString();
+  } catch {
+    return `${base.replace(/\/+$/, '')}${relativePath}`;
+  }
+};
+
+const sendAiImageResultEmail = async ({ order, job }) => {
+  const resend = getResendConfig();
+  if (!resend.apiKey || !resend.fromEmail) throw new Error('Resend is not configured');
+  if (!order?.customerEmail) throw new Error('customer email is missing');
+  if (!job?.imageUrl) throw new Error('ai image result is missing');
+
+  const resultPageUrl = buildAiImageResultPageUrl(job.id);
+  const imageUrl = buildAbsoluteFileUrl(job.imageUrl);
+  const modeLabel = String(job.mode ?? 'ai image').trim();
+
+  const response = await fetch(resendApiUrl, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${resend.apiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      from: resend.fromEmail,
+      to: [order.customerEmail],
+      subject: `[ManyTool] Your AI image is ready`,
+      html: `
+        <div style="font-family:Arial,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;line-height:1.7;color:#0f172a;">
+          <h1 style="font-size:22px;margin:0 0 16px;">Your AI image is ready</h1>
+          <p style="margin:0 0 10px;"><strong>Mode:</strong> ${modeLabel}</p>
+          <p style="margin:0 0 20px;">Use the links below to open the result page or download the generated image directly.</p>
+          <p style="margin:0 0 12px;">
+            <a href="${resultPageUrl}" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:700;">Open result page</a>
+          </p>
+          <p style="margin:0 0 22px;">
+            <a href="${imageUrl}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:700;">Download image</a>
+          </p>
+          <p style="margin:0 0 6px;color:#475569;">Result page URL</p>
+          <p style="margin:0 0 14px;color:#334155;word-break:break-all;">${resultPageUrl}</p>
+          <p style="margin:0 0 6px;color:#475569;">Direct image URL</p>
+          <p style="margin:0;color:#334155;word-break:break-all;">${imageUrl}</p>
+        </div>
+      `
+    })
+  });
+
+  if (!response.ok) {
+    const reason = await response.text();
+    throw new Error(`resend email send failed: ${response.status} ${reason}`);
+  }
+
+  return response.json();
+};
+
+const sendAiImageResultEmailIfNeeded = async ({ order, job }) => {
+  if (!order || !job?.imageUrl) return order;
+  if (!order.customerEmail || order.aiImageEmailStatus === 'sent') return order;
+
+  const emailPayload = await sendAiImageResultEmail({ order, job });
+  const nextOrder = {
+    ...order,
+    aiImageEmailStatus: 'sent',
+    aiImageEmailSentAt: new Date().toISOString(),
+    aiImageEmailError: null,
+    aiImageEmailPayload: emailPayload
   };
   db.orders.set(order.id, nextOrder);
   return nextOrder;
@@ -917,10 +1181,23 @@ app.post('/ai-image-generator/generate', upload.single('image'), async (req, res
       return res.status(503).json({ error: 'XAI_API_KEY is not configured' });
     }
     const userInput = sanitizeUserInput(req.body?.userInput ?? '');
+    const orderId = typeof req.body?.orderId === 'string' ? req.body.orderId.trim() : '';
+    let order = null;
+
+    if (orderId) {
+      order = await refreshOrderFromPolarIfNeeded(db.orders.get(orderId));
+      if (!order) {
+        return res.status(404).json({ error: 'order not found' });
+      }
+      if (order.status !== 'paid') {
+        return res.status(402).json({ error: 'payment required', status: order.status });
+      }
+    }
 
     const generationId = uuidv4();
     const job = {
       id: generationId,
+      orderId: order?.id ?? null,
       provider,
       mode,
       userInput,
@@ -956,10 +1233,29 @@ app.post('/ai-image-generator/generate', upload.single('image'), async (req, res
         job.prompt = generated.prompt;
         job.revisedPrompt = generated.revisedPrompt;
         job.imageUrl = `/files/generated/${generated.fileName}`;
+        if (order?.id) {
+          const nextOrder = {
+            ...order,
+            aiImageJobId: generationId,
+            aiImageEmailStatus: order.aiImageEmailStatus === 'sent' ? 'sent' : 'pending',
+            aiImageEmailError: null
+          };
+          db.orders.set(order.id, nextOrder);
+          await sendAiImageResultEmailIfNeeded({ order: nextOrder, job });
+        }
       } catch (error) {
         job.status = 'failed';
         job.completedAt = new Date().toISOString();
         job.error = error instanceof Error ? error.message : 'ai image generation failed';
+        if (order?.id) {
+          const currentOrder = db.orders.get(order.id) ?? order;
+          db.orders.set(order.id, {
+            ...currentOrder,
+            aiImageJobId: generationId,
+            aiImageEmailStatus: 'failed',
+            aiImageEmailError: job.error
+          });
+        }
       }
     })();
 
@@ -1405,6 +1701,8 @@ app.post('/checkout', async (req, res) => {
     amount: Number(amount),
     currency,
     jobId,
+    videoJobId: null,
+    aiImageJobId: null,
     provider,
     status: paymentMode === 'mock' ? 'paid' : 'pending',
     paymentMode,
@@ -1427,6 +1725,10 @@ app.post('/checkout', async (req, res) => {
     emailSentAt: null,
     emailError: null,
     emailPayload: null,
+    aiImageEmailStatus: null,
+    aiImageEmailSentAt: null,
+    aiImageEmailError: null,
+    aiImageEmailPayload: null,
     refundId: null,
     refundStatus: null,
     refundPayload: null,
@@ -1577,7 +1879,7 @@ app.get('/download/:candidateId', (req, res) => {
 
 app.use((err, _req, res, _next) => {
   if (err?.code === 'LIMIT_FILE_SIZE') {
-    return res.status(413).json({ error: 'image too large (max 12MB)' });
+    return res.status(413).json({ error: `file too large (max ${Math.round(VIDEO_MAX_BYTES / (1024 * 1024))}MB for video uploads)` });
   }
   return res.status(500).json({ error: 'internal server error' });
 });

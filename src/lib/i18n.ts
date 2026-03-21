@@ -176,7 +176,7 @@ const resources = {
           aiImage: 'AI Image Generator',
           aiCalorie: 'AI Calorie Calculator',
           aiIdPhoto: 'AI ID Photo',
-          productDetail: 'Product Detail Studio',
+          productDetail: 'AI Product Detail Studio',
         },
       },
       recommend: {

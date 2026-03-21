@@ -1,5 +1,7 @@
 ﻿import type { APIRoute } from 'astro';
 
+import { getAiImageSeoPathEntries } from '../lib/ai-image-seo';
+
 const paths = [
   '/',
   '/tools',
@@ -9,6 +11,12 @@ const paths = [
   '/what-is-manytool',
   '/online-tools',
   '/ai-search',
+  '/ai-calorie-calculator',
+  '/ai-headshot',
+  '/ai-id-photo',
+  '/ai-image-generator',
+  '/ai-passport-photo',
+  '/ai-photoshop',
   '/seo',
   '/about',
   '/contact',
@@ -38,6 +46,8 @@ const paths = [
   '/love-compatibility',
   '/ladder-game',
   '/streamer-battle',
+  '/tools/product-detail-studio',
+  '/tools/mkv-to-mp4',
   '/tools/scoreboard',
   '/random-picker',
   '/roulette',
@@ -60,7 +70,8 @@ const paths = [
 const localePaths = ['en', 'ja'].flatMap((locale) =>
   paths.map((path) => (path === '/' ? `/${locale}` : `/${locale}${path}`))
 );
-const allPaths = [...paths, ...localePaths];
+const aiImageSeoPaths = getAiImageSeoPathEntries().map((entry) => entry.path);
+const allPaths = [...new Set([...paths, ...localePaths, ...aiImageSeoPaths])];
 
 export const GET: APIRoute = ({ site }) => {
   const base = site ?? new URL('https://manytool.net');

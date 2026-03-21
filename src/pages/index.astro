@@ -82,7 +82,8 @@ const cardSeed = [
   { href: '/fortune-cookie-2026', title: '올해 포츈쿠키', desc: '2026년 키워드 뽑기', icon: '🥠', iconClass: 'bg-amber-100 text-amber-700' },
   { href: '/ladder-game', title: '사다리타기', desc: '랜덤 당첨 뽑기', icon: '🪜', iconClass: 'bg-lime-100 text-lime-700' },
   { href: '/ai-image-generator', title: 'AI 이미지 생성기', desc: '피규어와 바디프로필 스타일 이미지 생성', icon: '🪄', iconClass: 'bg-orange-100 text-orange-700' },
-  { href: '/tools/product-detail-studio', title: '상세페이지 생성기', desc: '사진과 프롬프트로 쇼핑몰 상세페이지 초안 생성', icon: '🛍️', iconClass: 'bg-rose-100 text-rose-700' },
+  { href: '/tools/product-detail-studio', title: 'AI 상세페이지 생성기', desc: '사진과 프롬프트로 쇼핑몰 상세페이지 초안 생성', icon: '🛍️', iconClass: 'bg-rose-100 text-rose-700' },
+  { href: '/tools/mkv-to-mp4', title: 'MKV to MP4 변환기', desc: '최대 1.5GB MKV를 MP4로 변환', icon: '🎬', iconClass: 'bg-sky-100 text-sky-700' },
   { href: '/tools/scoreboard', title: '스트리머 점수판', desc: 'OBS용 실시간 스코어보드', icon: '📊', iconClass: 'bg-teal-100 text-teal-700' },
   { href: '/face-shape-test', title: '얼굴형테스트', desc: '질문 기반 얼굴형 추정', icon: '🧑', iconClass: 'bg-slate-100 text-slate-700' },
   { href: '/nickname-generator', title: '닉네임생성기', desc: '랜덤 닉네임 자동 생성', icon: '🏷️', iconClass: 'bg-lime-100 text-lime-700' },
@@ -124,7 +125,8 @@ const cardTitleI18n: Record<string, { en: string; ja: string }> = {
   '/fortune-cookie-2026': { en: 'Year Fortune Cookie', ja: '今年のフォーチュンクッキー' },
   '/ladder-game': { en: 'Ladder Game', ja: 'あみだくじ' },
   '/ai-image-generator': { en: 'AI Image Generator', ja: 'AI画像生成' },
-  '/tools/product-detail-studio': { en: 'Product Detail Studio', ja: '商品詳細ページ生成' },
+  '/tools/product-detail-studio': { en: 'AI Product Detail Studio', ja: 'AI商品詳細ページ生成' },
+  '/tools/mkv-to-mp4': { en: 'MKV to MP4 Converter', ja: 'MKVからMP4変換' },
   '/tools/scoreboard': { en: 'Streamer Scoreboard', ja: 'ストリーマースコアボード' },
   '/face-shape-test': { en: 'Face Shape Test', ja: '顔型テスト' },
   '/nickname-generator': { en: 'Nickname Generator', ja: 'ニックネーム生成' },
@@ -158,36 +160,6 @@ const rowSize = Math.ceil(cards.length / rowCount);
 const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
   cards.slice(rowIndex * rowSize, (rowIndex + 1) * rowSize)
 ).filter((row) => row.length > 0);
-const faqJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'FAQPage',
-  mainEntity: [
-    {
-      '@type': 'Question',
-      name: 'ManyTool은 어떤 사이트인가요?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: '테스트, 미니게임, 지도, 랜덤 추천 기능을 한 곳에서 제공하는 도구형 포털입니다.'
-      }
-    },
-    {
-      '@type': 'Question',
-      name: '회원가입이 필요한가요?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: '대부분 기능은 회원가입 없이 바로 사용할 수 있습니다.'
-      }
-    },
-    {
-      '@type': 'Question',
-      name: '광고 및 제휴 문의는 어디서 하나요?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'Contact 페이지를 통해 공식 메일로 문의할 수 있습니다.'
-      }
-    }
-  ]
-};
 ---
 
 <Layout
@@ -613,5 +585,4 @@ const faqJsonLd = {
     
   </script>
 
-  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)}></script>
 </Layout>
