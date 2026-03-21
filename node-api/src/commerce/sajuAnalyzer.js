@@ -17,6 +17,101 @@ const STEM_ROLE_HINTS = {
   금: '판단과 기준',
   수: '정보와 흐름'
 };
+const ELEMENT_INTERPRETATION = {
+  목: {
+    strong: {
+      traits: ['성장지향', '추진력', '고집'],
+      strengths: ['도전정신', '확장력'],
+      weaknesses: ['과도한 고집', '충돌'],
+      careers: ['사업', '기획', '창업'],
+      money: '크게 벌 수 있으나 안정성 부족'
+    },
+    weak: {
+      traits: ['소극적', '결단력 부족'],
+      support: '도전 환경이 필요합니다.'
+    }
+  },
+  화: {
+    strong: {
+      traits: ['열정', '표현력', '리더십'],
+      strengths: ['인기', '에너지'],
+      weaknesses: ['과열', '감정기복'],
+      careers: ['연예', '마케팅', '리더직'],
+      money: '소비가 빠를 수 있어 관리가 필요합니다.'
+    },
+    weak: {
+      traits: ['무기력', '표현 부족'],
+      support: '활동성과 표현 리듬을 키울 필요가 있습니다.'
+    }
+  },
+  토: {
+    strong: {
+      traits: ['안정', '보수적'],
+      strengths: ['지속력', '신뢰'],
+      weaknesses: ['변화 거부'],
+      careers: ['관리', '공무', '부동산'],
+      money: '안정적으로 축적하는 흐름입니다.'
+    },
+    weak: {
+      traits: ['불안정', '기반 약함'],
+      support: '루틴과 생활 기반을 먼저 세우는 편이 좋습니다.'
+    }
+  },
+  금: {
+    strong: {
+      traits: ['결단력', '냉정'],
+      strengths: ['판단력', '재물관리'],
+      weaknesses: ['차가움'],
+      careers: ['금융', '법', '관리'],
+      money: '관리 능력이 우수한 편입니다.'
+    },
+    weak: {
+      traits: ['우유부단'],
+      support: '결정 훈련과 기준 정리가 필요합니다.'
+    }
+  },
+  수: {
+    strong: {
+      traits: ['지혜', '유연성'],
+      strengths: ['적응력', '두뇌'],
+      weaknesses: ['우유부단'],
+      careers: ['연구', '기획', 'IT'],
+      money: '흐름형 자산 구조로 들고 나는 움직임이 있습니다.'
+    },
+    weak: {
+      traits: ['감정 부족', '유연성 부족'],
+      support: '소통과 유연성을 키우는 편이 좋습니다.'
+    }
+  }
+};
+const ELEMENT_COLOR_MAP = {
+  목: ['초록', '청록'],
+  화: ['빨강', '주황'],
+  토: ['노랑', '베이지'],
+  금: ['흰색', '회색'],
+  수: ['파랑', '검정']
+};
+const ELEMENT_NUMBER_MAP = {
+  목: ['3', '8'],
+  화: ['2', '7'],
+  토: ['5', '10'],
+  금: ['4', '9'],
+  수: ['1', '6']
+};
+const ELEMENT_DIRECTION_MAP = {
+  목: '동쪽',
+  화: '남쪽',
+  토: '중심축이 잡힌 곳',
+  금: '서쪽',
+  수: '북쪽'
+};
+const ELEMENT_REGION_MAP = {
+  목: '숲과 공원이 가까운 생활권',
+  화: '활동성이 높은 도시 중심권',
+  토: '생활 인프라가 안정적인 주거권',
+  금: '정돈된 업무 중심 도시권',
+  수: '바다나 강과 가까운 수변 생활권'
+};
 
 const scoredBlock = {
   type: 'object',
@@ -266,6 +361,117 @@ const summarizeElementStructure = (counts) => {
   return { items: withRatio, dominant, lacking, maxCount, minCount, spread, balanceScore };
 };
 
+const unique = (items) => [...new Set((items || []).filter(Boolean))];
+
+const buildAnchorScores = (structure) => {
+  const countOf = (element) => structure.items.find((item) => item.key === element)?.count ?? 0;
+  const wood = countOf('목');
+  const fire = countOf('화');
+  const earth = countOf('토');
+  const metal = countOf('금');
+  const water = countOf('수');
+  const balance = structure.balanceScore;
+
+  return {
+    love: clamp(48 + (fire * 7) + (wood * 4) + (water * 2) - (metal * 2) + (balance * 0.08)),
+    marriage: clamp(50 + (earth * 6) + (water * 4) + (metal * 2) - (fire * 1) + (balance * 0.08)),
+    money: clamp(46 + (metal * 7) + (earth * 5) + (water * 3) - (fire * 2) + (balance * 0.1)),
+    business: clamp(45 + (wood * 7) + (fire * 5) + (water * 2) - (earth * 1) + (balance * 0.07)),
+    career: clamp(48 + (metal * 6) + (earth * 5) + (water * 2) + (balance * 0.09)),
+    study: clamp(47 + (water * 7) + (wood * 4) + (metal * 2) + (balance * 0.08)),
+    health: clamp(42 + (balance * 0.42) + (earth * 2) + (water * 1)),
+    social: clamp(48 + (fire * 6) + (wood * 4) + (water * 1) - (metal * 2) + (balance * 0.06)),
+    benefactor: clamp(47 + (metal * 5) + (water * 4) + (earth * 2) + (balance * 0.07)),
+    yearly: clamp(45 + (balance * 0.28) + (water * 2) + (earth * 1))
+  };
+};
+
+const deriveAnchors = ({ detail, structure, age }) => {
+  const sortedDesc = [...structure.items].sort((a, b) => b.count - a.count || ELEMENT_ORDER.indexOf(a.key) - ELEMENT_ORDER.indexOf(b.key));
+  const sortedAsc = [...structure.items].sort((a, b) => a.count - b.count || ELEMENT_ORDER.indexOf(a.key) - ELEMENT_ORDER.indexOf(b.key));
+  const dominantKey = sortedDesc[0]?.key ?? '토';
+  const supportKey = sortedAsc[0]?.key ?? dominantKey;
+  const secondarySupportKey = sortedAsc[1]?.key ?? supportKey;
+  const excessKey = sortedDesc[0]?.key ?? dominantKey;
+  const scores = buildAnchorScores(structure);
+  const dominantDb = ELEMENT_INTERPRETATION[dominantKey]?.strong;
+  const supportDb = ELEMENT_INTERPRETATION[supportKey]?.weak;
+  const secondarySupportDb = ELEMENT_INTERPRETATION[secondarySupportKey]?.weak;
+  const colors = unique([
+    ...(ELEMENT_COLOR_MAP[supportKey] ?? []),
+    ...(ELEMENT_COLOR_MAP[secondarySupportKey] ?? []),
+    ...(ELEMENT_COLOR_MAP[dominantKey] ?? [])
+  ]).slice(0, 3);
+  const numbers = unique([
+    ...(ELEMENT_NUMBER_MAP[supportKey] ?? []),
+    ...(ELEMENT_NUMBER_MAP[secondarySupportKey] ?? []),
+    ...(ELEMENT_NUMBER_MAP[dominantKey] ?? [])
+  ]).slice(0, 3);
+  const careerTop3 = unique([
+    ...(dominantDb?.careers ?? []),
+    ...(ELEMENT_INTERPRETATION[supportKey]?.strong?.careers ?? [])
+  ]).slice(0, 3);
+  const stageFocus = age >= 60 ? '안정적 자산 관리와 생활 리듬 유지' : age >= 35 ? '관계와 자산의 압축 성장' : '성장 동력과 진로 확장';
+
+  return {
+    coreLabel: `${structure.dominant.join('·')} 중심 ${detail.dayElement.stem} 일간`,
+    headline: `${structure.dominant.join('·')} 기운이 앞서는 ${detail.dayElement.stem} 일간 구조`,
+    summaryAnchor: `${dominantKey} 기운이 앞에 서고 ${supportKey} 기운을 보완할수록 흐름이 안정되는 구조입니다.`,
+    dominantTraits: dominantDb?.traits ?? [],
+    dominantStrengths: dominantDb?.strengths ?? [],
+    supportNeed: supportDb?.support ?? '',
+    supportNeedSecondary: secondarySupportDb?.support ?? '',
+    moneyTone: dominantDb?.money ?? '',
+    scores,
+    yongshin: supportKey,
+    huisin: secondarySupportKey,
+    gishin: excessKey,
+    colors,
+    numbers,
+    direction: ELEMENT_DIRECTION_MAP[supportKey] ?? '균형이 잘 잡히는 방향',
+    regionStyle: ELEMENT_REGION_MAP[supportKey] ?? '안정적인 생활권',
+    careerTop3,
+    goodNameStyle: `${ELEMENT_LABELS[supportKey]} 기운을 보완하는 안정형 이름 구조`,
+    lifeDirection: `${stageFocus}에 맞춰 ${supportKey} 기운을 보완하는 선택이 유리합니다.`,
+    moneyStyle: scores.money >= 70 ? '안정적 축적형과 관리형 수익 구조가 잘 맞습니다.' : '한 번에 크게 벌기보다 흐름을 관리하며 쌓는 방식이 유리합니다.',
+    riskyTone: `${supportKey} 기운이 약해지는 구간에는 속도를 낮추고 기준을 다시 세우는 편이 좋습니다.`
+  };
+};
+
+const applyAnchorsToReport = (report, anchors) => ({
+  ...report,
+  headline: anchors.headline,
+  baseCategories: {
+    ...report.baseCategories,
+    love: { ...report.baseCategories.love, score: anchors.scores.love, basis: `평소 사주 기본 성향 기준. ${anchors.coreLabel} 구조를 반영했습니다.` },
+    marriage: { ...report.baseCategories.marriage, score: anchors.scores.marriage, basis: `평소 사주 기본 성향 기준. ${anchors.yongshin} 기운 보완 흐름을 함께 봅니다.` },
+    money: { ...report.baseCategories.money, score: anchors.scores.money, basis: `평소 사주 기본 성향 기준. ${anchors.moneyTone || '축적과 관리 흐름'}를 반영했습니다.` },
+    business: { ...report.baseCategories.business, score: anchors.scores.business, basis: `평소 사주 기본 성향 기준. ${anchors.gishin} 과열을 줄이고 ${anchors.yongshin} 보완 시 더 안정적입니다.` },
+    career: { ...report.baseCategories.career, score: anchors.scores.career, basis: `평소 사주 기본 성향 기준. ${anchors.coreLabel}와 직업 적성 앵커를 반영했습니다.`, suitableRoles: anchors.careerTop3.length ? anchors.careerTop3 : report.baseCategories.career.suitableRoles },
+    study: { ...report.baseCategories.study, score: anchors.scores.study, basis: `평소 사주 기본 성향 기준. ${anchors.yongshin} 보완형 학습 흐름을 반영했습니다.` },
+    health: { ...report.baseCategories.health, score: anchors.scores.health, basis: `평소 사주 기본 성향 기준. 오행 균형도 ${anchors.scores.health}점대 관리 흐름입니다.` },
+    social: { ...report.baseCategories.social, score: anchors.scores.social, basis: `평소 사주 기본 성향 기준. 대인 에너지와 표현 축의 강약을 반영했습니다.` },
+    benefactor: { ...report.baseCategories.benefactor, score: anchors.scores.benefactor, basis: `평소 사주 기본 성향 기준. 도움을 받는 방식과 인맥 구조를 반영했습니다.` }
+  },
+  yearlyFlow: {
+    ...report.yearlyFlow,
+    score: anchors.scores.yearly,
+    basis: `올해 전체 흐름 기준. 기본 사주 축과 현재 리듬을 함께 반영했습니다.`
+  },
+  dosaAdvisory: {
+    ...report.dosaAdvisory,
+    careerTop3: anchors.careerTop3.length ? anchors.careerTop3 : report.dosaAdvisory.careerTop3,
+    moneyStyle: anchors.moneyStyle,
+    goodDirection: anchors.direction,
+    goodRegionStyle: anchors.regionStyle,
+    goodColors: anchors.colors.length ? anchors.colors : report.dosaAdvisory.goodColors,
+    goodNumbers: anchors.numbers.length ? anchors.numbers : report.dosaAdvisory.goodNumbers,
+    goodNameStyle: anchors.goodNameStyle,
+    lifeDirection: anchors.lifeDirection,
+    riskyPeriod: report.dosaAdvisory.riskyPeriod || anchors.riskyTone
+  }
+});
+
 const deriveMetaScores = ({ structure, timeKnown, calendarType, isLeapMonth }) => {
   const dominantGap = structure.maxCount - structure.minCount;
   const lackingPenalty = Math.max(0, structure.lacking.length - 1) * 4;
@@ -375,6 +581,7 @@ export const analyzeSaju = async ({ name = '', birthDate, birthTime, calendarTyp
   const pillarText = detail.toObject();
   const hanjaText = detail.toHanjaObject();
   const dayMaster = `${pillarText.day.slice(0, 1)}${detail.dayElement.stem}`;
+  const anchors = deriveAnchors({ detail, structure, age });
   const dominantSummary = structure.dominant.join(', ');
   const lackingSummary = structure.lacking.join(', ');
   const ruleHints = [
@@ -438,20 +645,21 @@ export const analyzeSaju = async ({ name = '', birthDate, birthTime, calendarTyp
             accuracyScore: metaScores.accuracyScore,
             dominantElements: structure.dominant,
             lackingElements: structure.lacking,
-            hints: ruleHints
+            hints: ruleHints,
+            anchors
           },
           responseGuide: {
-            headline: '핵심 분위기를 한 줄로 요약',
+            headline: `핵심 분위기를 한 줄로 요약하되 반드시 "${anchors.headline}"와 같은 결론 축을 유지`,
             summary: '전체 사주 구조 요약',
             easy_reading: 'AI 도사 한마디, 오행 비유, 언제 의미가 커지는지 쉬운 설명',
             personality: '성향, 판단 방식, 감정 처리 방식',
-            strengths: '강점 3~5개',
-            blind_spots: '주의할 점 3~5개',
-            base_categories: '연애운/결혼운/재물운/사업운/직업운/학업운/건강운/대인관계운/귀인운을 평소 사주 기본 성향 기준 점수와 설명으로 작성. career에는 suitable_roles 포함',
+            strengths: `강점 3~5개. 가능하면 ${anchors.dominantStrengths.join(', ')} 축을 반영`,
+            blind_spots: `주의할 점 3~5개. ${anchors.supportNeed || '부족한 기운 보완'} 관점을 포함`,
+            base_categories: '연애운/결혼운/재물운/사업운/직업운/학업운/건강운/대인관계운/귀인운을 평소 사주 기본 성향 기준 점수와 설명으로 작성. score는 profile.anchors.scores와 크게 다르게 쓰지 말고, career에는 suitable_roles 포함',
             yearly_flow: '올해 전체 흐름 요약',
             fortunes: '오늘/이번주/이번달/상반기/하반기/올해 각각 점수와 구체적 설명',
             life_stages: `현재 나이 ${age}세 기준 생애 흐름. 1번은 ${lifeStageLabels.primary.title}, 2번은 ${lifeStageLabels.secondary.title}`,
-            dosa_advisory: 'AI 도사식 참고 인사이트 묶음. 타이밍/방향/색/숫자/이동/운동/파트너/행동 조언을 긍정적이지만 과장 없이 작성. 투자와 사업은 참고용 보수 문장으로만 작성',
+            dosa_advisory: 'AI 도사식 참고 인사이트 묶음. 타이밍/방향/색/숫자/이동/운동/파트너/행동 조언을 긍정적이지만 과장 없이 작성. 투자와 사업은 참고용 보수 문장으로만 작성. profile.anchors.goodDirection/goodRegionStyle/goodColors/goodNumbers/goodNameStyle 결론을 뒤집지 말 것',
             keywords: '짧은 핵심 키워드',
             advice: '실행 가능한 조언',
             consistency_comment: '같은 입력에서 같은 결과가 유지되는 구조 해석 관점 설명',
@@ -468,7 +676,7 @@ export const analyzeSaju = async ({ name = '', birthDate, birthTime, calendarTyp
   });
 
   const parsed = extractJson(completion.choices?.[0]?.message?.content);
-  const report = normalizeAnalysis(parsed);
+  const report = applyAnchorsToReport(normalizeAnalysis(parsed), anchors);
 
   return {
     profile: {
