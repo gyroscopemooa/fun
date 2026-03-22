@@ -14,6 +14,7 @@ import { generateAiImage, getModeOptions, getProviderOptions, sanitizeUserInput 
 import { analyzeMealCalories } from './commerce/calorieAnalyzer.js';
 import { analyzePersonalColor } from './commerce/personalColorAnalyzer.js';
 import { analyzeSaju } from './commerce/sajuAnalyzer.js';
+import { analyzePetAudio, parsePetAudioPayload } from './commerce/petTranslator.js';
 import { generateCandidatesWithProvider, getImageProvider, getResolvedImageProvider, isExternalAiEnabled, normalizeRequestedProvider, resolveImageProvider } from './providers/providerRouter.js';
 import { getNamingDataset } from './naming/repository.js';
 import { validateNamingInput, validateRecommendInput } from './naming/validate.js';
@@ -101,6 +102,13 @@ app.use(express.json({
 }));
 app.use('/files', express.static(rootDir));
 
+const maybeAudioUpload = (req, res, next) => {
+  if (req.is('multipart/form-data')) {
+    return upload.single('audio')(req, res, next);
+  }
+  return next();
+};
+
 const getFirstEnv = (...keys) => {
   for (const key of keys) {
     const value = process.env[key];
@@ -115,6 +123,101 @@ const getResendConfig = () => ({
   apiKey: getFirstEnv('RESEND_API_KEY'),
   fromEmail: getFirstEnv('RESEND_FROM_EMAIL')
 });
+
+const PET_DAILY_LIMIT = 5;
+const PET_COOLDOWN_MS = 5000;
+
+const getTodayDateKey = () => new Date().toISOString().slice(0, 10);
+
+const seedPetTranslatorTokens = () => {
+  if (db.petTranslatorTokens.size > 0) return;
+
+  const raw = getFirstEnv('PET_TRANSLATOR_TOKENS_JSON');
+  if (!raw) return;
+
+  try {
+    const parsed = JSON.parse(raw);
+    const rows = Array.isArray(parsed)
+      ? parsed
+      : Object.entries(parsed).map(([token, value]) => ({ token, ...(value ?? {}) }));
+
+    for (const row of rows) {
+      const token = typeof row?.token === 'string' ? row.token.trim() : '';
+      if (!token) continue;
+      db.petTranslatorTokens.set(token, {
+        token,
+        usage_count: Number(row?.usage_count ?? 0),
+        last_used_date: typeof row?.last_used_date === 'string' ? row.last_used_date : null,
+        expires_at: typeof row?.expires_at === 'string' ? row.expires_at : null,
+        last_request_at: typeof row?.last_request_at === 'string' ? row.last_request_at : null
+      });
+    }
+  } catch (error) {
+    console.error('Failed to parse PET_TRANSLATOR_TOKENS_JSON', error);
+  }
+};
+
+const getPetTranslatorTokenState = (token) => {
+  seedPetTranslatorTokens();
+
+  const normalized = typeof token === 'string' ? token.trim() : '';
+  if (!normalized) {
+    const error = new Error('token is required');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const record = db.petTranslatorTokens.get(normalized);
+  if (!record) {
+    const error = new Error('invalid token');
+    error.statusCode = 401;
+    throw error;
+  }
+
+  const now = new Date();
+  if (record.expires_at && Number.isFinite(Date.parse(record.expires_at)) && Date.parse(record.expires_at) < now.getTime()) {
+    const error = new Error('token expired');
+    error.statusCode = 403;
+    throw error;
+  }
+
+  const todayKey = getTodayDateKey();
+  const baseRecord = record.last_used_date !== todayKey
+    ? { ...record, usage_count: 0, last_used_date: todayKey }
+    : { ...record };
+
+  const lastRequestAt = baseRecord.last_request_at ? Date.parse(baseRecord.last_request_at) : NaN;
+  if (Number.isFinite(lastRequestAt)) {
+    const elapsed = now.getTime() - lastRequestAt;
+    if (elapsed < PET_COOLDOWN_MS) {
+      const retryAfterMs = PET_COOLDOWN_MS - elapsed;
+      const error = new Error('cooldown active');
+      error.statusCode = 429;
+      error.retryAfterSeconds = Math.ceil(retryAfterMs / 1000);
+      throw error;
+    }
+  }
+
+  if (baseRecord.usage_count >= PET_DAILY_LIMIT) {
+    const error = new Error('daily usage exceeded');
+    error.statusCode = 429;
+    throw error;
+  }
+
+  return baseRecord;
+};
+
+const commitPetTranslatorUsage = (record) => {
+  const next = {
+    ...record,
+    usage_count: Number(record.usage_count ?? 0) + 1,
+    last_used_date: getTodayDateKey(),
+    last_request_at: new Date().toISOString()
+  };
+
+  db.petTranslatorTokens.set(next.token, next);
+  return next;
+};
 
 const getPolarProductMap = () => ({
   base: getFirstEnv('POLAR_PRODUCT_BASE', 'POLAR_PRODUCT_ID'),
@@ -238,6 +341,7 @@ app.get('/config', (_req, res) => {
       aiImageGeneratorReady: openAiReady || xaiReady,
       aiPersonalColorReady: openAiReady,
       aiManseryeokReady: openAiReady,
+      petTranslatorReady: openAiReady,
       resendReady: Boolean(resend.apiKey && resend.fromEmail),
       removeBgReady,
       photoroomReady,
@@ -257,6 +361,75 @@ app.get('/config', (_req, res) => {
     providerResolutionMap: providerDiagnostics,
     providerDiagnostics
   });
+});
+
+app.post('/pet', maybeAudioUpload, async (req, res) => {
+  try {
+    const tokenState = getPetTranslatorTokenState(req.body?.token);
+    const mode = typeof req.body?.mode === 'string' ? req.body.mode.trim() : 'analyze';
+    const animal = typeof req.body?.animal === 'string' ? req.body.animal.trim() : 'dog';
+    const audioInput = parsePetAudioPayload({
+      file: req.file,
+      audio: req.body?.audio,
+      audioMimeType: req.body?.audioMimeType
+    });
+
+    const result = await analyzePetAudio({
+      audioInput,
+      mode,
+      animal
+    });
+
+    const usage = commitPetTranslatorUsage(tokenState);
+
+    if (mode === 'command') {
+      return res.json({
+        ok: true,
+        mode,
+        animal,
+        audio: result.audio,
+        mimeType: result.mimeType,
+        meta: {
+          text: result.text,
+          emotion: result.emotion,
+          description: result.description,
+          transcript: result.transcript,
+          durationSeconds: result.durationSeconds
+        },
+        usage: {
+          usageCount: usage.usage_count,
+          dailyLimit: PET_DAILY_LIMIT,
+          lastUsedDate: usage.last_used_date
+        }
+      });
+    }
+
+    return res.json({
+      ok: true,
+      mode,
+      animal,
+      text: result.text,
+      emotion: result.emotion,
+      description: result.description,
+      transcript: result.transcript,
+      durationSeconds: result.durationSeconds,
+      usage: {
+        usageCount: usage.usage_count,
+        dailyLimit: PET_DAILY_LIMIT,
+        lastUsedDate: usage.last_used_date
+      }
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'pet translator failed';
+    const statusCode = Number.isFinite(error?.statusCode) ? error.statusCode : 500;
+    const retryAfterSeconds = Number.isFinite(error?.retryAfterSeconds) ? error.retryAfterSeconds : null;
+
+    return res.status(statusCode).json({
+      ok: false,
+      error: message,
+      ...(retryAfterSeconds ? { retryAfterSeconds } : {})
+    });
+  }
 });
 
 const ensureVideoOrder = async (orderId) => {
@@ -1841,7 +2014,7 @@ app.post('/name-premium/analyze', async (req, res) => {
     const givenStrokes = given.map((char) => dataset.strokeMap.get(char));
     const grids = calculateFiveGrid({ surnameStroke, givenStrokes });
     const scoreResult = scoreFiveGrid(grids, dataset.luckMap);
-    const explanation = buildNameExplanation({
+    const report = buildNameExplanation({
       surname,
       given,
       grids,
@@ -1859,7 +2032,8 @@ app.post('/name-premium/analyze', async (req, res) => {
       score: scoreResult.score,
       grade: scoreResult.grade,
       details: scoreResult.details,
-      explanation,
+      explanation: report.summary,
+      report,
       parts: chars.map((char) => ({
         hanja: char,
         strokes: dataset.strokeMap.get(char) ?? null,

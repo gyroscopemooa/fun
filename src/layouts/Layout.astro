@@ -76,6 +76,7 @@ const labelMap: Record<string, string> = {
   'personal-color': '퍼스널컬러 테스트',
   'ai-personal-color': 'AI 퍼스널컬러 자가진단',
   'ai-manseryeok': 'AI 만세력 사주팔자 정밀분석',
+  'ai-pet-translator': 'AI 펫 언어 분석기',
   sandbox: '샌드박스',
   'species-war': '종 vs 종 샌드박스',
   'magic-book': '마법책',
@@ -227,6 +228,10 @@ const sidebarText = {
     {
       href: withLocalePath(locale, '/name-premium'),
       label: locale === 'ko' ? 'AI 프리미엄 이름분석 개명추천' : locale === 'ja' ? 'AIプレミアム名前分析・改名推薦' : 'AI Premium Name Analysis'
+    },
+    {
+      href: withLocalePath(locale, '/ai-pet-translator'),
+      label: locale === 'ko' ? 'AI 펫 언어 분석기' : locale === 'ja' ? 'AIペット翻訳機' : 'AI Pet Translator'
     },
     { href: withLocalePath(locale, '/ai-calorie-calculator'), label: t('layout.sidebar.aiCalorie') },
     { href: withLocalePath(locale, '/ai-id-photo'), label: t('layout.sidebar.aiIdPhoto') },
