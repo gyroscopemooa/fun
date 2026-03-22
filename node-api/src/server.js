@@ -890,6 +890,17 @@ const buildAiManseryeokResultPageUrl = (jobId) => {
   }
 };
 
+const buildNamePremiumResultUrl = (orderId) => {
+  const base = getFirstEnv('PUBLIC_WEB_BASE_URL', 'WEB_BASE_URL') ?? 'https://manytool.net';
+  try {
+    const url = new URL('/name-premium/', base);
+    url.searchParams.set('orderId', orderId);
+    return url.toString();
+  } catch {
+    return `https://manytool.net/name-premium/?orderId=${encodeURIComponent(orderId)}`;
+  }
+};
+
 const getAiManseryeokJobPath = (jobId) => path.join(aiManseryeokJobDir, `${jobId}.json`);
 
 const isAiManseryeokJobExpired = (job) => {
@@ -1029,6 +1040,81 @@ const sendAiManseryeokResultEmailIfNeeded = async ({ order, job }) => {
     aiManseryeokEmailSentAt: new Date().toISOString(),
     aiManseryeokEmailError: null,
     aiManseryeokEmailPayload: emailPayload
+  };
+  db.orders.set(order.id, nextOrder);
+  return nextOrder;
+};
+
+const sendNamePremiumResultEmail = async ({ order, currentName, recommendations }) => {
+  const resend = getResendConfig();
+  if (!resend.apiKey || !resend.fromEmail) throw new Error('Resend is not configured');
+  if (!order?.customerEmail) throw new Error('customer email is missing');
+  if (!Array.isArray(recommendations) || recommendations.length === 0) throw new Error('name premium recommendations are missing');
+
+  const resultUrl = buildNamePremiumResultUrl(order.id);
+  const currentSummary = currentName
+    ? `<p style="margin:0 0 14px;"><strong>현재 이름 풀이</strong><br />${currentName}</p>`
+    : '';
+  const recommendationHtml = recommendations
+    .slice(0, 6)
+    .map((item, index) => {
+      const reading = (item.parts ?? []).map((part) => part.meta?.reading).filter(Boolean).join('') || (item.given ?? []).join('');
+      const meaning = (item.parts ?? []).map((part) => part.meta?.meaning).filter(Boolean).join(', ');
+      return `
+        <li style="margin:0 0 12px;">
+          <strong>추천 ${index + 1}. ${reading} (${(item.given ?? []).join('')})</strong><br />
+          점수 ${item.score} / ${item.grade}<br />
+          ${meaning || '이름 의미 데이터 연결 중'}
+        </li>
+      `;
+    })
+    .join('');
+
+  const response = await fetch(resendApiUrl, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${resend.apiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      from: resend.fromEmail,
+      to: [order.customerEmail],
+      subject: '[ManyTool] 프리미엄 이름분석 결과가 준비되었습니다',
+      html: `
+        <div style="font-family:Arial,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;line-height:1.7;color:#0f172a;">
+          <h1 style="font-size:22px;margin:0 0 16px;">프리미엄 이름분석 결과가 준비되었습니다</h1>
+          ${currentSummary}
+          <p style="margin:0 0 8px;"><strong>개명추천 요약</strong></p>
+          <ol style="padding-left:18px;margin:0 0 20px;">${recommendationHtml}</ol>
+          <p style="margin:0 0 20px;">아래 버튼으로 돌아오면 이름풀이, 수리오행, AI 도사 평가, 추천 이유 전체를 다시 확인할 수 있습니다.</p>
+          <p style="margin:0 0 22px;">
+            <a href="${resultUrl}" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:700;">프리미엄 결과 다시 보기</a>
+          </p>
+          <p style="margin:0;color:#334155;word-break:break-all;">${resultUrl}</p>
+        </div>
+      `
+    })
+  });
+
+  if (!response.ok) {
+    const reason = await response.text();
+    throw new Error(`resend email send failed: ${response.status} ${reason}`);
+  }
+
+  return response.json();
+};
+
+const sendNamePremiumResultEmailIfNeeded = async ({ order, currentName, recommendations }) => {
+  if (!order || !Array.isArray(recommendations) || recommendations.length === 0) return order;
+  if (!order.customerEmail || order.aiNamePremiumEmailStatus === 'sent') return order;
+
+  const emailPayload = await sendNamePremiumResultEmail({ order, currentName, recommendations });
+  const nextOrder = {
+    ...order,
+    aiNamePremiumEmailStatus: 'sent',
+    aiNamePremiumEmailSentAt: new Date().toISOString(),
+    aiNamePremiumEmailError: null,
+    aiNamePremiumEmailPayload: emailPayload
   };
   db.orders.set(order.id, nextOrder);
   return nextOrder;
@@ -1729,7 +1815,7 @@ app.post('/ai-manseryeok/analyze', async (req, res) => {
 
 app.post('/name-premium/analyze', async (req, res) => {
   try {
-    await ensureNamePremiumOrder(req.body?.orderId ?? null);
+    const order = await ensureNamePremiumOrder(req.body?.orderId ?? null);
     const validation = validateNamingInput({
       surname: req.body?.surname,
       given: req.body?.given
@@ -1798,7 +1884,7 @@ app.post('/name-premium/analyze', async (req, res) => {
 
 app.post('/name-premium/recommend', async (req, res) => {
   try {
-    await ensureNamePremiumOrder(req.body?.orderId ?? null);
+    const order = await ensureNamePremiumOrder(req.body?.orderId ?? null);
     const validation = validateRecommendInput({
       surname: req.body?.surname,
       topK: req.body?.topK,
@@ -1837,6 +1923,22 @@ app.post('/name-premium/recommend', async (req, res) => {
       }));
     }
 
+    let mailedOrder = order;
+    try {
+      mailedOrder = await sendNamePremiumResultEmailIfNeeded({
+        order,
+        currentName: typeof req.body?.currentName === 'string' ? req.body.currentName.trim() : null,
+        recommendations
+      });
+    } catch (emailError) {
+      mailedOrder = {
+        ...order,
+        aiNamePremiumEmailStatus: 'failed',
+        aiNamePremiumEmailError: emailError instanceof Error ? emailError.message : 'email send failed'
+      };
+      db.orders.set(order.id, mailedOrder);
+    }
+
     return res.json({
       ok: true,
       input: {
@@ -1845,6 +1947,8 @@ app.post('/name-premium/recommend', async (req, res) => {
         givenLength
       },
       recommendations,
+      emailStatus: mailedOrder.aiNamePremiumEmailStatus ?? null,
+      emailError: mailedOrder.aiNamePremiumEmailError ?? null,
       notices: [
         '현재는 단성 기준 추천만 지원합니다.',
         'luck81.csv의 31~81 구간은 seed 상태라 점수가 보수적으로 계산될 수 있습니다.'
@@ -2302,6 +2406,7 @@ app.post('/checkout', async (req, res) => {
     productType = 'add2',
     amount = 0,
     currency = 'KRW',
+    customerEmail = null,
     jobId = null,
     provider = 'polar',
     clientSessionId = null,
@@ -2342,7 +2447,7 @@ app.post('/checkout', async (req, res) => {
     detailPageGeneratedAt: null,
     detailPageGenerationStatus: 'pending',
     detailPageGenerationError: null,
-    customerEmail: null,
+    customerEmail: typeof customerEmail === 'string' ? customerEmail.trim() || null : null,
     emailStatus: null,
     emailSentAt: null,
     emailError: null,
@@ -2359,6 +2464,10 @@ app.post('/checkout', async (req, res) => {
     aiManseryeokEmailSentAt: null,
     aiManseryeokEmailError: null,
     aiManseryeokEmailPayload: null,
+    aiNamePremiumEmailStatus: null,
+    aiNamePremiumEmailSentAt: null,
+    aiNamePremiumEmailError: null,
+    aiNamePremiumEmailPayload: null,
     refundId: null,
     refundStatus: null,
     refundPayload: null,
