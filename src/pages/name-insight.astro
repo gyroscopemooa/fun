@@ -1,45 +1,11 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import NamePremiumLanding from '../components/name-premium/NamePremiumLanding.astro';
-import NamePremiumStudio from '../components/name-premium/NamePremiumStudio.astro';
+import NamePremiumHub from '../components/name-premium/NamePremiumHub.astro';
 ---
 
 <Layout
   title="AI 이름풀이 프리미엄 | ManyTool"
-  description="무료 이름풀이 업그레이드 버전. 이름 구조 해석, 성향 키워드, 사주 연결 포인트까지 확인하는 AI 이름풀이 프리미엄 페이지입니다."
+  description="이름풀이, 개명추천, 개명풀이를 한 화면에서 이어서 보는 프리미엄 이름 분석 허브입니다."
 >
-  <NamePremiumLanding
-    eyebrow="Premium Naming"
-    title="AI 이름풀이 프리미엄"
-    description="무료 재미용 이름풀이에서 한 단계 올라간 버전입니다. 이름의 발음 흐름, 구조 포인트, 성향 해석, 사주팔자 결과와의 연결 포인트까지 한 화면에서 정리하는 유료 전용 페이지로 구성했습니다."
-    heroSummary="이름을 단순 키워드가 아니라 구조형 리포트로 읽는 업그레이드 버전"
-    heroDetail="기본 이름풀이 결과에 더해, 사주에서 부족하거나 보완이 필요한 흐름과 이름의 인상, 사용감, 해석 포인트를 함께 묶어 보여주도록 설계했습니다. 실제 리포트 로직은 이후 CSV DB와 연결해 확장할 예정입니다."
-    featureTitle="포함 예정 항목"
-    featurePoints={[
-      '이름 구조 핵심 해석과 첫인상/호감도 키워드',
-      '사주팔자 결과와 연결되는 보완 포인트 요약',
-      '현재 이름과 추천 이름의 비교형 리포트',
-      '유료 전용 리포트용 저장형 데이터 구조'
-    ]}
-    relatedLinks={[
-      {
-        href: '/name-change-recommendation',
-        title: '개명추천으로 이동',
-        desc: '사주와 이름 데이터를 함께 보고 후보 이름을 고르는 추천형 페이지입니다.'
-      },
-      {
-        href: '/seongmyeonghak',
-        title: '개명풀이로 이동',
-        desc: '후보 이름별 구조와 느낌, 해석 결과를 개별 비교하는 상세 페이지입니다.'
-      },
-      {
-        href: '/ai-manseryeok',
-        title: '사주팔자 결과 다시 보기',
-        desc: 'AI 만세력 분석 결과에서 바로 이름 확장 도구로 다시 연결할 수 있습니다.'
-      }
-    ]}
-  />
-  <div class="mx-auto max-w-6xl px-4 pb-12">
-    <NamePremiumStudio mode="analyze" />
-  </div>
+  <NamePremiumHub initialView="analysis" />
 </Layout>
