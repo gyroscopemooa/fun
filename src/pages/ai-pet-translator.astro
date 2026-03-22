@@ -24,6 +24,13 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
     </div>
 
     <section class="mx-auto max-w-[1180px] px-4 pt-8 sm:px-6 lg:px-8">
+      <div id="pet-diagnostic-banner" class="mb-6 hidden rounded-[28px] border border-amber-200 bg-amber-50/95 p-5 shadow-[0_18px_40px_rgba(180,83,9,0.08)]">
+        <p id="pet-diagnostic-title" class="text-sm font-black uppercase tracking-[0.18em] text-amber-700">Connection Check</p>
+        <p id="pet-diagnostic-message" class="mt-2 text-sm leading-6 text-amber-950">
+          API 연결 상태를 확인하는 중입니다.
+        </p>
+      </div>
+
       <div class="grid gap-6 lg:grid-cols-[1.04fr_0.96fr]">
         <section class="rounded-[34px] border border-rose-100 bg-white/92 p-7 shadow-[0_28px_60px_rgba(92,54,80,0.08)] sm:p-9">
           <p class="inline-flex rounded-full bg-rose-100 px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-rose-700">
@@ -255,6 +262,9 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       const loadingOverlayEl = document.getElementById('pet-loading-overlay');
       const loadingOverlayTitleEl = document.getElementById('pet-loading-overlay-title');
       const loadingOverlayMessageEl = document.getElementById('pet-loading-overlay-message');
+      const diagnosticBannerEl = document.getElementById('pet-diagnostic-banner');
+      const diagnosticTitleEl = document.getElementById('pet-diagnostic-title');
+      const diagnosticMessageEl = document.getElementById('pet-diagnostic-message');
       const usageEl = document.getElementById('pet-usage');
       const textEl = document.getElementById('pet-text');
       const emotionEl = document.getElementById('pet-emotion');
@@ -279,6 +289,9 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       let autoStopTimer = null;
       let isRecording = false;
       let pressActivated = false;
+      let apiReady = false;
+      let tokenReady = false;
+      let serviceReady = true;
 
       const getStoredToken = () => {
         const params = new URLSearchParams(window.location.search);
@@ -305,10 +318,49 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         usageEl.textContent = usage ? `사용량 ${usage.usageCount}/${usage.dailyLimit}` : '사용량 -';
       };
 
+      const setDiagnostic = (visible, title = '', message = '') => {
+        if (!diagnosticBannerEl) return;
+        diagnosticBannerEl.classList.toggle('hidden', !visible);
+        if (diagnosticTitleEl && title) diagnosticTitleEl.textContent = title;
+        if (diagnosticMessageEl && message) diagnosticMessageEl.textContent = message;
+      };
+
       const syncCommandButtonState = () => {
         if (!commandSubmitEl) return;
         const hasText = Boolean((commandTextEl?.value || '').trim());
-        commandSubmitEl.disabled = currentMode !== MODE_COMMAND || !hasText;
+        const blocked = !apiReady || !tokenReady || !serviceReady;
+        commandSubmitEl.disabled = currentMode !== MODE_COMMAND || !hasText || blocked;
+      };
+
+      const syncRecordButtonState = () => {
+        if (!recordHoldEl) return;
+        const blocked = !apiReady || !tokenReady || !serviceReady;
+        recordHoldEl.disabled = blocked;
+        if (!blocked && !isRecording) recordHoldEl.textContent = '길게 눌러 녹음 시작';
+      };
+
+      const refreshAvailability = () => {
+        apiReady = Boolean(API_BASE);
+        tokenReady = Boolean(getStoredToken());
+        const blocked = !apiReady || !tokenReady || !serviceReady;
+
+        if (!apiReady) {
+          setDiagnostic(true, 'API Missing', '현재 페이지에 PUBLIC_NODE_API_BASE가 연결되지 않았습니다. 프론트 배포 환경 변수 확인이 필요합니다.');
+          setStatus('API 서버 주소가 연결되지 않아 요청을 보낼 수 없습니다.');
+        } else if (!serviceReady) {
+          setDiagnostic(true, 'API Not Ready', 'API 서버는 연결됐지만 펫 번역 기능이 준비되지 않았습니다. OPENAI 설정 또는 서버 상태를 확인해야 합니다.');
+          setStatus('펫 번역 API 준비 상태를 확인해 주세요.');
+        } else if (!tokenReady) {
+          setDiagnostic(true, 'Token Missing', '현재 토큰이 없어 요청을 보낼 수 없습니다. URL의 token 또는 petToken 파라미터, 또는 저장된 토큰이 필요합니다.');
+          setStatus('사용 가능한 토큰을 먼저 연결해 주세요.');
+        } else {
+          setDiagnostic(false);
+        }
+
+        if (blocked) setRecorderStatus('설정이 완료되기 전까지는 요청을 보낼 수 없습니다.');
+
+        syncRecordButtonState();
+        syncCommandButtonState();
       };
 
       const setLoadingOverlay = (value, title, message) => {
@@ -324,11 +376,9 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       const setLoading = (value, label = '분석 중...') => {
         loadingEl?.classList.toggle('hidden', !value);
         if (commandSubmitEl) {
-          commandSubmitEl.disabled = value || !(commandTextEl?.value || '').trim();
           commandSubmitEl.textContent = value && currentMode === MODE_COMMAND ? label : '텍스트로 명령 음성 만들기';
         }
         if (recordHoldEl) {
-          recordHoldEl.disabled = value;
           recordHoldEl.textContent = isRecording ? '녹음 중...' : '길게 눌러 녹음 시작';
         }
         if (value) {
@@ -340,6 +390,8 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         } else {
           setLoadingOverlay(false);
         }
+        syncRecordButtonState();
+        syncCommandButtonState();
       };
 
       const resetAudioOutput = () => {
@@ -436,10 +488,10 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
 
         if (currentMode === MODE_ANALYZE) {
           setRecorderStatus('반려동물 소리를 바로 눌러서 녹음하고 손을 떼면 즉시 분석합니다.');
-          setStatus('반려동물 소리를 짧게 녹음해 주세요.');
+          if (apiReady && tokenReady && serviceReady) setStatus('반려동물 소리를 짧게 녹음해 주세요.');
         } else {
           setRecorderStatus('짧은 명령은 텍스트로 직접 쓰는 편이 더 빠르고 비용도 적게 듭니다.');
-          setStatus('짧은 명령 문장을 입력하고 음성을 생성해 주세요.');
+          if (apiReady && tokenReady && serviceReady) setStatus('짧은 명령 문장을 입력하고 음성을 생성해 주세요.');
         }
       };
 
@@ -529,17 +581,22 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       };
 
       const loadConfig = async () => {
-        if (!API_BASE) return;
+        if (!API_BASE) {
+          serviceReady = false;
+          refreshAvailability();
+          return;
+        }
 
         try {
           const response = await fetch(`${API_BASE}/config`);
           const payload = await response.json().catch(() => null);
           if (!response.ok || !payload) throw new Error('config fetch failed');
-          if (!payload?.readiness?.petTranslatorReady) {
-            setStatus('현재 펫 번역 API 준비 상태를 확인해 주세요.');
-          }
+          serviceReady = Boolean(payload?.readiness?.petTranslatorReady);
         } catch {
+          serviceReady = false;
         }
+
+        refreshAvailability();
       };
 
       const callPetApi = async (body, loadingLabel) => {
@@ -548,10 +605,17 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
 
         if (!API_BASE) {
           setStatus('PUBLIC_NODE_API_BASE 설정이 필요합니다.');
+          refreshAvailability();
           return null;
         }
         if (!token) {
           setStatus('사용 가능한 토큰을 찾지 못했습니다. 결제 또는 발급 흐름을 먼저 연결해 주세요.');
+          refreshAvailability();
+          return null;
+        }
+        if (!serviceReady) {
+          setStatus('펫 번역 API 준비 상태를 먼저 확인해 주세요.');
+          refreshAvailability();
           return null;
         }
 
@@ -562,9 +626,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         try {
           const response = await fetch(`${API_BASE}/api/pet`, {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               token,
               animal,
@@ -595,6 +657,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           return null;
         } finally {
           setLoading(false);
+          refreshAvailability();
         }
       };
 
@@ -620,14 +683,12 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           return;
         }
 
-        await callPetApi({
-          text: textValue
-        }, '명령 생성 중...');
+        await callPetApi({ text: textValue }, '명령 생성 중...');
       };
 
       const handleRecordPressStart = async (event) => {
         event.preventDefault();
-        if (currentMode !== MODE_ANALYZE || isRecording || pressActivated) return;
+        if (currentMode !== MODE_ANALYZE || isRecording || pressActivated || !apiReady || !tokenReady || !serviceReady) return;
         pressActivated = true;
         await startRecordingNow();
       };
@@ -641,7 +702,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
 
       const handleRecordButtonClick = async (event) => {
         event.preventDefault();
-        if (currentMode !== MODE_ANALYZE || pressActivated) return;
+        if (currentMode !== MODE_ANALYZE || pressActivated || !apiReady || !tokenReady || !serviceReady) return;
         if (isRecording) {
           stopRecording();
           return;
@@ -658,9 +719,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       commandTextEl?.addEventListener('keydown', (event) => {
         if (event.key === 'Enter' && !event.shiftKey) {
           event.preventDefault();
-          if (!commandSubmitEl?.disabled) {
-            void submitCommandText();
-          }
+          if (!commandSubmitEl?.disabled) void submitCommandText();
         }
       });
 
@@ -677,16 +736,22 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       });
       commandSubmitEl?.addEventListener('click', () => {
         if (commandSubmitEl.disabled) {
+          refreshAvailability();
           commandTextEl?.focus();
           return;
         }
         void submitCommandText();
       });
 
+      window.addEventListener('storage', (event) => {
+        if (event.key === TOKEN_STORAGE_KEY) refreshAvailability();
+      });
+
       resetAudioOutput();
       refreshMeter(false);
       setRecordingUi(false);
       setMode(MODE_ANALYZE);
+      refreshAvailability();
       loadConfig();
     </script>
   </main>
