@@ -6,45 +6,46 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
 ---
 
 <Layout
-  title="AI 펫 언어 분석기 | 강아지 고양이 울음 번역기와 명령기"
-  description="강아지와 고양이 소리를 AI로 분석해 사람 말처럼 해석하고, 명령 모드에서는 펫 스타일 음성까지 생성하는 ManyTool AI 펫 언어 분석기입니다."
-  keywords="AI 펫 언어 분석기, 강아지 번역기, 고양이 번역기, 펫 명령기, 반려동물 소리 해석, pet translator"
+  title="AI 펫 언어 분석기 | 강아지 고양이 소리 번역기"
+  description="강아지와 고양이 소리를 바로 녹음해 사람 말처럼 해석하고, 명령 모드에서는 펫 스타일 음성까지 만드는 ManyTool AI 펫 언어 분석기입니다."
+  keywords="AI 펫 언어 분석기, 강아지 번역기, 고양이 번역기, 펫 명령기, 반려동물 번역, pet translator"
 >
-  <main class="bg-[radial-gradient(circle_at_top,#fff4ef,transparent_42%),linear-gradient(180deg,#fffaf7_0%,#f7f3ff_100%)] pb-20">
+  <main class="bg-[radial-gradient(circle_at_top,#fff4ef,transparent_42%),linear-gradient(180deg,#fffaf7_0%,#f5f3ff_100%)] pb-20">
     <section class="mx-auto max-w-[1180px] px-4 pt-10 sm:px-6 lg:px-8">
-      <div class="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-        <div class="rounded-[32px] border border-rose-100 bg-white/90 p-7 shadow-[0_28px_60px_rgba(92,54,80,0.08)] sm:p-9">
-          <p class="inline-flex rounded-full bg-rose-100 px-4 py-2 text-[11px] font-black uppercase tracking-[0.24em] text-rose-700">
+      <div class="grid gap-6 lg:grid-cols-[1.02fr_0.98fr]">
+        <section class="rounded-[34px] border border-rose-100 bg-white/90 p-7 shadow-[0_28px_60px_rgba(92,54,80,0.08)] sm:p-9">
+          <p class="inline-flex rounded-full bg-rose-100 px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-rose-700">
             Pet Translator
           </p>
           <h1 class="mt-4 text-3xl font-black tracking-tight text-slate-950 sm:text-5xl">
             AI 펫 언어 분석기, 명령기
           </h1>
           <p class="mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
-            강아지와 고양이 소리를 사람 말처럼 짧고 자연스럽게 해석하고, 명령 모드에서는 펫 스타일 음성까지 생성합니다.
-            토큰 인증, 일일 사용량 제한, 쿨다운이 포함된 SaaS형 분석기 구조로 붙였습니다.
+            모바일에서 바로 녹음 버튼을 눌러 강아지나 고양이 소리를 들려주면 사람 말처럼 짧고 자연스럽게 해석합니다.
+            명령 모드에서는 결과를 펫 스타일 음성으로 다시 돌려줍니다.
           </p>
+
           <div class="mt-6 grid gap-3 sm:grid-cols-3">
             <div class="rounded-[24px] bg-rose-50 p-4">
-              <p class="text-xs font-black uppercase tracking-[0.18em] text-rose-600">Analyze</p>
-              <p class="mt-2 text-sm leading-6 text-slate-700">3줄 해석으로 감정과 상황을 빠르게 요약합니다.</p>
+              <p class="text-xs font-black uppercase tracking-[0.18em] text-rose-600">즉시 분석</p>
+              <p class="mt-2 text-sm leading-6 text-slate-700">녹음만 하면 3줄 번역 결과로 바로 요약합니다.</p>
             </div>
             <div class="rounded-[24px] bg-amber-50 p-4">
-              <p class="text-xs font-black uppercase tracking-[0.18em] text-amber-700">Command</p>
-              <p class="mt-2 text-sm leading-6 text-slate-700">번역된 문장을 펫 스타일 명령 음성으로 돌려줍니다.</p>
+              <p class="text-xs font-black uppercase tracking-[0.18em] text-amber-700">명령 음성</p>
+              <p class="mt-2 text-sm leading-6 text-slate-700">명령 모드에서는 펫 스타일 음성까지 생성합니다.</p>
             </div>
             <div class="rounded-[24px] bg-emerald-50 p-4">
-              <p class="text-xs font-black uppercase tracking-[0.18em] text-emerald-700">Guardrail</p>
-              <p class="mt-2 text-sm leading-6 text-slate-700">토큰, 일일 5회 제한, 5초 쿨다운을 함께 검증합니다.</p>
+              <p class="text-xs font-black uppercase tracking-[0.18em] text-emerald-700">SaaS 보호</p>
+              <p class="mt-2 text-sm leading-6 text-slate-700">일일 사용량 제한과 쿨다운이 API에서 함께 관리됩니다.</p>
             </div>
           </div>
-        </div>
+        </section>
 
-        <section class="rounded-[32px] border border-white/70 bg-white/85 p-6 shadow-[0_28px_60px_rgba(56,60,94,0.08)] sm:p-8">
+        <section class="rounded-[34px] border border-white/70 bg-white/88 p-6 shadow-[0_28px_60px_rgba(56,60,94,0.08)] sm:p-8">
           <div class="flex items-center justify-between gap-3">
             <div>
-              <p class="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Studio Input</p>
-              <h2 class="mt-2 text-2xl font-black text-slate-950">소리 업로드</h2>
+              <p class="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Recorder Studio</p>
+              <h2 class="mt-2 text-2xl font-black text-slate-950">바로 녹음하기</h2>
             </div>
             <span id="pet-readiness" class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
               확인 중
@@ -52,11 +53,6 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           </div>
 
           <div class="mt-6 space-y-4">
-            <label class="block">
-              <span class="mb-2 block text-sm font-bold text-slate-800">API 토큰</span>
-              <input id="pet-token" type="text" placeholder="pet_live_xxxxx" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-rose-400 focus:ring-4 focus:ring-rose-100" />
-            </label>
-
             <label class="block">
               <span class="mb-2 block text-sm font-bold text-slate-800">동물 선택</span>
               <select id="pet-animal" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-rose-400 focus:ring-4 focus:ring-rose-100">
@@ -72,21 +68,54 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
                 <option value="command">명령 음성 생성</option>
               </select>
             </label>
+          </div>
 
-            <label class="block">
-              <span class="mb-2 block text-sm font-bold text-slate-800">오디오 파일</span>
-              <input id="pet-audio" type="file" accept="audio/*" class="block w-full rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm text-slate-700 file:mr-4 file:rounded-full file:border-0 file:bg-slate-900 file:px-4 file:py-2 file:text-sm file:font-bold file:text-white hover:border-slate-400" />
-            </label>
+          <div class="mt-5 rounded-[28px] bg-[linear-gradient(135deg,#fff1f2_0%,#f5f3ff_100%)] p-5">
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <p class="text-sm font-black text-slate-900">녹음 상태</p>
+                <p id="pet-recorder-status" class="mt-2 text-sm leading-6 text-slate-600">버튼을 누르면 3, 2, 1 카운트다운 후 녹음이 시작됩니다.</p>
+              </div>
+              <div id="pet-countdown" class="flex h-16 w-16 items-center justify-center rounded-full bg-white text-2xl font-black text-rose-600 shadow-sm">
+                -
+              </div>
+            </div>
+
+            <div class="mt-5 rounded-[24px] bg-white/90 p-4">
+              <div class="flex items-center justify-between gap-3">
+                <p class="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Live Meter</p>
+                <span id="pet-recording-badge" class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">대기 중</span>
+              </div>
+              <div class="mt-4 flex h-20 items-end gap-2">
+                <span class="pet-bar h-4 flex-1 rounded-full bg-rose-200"></span>
+                <span class="pet-bar h-8 flex-1 rounded-full bg-rose-200"></span>
+                <span class="pet-bar h-6 flex-1 rounded-full bg-rose-200"></span>
+                <span class="pet-bar h-10 flex-1 rounded-full bg-rose-200"></span>
+                <span class="pet-bar h-5 flex-1 rounded-full bg-rose-200"></span>
+                <span class="pet-bar h-7 flex-1 rounded-full bg-rose-200"></span>
+                <span class="pet-bar h-3 flex-1 rounded-full bg-rose-200"></span>
+                <span class="pet-bar h-9 flex-1 rounded-full bg-rose-200"></span>
+              </div>
+            </div>
+
+            <div class="mt-5 grid gap-3 sm:grid-cols-2">
+              <button id="pet-record" type="button" class="rounded-[22px] bg-[linear-gradient(135deg,#d6336c_0%,#fb7185_100%)] px-5 py-4 text-sm font-black text-white shadow-[0_16px_34px_rgba(214,51,108,0.26)] transition hover:translate-y-[-1px]">
+                녹음 시작
+              </button>
+              <button id="pet-stop" type="button" class="rounded-[22px] bg-slate-900 px-5 py-4 text-sm font-black text-white transition disabled:cursor-not-allowed disabled:bg-slate-300" disabled>
+                녹음 종료
+              </button>
+            </div>
+
+            <button id="pet-submit" type="button" class="mt-3 w-full rounded-[22px] bg-[linear-gradient(135deg,#7c3aed_0%,#4338ca_100%)] px-5 py-4 text-sm font-black text-white shadow-[0_16px_34px_rgba(79,70,229,0.26)] transition hover:translate-y-[-1px] disabled:cursor-not-allowed disabled:opacity-60" disabled>
+              녹음 후 분석 시작
+            </button>
           </div>
 
           <div class="mt-5 rounded-[24px] bg-slate-50 p-4 text-sm leading-6 text-slate-600">
             <p class="font-bold text-slate-900">사용법</p>
-            <p class="mt-2">토큰을 넣고 동물과 모드를 고른 뒤 오디오를 업로드하면 됩니다. 분석은 3줄 결과, 명령 모드는 음성까지 같이 돌려줍니다.</p>
+            <p class="mt-2">반려동물 소리를 들려주거나, 명령 모드에서는 말하고 싶은 내용을 녹음한 뒤 분석을 시작하세요. 일반 사용 화면에서는 API 토큰을 직접 입력하지 않도록 숨겨져 있습니다.</p>
           </div>
-
-          <button id="pet-submit" type="button" class="mt-5 w-full rounded-[22px] bg-[linear-gradient(135deg,#d6336c_0%,#7c3aed_100%)] px-5 py-4 text-sm font-black text-white shadow-[0_16px_34px_rgba(124,58,237,0.26)] transition hover:translate-y-[-1px]">
-            펫 언어 분석 시작
-          </button>
         </section>
       </div>
     </section>
@@ -109,13 +138,13 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
               <div class="h-10 w-10 animate-spin rounded-full border-4 border-violet-200 border-t-violet-600"></div>
               <div>
                 <p class="text-sm font-black text-violet-900">AI가 펫 소리를 해석 중입니다</p>
-                <p class="mt-1 text-sm text-violet-700">음성 전사, 감정 해석, 결과 생성 순서로 처리합니다.</p>
+                <p class="mt-1 text-sm text-violet-700">음성 전사, 감정 해석, 결과 생성을 순서대로 처리합니다.</p>
               </div>
             </div>
           </div>
 
           <p id="pet-status" class="mt-6 text-sm leading-7 text-slate-500">
-            아직 결과가 없습니다. 파일을 업로드하고 분석을 시작하세요.
+            아직 결과가 없습니다. 녹음을 시작하고 분석 버튼을 눌러주세요.
           </p>
 
           <div class="mt-6 grid gap-4 sm:grid-cols-3">
@@ -149,7 +178,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           <p class="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Command Audio</p>
           <h2 class="mt-2 text-2xl font-black text-slate-950">펫 스타일 출력</h2>
           <p class="mt-3 text-sm leading-7 text-slate-600">
-            명령 모드일 때 번역된 문장을 음성으로 다시 돌려줍니다. 분석 모드에서는 이 영역이 비활성화됩니다.
+            명령 모드일 때만 번역된 문장을 음성으로 다시 돌려줍니다. 분석 모드에서는 이 영역이 비활성화됩니다.
           </p>
 
           <div id="pet-audio-card" class="mt-6 rounded-[28px] bg-[linear-gradient(135deg,#101828_0%,#312e81_100%)] p-5 text-white opacity-50">
@@ -159,11 +188,12 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           </div>
 
           <div class="mt-6 rounded-[24px] bg-slate-50 p-5">
-            <p class="text-sm font-bold text-slate-900">API 응답 형식</p>
+            <p class="text-sm font-bold text-slate-900">작동 흐름</p>
             <ul class="mt-3 space-y-2 text-sm leading-6 text-slate-600">
-              <li>`analyze` -> 문장, 감정, 짧은 설명</li>
-              <li>`command` -> 생성 음성 base64와 보조 메타</li>
-              <li>토큰별 일일 5회, 5초 쿨다운</li>
+              <li>1. 3초 카운트다운 후 녹음 시작</li>
+              <li>2. STT로 소리 길이와 전사 내용 추출</li>
+              <li>3. 3줄 형식으로 감정과 의미 요약</li>
+              <li>4. 명령 모드면 펫 스타일 음성 추가 생성</li>
             </ul>
           </div>
         </aside>
@@ -172,10 +202,13 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
 
     <script is:inline define:vars={{ apiBase }}>
       const API_BASE = apiBase;
-      const tokenEl = document.getElementById('pet-token');
+      const TOKEN_STORAGE_KEY = 'manytool.pet.token';
+      const PARAM_KEYS = ['token', 'petToken'];
+
       const animalEl = document.getElementById('pet-animal');
       const modeEl = document.getElementById('pet-mode');
-      const audioEl = document.getElementById('pet-audio');
+      const recordEl = document.getElementById('pet-record');
+      const stopEl = document.getElementById('pet-stop');
       const submitEl = document.getElementById('pet-submit');
       const statusEl = document.getElementById('pet-status');
       const loadingEl = document.getElementById('pet-loading');
@@ -186,27 +219,51 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       const descriptionEl = document.getElementById('pet-description');
       const transcriptEl = document.getElementById('pet-transcript');
       const durationEl = document.getElementById('pet-duration');
+      const recorderStatusEl = document.getElementById('pet-recorder-status');
+      const countdownEl = document.getElementById('pet-countdown');
+      const recordingBadgeEl = document.getElementById('pet-recording-badge');
       const audioCardEl = document.getElementById('pet-audio-card');
       const resultAudioEl = document.getElementById('pet-result-audio');
       const downloadEl = document.getElementById('pet-download');
+      const meterBars = Array.from(document.querySelectorAll('.pet-bar'));
 
-      const setLoading = (value) => {
-        loadingEl?.classList.toggle('hidden', !value);
-        submitEl.disabled = value;
-        submitEl.textContent = value ? '분석 중...' : '펫 언어 분석 시작';
+      let recorder = null;
+      let recordedChunks = [];
+      let recordedBlob = null;
+      let recordingStream = null;
+      let countdownTimer = null;
+      let meterTimer = null;
+      let isRecording = false;
+
+      const getStoredToken = () => {
+        const params = new URLSearchParams(window.location.search);
+        for (const key of PARAM_KEYS) {
+          const value = params.get(key)?.trim();
+          if (value) {
+            window.localStorage.setItem(TOKEN_STORAGE_KEY, value);
+            return value;
+          }
+        }
+        return window.localStorage.getItem(TOKEN_STORAGE_KEY)?.trim() || '';
       };
 
       const setStatus = (message) => {
         if (statusEl) statusEl.textContent = message;
       };
 
+      const setRecorderStatus = (message) => {
+        if (recorderStatusEl) recorderStatusEl.textContent = message;
+      };
+
       const setUsage = (usage) => {
         if (!usageEl) return;
-        if (!usage) {
-          usageEl.textContent = '사용량: -';
-          return;
-        }
-        usageEl.textContent = `사용량: ${usage.usageCount}/${usage.dailyLimit}`;
+        usageEl.textContent = usage ? `사용량: ${usage.usageCount}/${usage.dailyLimit}` : '사용량: -';
+      };
+
+      const setLoading = (value) => {
+        loadingEl?.classList.toggle('hidden', !value);
+        submitEl.disabled = value || !recordedBlob;
+        submitEl.textContent = value ? '분석 중...' : '녹음 후 분석 시작';
       };
 
       const resetAudioOutput = () => {
@@ -221,33 +278,39 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         audioCardEl?.classList.add('opacity-50');
       };
 
-      const fileToBase64 = (file) => new Promise((resolve, reject) => {
+      const refreshMeter = (active) => {
+        meterBars.forEach((bar, index) => {
+          const height = active ? 18 + Math.round(Math.random() * 48) : 12 + ((index % 4) * 8);
+          bar.style.height = `${height}px`;
+          bar.classList.toggle('bg-rose-500', active);
+          bar.classList.toggle('bg-rose-200', !active);
+        });
+      };
+
+      const stopMeter = () => {
+        window.clearInterval(meterTimer);
+        meterTimer = null;
+        refreshMeter(false);
+      };
+
+      const startMeter = () => {
+        stopMeter();
+        refreshMeter(true);
+        meterTimer = window.setInterval(() => refreshMeter(true), 180);
+      };
+
+      const stopStreamTracks = () => {
+        if (!recordingStream) return;
+        recordingStream.getTracks().forEach((track) => track.stop());
+        recordingStream = null;
+      };
+
+      const blobToDataUrl = (blob) => new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
-        reader.onerror = () => reject(new Error('오디오를 읽지 못했습니다.'));
-        reader.readAsDataURL(file);
+        reader.onerror = () => reject(new Error('녹음 데이터를 읽지 못했습니다.'));
+        reader.readAsDataURL(blob);
       });
-
-      const loadConfig = async () => {
-        if (!API_BASE) {
-          readinessEl.textContent = 'API 없음';
-          readinessEl.className = 'rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-700';
-          return;
-        }
-
-        try {
-          const response = await fetch(`${API_BASE}/config`);
-          const payload = await response.json().catch(() => null);
-          const ready = Boolean(payload?.readiness?.petTranslatorReady);
-          readinessEl.textContent = ready ? 'API 연결됨' : 'API 준비 필요';
-          readinessEl.className = ready
-            ? 'rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700'
-            : 'rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700';
-        } catch {
-          readinessEl.textContent = 'API 오류';
-          readinessEl.className = 'rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-700';
-        }
-      };
 
       const renderAnalyzeResult = (payload) => {
         textEl.textContent = payload?.text || '-';
@@ -275,32 +338,137 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         audioCardEl?.classList.remove('opacity-50');
       };
 
+      const setRecordingUi = (recording) => {
+        isRecording = recording;
+        recordEl.disabled = recording;
+        stopEl.disabled = !recording;
+        recordingBadgeEl.textContent = recording ? '녹음 중' : recordedBlob ? '녹음 완료' : '대기 중';
+        recordingBadgeEl.className = recording
+          ? 'rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-700'
+          : recordedBlob
+            ? 'rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700'
+            : 'rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600';
+        submitEl.disabled = recording || !recordedBlob;
+      };
+
+      const finishRecording = () => {
+        if (!recordedChunks.length) return;
+        recordedBlob = new Blob(recordedChunks, { type: recorder?.mimeType || 'audio/webm' });
+        setRecorderStatus('녹음이 완료되었습니다. 이제 분석 버튼을 누르면 됩니다.');
+        setRecordingUi(false);
+        stopMeter();
+        countdownEl.textContent = 'OK';
+      };
+
+      const startRecordingNow = async () => {
+        recordedBlob = null;
+        recordedChunks = [];
+        resetAudioOutput();
+        submitEl.disabled = true;
+
+        try {
+          recordingStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          recorder = new MediaRecorder(recordingStream);
+          recorder.ondataavailable = (event) => {
+            if (event.data && event.data.size > 0) recordedChunks.push(event.data);
+          };
+          recorder.onstop = () => {
+            stopStreamTracks();
+            finishRecording();
+          };
+          recorder.start();
+          setRecorderStatus('지금 반려동물 소리나 명령을 들려주세요.');
+          setRecordingUi(true);
+          startMeter();
+        } catch (error) {
+          setRecorderStatus(error instanceof Error ? error.message : '마이크 권한을 확인해주세요.');
+          countdownEl.textContent = '!';
+          setRecordingUi(false);
+          stopStreamTracks();
+        }
+      };
+
+      const startCountdown = () => {
+        if (!navigator.mediaDevices?.getUserMedia) {
+          setRecorderStatus('이 브라우저는 마이크 녹음을 지원하지 않습니다.');
+          return;
+        }
+
+        let count = 3;
+        setRecorderStatus('곧 녹음을 시작합니다. 준비하세요.');
+        countdownEl.textContent = String(count);
+        recordEl.disabled = true;
+        stopEl.disabled = true;
+        window.clearInterval(countdownTimer);
+        countdownTimer = window.setInterval(() => {
+          count -= 1;
+          if (count > 0) {
+            countdownEl.textContent = String(count);
+            return;
+          }
+          window.clearInterval(countdownTimer);
+          countdownTimer = null;
+          countdownEl.textContent = 'GO';
+          startRecordingNow();
+        }, 1000);
+      };
+
+      const stopRecording = () => {
+        if (!recorder || recorder.state === 'inactive') return;
+        recorder.stop();
+        setRecorderStatus('녹음을 정리하고 있습니다.');
+        setRecordingUi(false);
+      };
+
+      const loadConfig = async () => {
+        if (!API_BASE) {
+          readinessEl.textContent = 'API 없음';
+          readinessEl.className = 'rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-700';
+          return;
+        }
+
+        try {
+          const response = await fetch(`${API_BASE}/config`);
+          const payload = await response.json().catch(() => null);
+          const ready = Boolean(payload?.readiness?.petTranslatorReady);
+          readinessEl.textContent = ready ? 'API 연결됨' : 'API 준비 필요';
+          readinessEl.className = ready
+            ? 'rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700'
+            : 'rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700';
+        } catch {
+          readinessEl.textContent = 'API 오류';
+          readinessEl.className = 'rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-700';
+        }
+      };
+
+      recordEl?.addEventListener('click', startCountdown);
+      stopEl?.addEventListener('click', stopRecording);
+
       submitEl?.addEventListener('click', async () => {
-        const token = tokenEl?.value?.trim() || '';
+        const token = getStoredToken();
         const animal = animalEl?.value || 'dog';
         const mode = modeEl?.value || 'analyze';
-        const file = audioEl?.files?.[0];
 
         if (!API_BASE) {
           setStatus('PUBLIC_NODE_API_BASE 설정이 필요합니다.');
           return;
         }
         if (!token) {
-          setStatus('토큰을 먼저 입력하세요.');
+          setStatus('사용 가능한 이용 토큰이 확인되지 않았습니다. 결제나 활성화 흐름과 연결해주세요.');
           return;
         }
-        if (!file) {
-          setStatus('오디오 파일을 선택하세요.');
+        if (!recordedBlob) {
+          setStatus('먼저 녹음을 완료해주세요.');
           return;
         }
 
         setLoading(true);
-        setStatus('오디오를 업로드하고 있습니다.');
+        setStatus('녹음한 소리를 업로드하고 있습니다.');
         resetAudioOutput();
 
         try {
-          const audio = await fileToBase64(file);
-          const response = await fetch(`${API_BASE}/pet`, {
+          const audio = await blobToDataUrl(recordedBlob);
+          const response = await fetch(`${API_BASE}/api/pet`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
@@ -310,7 +478,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
               animal,
               mode,
               audio,
-              audioMimeType: file.type || 'audio/webm'
+              audioMimeType: recordedBlob.type || 'audio/webm'
             })
           });
 
@@ -337,6 +505,8 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       });
 
       resetAudioOutput();
+      refreshMeter(false);
+      setRecordingUi(false);
       loadConfig();
     </script>
   </main>
