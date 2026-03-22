@@ -43,11 +43,11 @@ const t = {
     faqQ: 'Q. Is this saved?',
     faqA: 'A. No. This free result is calculated locally in your browser.',
     premiumEyebrow: 'Upgrade',
-    premiumTitle: 'Premium naming pages',
-    premiumDesc: 'A premium upgrade path is now prepared for deeper naming analysis, rename suggestions, and detailed report pages.',
-    premiumPrimary: 'Open premium name report',
-    premiumSecondary: 'Open rename suggestions',
-    premiumTertiary: 'Open rename analysis'
+    premiumTitle: 'Premium naming hub',
+    premiumDesc: 'A premium upgrade path is now prepared for deeper naming analysis, rename suggestions, and detailed report pages in one service.',
+    premiumPrimary: 'Open premium name analysis',
+    premiumSecondary: 'Name insight + rename recommendations',
+    premiumTertiary: 'Open the unified hub'
   },
   ja: {
     title: '名前診断 | ManyTool',
@@ -90,9 +90,9 @@ const t = {
       <h2 class="mt-4 text-2xl font-black tracking-tight">{t.premiumTitle}</h2>
       <p class="mt-3 max-w-3xl text-sm leading-7 text-white/72">{t.premiumDesc}</p>
       <div class="mt-5 flex flex-wrap gap-3">
-        <a href="/name-insight" class="rounded-full bg-[#e9c349] px-5 py-3 text-sm font-black text-[#3c2f00] transition hover:brightness-110">{t.premiumPrimary}</a>
-        <a href="/name-change-recommendation" class="rounded-full border border-white/15 px-5 py-3 text-sm font-black text-white/85 transition hover:bg-white/10">{t.premiumSecondary}</a>
-        <a href="/seongmyeonghak" class="rounded-full border border-white/15 px-5 py-3 text-sm font-black text-white/85 transition hover:bg-white/10">{t.premiumTertiary}</a>
+        <a href="/name-premium" class="rounded-full bg-[#e9c349] px-5 py-3 text-sm font-black text-[#3c2f00] transition hover:brightness-110">{t.premiumPrimary}</a>
+        <span class="rounded-full border border-white/15 px-5 py-3 text-sm font-black text-white/65">{t.premiumSecondary}</span>
+        <a href="/name-premium" class="rounded-full border border-white/15 px-5 py-3 text-sm font-black text-white/85 transition hover:bg-white/10">{t.premiumTertiary}</a>
       </div>
     </section>
 

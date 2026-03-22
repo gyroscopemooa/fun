@@ -225,16 +225,8 @@ const sidebarText = {
       label: locale === 'ko' ? 'AI 사주팔자 정밀분석' : locale === 'ja' ? 'AI四柱推命精密分析' : 'Korean Saju Palja'
     },
     {
-      href: withLocalePath(locale, '/name-insight'),
-      label: locale === 'ko' ? 'AI 이름풀이 프리미엄' : locale === 'ja' ? 'AI名前分析プレミアム' : 'AI Name Insight Premium'
-    },
-    {
-      href: withLocalePath(locale, '/name-change-recommendation'),
-      label: locale === 'ko' ? '개명추천 프리미엄' : locale === 'ja' ? '改名おすすめプレミアム' : 'Rename Recommendation Premium'
-    },
-    {
-      href: withLocalePath(locale, '/seongmyeonghak'),
-      label: locale === 'ko' ? '개명풀이 프리미엄' : locale === 'ja' ? '改名レポートプレミアム' : 'Rename Analysis Premium'
+      href: withLocalePath(locale, '/name-premium'),
+      label: locale === 'ko' ? '프리미엄 이름분석' : locale === 'ja' ? 'プレミアム名前分析' : 'Premium Name Analysis'
     },
     { href: withLocalePath(locale, '/ai-calorie-calculator'), label: t('layout.sidebar.aiCalorie') },
     { href: withLocalePath(locale, '/ai-id-photo'), label: t('layout.sidebar.aiIdPhoto') },

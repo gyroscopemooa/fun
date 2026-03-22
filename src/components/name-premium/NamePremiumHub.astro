@@ -44,15 +44,16 @@ const views = [viewMap.analysis, viewMap.recommendation, viewMap.report];
         <div class="text-lg font-bold italic text-[#a7295a]" style="font-family: 'Plus Jakarta Sans', 'Pretendard', sans-serif;">The Ethereal Boutique</div>
         <div class="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.16em] text-[#5e5b57]">
           {views.map((view) => (
-            <a
-              href={view.key === 'analysis' ? '/name-insight' : view.key === 'recommendation' ? '/name-change-recommendation' : '/seongmyeonghak'}
+            <button
+              type="button"
+              data-switch-view={view.key}
               class:list={[
                 'rounded-full px-4 py-2 transition',
                 initialView === view.key ? 'bg-[#a7295a] text-white shadow-md' : 'hover:bg-white hover:text-[#a7295a]'
               ]}
             >
               {view.label}
-            </a>
+            </button>
           ))}
         </div>
       </div>

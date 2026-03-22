@@ -35,6 +35,7 @@ const paths = [
   '/name-generator',
   '/name-meaning',
   '/name-compatibility',
+  '/name-premium',
   '/name-insight',
   '/name-change-recommendation',
   '/seongmyeonghak',
