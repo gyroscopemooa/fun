@@ -290,6 +290,14 @@ const shuffle = (items) => {
   return next;
 };
 
+const getSamplePlan = (text) => {
+  const length = String(text ?? '').trim().length;
+  if (length <= 8) return { sampleCount: 1, clipSeconds: 0.7 };
+  if (length <= 24) return { sampleCount: 2, clipSeconds: 0.85 };
+  if (length <= 48) return { sampleCount: 2, clipSeconds: 1.0 };
+  return { sampleCount: 3, clipSeconds: 1.15 };
+};
+
 const selectPetSamples = async ({ animal, text, emotion }) => {
   const catalog = await getPetSampleCatalog();
   const pool = catalog[animal] ?? [];
@@ -298,33 +306,47 @@ const selectPetSamples = async ({ animal, text, emotion }) => {
   const targetMood = inferTargetMood({ text, emotion, animal });
   const preferred = pool.filter((sample) => sample.mood === targetMood);
   const backup = pool.filter((sample) => sample.mood !== targetMood);
-  const targetCount = Math.min(Math.max(Math.ceil(String(text ?? '').trim().length / 12), 2), 4);
+  const { sampleCount } = getSamplePlan(text);
   const picked = [];
 
   for (const sample of [...shuffle(preferred), ...shuffle(backup)]) {
     if (!picked.find((item) => item.path === sample.path)) {
       picked.push(sample);
     }
-    if (picked.length >= targetCount) break;
+    if (picked.length >= sampleCount) break;
   }
 
   return picked;
 };
 
-const concatPetSamples = async (samples) => {
+const concatPetSamples = async (samples, text) => {
   if (!samples.length) return null;
-  if (samples.length === 1) {
-    const buffer = await fs.readFile(samples[0].path);
-    return { audio: buffer.toString('base64'), mimeType: 'audio/mpeg' };
-  }
-
+  const { clipSeconds } = getSamplePlan(text);
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pet-sfx-'));
-  const listPath = path.join(tempDir, 'concat.txt');
+  const preparedPaths = [];
   const outputPath = path.join(tempDir, 'pet-command.mp3');
 
   try {
-    const listContent = samples
-      .map((sample) => `file '${sample.path.replace(/'/g, "'\\''")}'`)
+    for (let index = 0; index < samples.length; index += 1) {
+      const preparedPath = path.join(tempDir, `clip-${index}.mp3`);
+      preparedPaths.push(preparedPath);
+      await waitForFfmpeg([
+        '-y',
+        '-i', samples[index].path,
+        '-t', String(clipSeconds),
+        '-af', 'afade=t=out:st=0.45:d=0.2',
+        preparedPath
+      ]);
+    }
+
+    if (preparedPaths.length === 1) {
+      const buffer = await fs.readFile(preparedPaths[0]);
+      return { audio: buffer.toString('base64'), mimeType: 'audio/mpeg' };
+    }
+
+    const listPath = path.join(tempDir, 'concat.txt');
+    const listContent = preparedPaths
+      .map((samplePath) => `file '${samplePath.replace(/'/g, "'\\''")}'`)
       .join('\n');
     await fs.writeFile(listPath, listContent, 'utf8');
     await waitForFfmpeg([
@@ -332,7 +354,7 @@ const concatPetSamples = async (samples) => {
       '-f', 'concat',
       '-safe', '0',
       '-i', listPath,
-      '-c', 'copy',
+      '-c:a', 'libmp3lame',
       outputPath
     ]);
     const buffer = await fs.readFile(outputPath);
@@ -347,9 +369,13 @@ const concatPetSamples = async (samples) => {
 
 const synthesizePetCommandAudio = async ({ text, emotion, animal }) => {
   const sampleSelection = await selectPetSamples({ animal, text, emotion });
-  const sampleAudio = await concatPetSamples(sampleSelection);
+  const sampleAudio = await concatPetSamples(sampleSelection, text);
   if (sampleAudio) {
-    return sampleAudio;
+    return {
+      ...sampleAudio,
+      audioSource: 'sample',
+      sampleCount: sampleSelection.length
+    };
   }
 
   const speech = await getClient().audio.speech.create({
@@ -361,7 +387,9 @@ const synthesizePetCommandAudio = async ({ text, emotion, animal }) => {
   const buffer = Buffer.from(await speech.arrayBuffer());
   return {
     audio: buffer.toString('base64'),
-    mimeType: 'audio/mpeg'
+    mimeType: 'audio/mpeg',
+    audioSource: 'tts',
+    sampleCount: 0
   };
 };
 
