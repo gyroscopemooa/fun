@@ -57,38 +57,49 @@ const rawApiBase = (import.meta.env.PUBLIC_NODE_API_BASE ?? '').trim();
               </div>
 
               <form id="name-premium-form" class="space-y-4">
-                <div class="grid gap-4 sm:grid-cols-2">
-                  <label class="block">
-                    <span class="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-[#5f5a57]">이름</span>
-                    <input name="displayName" placeholder="김민지" class="w-full rounded-full border-0 bg-white px-5 py-4 text-sm shadow-inner shadow-[#e8d9d3]/60 outline-none ring-1 ring-[#b1aca8]/20 focus:ring-2 focus:ring-[#a7295a]/35" />
-                  </label>
-                  <label class="block">
-                    <span class="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-[#5f5a57]">한자</span>
-                    <input name="hanjaName" placeholder="金民智" maxlength="3" class="w-full rounded-full border-0 bg-white px-5 py-4 text-sm shadow-inner shadow-[#e8d9d3]/60 outline-none ring-1 ring-[#b1aca8]/20 focus:ring-2 focus:ring-[#a7295a]/35" />
-                  </label>
+                <label class="block rounded-[24px] bg-white/88 p-4 ring-1 ring-[#b1aca8]/16">
+                  <span class="mb-3 flex items-center justify-between gap-3">
+                    <span class="text-sm font-bold text-[#2f2a28]">이름</span>
+                    <span class="rounded-full bg-[#a7295a] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white">필수</span>
+                  </span>
+                  <input name="displayName" placeholder="김민지" class="w-full rounded-[18px] border-0 bg-[#fffaf7] px-5 py-4 text-sm shadow-inner shadow-[#ead8d2]/60 outline-none ring-1 ring-[#b1aca8]/15 transition focus:bg-white focus:ring-2 focus:ring-[#a7295a]/30" />
+                </label>
+
+                <label class="block rounded-[24px] bg-white/88 p-4 ring-1 ring-[#b1aca8]/16">
+                  <span class="mb-3 flex items-center justify-between gap-3">
+                    <span class="text-sm font-bold text-[#2f2a28]">한자</span>
+                    <span class="rounded-full bg-[#f6f0ea] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#7a6f6a]">선택</span>
+                  </span>
+                  <input name="hanjaName" placeholder="金民智" maxlength="3" class="w-full rounded-[18px] border-0 bg-[#fffaf7] px-5 py-4 text-sm shadow-inner shadow-[#ead8d2]/60 outline-none ring-1 ring-[#b1aca8]/15 transition focus:bg-white focus:ring-2 focus:ring-[#a7295a]/30" />
+                  <p class="mt-3 text-xs leading-6 text-[#7a6f6a]">한자를 넣으면 오격, 획수, 개명추천까지 더 정확하게 계산합니다.</p>
+                </label>
+
+                <label class="block rounded-[24px] bg-white/88 p-4 ring-1 ring-[#b1aca8]/16">
+                  <span class="mb-3 flex items-center justify-between gap-3">
+                    <span class="text-sm font-bold text-[#2f2a28]">생년월일</span>
+                    <span class="rounded-full bg-[#f6f0ea] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#7a6f6a]">선택</span>
+                  </span>
+                  <input name="birthDate" type="date" class="w-full rounded-[18px] border-0 bg-[#fffaf7] px-5 py-4 text-sm shadow-inner shadow-[#ead8d2]/60 outline-none ring-1 ring-[#b1aca8]/15 transition focus:bg-white focus:ring-2 focus:ring-[#a7295a]/30" />
+                </label>
+
+                <div class="rounded-[24px] bg-white/88 p-4 ring-1 ring-[#b1aca8]/16">
+                  <div class="mb-3 flex items-center justify-between gap-3">
+                    <span class="text-sm font-bold text-[#2f2a28]">성별</span>
+                    <span class="rounded-full bg-[#f6f0ea] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#7a6f6a]">선택</span>
+                  </div>
+                  <div class="grid grid-cols-2 gap-3">
+                    <label class="cursor-pointer">
+                      <input type="radio" name="gender" value="female" class="peer sr-only" checked />
+                      <span class="flex items-center justify-center rounded-[18px] bg-[#fffaf7] px-4 py-4 text-sm font-semibold text-[#5f5a57] ring-1 ring-[#b1aca8]/15 transition peer-checked:bg-[#a7295a] peer-checked:text-white peer-checked:ring-0">여성</span>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="gender" value="male" class="peer sr-only" />
+                      <span class="flex items-center justify-center rounded-[18px] bg-[#fffaf7] px-4 py-4 text-sm font-semibold text-[#5f5a57] ring-1 ring-[#b1aca8]/15 transition peer-checked:bg-[#a7295a] peer-checked:text-white peer-checked:ring-0">남성</span>
+                    </label>
+                  </div>
                 </div>
 
-                <div class="grid gap-4 sm:grid-cols-2">
-                  <label class="block">
-                    <span class="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-[#5f5a57]">생년월일</span>
-                    <input name="birthDate" type="date" class="w-full rounded-full border-0 bg-white px-5 py-4 text-sm shadow-inner shadow-[#e8d9d3]/60 outline-none ring-1 ring-[#b1aca8]/20 focus:ring-2 focus:ring-[#a7295a]/35" />
-                  </label>
-                  <label class="block">
-                    <span class="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-[#5f5a57]">성별</span>
-                    <div class="grid grid-cols-2 gap-3">
-                      <label class="cursor-pointer">
-                        <input type="radio" name="gender" value="female" class="peer sr-only" checked />
-                        <span class="flex items-center justify-center rounded-full bg-white px-4 py-4 text-sm font-semibold text-[#5f5a57] ring-1 ring-[#b1aca8]/20 transition peer-checked:bg-[#a7295a] peer-checked:text-white">여성</span>
-                      </label>
-                      <label class="cursor-pointer">
-                        <input type="radio" name="gender" value="male" class="peer sr-only" />
-                        <span class="flex items-center justify-center rounded-full bg-white px-4 py-4 text-sm font-semibold text-[#5f5a57] ring-1 ring-[#b1aca8]/20 transition peer-checked:bg-[#a7295a] peer-checked:text-white">남성</span>
-                      </label>
-                    </div>
-                  </label>
-                </div>
-
-                <button type="button" class="w-full rounded-full bg-[#a7295a] px-4 py-4 text-sm font-bold text-white transition hover:scale-[0.98]" data-action="suite">
+                <button type="button" class="w-full rounded-[22px] bg-[linear-gradient(135deg,#a7295a,#c83b74)] px-4 py-4 text-sm font-bold text-white shadow-[0_20px_35px_rgba(167,41,90,0.26)] transition hover:-translate-y-0.5 hover:shadow-[0_24px_40px_rgba(167,41,90,0.3)]" data-action="suite">
                   통합 분석 시작
                 </button>
               </form>
@@ -313,8 +324,23 @@ const rawApiBase = (import.meta.env.PUBLIC_NODE_API_BASE ?? '').trim();
     }
 
     const { displayName, hanjaName, surname, given } = getFormPayload();
+    if (!displayName) {
+      setCurrentSummary(null, '입력 필요', '이름은 필수입니다. 이름을 먼저 입력해 주세요.');
+      return null;
+    }
+
     if (!surname || given.length === 0) {
-      setCurrentSummary(null, '입력 필요', '이름과 한자를 입력해 주세요. 한자는 성 1자 + 이름 1~2자 형식입니다.');
+      if (analysisNameEl) analysisNameEl.textContent = displayName;
+      if (analysisExplanationEl) analysisExplanationEl.textContent = '현재는 이름만 입력된 상태입니다. 한자를 넣으면 오격, 획수, 81수 기반의 정밀 이름풀이가 이어집니다.';
+      if (analysisGridEl) {
+        analysisGridEl.innerHTML = '<div class="rounded-[22px] bg-white px-4 py-4 text-sm text-[#5f5a57]">한자를 입력하면 오격 계산과 구조 해석이 여기 표시됩니다.</div>';
+      }
+      if (reportNameEl) reportNameEl.textContent = displayName;
+      if (reportExplanationEl) reportExplanationEl.textContent = '한자가 없어서 개명풀이 상세는 아직 계산하지 않았습니다.';
+      if (reportPointsEl) {
+        reportPointsEl.innerHTML = '<div class="rounded-[22px] bg-white px-4 py-4 text-sm text-[#5f5a57]">한자를 입력하면 각 글자의 뜻, 획수, 키워드가 정리됩니다.</div>';
+      }
+      setCurrentSummary(null, '기본 입력 완료', '이름은 저장됐습니다. 한자를 추가하면 이름풀이, 개명추천, 개명풀이가 모두 활성화됩니다.');
       return null;
     }
 
@@ -345,7 +371,7 @@ const rawApiBase = (import.meta.env.PUBLIC_NODE_API_BASE ?? '').trim();
 
     const { displayName, surname } = getFormPayload();
     if (!surname) {
-      setCurrentSummary(null, '입력 필요', '한자를 입력해 주세요.');
+      setCurrentSummary(null, '추천 대기', '개명추천은 한자 입력 후에 시작됩니다.');
       return null;
     }
 
