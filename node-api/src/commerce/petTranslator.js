@@ -1,4 +1,5 @@
 import path from 'node:path';
+import path from 'node:path';
 import os from 'node:os';
 import fs from 'node:fs/promises';
 import { spawn } from 'node:child_process';
@@ -176,16 +177,60 @@ const buildPromptContext = ({ transcript, animal, mode, durationSeconds }) => [
   'Return exactly 3 lines and nothing else.'
 ].join('\n');
 
+const transcodeAudioForTranscription = async ({ buffer, filename }) => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pet-stt-'));
+  const inputPath = path.join(tempDir, filename || 'pet-input.webm');
+  const outputPath = path.join(tempDir, 'pet-input.wav');
+
+  try {
+    await fs.writeFile(inputPath, buffer);
+    await waitForFfmpeg([
+      '-y',
+      '-i', inputPath,
+      '-ac', '1',
+      '-ar', '16000',
+      outputPath
+    ]);
+    const nextBuffer = await fs.readFile(outputPath);
+    return {
+      buffer: nextBuffer,
+      mimeType: 'audio/wav',
+      filename: 'pet-input.wav'
+    };
+  } finally {
+    await fs.rm(tempDir, { recursive: true, force: true }).catch(() => {});
+  }
+};
+
 const transcribePetAudio = async ({ buffer, mimeType, filename, animal }) => {
-  const file = await toFile(buffer, filename, { type: mimeType });
-  const response = await getClient().audio.transcriptions.create({
-    file,
-    model: DEFAULT_TRANSCRIPTION_MODEL,
-    response_format: 'verbose_json',
-    prompt: animal === 'cat'
-      ? 'Cat meowing, purring, yowling, hissing, chirping, short pet vocalizations.'
-      : 'Dog barking, whining, howling, panting, growling, short pet vocalizations.'
-  });
+  const prompt = animal === 'cat'
+    ? 'Cat meowing, purring, yowling, hissing, chirping, short pet vocalizations.'
+    : 'Dog barking, whining, howling, panting, growling, short pet vocalizations.';
+  let response = null;
+
+  try {
+    const file = await toFile(buffer, filename, { type: mimeType });
+    response = await getClient().audio.transcriptions.create({
+      file,
+      model: DEFAULT_TRANSCRIPTION_MODEL,
+      response_format: 'verbose_json',
+      prompt
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '';
+    if (!message.toLowerCase().includes('corrupted') && !message.toLowerCase().includes('unsupported')) {
+      throw error;
+    }
+
+    const transcoded = await transcodeAudioForTranscription({ buffer, filename });
+    const transcodedFile = await toFile(transcoded.buffer, transcoded.filename, { type: transcoded.mimeType });
+    response = await getClient().audio.transcriptions.create({
+      file: transcodedFile,
+      model: DEFAULT_TRANSCRIPTION_MODEL,
+      response_format: 'verbose_json',
+      prompt
+    });
+  }
 
   return {
     transcript: typeof response?.text === 'string' ? response.text.trim() : '',
