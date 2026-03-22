@@ -291,6 +291,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       let recordedChunks = [];
       let recordedBlob = null;
       let recordingStream = null;
+      let selectedRecordingMimeType = '';
       let meterTimer = null;
       let autoStopTimer = null;
       let isRecording = false;
@@ -447,6 +448,31 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         autoStopTimer = null;
       };
 
+      const chooseRecordingMimeType = () => {
+        if (typeof MediaRecorder === 'undefined' || typeof MediaRecorder.isTypeSupported !== 'function') {
+          return '';
+        }
+
+        const candidates = [
+          'audio/webm;codecs=opus',
+          'audio/webm',
+          'audio/mp4',
+          'audio/ogg;codecs=opus',
+          'audio/ogg'
+        ];
+
+        return candidates.find((mimeType) => MediaRecorder.isTypeSupported(mimeType)) || '';
+      };
+
+      const inferAudioExtension = (mimeType) => {
+        const normalized = String(mimeType || '').toLowerCase();
+        if (normalized.includes('wav')) return 'wav';
+        if (normalized.includes('mpeg') || normalized.includes('mp3')) return 'mp3';
+        if (normalized.includes('ogg')) return 'ogg';
+        if (normalized.includes('mp4') || normalized.includes('m4a')) return 'm4a';
+        return 'webm';
+      };
+
       const blobToDataUrl = (blob) => new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
@@ -537,7 +563,9 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           stopStreamTracks();
           return;
         }
-        recordedBlob = new Blob(recordedChunks, { type: recorder?.mimeType || 'audio/webm' });
+        recordedBlob = new Blob(recordedChunks, {
+          type: recorder?.mimeType || selectedRecordingMimeType || recordedChunks[0]?.type || 'audio/webm'
+        });
         setRecorderStatus('녹음이 끝났습니다. 바로 분석을 시작합니다.');
         setRecordingUi(false);
         stopMeter();
@@ -559,7 +587,10 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
 
         try {
           recordingStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          recorder = new MediaRecorder(recordingStream);
+          selectedRecordingMimeType = chooseRecordingMimeType();
+          recorder = selectedRecordingMimeType
+            ? new MediaRecorder(recordingStream, { mimeType: selectedRecordingMimeType })
+            : new MediaRecorder(recordingStream);
           recorder.ondataavailable = (event) => {
             if (event.data && event.data.size > 0) recordedChunks.push(event.data);
           };
@@ -634,15 +665,36 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         resetAudioOutput();
 
         try {
-          const response = await fetch(`${API_BASE}/api/pet`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
+          const hasAudioFile = body?.audioFile instanceof Blob;
+          let requestBody = null;
+          let headers = null;
+
+          if (hasAudioFile) {
+            const formData = new FormData();
+            formData.append('token', token);
+            formData.append('animal', animal);
+            formData.append('mode', currentMode);
+            formData.append('audioMimeType', body.audioMimeType || body.audioFile.type || 'audio/webm');
+            formData.append(
+              'audio',
+              body.audioFile,
+              `pet-recording.${inferAudioExtension(body.audioMimeType || body.audioFile.type)}`
+            );
+            requestBody = formData;
+          } else {
+            headers = { 'Content-Type': 'application/json' };
+            requestBody = JSON.stringify({
               token,
               animal,
               mode: currentMode,
               ...body
-            })
+            });
+          }
+
+          const response = await fetch(`${API_BASE}/api/pet`, {
+            method: 'POST',
+            ...(headers ? { headers } : {}),
+            body: requestBody
           });
 
           const payload = await response.json().catch(() => null);
@@ -677,9 +729,8 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           return;
         }
 
-        const audio = await blobToDataUrl(recordedBlob);
         await callPetApi({
-          audio,
+          audioFile: recordedBlob,
           audioMimeType: recordedBlob.type || 'audio/webm'
         }, '분석 중...');
       };
