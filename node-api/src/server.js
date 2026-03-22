@@ -368,6 +368,7 @@ const handlePetTranslator = async (req, res) => {
     const tokenState = getPetTranslatorTokenState(req.body?.token);
     const mode = typeof req.body?.mode === 'string' ? req.body.mode.trim() : 'analyze';
     const animal = typeof req.body?.animal === 'string' ? req.body.animal.trim() : 'dog';
+    const textInput = typeof req.body?.text === 'string' ? req.body.text.trim() : '';
     const audioInput = parsePetAudioPayload({
       file: req.file,
       audio: req.body?.audio,
@@ -377,7 +378,8 @@ const handlePetTranslator = async (req, res) => {
     const result = await analyzePetAudio({
       audioInput,
       mode,
-      animal
+      animal,
+      textInput
     });
 
     const usage = commitPetTranslatorUsage(tokenState);

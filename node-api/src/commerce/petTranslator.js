@@ -154,7 +154,7 @@ const synthesizePetCommandAudio = async ({ text, animal }) => {
   const speech = await getClient().audio.speech.create({
     model: DEFAULT_TTS_MODEL,
     voice: DEFAULT_TTS_VOICE,
-    input: animal === 'cat' ? `야옹 톤으로 말하듯: ${text}` : `멍멍 톤으로 말하듯: ${text}`
+    input: animal === 'cat' ? `고양이처럼 말해줘. ${text}` : `강아지처럼 말해줘. ${text}`
   });
 
   const buffer = Buffer.from(await speech.arrayBuffer());
@@ -164,26 +164,33 @@ const synthesizePetCommandAudio = async ({ text, animal }) => {
   };
 };
 
-export const analyzePetAudio = async ({ audioInput, animal = 'dog', mode = 'analyze' }) => {
+export const analyzePetAudio = async ({ audioInput, animal = 'dog', mode = 'analyze', textInput = '' }) => {
   if (!['dog', 'cat'].includes(animal)) {
     throw new Error('animal must be dog or cat');
   }
   if (!['analyze', 'command'].includes(mode)) {
     throw new Error('mode must be analyze or command');
   }
-  if (!audioInput?.buffer?.length) {
+
+  const normalizedTextInput = typeof textInput === 'string' ? textInput.trim() : '';
+  if (!audioInput?.buffer?.length && !normalizedTextInput) {
     throw new Error('audio is required');
   }
-  if (audioInput.buffer.length > MAX_AUDIO_BYTES) {
+  if (audioInput?.buffer?.length > MAX_AUDIO_BYTES) {
     throw new Error('audio file is too large');
   }
 
-  const transcription = await transcribePetAudio({
-    buffer: audioInput.buffer,
-    mimeType: audioInput.mimeType,
-    filename: audioInput.filename,
-    animal
-  });
+  const transcription = normalizedTextInput
+    ? {
+        transcript: normalizedTextInput,
+        durationSeconds: 0
+      }
+    : await transcribePetAudio({
+        buffer: audioInput.buffer,
+        mimeType: audioInput.mimeType,
+        filename: audioInput.filename,
+        animal
+      });
 
   const result = await generatePetTranslation({
     transcript: transcription.transcript,
@@ -213,4 +220,9 @@ export const analyzePetAudio = async ({ audioInput, animal = 'dog', mode = 'anal
   };
 };
 
-export const parsePetAudioPayload = ({ file, audio, audioMimeType }) => normalizeAudioInput({ file, audio, audioMimeType });
+export const parsePetAudioPayload = ({ file, audio, audioMimeType }) => {
+  if (!file?.buffer?.length && !(typeof audio === 'string' && audio.trim())) {
+    return null;
+  }
+  return normalizeAudioInput({ file, audio, audioMimeType });
+};
