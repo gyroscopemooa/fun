@@ -1,23 +1,45 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import NamePremiumLanding from '../components/name-premium/NamePremiumLanding.astro';
+import NamePremiumStudio from '../components/name-premium/NamePremiumStudio.astro';
 ---
 
 <Layout
-  title="성명학 | 준비중 | ManyTool"
-  description="ManyTool 성명학 페이지는 준비중입니다."
-  canonical="https://manytool.net/seongmyeonghak"
+  title="개명풀이 프리미엄 | ManyTool"
+  description="후보 이름별 구조, 인상, 사주 연결 포인트를 해석하는 개명풀이 프리미엄 페이지입니다."
 >
-  <main class="min-h-screen bg-[#121212] px-4 py-20 text-white">
-    <div class="mx-auto max-w-3xl rounded-[32px] border border-white/10 bg-white/5 p-8 text-center">
-      <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[#e9c349]">Coming Soon</p>
-      <h1 class="mt-4 text-4xl font-black tracking-tight">성명학 준비중</h1>
-      <p class="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/65">
-        성명학 기능은 아직 준비중입니다. 추후 이름 구조, 음양 조합, 한글/한자 흐름을 참고형 리포트로 제공할 예정입니다.
-      </p>
-      <div class="mt-8 flex flex-wrap justify-center gap-3">
-        <a href="/ai-manseryeok" class="rounded-full bg-[#e9c349] px-5 py-3 text-sm font-black text-[#3c2f00]">사주 리포트로 돌아가기</a>
-        <a href="/" class="rounded-full border border-white/15 px-5 py-3 text-sm font-black text-white/80">홈으로</a>
-      </div>
-    </div>
-  </main>
+  <NamePremiumLanding
+    eyebrow="Naming Report"
+    title="개명풀이 프리미엄"
+    description="추천만 보여주는 페이지가 아니라, 선택한 후보 이름이 왜 맞는지까지 읽어주는 해석형 페이지입니다. 이름 구조, 발음 인상, 보완 포인트, 비교 노트를 한 번에 정리하는 유료 리포트 화면으로 먼저 구성했습니다."
+    heroSummary="후보 이름을 하나씩 뜯어보는 비교형 개명 리포트"
+    heroDetail="같은 추천 후보라도 실제 체감은 다르기 때문에, 각 이름의 강점과 약점, 사주 흐름과의 연결성, 실제 사용감 메모를 같이 보여주는 방향으로 설계했습니다. 이후 CSV DB가 오면 각 이름별 기준 데이터를 붙여 정교하게 확장할 수 있습니다."
+    featureTitle="리포트 구성"
+    featurePoints={[
+      '후보 이름별 해석 요약과 한 줄 인상',
+      '사주와 연결되는 보완/충돌 포인트 정리',
+      '서로 다른 후보 간 비교 메모 제공',
+      '추후 CSV DB 기반 상세 해석 확장 준비 완료'
+    ]}
+    relatedLinks={[
+      {
+        href: '/name-change-recommendation',
+        title: '개명추천 보기',
+        desc: '먼저 추천 후보군을 받고, 이 페이지에서 각 후보를 자세히 읽는 흐름입니다.'
+      },
+      {
+        href: '/name-insight',
+        title: 'AI 이름풀이 보기',
+        desc: '현재 사용 중인 이름의 구조와 인상을 먼저 점검할 수 있습니다.'
+      },
+      {
+        href: '/ai-manseryeok',
+        title: '사주팔자 결과 연결',
+        desc: '사주 결과에서 바로 프리미엄 이름 리포트로 이어지는 동선을 유지합니다.'
+      }
+    ]}
+  />
+  <div class="mx-auto max-w-6xl px-4 pb-12">
+    <NamePremiumStudio mode="report" />
+  </div>
 </Layout>

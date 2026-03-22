@@ -15,46 +15,64 @@ const locale = pathname.startsWith('/en/') || pathname === '/en'
 const t = {
   ko: {
     title: '이름풀이 | ManyTool',
-    desc: '이름 입력으로 성향 키워드를 보여주는 재미형 이름풀이 도구입니다.',
+    desc: '이름 입력으로 성향 키워드를 가볍게 보는 무료 재미형 이름풀이 도구입니다.',
     h1: '이름풀이',
-    sub: '이름 기반 키워드 결과를 간단히 확인해보세요.',
+    sub: '이름을 입력하면 간단한 키워드 조합을 보여주는 무료 재미용 페이지입니다.',
     placeholder: '이름 입력',
     run: '결과 보기',
     empty: '이름을 입력해 주세요.',
-    resultPrefix: '의 키워드:',
+    resultPrefix: '키워드:',
     faqQ: 'Q. 결과가 저장되나요?',
-    faqA: 'A. 저장하지 않고 현재 브라우저에서만 계산합니다.'
+    faqA: 'A. 아니요. 브라우저에서 즉시 계산되는 무료 재미용 결과입니다.',
+    premiumEyebrow: 'Upgrade',
+    premiumTitle: 'AI 이름풀이 / 개명추천 / 개명풀이 프리미엄',
+    premiumDesc: '사주팔자 해석과 연결되는 업그레이드 버전입니다. 무료 이름풀이 후 더 자세한 구조 해석, 개명 후보 추천, 후보별 비교 리포트로 이어질 수 있게 전용 페이지를 열어두었습니다.',
+    premiumPrimary: '프리미엄 이름풀이 보기',
+    premiumSecondary: '개명추천 보기',
+    premiumTertiary: '개명풀이 보기'
   },
   en: {
     title: 'Name Meaning | ManyTool',
-    desc: 'Fun name keyword analyzer based on input text.',
+    desc: 'A light, fun name keyword tool based on text input.',
     h1: 'Name Meaning',
-    sub: 'Get simple personality keywords from a name.',
+    sub: 'Enter a name to get a simple set of personality keywords.',
     placeholder: 'Enter a name',
     run: 'Show result',
     empty: 'Please enter a name.',
     resultPrefix: 'keywords:',
     faqQ: 'Q. Is this saved?',
-    faqA: 'A. No. It is calculated locally in your browser.'
+    faqA: 'A. No. This free result is calculated locally in your browser.',
+    premiumEyebrow: 'Upgrade',
+    premiumTitle: 'Premium naming pages',
+    premiumDesc: 'A premium upgrade path is now prepared for deeper naming analysis, rename suggestions, and detailed report pages.',
+    premiumPrimary: 'Open premium name report',
+    premiumSecondary: 'Open rename suggestions',
+    premiumTertiary: 'Open rename analysis'
   },
   ja: {
     title: '名前診断 | ManyTool',
-    desc: '名前を入力してキーワードを表示するお楽しみ診断です。',
+    desc: '名前入力でキーワードを軽く見る無料のお楽しみページです。',
     h1: '名前診断',
-    sub: '名前ベースのキーワード結果を確認できます。',
+    sub: '名前を入力すると簡単なキーワード結果を表示します。',
     placeholder: '名前を入力',
     run: '結果を見る',
     empty: '名前を入力してください。',
-    resultPrefix: 'のキーワード:',
+    resultPrefix: 'キーワード:',
     faqQ: 'Q. 結果は保存されますか？',
-    faqA: 'A. いいえ。ブラウザ内でのみ計算します。'
+    faqA: 'A. いいえ。ブラウザ内で計算される無料の簡易結果です。',
+    premiumEyebrow: 'Upgrade',
+    premiumTitle: 'プレミアム名前レポート',
+    premiumDesc: 'より詳しい名前分析、改名候補、候補別レポートへつながるプレミアム導線を用意しました。',
+    premiumPrimary: 'プレミアム名前分析',
+    premiumSecondary: '改名おすすめ',
+    premiumTertiary: '改名解説'
   }
 }[locale];
 ---
 
 <Layout title={t.title} description={t.desc}>
   <Header />
-  <main class="mx-auto max-w-3xl px-4 py-8">
+  <main class="mx-auto max-w-4xl px-4 py-8">
     <h1 class="text-2xl font-bold">{t.h1}</h1>
     <p class="mt-3 text-slate-700">{t.sub}</p>
     <AdSense slotName="본문 상단" />
@@ -63,6 +81,19 @@ const t = {
       <input id="name-input" class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder={t.placeholder} type="text" />
       <button id="name-run" class="mt-3 rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white">{t.run}</button>
       <p id="name-result" class="mt-3 rounded-md bg-slate-100 px-3 py-3 text-sm text-slate-700">{t.empty}</p>
+    </section>
+
+    <section class="mt-6 overflow-hidden rounded-[28px] border border-slate-900/10 bg-[radial-gradient(circle_at_top,_rgba(233,195,73,0.18),_transparent_32%),linear-gradient(135deg,_#111827_0%,_#1f2937_100%)] p-6 text-white">
+      <p class="inline-flex rounded-full border border-[#e9c349]/40 bg-[#e9c349]/10 px-3 py-1 text-[11px] font-black uppercase tracking-[0.2em] text-[#f2d677]">
+        {t.premiumEyebrow}
+      </p>
+      <h2 class="mt-4 text-2xl font-black tracking-tight">{t.premiumTitle}</h2>
+      <p class="mt-3 max-w-3xl text-sm leading-7 text-white/72">{t.premiumDesc}</p>
+      <div class="mt-5 flex flex-wrap gap-3">
+        <a href="/name-insight" class="rounded-full bg-[#e9c349] px-5 py-3 text-sm font-black text-[#3c2f00] transition hover:brightness-110">{t.premiumPrimary}</a>
+        <a href="/name-change-recommendation" class="rounded-full border border-white/15 px-5 py-3 text-sm font-black text-white/85 transition hover:bg-white/10">{t.premiumSecondary}</a>
+        <a href="/seongmyeonghak" class="rounded-full border border-white/15 px-5 py-3 text-sm font-black text-white/85 transition hover:bg-white/10">{t.premiumTertiary}</a>
+      </div>
     </section>
 
     <section class="mt-5 rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-700">
@@ -76,15 +107,16 @@ const t = {
   </main>
   <Footer />
 
-  <script is:inline define:vars={{ t }}>
+  <script is:inline define:vars={{ t, locale }}>
     const inputEl = document.getElementById('name-input');
     const runEl = document.getElementById('name-run');
     const resultEl = document.getElementById('name-result');
 
-    const traits = [
-      'focused', 'empathetic', 'curious', 'steady', 'creative', 'practical',
-      'bold', 'calm', 'analytical', 'friendly', 'adaptive', 'persistent'
-    ];
+    const traits = locale === 'ko'
+      ? ['집중형', '공감형', '호기심형', '안정형', '창의형', '실속형', '대담형', '차분형', '분석형', '친화형', '유연형', '지속형']
+      : locale === 'ja'
+        ? ['集中型', '共感型', '好奇心型', '安定型', '創意型', '実用型', '大胆型', '落ち着き型', '分析型', '親和型', '柔軟型', '持続型']
+        : ['focused', 'empathetic', 'curious', 'steady', 'creative', 'practical', 'bold', 'calm', 'analytical', 'friendly', 'adaptive', 'persistent'];
 
     runEl?.addEventListener('click', () => {
       const name = inputEl instanceof HTMLInputElement ? inputEl.value.trim() : '';
@@ -92,10 +124,13 @@ const t = {
         if (resultEl) resultEl.textContent = t.empty;
         return;
       }
+
       let sum = 0;
       for (const ch of name) sum += ch.charCodeAt(0);
+
       const a = traits[sum % traits.length];
       const b = traits[(sum + 5) % traits.length];
+
       if (resultEl) resultEl.textContent = `${name} ${t.resultPrefix} ${a}, ${b}`;
     });
   </script>

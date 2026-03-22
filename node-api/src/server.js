@@ -15,6 +15,13 @@ import { analyzeMealCalories } from './commerce/calorieAnalyzer.js';
 import { analyzePersonalColor } from './commerce/personalColorAnalyzer.js';
 import { analyzeSaju } from './commerce/sajuAnalyzer.js';
 import { generateCandidatesWithProvider, getImageProvider, getResolvedImageProvider, isExternalAiEnabled, normalizeRequestedProvider, resolveImageProvider } from './providers/providerRouter.js';
+import { getNamingDataset } from './naming/repository.js';
+import { validateNamingInput, validateRecommendInput } from './naming/validate.js';
+import { calculateFiveGrid } from './naming/fiveGrid.js';
+import { scoreFiveGrid } from './naming/score.js';
+import { recommendNames } from './naming/recommend.js';
+import { buildFallback, getMissingStrokeSuggestion } from './naming/fallback.js';
+import { buildNameExplanation } from './naming/description.js';
 
 const app = express();
 const port = Number(process.env.PORT ?? 8787);
@@ -1706,6 +1713,125 @@ app.post('/ai-manseryeok/analyze', async (req, res) => {
     if (message === 'payment required') return res.status(402).json({ error: message });
     if (message === 'this order has already been used') return res.status(409).json({ error: message });
     return res.status(500).json({ error: message });
+  }
+});
+
+app.post('/name-premium/analyze', async (req, res) => {
+  try {
+    const validation = validateNamingInput({
+      surname: req.body?.surname,
+      given: req.body?.given
+    });
+
+    if (!validation.valid) {
+      return res.status(400).json(buildFallback({ error: validation.error }));
+    }
+
+    const { surname, given } = validation.value;
+    const dataset = await getNamingDataset();
+    const chars = [surname, ...given];
+    const missingStrokeChars = chars.filter((char) => !dataset.strokeMap.has(char));
+
+    if (missingStrokeChars.length > 0) {
+      return res.status(404).json(buildFallback({
+        error: '획수 데이터 없음',
+        suggestion: getMissingStrokeSuggestion(chars, dataset.strokeMap, dataset.metaMap)
+      }));
+    }
+
+    const surnameStroke = dataset.strokeMap.get(surname);
+    const givenStrokes = given.map((char) => dataset.strokeMap.get(char));
+    const grids = calculateFiveGrid({ surnameStroke, givenStrokes });
+    const scoreResult = scoreFiveGrid(grids, dataset.luckMap);
+    const explanation = buildNameExplanation({
+      surname,
+      given,
+      grids,
+      scoreResult,
+      metaMap: dataset.metaMap
+    });
+
+    return res.json({
+      ok: true,
+      input: {
+        surname,
+        given
+      },
+      grids,
+      score: scoreResult.score,
+      grade: scoreResult.grade,
+      details: scoreResult.details,
+      explanation,
+      parts: chars.map((char) => ({
+        hanja: char,
+        strokes: dataset.strokeMap.get(char) ?? null,
+        meta: dataset.metaMap.get(char) ?? dataset.surnameMap.get(char) ?? null
+      }))
+    });
+  } catch (error) {
+    return res.status(500).json(buildFallback({
+      error: error instanceof Error ? error.message : 'name premium analyze failed'
+    }));
+  }
+});
+
+app.post('/name-premium/recommend', async (req, res) => {
+  try {
+    const validation = validateRecommendInput({
+      surname: req.body?.surname,
+      topK: req.body?.topK,
+      givenLength: req.body?.givenLength
+    });
+
+    if (!validation.valid) {
+      return res.status(400).json(buildFallback({ error: validation.error }));
+    }
+
+    const { surname, topK, givenLength } = validation.value;
+    const dataset = await getNamingDataset();
+    const surnameStroke = dataset.strokeMap.get(surname);
+
+    if (!surnameStroke) {
+      return res.status(404).json(buildFallback({
+        error: '성씨 획수 데이터 없음',
+        suggestion: getMissingStrokeSuggestion([surname], dataset.strokeMap, dataset.metaMap)
+      }));
+    }
+
+    const recommendations = recommendNames({
+      surname,
+      surnameStroke,
+      givenLength,
+      topK,
+      pool: dataset.pool,
+      luckMap: dataset.luckMap,
+      metaMap: dataset.metaMap
+    });
+
+    if (recommendations.length === 0) {
+      return res.status(404).json(buildFallback({
+        error: '추천 후보 없음',
+        suggestion: 'name_pool.csv 또는 strokes.csv 데이터를 확장해 주세요.'
+      }));
+    }
+
+    return res.json({
+      ok: true,
+      input: {
+        surname,
+        topK,
+        givenLength
+      },
+      recommendations,
+      notices: [
+        '현재는 단성 기준 추천만 지원합니다.',
+        'luck81.csv의 31~81 구간은 seed 상태라 점수가 보수적으로 계산될 수 있습니다.'
+      ]
+    });
+  } catch (error) {
+    return res.status(500).json(buildFallback({
+      error: error instanceof Error ? error.message : 'name premium recommend failed'
+    }));
   }
 });
 

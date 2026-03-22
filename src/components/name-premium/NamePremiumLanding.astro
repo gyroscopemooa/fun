@@ -1,0 +1,112 @@
+---
+import Header from '../Header.astro';
+import Footer from '../Footer.astro';
+
+interface RelatedLink {
+  href: string;
+  title: string;
+  desc: string;
+}
+
+interface Props {
+  eyebrow: string;
+  title: string;
+  description: string;
+  heroSummary: string;
+  heroDetail: string;
+  featureTitle: string;
+  featurePoints: string[];
+  relatedLinks: RelatedLink[];
+  fromFreeHref?: string;
+  fromFreeLabel?: string;
+}
+
+const {
+  eyebrow,
+  title,
+  description,
+  heroSummary,
+  heroDetail,
+  featureTitle,
+  featurePoints,
+  relatedLinks,
+  fromFreeHref = '/name-meaning',
+  fromFreeLabel = '무료 이름풀이에서 먼저 보기'
+} = Astro.props;
+---
+
+<Header />
+<main class="bg-[radial-gradient(circle_at_top,_rgba(233,195,73,0.18),_transparent_32%),linear-gradient(180deg,_#181613_0%,_#111827_45%,_#0f172a_100%)] px-4 py-10 text-white">
+  <section class="mx-auto max-w-6xl">
+    <div class="overflow-hidden rounded-[36px] border border-white/10 bg-white/5 shadow-[0_30px_120px_rgba(15,23,42,0.35)] backdrop-blur">
+      <div class="grid gap-0 lg:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)]">
+        <div class="px-6 py-8 sm:px-8 sm:py-10 lg:px-10 lg:py-12">
+          <p class="inline-flex rounded-full border border-[#e9c349]/40 bg-[#e9c349]/10 px-3 py-1 text-[11px] font-black uppercase tracking-[0.24em] text-[#f3d87a]">
+            {eyebrow}
+          </p>
+          <h1 class="mt-5 max-w-3xl text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">{title}</h1>
+          <p class="mt-5 max-w-3xl text-base leading-8 text-white/72 sm:text-lg">{description}</p>
+
+          <div class="mt-8 grid gap-4 sm:grid-cols-3">
+            <article class="rounded-[24px] border border-white/10 bg-black/20 p-4">
+              <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#e9c349]">AI 이름풀이</p>
+              <p class="mt-3 text-sm leading-6 text-white/70">이름 구조, 발음 흐름, 성향 키워드, 사주 연결 포인트를 한 번에 정리합니다.</p>
+            </article>
+            <article class="rounded-[24px] border border-white/10 bg-black/20 p-4">
+              <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#59de9b]">개명추천</p>
+              <p class="mt-3 text-sm leading-6 text-white/70">사주 부족 오행과 이름 데이터 조건을 함께 보며 후보 이름을 추천합니다.</p>
+            </article>
+            <article class="rounded-[24px] border border-white/10 bg-black/20 p-4">
+              <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8dd6ff]">개명풀이</p>
+              <p class="mt-3 text-sm leading-6 text-white/70">후보 이름별 장단점, 발음 인상, 실제 사용감까지 비교형으로 제공합니다.</p>
+            </article>
+          </div>
+
+          <div class="mt-8 flex flex-wrap gap-3">
+            <a href="/ai-manseryeok" class="rounded-full bg-[#e9c349] px-5 py-3 text-sm font-black text-[#3c2f00] transition hover:brightness-110">
+              사주팔자 결과와 연결하기
+            </a>
+            <a href={fromFreeHref} class="rounded-full border border-white/15 px-5 py-3 text-sm font-black text-white/85 transition hover:bg-white/8">
+              {fromFreeLabel}
+            </a>
+          </div>
+        </div>
+
+        <aside class="border-t border-white/10 bg-black/20 px-6 py-8 sm:px-8 lg:border-l lg:border-t-0 lg:px-8 lg:py-12">
+          <div class="rounded-[28px] border border-white/10 bg-white/[0.04] p-5">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/45">프리미엄 리포트 요약</p>
+            <p class="mt-4 text-xl font-black tracking-tight text-white">{heroSummary}</p>
+            <p class="mt-4 text-sm leading-7 text-white/68">{heroDetail}</p>
+          </div>
+
+          <div class="mt-5 rounded-[28px] border border-white/10 bg-white/[0.04] p-5">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#e9c349]">{featureTitle}</p>
+            <ul class="mt-4 space-y-3 text-sm leading-7 text-white/72">
+              {featurePoints.map((point) => (
+                <li class="rounded-2xl border border-white/8 bg-black/15 px-4 py-3">{point}</li>
+              ))}
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <section class="mt-8 grid gap-4 lg:grid-cols-3">
+      {relatedLinks.map((item) => (
+        <a href={item.href} class="rounded-[28px] border border-white/10 bg-white/5 px-5 py-5 transition hover:border-[#e9c349]/35 hover:bg-white/10">
+          <p class="text-lg font-black tracking-tight text-white">{item.title}</p>
+          <p class="mt-3 text-sm leading-7 text-white/62">{item.desc}</p>
+        </a>
+      ))}
+    </section>
+
+    <section class="mt-8 rounded-[32px] border border-dashed border-white/15 bg-black/20 px-6 py-6">
+      <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#59de9b]">CSV DB Ready</p>
+      <p class="mt-4 text-base font-bold text-white">CSV 데이터는 바로 연결할 수 있게 저장 폴더를 분리해 두었습니다.</p>
+      <p class="mt-3 max-w-4xl text-sm leading-7 text-white/68">
+        나중에 주실 파일은 `src/data/name-premium/` 아래에 넣으면 됩니다. 현재는 페이지 구조, 연결 동선, 유료 업그레이드 문구, 데이터 보관 위치까지 먼저 세팅된 상태입니다.
+      </p>
+    </section>
+  </section>
+</main>
+<Footer />
