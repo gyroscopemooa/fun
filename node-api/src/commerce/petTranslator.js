@@ -1,7 +1,7 @@
 import path from 'node:path';
-import path from 'node:path';
 import os from 'node:os';
 import fs from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 import OpenAI, { toFile } from 'openai';
 
@@ -11,7 +11,9 @@ const DEFAULT_TTS_MODEL = process.env.OPENAI_PET_TTS_MODEL?.trim() || 'gpt-4o-mi
 const DEFAULT_TTS_VOICE = process.env.OPENAI_PET_TTS_VOICE?.trim() || 'alloy';
 const FFMPEG_BINARY = (process.env.FFMPEG_PATH ?? 'ffmpeg').trim() || 'ffmpeg';
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
-const SAMPLE_ROOT = path.resolve(process.cwd(), 'node-api');
+const thisFile = fileURLToPath(import.meta.url);
+const thisDir = path.dirname(thisFile);
+const SAMPLE_ROOT = path.resolve(thisDir, '..', '..');
 
 const PET_TRANSLATOR_PROMPT = `You translate pet sounds into human language.
 
