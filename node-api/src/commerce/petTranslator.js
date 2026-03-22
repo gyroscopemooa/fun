@@ -215,7 +215,7 @@ const transcribePetAudio = async ({ buffer, mimeType, filename, animal }) => {
     response = await getClient().audio.transcriptions.create({
       file,
       model: DEFAULT_TRANSCRIPTION_MODEL,
-      response_format: 'verbose_json',
+      response_format: 'json',
       prompt
     });
   } catch (error) {
@@ -229,7 +229,7 @@ const transcribePetAudio = async ({ buffer, mimeType, filename, animal }) => {
     response = await getClient().audio.transcriptions.create({
       file: transcodedFile,
       model: DEFAULT_TRANSCRIPTION_MODEL,
-      response_format: 'verbose_json',
+      response_format: 'json',
       prompt
     });
   }
@@ -292,10 +292,11 @@ const shuffle = (items) => {
 
 const getSamplePlan = (text) => {
   const length = String(text ?? '').trim().length;
-  if (length <= 8) return { sampleCount: 1, clipSeconds: 0.7 };
-  if (length <= 24) return { sampleCount: 2, clipSeconds: 0.85 };
-  if (length <= 48) return { sampleCount: 2, clipSeconds: 1.0 };
-  return { sampleCount: 3, clipSeconds: 1.15 };
+  if (length <= 8) return { sampleCount: 1, clipSeconds: 3 };
+  if (length <= 24) return { sampleCount: 2, clipSeconds: 2.5 };
+  if (length <= 60) return { sampleCount: 3, clipSeconds: 3.3 };
+  if (length <= 120) return { sampleCount: 4, clipSeconds: 3.75 };
+  return { sampleCount: 6, clipSeconds: 5 };
 };
 
 const selectPetSamples = async ({ animal, text, emotion }) => {
@@ -334,7 +335,7 @@ const concatPetSamples = async (samples, text) => {
         '-y',
         '-i', samples[index].path,
         '-t', String(clipSeconds),
-        '-af', 'afade=t=out:st=0.45:d=0.2',
+        '-af', `afade=t=out:st=${Math.max(clipSeconds - 0.35, 0.1)}:d=0.25`,
         preparedPath
       ]);
     }
