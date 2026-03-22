@@ -10,7 +10,19 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
   description="강아지와 고양이 소리를 바로 녹음해 분석하고, 짧은 명령은 텍스트로 입력해 음성까지 만드는 ManyTool AI 펫 언어 분석기입니다."
   keywords="AI 펫 번역기, 강아지 번역기, 고양이 번역기, 펫 언어 분석기, 반려동물 명령기, pet translator"
 >
-  <main class="bg-[radial-gradient(circle_at_top,#fff2ef,transparent_38%),linear-gradient(180deg,#fffaf7_0%,#f6f4ff_100%)] pb-20">
+  <main class="relative bg-[radial-gradient(circle_at_top,#fff2ef,transparent_38%),linear-gradient(180deg,#fffaf7_0%,#f6f4ff_100%)] pb-20">
+    <div id="pet-loading-overlay" class="pointer-events-none fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/55 px-4 backdrop-blur-sm">
+      <div class="w-full max-w-md rounded-[32px] border border-white/20 bg-white/95 p-7 text-center shadow-[0_30px_80px_rgba(15,23,42,0.35)]">
+        <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-violet-100">
+          <div class="h-8 w-8 animate-spin rounded-full border-4 border-violet-200 border-t-violet-600"></div>
+        </div>
+        <p id="pet-loading-overlay-title" class="mt-5 text-lg font-black text-slate-950">AI가 결과를 만드는 중입니다</p>
+        <p id="pet-loading-overlay-message" class="mt-2 text-sm leading-6 text-slate-600">
+          잠시만 기다려 주세요. 음성 분석과 결과 생성을 순서대로 처리하고 있습니다.
+        </p>
+      </div>
+    </div>
+
     <section class="mx-auto max-w-[1180px] px-4 pt-8 sm:px-6 lg:px-8">
       <div class="grid gap-6 lg:grid-cols-[1.04fr_0.96fr]">
         <section class="rounded-[34px] border border-rose-100 bg-white/92 p-7 shadow-[0_28px_60px_rgba(92,54,80,0.08)] sm:p-9">
@@ -202,7 +214,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           </p>
 
           <div id="pet-audio-card" class="mt-6 rounded-[28px] bg-[linear-gradient(135deg,#101828_0%,#312e81_100%)] p-5 text-white opacity-50">
-            <p class="text-sm font-semibold text-white/70">아직 생성된 음성이 없습니다.</p>
+            <p id="pet-audio-empty" class="text-sm font-semibold text-white/70">아직 생성된 음성이 없습니다.</p>
             <audio id="pet-result-audio" class="mt-4 w-full" controls hidden></audio>
             <a id="pet-download" class="mt-4 hidden rounded-full bg-white px-4 py-2 text-sm font-bold text-slate-900" download="pet-command.mp3">음성 다운로드</a>
           </div>
@@ -240,6 +252,9 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       const recordHoldEl = document.getElementById('pet-record-hold');
       const statusEl = document.getElementById('pet-status');
       const loadingEl = document.getElementById('pet-loading');
+      const loadingOverlayEl = document.getElementById('pet-loading-overlay');
+      const loadingOverlayTitleEl = document.getElementById('pet-loading-overlay-title');
+      const loadingOverlayMessageEl = document.getElementById('pet-loading-overlay-message');
       const usageEl = document.getElementById('pet-usage');
       const textEl = document.getElementById('pet-text');
       const emotionEl = document.getElementById('pet-emotion');
@@ -250,6 +265,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       const liveIndicatorEl = document.getElementById('pet-live-indicator');
       const recordingBadgeEl = document.getElementById('pet-recording-badge');
       const audioCardEl = document.getElementById('pet-audio-card');
+      const audioEmptyEl = document.getElementById('pet-audio-empty');
       const resultAudioEl = document.getElementById('pet-result-audio');
       const downloadEl = document.getElementById('pet-download');
       const meterBars = Array.from(document.querySelectorAll('.pet-bar'));
@@ -289,6 +305,22 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         usageEl.textContent = usage ? `사용량 ${usage.usageCount}/${usage.dailyLimit}` : '사용량 -';
       };
 
+      const syncCommandButtonState = () => {
+        if (!commandSubmitEl) return;
+        const hasText = Boolean((commandTextEl?.value || '').trim());
+        commandSubmitEl.disabled = currentMode !== MODE_COMMAND || !hasText;
+      };
+
+      const setLoadingOverlay = (value, title, message) => {
+        if (!loadingOverlayEl) return;
+        loadingOverlayEl.classList.toggle('hidden', !value);
+        loadingOverlayEl.classList.toggle('flex', value);
+        loadingOverlayEl.classList.toggle('pointer-events-none', !value);
+        if (loadingOverlayTitleEl && title) loadingOverlayTitleEl.textContent = title;
+        if (loadingOverlayMessageEl && message) loadingOverlayMessageEl.textContent = message;
+        document.body.classList.toggle('overflow-hidden', value);
+      };
+
       const setLoading = (value, label = '분석 중...') => {
         loadingEl?.classList.toggle('hidden', !value);
         if (commandSubmitEl) {
@@ -298,6 +330,15 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         if (recordHoldEl) {
           recordHoldEl.disabled = value;
           recordHoldEl.textContent = isRecording ? '녹음 중...' : '길게 눌러 녹음 시작';
+        }
+        if (value) {
+          const title = currentMode === MODE_COMMAND ? '명령 음성을 만들고 있습니다' : '반려동물 소리를 분석하고 있습니다';
+          const message = currentMode === MODE_COMMAND
+            ? '텍스트를 해석하고 음성을 생성하는 중입니다.'
+            : '녹음 파일을 분석하고 감정과 설명을 정리하는 중입니다.';
+          setLoadingOverlay(true, title, message);
+        } else {
+          setLoadingOverlay(false);
         }
       };
 
@@ -310,6 +351,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           downloadEl.hidden = true;
           downloadEl.removeAttribute('href');
         }
+        if (audioEmptyEl) audioEmptyEl.hidden = false;
         audioCardEl?.classList.add('opacity-50');
       };
 
@@ -375,6 +417,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         resultAudioEl.hidden = false;
         downloadEl.href = audioUrl;
         downloadEl.hidden = false;
+        if (audioEmptyEl) audioEmptyEl.hidden = true;
         audioCardEl?.classList.remove('opacity-50');
       };
 
@@ -389,6 +432,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         analyzePanelEl?.classList.toggle('hidden', currentMode !== MODE_ANALYZE);
         commandPanelEl?.classList.toggle('hidden', currentMode !== MODE_COMMAND);
         resetAudioOutput();
+        syncCommandButtonState();
 
         if (currentMode === MODE_ANALYZE) {
           setRecorderStatus('반려동물 소리를 바로 눌러서 녹음하고 손을 떼면 즉시 분석합니다.');
@@ -485,9 +529,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       };
 
       const loadConfig = async () => {
-        if (!API_BASE) {
-          return;
-        }
+        if (!API_BASE) return;
 
         try {
           const response = await fetch(`${API_BASE}/config`);
@@ -573,6 +615,8 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         const textValue = (commandTextEl?.value || '').trim();
         if (!textValue) {
           setStatus('짧은 명령 문장을 먼저 입력해 주세요.');
+          syncCommandButtonState();
+          commandTextEl?.focus();
           return;
         }
 
@@ -608,7 +652,16 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       commandTextEl?.addEventListener('input', () => {
         const length = (commandTextEl.value || '').length;
         if (commandCountEl) commandCountEl.textContent = `${length} / 80`;
-        if (commandSubmitEl) commandSubmitEl.disabled = !commandTextEl.value.trim();
+        syncCommandButtonState();
+      });
+
+      commandTextEl?.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+          event.preventDefault();
+          if (!commandSubmitEl?.disabled) {
+            void submitCommandText();
+          }
+        }
       });
 
       modeButtons.forEach((button) => {
@@ -622,7 +675,13 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       recordHoldEl?.addEventListener('pointerleave', (event) => {
         if (isRecording) handleRecordPressEnd(event);
       });
-      commandSubmitEl?.addEventListener('click', submitCommandText);
+      commandSubmitEl?.addEventListener('click', () => {
+        if (commandSubmitEl.disabled) {
+          commandTextEl?.focus();
+          return;
+        }
+        void submitCommandText();
+      });
 
       resetAudioOutput();
       refreshMeter(false);
