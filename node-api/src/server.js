@@ -485,13 +485,55 @@ const ensureAiManseryeokOrder = async (orderId) => {
   return order;
 };
 
-const ensureNamePremiumOrder = async (orderId) => {
+const normalizeNamePremiumLockInput = (input = {}) => {
+  const displayName = typeof input?.displayName === 'string' ? input.displayName.trim() : '';
+  const hanjaName = typeof input?.hanjaName === 'string' ? input.hanjaName.trim().replace(/\s+/g, '') : '';
+  const birthDate = typeof input?.birthDate === 'string' ? input.birthDate.trim() : '';
+  const gender = input?.gender === 'male' ? 'male' : 'female';
+  const calendarType = input?.calendarType === 'lunar' ? 'lunar' : 'solar';
+  const surname = typeof input?.surname === 'string' && input.surname.trim()
+    ? input.surname.trim()
+    : hanjaName.slice(0, 1);
+  const givenSource = Array.isArray(input?.given) ? input.given : hanjaName.slice(1).split('');
+  const given = givenSource
+    .map((value) => (typeof value === 'string' ? value.trim() : ''))
+    .filter(Boolean);
+
+  return {
+    displayName,
+    hanjaName,
+    birthDate,
+    gender,
+    calendarType,
+    surname,
+    given
+  };
+};
+
+const serializeNamePremiumLockInput = (input = {}) => JSON.stringify(normalizeNamePremiumLockInput(input));
+
+const ensureNamePremiumOrder = async (orderId, requestedInput = null) => {
   if (!orderId) throw new Error('orderId is required');
   const current = db.orders.get(orderId);
-  const order = await refreshOrderFromPolarIfNeeded(current);
+  let order = await refreshOrderFromPolarIfNeeded(current);
   if (!order) throw new Error('order not found');
   if (order.productType !== 'ai_name_premium') throw new Error('invalid order product type');
   if (order.status !== 'paid') throw new Error('payment required');
+  if (requestedInput) {
+    const normalizedInput = normalizeNamePremiumLockInput(requestedInput);
+    if (order.namePremiumLock) {
+      if (serializeNamePremiumLockInput(order.namePremiumLock) !== serializeNamePremiumLockInput(normalizedInput)) {
+        throw new Error('name premium input changed');
+      }
+    } else {
+      order = {
+        ...order,
+        namePremiumLock: normalizedInput,
+        namePremiumLockedAt: new Date().toISOString()
+      };
+      db.orders.set(order.id, order);
+    }
+  }
   return order;
 };
 
@@ -1993,7 +2035,7 @@ app.post('/ai-manseryeok/analyze', async (req, res) => {
 
 app.post('/name-premium/analyze', async (req, res) => {
   try {
-    const order = await ensureNamePremiumOrder(req.body?.orderId ?? null);
+    const order = await ensureNamePremiumOrder(req.body?.orderId ?? null, req.body?.input ?? null);
     const validation = validateNamingInput({
       surname: req.body?.surname,
       given: req.body?.given
@@ -2029,6 +2071,7 @@ app.post('/name-premium/analyze', async (req, res) => {
 
     return res.json({
       ok: true,
+      orderLock: order.namePremiumLock ?? null,
       input: {
         surname,
         given
@@ -2055,6 +2098,9 @@ app.post('/name-premium/analyze', async (req, res) => {
     if (error instanceof Error && error.message === 'payment required') {
       return res.status(402).json(buildFallback({ error: error.message }));
     }
+    if (error instanceof Error && error.message === 'name premium input changed') {
+      return res.status(409).json(buildFallback({ error: 'paid input changed. checkout is required again.' }));
+    }
     return res.status(500).json(buildFallback({
       error: error instanceof Error ? error.message : 'name premium analyze failed'
     }));
@@ -2063,7 +2109,7 @@ app.post('/name-premium/analyze', async (req, res) => {
 
 app.post('/name-premium/recommend', async (req, res) => {
   try {
-    const order = await ensureNamePremiumOrder(req.body?.orderId ?? null);
+    const order = await ensureNamePremiumOrder(req.body?.orderId ?? null, req.body?.input ?? null);
     const validation = validateRecommendInput({
       surname: req.body?.surname,
       topK: req.body?.topK,
@@ -2120,6 +2166,7 @@ app.post('/name-premium/recommend', async (req, res) => {
 
     return res.json({
       ok: true,
+      orderLock: mailedOrder.namePremiumLock ?? null,
       input: {
         surname,
         topK,
@@ -2142,6 +2189,9 @@ app.post('/name-premium/recommend', async (req, res) => {
     }
     if (error instanceof Error && error.message === 'payment required') {
       return res.status(402).json(buildFallback({ error: error.message }));
+    }
+    if (error instanceof Error && error.message === 'name premium input changed') {
+      return res.status(409).json(buildFallback({ error: 'paid input changed. checkout is required again.' }));
     }
     return res.status(500).json(buildFallback({
       error: error instanceof Error ? error.message : 'name premium recommend failed'
@@ -2647,6 +2697,8 @@ app.post('/checkout', async (req, res) => {
     aiNamePremiumEmailSentAt: null,
     aiNamePremiumEmailError: null,
     aiNamePremiumEmailPayload: null,
+    namePremiumLock: null,
+    namePremiumLockedAt: null,
     refundId: null,
     refundStatus: null,
     refundPayload: null,
