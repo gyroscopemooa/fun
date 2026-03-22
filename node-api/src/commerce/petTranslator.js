@@ -1,10 +1,16 @@
+import path from 'node:path';
+import os from 'node:os';
+import fs from 'node:fs/promises';
+import { spawn } from 'node:child_process';
 import OpenAI, { toFile } from 'openai';
 
 const DEFAULT_TEXT_MODEL = process.env.OPENAI_PET_TRANSLATOR_MODEL?.trim() || process.env.OPENAI_MODEL?.trim() || 'gpt-5-mini';
 const DEFAULT_TRANSCRIPTION_MODEL = process.env.OPENAI_PET_TRANSCRIBE_MODEL?.trim() || 'gpt-4o-mini-transcribe';
 const DEFAULT_TTS_MODEL = process.env.OPENAI_PET_TTS_MODEL?.trim() || 'gpt-4o-mini-tts';
 const DEFAULT_TTS_VOICE = process.env.OPENAI_PET_TTS_VOICE?.trim() || 'alloy';
+const FFMPEG_BINARY = (process.env.FFMPEG_PATH ?? 'ffmpeg').trim() || 'ffmpeg';
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
+const SAMPLE_ROOT = path.resolve(process.cwd(), 'node-api');
 
 const PET_TRANSLATOR_PROMPT = `You translate pet sounds into human language.
 
@@ -24,12 +30,67 @@ Rules:
   long -> longer emotional sentence`;
 
 let client = null;
+let petSampleCatalog = null;
 
 const getClient = () => {
   const apiKey = process.env.OPENAI_API_KEY?.trim();
   if (!apiKey) throw new Error('OPENAI_API_KEY is missing');
   client ??= new OpenAI({ apiKey });
   return client;
+};
+
+const waitForFfmpeg = (args) => new Promise((resolve, reject) => {
+  const child = spawn(FFMPEG_BINARY, args, { stdio: ['ignore', 'ignore', 'pipe'] });
+  let stderr = '';
+
+  child.stderr.on('data', (chunk) => {
+    stderr += String(chunk);
+  });
+  child.on('error', reject);
+  child.on('close', (code) => {
+    if (code === 0) {
+      resolve();
+      return;
+    }
+    reject(new Error(stderr.trim() || `ffmpeg exited with code ${code}`));
+  });
+});
+
+const hasKeyword = (value, keywords) => keywords.some((keyword) => value.includes(keyword));
+
+const classifySample = (animal, filename) => {
+  const normalized = String(filename ?? '').toLowerCase();
+  if (animal === 'dog') {
+    if (hasKeyword(normalized, ['growl'])) return 'tense';
+    if (hasKeyword(normalized, ['pant'])) return 'playful';
+    if (hasKeyword(normalized, ['howl', 'howling'])) return 'sad';
+    if (hasKeyword(normalized, ['distant'])) return 'alert';
+    if (hasKeyword(normalized, ['small', 'cute'])) return 'playful';
+    return 'alert';
+  }
+
+  if (hasKeyword(normalized, ['cute'])) return 'playful';
+  if (hasKeyword(normalized, ['meowing'])) return 'sad';
+  return 'neutral';
+};
+
+const loadAnimalSamples = async (animal) => {
+  const folder = path.join(SAMPLE_ROOT, animal.toUpperCase());
+  const entries = await fs.readdir(folder, { withFileTypes: true }).catch(() => []);
+  return entries
+    .filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith('.mp3'))
+    .map((entry) => ({
+      path: path.join(folder, entry.name),
+      name: entry.name,
+      mood: classifySample(animal, entry.name)
+    }));
+};
+
+const getPetSampleCatalog = async () => {
+  if (petSampleCatalog) return petSampleCatalog;
+  const [dog, cat] = await Promise.all([loadAnimalSamples('dog'), loadAnimalSamples('cat')]);
+  petSampleCatalog = { dog, cat };
+  return petSampleCatalog;
 };
 
 const decodeBase64Audio = (audio) => {
@@ -159,7 +220,91 @@ const buildPetSpeechInput = ({ text, animal }) => {
   return `멍, 멍멍, 컹컹, 왈. 사람처럼 또박또박 한국어 문장을 읽지 말고, 강아지가 짖는 소리와 짧은 리듬 중심으로 표현해. 의미 힌트만 살짝 반영해: ${trimmed}`;
 };
 
-const synthesizePetCommandAudio = async ({ text, animal }) => {
+const inferTargetMood = ({ text, emotion, animal }) => {
+  const normalized = `${text ?? ''} ${emotion ?? ''}`.toLowerCase();
+  if (animal === 'dog') {
+    if (hasKeyword(normalized, ['화', '분노', '경계', '불안', '짜증', 'growl'])) return 'tense';
+    if (hasKeyword(normalized, ['슬픔', '외로', '그리움', 'sad'])) return 'sad';
+    if (hasKeyword(normalized, ['기쁨', '신남', '반가', '즐거', 'play'])) return 'playful';
+    return 'alert';
+  }
+
+  if (hasKeyword(normalized, ['기쁨', '신남', '반가', 'play'])) return 'playful';
+  if (hasKeyword(normalized, ['슬픔', '불안', '짜증', 'sad'])) return 'sad';
+  return 'neutral';
+};
+
+const shuffle = (items) => {
+  const next = [...items];
+  for (let index = next.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [next[index], next[swapIndex]] = [next[swapIndex], next[index]];
+  }
+  return next;
+};
+
+const selectPetSamples = async ({ animal, text, emotion }) => {
+  const catalog = await getPetSampleCatalog();
+  const pool = catalog[animal] ?? [];
+  if (!pool.length) return [];
+
+  const targetMood = inferTargetMood({ text, emotion, animal });
+  const preferred = pool.filter((sample) => sample.mood === targetMood);
+  const backup = pool.filter((sample) => sample.mood !== targetMood);
+  const targetCount = Math.min(Math.max(Math.ceil(String(text ?? '').trim().length / 12), 2), 4);
+  const picked = [];
+
+  for (const sample of [...shuffle(preferred), ...shuffle(backup)]) {
+    if (!picked.find((item) => item.path === sample.path)) {
+      picked.push(sample);
+    }
+    if (picked.length >= targetCount) break;
+  }
+
+  return picked;
+};
+
+const concatPetSamples = async (samples) => {
+  if (!samples.length) return null;
+  if (samples.length === 1) {
+    const buffer = await fs.readFile(samples[0].path);
+    return { audio: buffer.toString('base64'), mimeType: 'audio/mpeg' };
+  }
+
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pet-sfx-'));
+  const listPath = path.join(tempDir, 'concat.txt');
+  const outputPath = path.join(tempDir, 'pet-command.mp3');
+
+  try {
+    const listContent = samples
+      .map((sample) => `file '${sample.path.replace(/'/g, "'\\''")}'`)
+      .join('\n');
+    await fs.writeFile(listPath, listContent, 'utf8');
+    await waitForFfmpeg([
+      '-y',
+      '-f', 'concat',
+      '-safe', '0',
+      '-i', listPath,
+      '-c', 'copy',
+      outputPath
+    ]);
+    const buffer = await fs.readFile(outputPath);
+    return { audio: buffer.toString('base64'), mimeType: 'audio/mpeg' };
+  } catch {
+    const buffer = await fs.readFile(samples[0].path);
+    return { audio: buffer.toString('base64'), mimeType: 'audio/mpeg' };
+  } finally {
+    await fs.rm(tempDir, { recursive: true, force: true }).catch(() => {});
+  }
+};
+
+const synthesizePetCommandAudio = async ({ text, emotion, animal }) => {
+  const sampleSelection = await selectPetSamples({ animal, text, emotion });
+  const sampleAudio = await concatPetSamples(sampleSelection);
+  if (sampleAudio) {
+    return sampleAudio;
+  }
+
   const speech = await getClient().audio.speech.create({
     model: DEFAULT_TTS_MODEL,
     voice: DEFAULT_TTS_VOICE,
@@ -209,7 +354,11 @@ export const analyzePetAudio = async ({ audioInput, animal = 'dog', mode = 'anal
   });
 
   if (mode === 'command') {
-    const commandAudio = await synthesizePetCommandAudio({ text: result.text, animal });
+    const commandAudio = await synthesizePetCommandAudio({
+      text: result.text,
+      emotion: result.emotion,
+      animal
+    });
     return {
       ...commandAudio,
       text: result.text,
