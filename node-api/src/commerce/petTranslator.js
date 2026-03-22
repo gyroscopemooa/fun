@@ -150,11 +150,20 @@ const generatePetTranslation = async ({ transcript, animal, mode, durationSecond
   return normalizeThreeLineOutput(completion.choices?.[0]?.message?.content ?? '');
 };
 
+const buildPetSpeechInput = ({ text, animal }) => {
+  const trimmed = typeof text === 'string' ? text.trim() : '';
+  if (animal === 'cat') {
+    return `야옹, 냐앙, 냥. 사람처럼 또박또박 한국어 문장을 읽지 말고, 고양이가 우는 소리와 짧은 리듬 중심으로 표현해. 의미 힌트만 살짝 반영해: ${trimmed}`;
+  }
+
+  return `멍, 멍멍, 컹컹, 왈. 사람처럼 또박또박 한국어 문장을 읽지 말고, 강아지가 짖는 소리와 짧은 리듬 중심으로 표현해. 의미 힌트만 살짝 반영해: ${trimmed}`;
+};
+
 const synthesizePetCommandAudio = async ({ text, animal }) => {
   const speech = await getClient().audio.speech.create({
     model: DEFAULT_TTS_MODEL,
     voice: DEFAULT_TTS_VOICE,
-    input: animal === 'cat' ? `고양이처럼 말해줘. ${text}` : `강아지처럼 말해줘. ${text}`
+    input: buildPetSpeechInput({ text, animal })
   });
 
   const buffer = Buffer.from(await speech.arrayBuffer());

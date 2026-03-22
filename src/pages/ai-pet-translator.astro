@@ -223,7 +223,11 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           <div id="pet-audio-card" class="mt-6 rounded-[28px] bg-[linear-gradient(135deg,#101828_0%,#312e81_100%)] p-5 text-white opacity-50">
             <p id="pet-audio-empty" class="text-sm font-semibold text-white/70">아직 생성된 음성이 없습니다.</p>
             <audio id="pet-result-audio" class="mt-4 w-full" controls hidden></audio>
-            <a id="pet-download" class="mt-4 hidden rounded-full bg-white px-4 py-2 text-sm font-bold text-slate-900" download="pet-command.mp3">음성 다운로드</a>
+            <div class="mt-4 flex flex-wrap gap-2">
+              <button id="pet-audio-play" type="button" class="hidden rounded-full bg-white px-4 py-2 text-sm font-bold text-slate-900">재생</button>
+              <button id="pet-audio-stop" type="button" class="hidden rounded-full border border-white/30 bg-white/10 px-4 py-2 text-sm font-bold text-white">정지</button>
+              <a id="pet-download" class="hidden rounded-full bg-white px-4 py-2 text-sm font-bold text-slate-900" download="pet-command.mp3">음성 다운로드</a>
+            </div>
           </div>
 
           <div class="mt-6 rounded-[24px] bg-slate-50 p-5">
@@ -277,6 +281,8 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       const audioCardEl = document.getElementById('pet-audio-card');
       const audioEmptyEl = document.getElementById('pet-audio-empty');
       const resultAudioEl = document.getElementById('pet-result-audio');
+      const playAudioEl = document.getElementById('pet-audio-play');
+      const stopAudioEl = document.getElementById('pet-audio-stop');
       const downloadEl = document.getElementById('pet-download');
       const meterBars = Array.from(document.querySelectorAll('.pet-bar'));
 
@@ -403,6 +409,8 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           downloadEl.hidden = true;
           downloadEl.removeAttribute('href');
         }
+        if (playAudioEl) playAudioEl.hidden = true;
+        if (stopAudioEl) stopAudioEl.hidden = true;
         if (audioEmptyEl) audioEmptyEl.hidden = false;
         audioCardEl?.classList.add('opacity-50');
       };
@@ -469,6 +477,8 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         resultAudioEl.hidden = false;
         downloadEl.href = audioUrl;
         downloadEl.hidden = false;
+        if (playAudioEl) playAudioEl.hidden = false;
+        if (stopAudioEl) stopAudioEl.hidden = false;
         if (audioEmptyEl) audioEmptyEl.hidden = true;
         audioCardEl?.classList.remove('opacity-50');
       };
@@ -741,6 +751,17 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           return;
         }
         void submitCommandText();
+      });
+      playAudioEl?.addEventListener('click', async () => {
+        try {
+          await resultAudioEl?.play();
+        } catch {
+        }
+      });
+      stopAudioEl?.addEventListener('click', () => {
+        if (!resultAudioEl) return;
+        resultAudioEl.pause();
+        resultAudioEl.currentTime = 0;
       });
 
       window.addEventListener('storage', (event) => {
