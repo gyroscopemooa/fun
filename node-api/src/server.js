@@ -122,6 +122,7 @@ const getPolarProductMap = () => ({
   donation: getFirstEnv('POLAR_PRODUCT_DONATION'),
   ai_personal_color: getFirstEnv('POLAR_PRODUCT_AI_PERSONAL_COLOR'),
   ai_manseryeok: getFirstEnv('POLAR_PRODUCT_AI_MANSERYEOK'),
+  ai_name_premium: getFirstEnv('POLAR_PRODUCT_AI_NAME_PREMIUM'),
   video_mkv_mp4: getFirstEnv('POLAR_PRODUCT_VIDEO_MKV_MP4'),
   add2: getFirstEnv('POLAR_PRODUCT_ADD2'),
   add3: getFirstEnv('POLAR_PRODUCT_ADD3'),
@@ -303,6 +304,16 @@ const ensureAiManseryeokOrder = async (orderId) => {
       throw new Error('this order has already been used');
     }
   }
+  return order;
+};
+
+const ensureNamePremiumOrder = async (orderId) => {
+  if (!orderId) throw new Error('orderId is required');
+  const current = db.orders.get(orderId);
+  const order = await refreshOrderFromPolarIfNeeded(current);
+  if (!order) throw new Error('order not found');
+  if (order.productType !== 'ai_name_premium') throw new Error('invalid order product type');
+  if (order.status !== 'paid') throw new Error('payment required');
   return order;
 };
 
@@ -1718,6 +1729,7 @@ app.post('/ai-manseryeok/analyze', async (req, res) => {
 
 app.post('/name-premium/analyze', async (req, res) => {
   try {
+    await ensureNamePremiumOrder(req.body?.orderId ?? null);
     const validation = validateNamingInput({
       surname: req.body?.surname,
       given: req.body?.given
@@ -1769,6 +1781,15 @@ app.post('/name-premium/analyze', async (req, res) => {
       }))
     });
   } catch (error) {
+    if (error instanceof Error && error.message === 'order not found') {
+      return res.status(404).json(buildFallback({ error: error.message }));
+    }
+    if (error instanceof Error && error.message === 'invalid order product type') {
+      return res.status(400).json(buildFallback({ error: error.message }));
+    }
+    if (error instanceof Error && error.message === 'payment required') {
+      return res.status(402).json(buildFallback({ error: error.message }));
+    }
     return res.status(500).json(buildFallback({
       error: error instanceof Error ? error.message : 'name premium analyze failed'
     }));
@@ -1777,6 +1798,7 @@ app.post('/name-premium/analyze', async (req, res) => {
 
 app.post('/name-premium/recommend', async (req, res) => {
   try {
+    await ensureNamePremiumOrder(req.body?.orderId ?? null);
     const validation = validateRecommendInput({
       surname: req.body?.surname,
       topK: req.body?.topK,
@@ -1829,6 +1851,15 @@ app.post('/name-premium/recommend', async (req, res) => {
       ]
     });
   } catch (error) {
+    if (error instanceof Error && error.message === 'order not found') {
+      return res.status(404).json(buildFallback({ error: error.message }));
+    }
+    if (error instanceof Error && error.message === 'invalid order product type') {
+      return res.status(400).json(buildFallback({ error: error.message }));
+    }
+    if (error instanceof Error && error.message === 'payment required') {
+      return res.status(402).json(buildFallback({ error: error.message }));
+    }
     return res.status(500).json(buildFallback({
       error: error instanceof Error ? error.message : 'name premium recommend failed'
     }));

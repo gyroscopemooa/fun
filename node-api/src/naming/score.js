@@ -1,8 +1,8 @@
 const gradeScoreMap = {
-  '대길': 20,
-  '길': 10,
-  '미정': 0,
-  '흉': -10
+  대길: 20,
+  길: 10,
+  미정: 0,
+  흉: -10
 };
 
 export function scoreFiveGrid(grids, luckMap) {
@@ -12,7 +12,7 @@ export function scoreFiveGrid(grids, luckMap) {
     const luck = luckMap.get(value) ?? {
       number: String(value),
       grade: '미정',
-      summary: '기준 데이터 필요',
+      summary: '기준 데이터 보강 필요',
       keywords: 'seed'
     };
 
@@ -27,9 +27,12 @@ export function scoreFiveGrid(grids, luckMap) {
     };
   });
 
-  const grade = score >= 60 ? '대길'
-    : score >= 20 ? '길'
-      : score >= 0 ? '보통'
+  const grade = score >= 60
+    ? '대길'
+    : score >= 20
+      ? '길'
+      : score >= 0
+        ? '보통'
         : '주의';
 
   return {
