@@ -363,7 +363,7 @@ app.get('/config', (_req, res) => {
   });
 });
 
-app.post('/pet', maybeAudioUpload, async (req, res) => {
+const handlePetTranslator = async (req, res) => {
   try {
     const tokenState = getPetTranslatorTokenState(req.body?.token);
     const mode = typeof req.body?.mode === 'string' ? req.body.mode.trim() : 'analyze';
@@ -430,7 +430,10 @@ app.post('/pet', maybeAudioUpload, async (req, res) => {
       ...(retryAfterSeconds ? { retryAfterSeconds } : {})
     });
   }
-});
+};
+
+app.post('/pet', maybeAudioUpload, handlePetTranslator);
+app.post('/api/pet', maybeAudioUpload, handlePetTranslator);
 
 const ensureVideoOrder = async (orderId) => {
   if (!orderId) throw new Error('orderId is required');

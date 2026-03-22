@@ -6,25 +6,22 @@ const DEFAULT_TTS_MODEL = process.env.OPENAI_PET_TTS_MODEL?.trim() || 'gpt-4o-mi
 const DEFAULT_TTS_VOICE = process.env.OPENAI_PET_TTS_VOICE?.trim() || 'alloy';
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
 
-const PET_TRANSLATOR_PROMPT = [
-  'You translate pet sounds into human language.',
-  '',
-  'Output EXACTLY 3 lines:',
-  '',
-  '1. A natural sentence as if the pet is speaking',
-  '2. Emotion with percentage (e.g. 감정: 기대 82%)',
-  '3. A short explanation sentence',
-  '',
-  'Rules:',
-  '- No "~want to"',
-  '- No long explanation',
-  '- Must feel like real speech',
-  '- Output in natural Korean',
-  '- Adjust sentence length based on input duration:',
-  '  - short sound -> very short sentence',
-  '  - medium sound -> normal sentence',
-  '  - long/repeated sound -> longer emotional sentence'
-].join('\n');
+const PET_TRANSLATOR_PROMPT = `You translate pet sounds into human language.
+
+Output EXACTLY 3 lines:
+
+1. A natural sentence as if the pet is speaking
+2. Emotion with percentage (e.g. 감정: 기대 82%)
+3. A short explanation sentence
+
+Rules:
+- No "~want to"
+- No long explanation
+- Must feel like real speech
+- Adjust output length based on input duration:
+  short -> short sentence
+  medium -> normal
+  long -> longer emotional sentence`;
 
 let client = null;
 
@@ -114,6 +111,7 @@ const buildPromptContext = ({ transcript, animal, mode, durationSeconds }) => [
   `Mode: ${mode}`,
   `Detected duration: ${durationSeconds || 0} seconds`,
   `Transcribed audio: ${transcript || '(no clear words, mostly pet vocalization)'}`,
+  'Write the three lines in natural Korean.',
   'Return exactly 3 lines and nothing else.'
 ].join('\n');
 
