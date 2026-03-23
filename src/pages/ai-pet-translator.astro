@@ -314,12 +314,9 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         const params = new URLSearchParams(window.location.search);
         for (const key of PARAM_KEYS) {
           const value = params.get(key)?.trim();
-          if (value) {
-            window.localStorage.setItem(TOKEN_STORAGE_KEY, value);
-            return value;
-          }
+          if (value) return value;
         }
-        return window.localStorage.getItem(TOKEN_STORAGE_KEY)?.trim() || '';
+        return '';
       };
 
       const getStoredOrderId = () => window.localStorage.getItem(ORDER_STORAGE_KEY)?.trim() || '';
@@ -983,6 +980,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
 
       void (async () => {
         if (typeof window === 'undefined') return;
+        window.localStorage.removeItem(TOKEN_STORAGE_KEY);
         const params = new URLSearchParams(window.location.search);
         const orderId = params.get('orderId');
         const savedOrderId = orderId || getStoredOrderId();
