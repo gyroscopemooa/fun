@@ -248,10 +248,14 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         ? 'http://127.0.0.1:8787'
         : '');
       const TOKEN_STORAGE_KEY = 'manytool.pet.token';
+      const ORDER_STORAGE_KEY = 'manytool.pet.orderId';
+      const DRAFT_STORAGE_KEY = 'manytool.pet.draft.v1';
       const PARAM_KEYS = ['token', 'petToken'];
       const MODE_ANALYZE = 'analyze';
       const MODE_COMMAND = 'command';
       const ANALYZE_MAX_MS = 4000;
+      const PET_PRICE_CENTS = 199;
+      const PET_CURRENCY = 'USD';
 
       const animalEl = document.getElementById('pet-animal');
       const modeButtons = Array.from(document.querySelectorAll('.pet-mode-btn'));
@@ -298,7 +302,11 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       let pressActivated = false;
       let apiReady = false;
       let tokenReady = false;
+      let paymentMode = 'mock';
+      let orderReady = false;
       let serviceReady = true;
+      let currentOrderId = '';
+      let shouldAutoResumeAfterPayment = false;
 
       const getStoredToken = () => {
         const params = new URLSearchParams(window.location.search);
@@ -312,6 +320,15 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         return window.localStorage.getItem(TOKEN_STORAGE_KEY)?.trim() || '';
       };
 
+      const getStoredOrderId = () => window.localStorage.getItem(ORDER_STORAGE_KEY)?.trim() || '';
+
+      const hasPaidAccess = () => tokenReady || paymentMode !== 'polar' || Boolean(currentOrderId);
+
+      const clearPaidOrder = () => {
+        currentOrderId = '';
+        window.localStorage.removeItem(ORDER_STORAGE_KEY);
+      };
+
       const setStatus = (message) => {
         if (statusEl) statusEl.textContent = message;
       };
@@ -322,7 +339,15 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
 
       const setUsage = (usage) => {
         if (!usageEl) return;
-        usageEl.textContent = usage ? `사용량 ${usage.usageCount}/${usage.dailyLimit}` : '사용량 -';
+        if (usage?.usageCount && usage?.dailyLimit) {
+          usageEl.textContent = `사용량 ${usage.usageCount}/${usage.dailyLimit}`;
+          return;
+        }
+        if (usage?.orderId) {
+          usageEl.textContent = '결제 완료';
+          return;
+        }
+        usageEl.textContent = '사용량 -';
       };
 
       const setDiagnostic = (visible, title = '', message = '') => {
@@ -335,13 +360,13 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       const syncCommandButtonState = () => {
         if (!commandSubmitEl) return;
         const hasText = Boolean((commandTextEl?.value || '').trim());
-        const blocked = !apiReady || !tokenReady || !serviceReady;
+        const blocked = !apiReady || !hasPaidAccess() || !serviceReady || (paymentMode === 'polar' && !orderReady);
         commandSubmitEl.disabled = currentMode !== MODE_COMMAND || !hasText || blocked;
       };
 
       const syncRecordButtonState = () => {
         if (!recordHoldEl) return;
-        const blocked = !apiReady || !tokenReady || !serviceReady;
+        const blocked = !apiReady || !hasPaidAccess() || !serviceReady || (paymentMode === 'polar' && !orderReady);
         recordHoldEl.disabled = blocked;
         if (!blocked && !isRecording) recordHoldEl.textContent = '길게 눌러 녹음 시작';
       };
@@ -349,7 +374,8 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       const refreshAvailability = () => {
         apiReady = Boolean(API_BASE);
         tokenReady = Boolean(getStoredToken());
-        const blocked = !apiReady || !tokenReady || !serviceReady;
+        currentOrderId = getStoredOrderId();
+        const blocked = !apiReady || !hasPaidAccess() || !serviceReady || (paymentMode === 'polar' && !orderReady);
 
         if (!apiReady) {
           setDiagnostic(true, 'API Missing', '현재 페이지에 PUBLIC_NODE_API_BASE가 연결되지 않았습니다. 프론트 배포 환경 변수 확인이 필요합니다.');
@@ -357,9 +383,12 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         } else if (!serviceReady) {
           setDiagnostic(true, 'API Not Ready', 'API 서버는 연결됐지만 펫 번역 기능이 준비되지 않았습니다. OPENAI 설정 또는 서버 상태를 확인해야 합니다.');
           setStatus('펫 번역 API 준비 상태를 확인해 주세요.');
-        } else if (!tokenReady) {
+        } else if (paymentMode === 'polar' && !orderReady) {
           setDiagnostic(true, 'Token Missing', '현재 토큰이 없어 요청을 보낼 수 없습니다. URL의 token 또는 petToken 파라미터, 또는 저장된 토큰이 필요합니다.');
           setStatus('사용 가능한 토큰을 먼저 연결해 주세요.');
+        } else if (!hasPaidAccess()) {
+          setDiagnostic(true, 'Payment Required', '寃곗젣 ?꾨즺 ?먮뒗 湲곗〈 ?좏겙 ?곌껐 ???붿껌??蹂대궪 ???놁뒿?덈떎.');
+          setStatus('寃곗젣 ?꾨즺 ?먮뒗 ?좏겙 ?곌껐 ???붿껌??蹂대궪 ???놁뒿?덈떎.');
         } else {
           setDiagnostic(false);
         }
@@ -480,6 +509,96 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         reader.readAsDataURL(blob);
       });
 
+      const dataUrlToBlob = async (dataUrl) => {
+        const response = await fetch(dataUrl);
+        return response.blob();
+      };
+
+      const buildDraftPayload = async () => {
+        const draft = {
+          mode: currentMode,
+          animal: animalEl?.value || 'dog',
+          commandText: commandTextEl?.value || ''
+        };
+
+        if (recordedBlob instanceof Blob && currentMode === MODE_ANALYZE) {
+          draft.audioDataUrl = await blobToDataUrl(recordedBlob);
+          draft.audioMimeType = recordedBlob.type || 'audio/webm';
+        }
+
+        return draft;
+      };
+
+      const persistDraftForCheckout = async () => {
+        const draft = await buildDraftPayload();
+        window.sessionStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+      };
+
+      const restoreDraftFromStorage = async () => {
+        const raw = window.sessionStorage.getItem(DRAFT_STORAGE_KEY);
+        if (!raw) return false;
+
+        try {
+          const draft = JSON.parse(raw);
+          if (animalEl && draft?.animal) animalEl.value = draft.animal;
+          if (typeof draft?.mode === 'string') setMode(draft.mode);
+          if (commandTextEl && typeof draft?.commandText === 'string') {
+            commandTextEl.value = draft.commandText;
+            if (commandCountEl) commandCountEl.textContent = `${draft.commandText.length} / 80`;
+          }
+          if (draft?.audioDataUrl) {
+            recordedBlob = await dataUrlToBlob(draft.audioDataUrl);
+            selectedRecordingMimeType = draft.audioMimeType || recordedBlob.type || 'audio/webm';
+            setRecordingUi(false);
+          }
+          syncCommandButtonState();
+          return true;
+        } catch {
+          window.sessionStorage.removeItem(DRAFT_STORAGE_KEY);
+          return false;
+        }
+      };
+
+      const requestPetCheckout = async () => {
+        const currentUrl = window.location.href.split('?')[0];
+        const response = await fetch(`${API_BASE}/checkout`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            productType: 'ai_pet_translator',
+            amount: PET_PRICE_CENTS,
+            currency: PET_CURRENCY,
+            successUrl: currentUrl,
+            returnUrl: currentUrl
+          })
+        });
+        const payload = await response.json().catch(() => null);
+        if (!response.ok || !payload) {
+          throw new Error(payload?.error || 'checkout failed');
+        }
+        return payload;
+      };
+
+      const verifyExistingOrder = async (orderId) => {
+        if (!orderId || !API_BASE) return false;
+        try {
+          const response = await fetch(`${API_BASE}/order/${encodeURIComponent(orderId)}`);
+          const payload = await response.json().catch(() => null);
+          if (!response.ok || !payload) return false;
+          if (payload.status === 'paid' && payload.productType === 'ai_pet_translator' && !payload.petTranslatorUsedAt) {
+            currentOrderId = orderId;
+            window.localStorage.setItem(ORDER_STORAGE_KEY, orderId);
+            return true;
+          }
+          if (payload.petTranslatorUsedAt) {
+            clearPaidOrder();
+          }
+          return false;
+        } catch {
+          return false;
+        }
+      };
+
       const renderAnalyzeResult = (payload) => {
         textEl.textContent = payload?.text || '-';
         emotionEl.textContent = payload?.emotion || '-';
@@ -524,10 +643,10 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
 
         if (currentMode === MODE_ANALYZE) {
           setRecorderStatus('반려동물 소리를 바로 눌러서 녹음하고 손을 떼면 즉시 분석합니다.');
-          if (apiReady && tokenReady && serviceReady) setStatus('반려동물 소리를 짧게 녹음해 주세요.');
+          if (apiReady && hasPaidAccess() && serviceReady) setStatus('반려동물 소리를 짧게 녹음해 주세요.');
         } else {
           setRecorderStatus('짧은 명령은 텍스트로 직접 쓰는 편이 더 빠르고 비용도 적게 듭니다.');
-          if (apiReady && tokenReady && serviceReady) setStatus('짧은 명령 문장을 입력하고 음성을 생성해 주세요.');
+          if (apiReady && hasPaidAccess() && serviceReady) setStatus('짧은 명령 문장을 입력하고 음성을 생성해 주세요.');
         }
       };
 
@@ -624,6 +743,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       const loadConfig = async () => {
         if (!API_BASE) {
           serviceReady = false;
+          orderReady = false;
           refreshAvailability();
           return;
         }
@@ -633,8 +753,11 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           const payload = await response.json().catch(() => null);
           if (!response.ok || !payload) throw new Error('config fetch failed');
           serviceReady = Boolean(payload?.readiness?.petTranslatorReady);
+          paymentMode = payload?.paymentMode === 'polar' ? 'polar' : 'mock';
+          orderReady = paymentMode === 'polar' ? Boolean(payload?.paymentProducts?.ai_pet_translator) : true;
         } catch {
           serviceReady = false;
+          orderReady = false;
         }
 
         refreshAvailability();
@@ -649,7 +772,27 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           refreshAvailability();
           return null;
         }
-        if (!token) {
+        if (!hasPaidAccess()) {
+          try {
+            await persistDraftForCheckout();
+            const checkout = await requestPetCheckout();
+            if (checkout?.orderId) {
+              currentOrderId = checkout.orderId;
+              window.localStorage.setItem(ORDER_STORAGE_KEY, checkout.orderId);
+            }
+            if (!checkout?.paid) {
+              if (checkout?.checkoutUrl) {
+                window.location.href = checkout.checkoutUrl;
+                return null;
+              }
+              throw new Error('checkout url is missing');
+            }
+          } catch (error) {
+            setStatus(error instanceof Error ? error.message : '寃곗젣 ?쒖옉???ㅽ뙣?덉뒿?덈떎.');
+            return null;
+          }
+        }
+        if (!token && !currentOrderId) {
           setStatus('사용 가능한 토큰을 찾지 못했습니다. 결제 또는 발급 흐름을 먼저 연결해 주세요.');
           refreshAvailability();
           return null;
@@ -671,7 +814,11 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
 
           if (hasAudioFile) {
             const formData = new FormData();
-            formData.append('token', token);
+            if (currentOrderId) {
+              formData.append('orderId', currentOrderId);
+            } else {
+              formData.append('token', token);
+            }
             formData.append('animal', animal);
             formData.append('mode', currentMode);
             formData.append('audioMimeType', body.audioMimeType || body.audioFile.type || 'audio/webm');
@@ -684,7 +831,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           } else {
             headers = { 'Content-Type': 'application/json' };
             requestBody = JSON.stringify({
-              token,
+              ...(currentOrderId ? { orderId: currentOrderId } : { token }),
               animal,
               mode: currentMode,
               ...body
@@ -711,11 +858,18 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
             setStatus('펫 언어 분석이 완료됐습니다.');
           }
 
+          if (currentOrderId && !token) {
+            clearPaidOrder();
+            window.sessionStorage.removeItem(DRAFT_STORAGE_KEY);
+          }
           return payload;
         } catch (error) {
           setStatus(error instanceof Error ? error.message : '펫 번역 요청에 실패했습니다.');
           setUsage(null);
           resetAudioOutput();
+          if (String(error instanceof Error ? error.message : '').toLowerCase().includes('already been used')) {
+            clearPaidOrder();
+          }
           return null;
         } finally {
           setLoading(false);
@@ -749,7 +903,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
 
       const handleRecordPressStart = async (event) => {
         event.preventDefault();
-        if (currentMode !== MODE_ANALYZE || isRecording || pressActivated || !apiReady || !tokenReady || !serviceReady) return;
+        if (currentMode !== MODE_ANALYZE || isRecording || pressActivated || !apiReady || !hasPaidAccess() || !serviceReady) return;
         pressActivated = true;
         await startRecordingNow();
       };
@@ -763,7 +917,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
 
       const handleRecordButtonClick = async (event) => {
         event.preventDefault();
-        if (currentMode !== MODE_ANALYZE || pressActivated || !apiReady || !tokenReady || !serviceReady) return;
+        if (currentMode !== MODE_ANALYZE || pressActivated || !apiReady || !hasPaidAccess() || !serviceReady) return;
         if (isRecording) {
           stopRecording();
           return;
@@ -816,8 +970,36 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       });
 
       window.addEventListener('storage', (event) => {
-        if (event.key === TOKEN_STORAGE_KEY) refreshAvailability();
+        if (event.key === TOKEN_STORAGE_KEY || event.key === ORDER_STORAGE_KEY) refreshAvailability();
       });
+
+      void (async () => {
+        if (typeof window === 'undefined') return;
+        const params = new URLSearchParams(window.location.search);
+        const orderId = params.get('orderId');
+        const savedOrderId = orderId || getStoredOrderId();
+
+        if (savedOrderId) {
+          const verified = await verifyExistingOrder(savedOrderId);
+          if (verified && orderId) {
+            shouldAutoResumeAfterPayment = true;
+          }
+        }
+
+        const restoredDraft = await restoreDraftFromStorage();
+        if (shouldAutoResumeAfterPayment && restoredDraft) {
+          shouldAutoResumeAfterPayment = false;
+          if (currentMode === MODE_COMMAND) {
+            await submitCommandText();
+          } else if (recordedBlob) {
+            await submitAnalyze();
+          }
+        }
+
+        if (orderId) {
+          window.history.replaceState({}, '', window.location.pathname);
+        }
+      })();
 
       resetAudioOutput();
       refreshMeter(false);

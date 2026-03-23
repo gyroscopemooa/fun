@@ -223,6 +223,7 @@ const getPolarProductMap = () => ({
   base: getFirstEnv('POLAR_PRODUCT_BASE', 'POLAR_PRODUCT_ID'),
   calorie: getFirstEnv('POLAR_PRODUCT_CALORIE'),
   donation: getFirstEnv('POLAR_PRODUCT_DONATION'),
+  ai_pet_translator: getFirstEnv('POLAR_PRODUCT_AI_PET_TRANSLATOR'),
   ai_personal_color: getFirstEnv('POLAR_PRODUCT_AI_PERSONAL_COLOR'),
   ai_manseryeok: getFirstEnv('POLAR_PRODUCT_AI_MANSERYEOK'),
   ai_name_premium: getFirstEnv('POLAR_PRODUCT_AI_NAME_PREMIUM'),
@@ -365,15 +366,23 @@ app.get('/config', (_req, res) => {
 
 const handlePetTranslator = async (req, res) => {
   try {
-    const tokenState = getPetTranslatorTokenState(req.body?.token);
     const mode = typeof req.body?.mode === 'string' ? req.body.mode.trim() : 'analyze';
     const animal = typeof req.body?.animal === 'string' ? req.body.animal.trim() : 'dog';
     const textInput = typeof req.body?.text === 'string' ? req.body.text.trim() : '';
+    const orderId = typeof req.body?.orderId === 'string' ? req.body.orderId.trim() : '';
     const audioInput = parsePetAudioPayload({
       file: req.file,
       audio: req.body?.audio,
       audioMimeType: req.body?.audioMimeType
     });
+
+    let tokenState = null;
+    let paidOrder = null;
+    if (orderId) {
+      paidOrder = await ensurePetTranslatorOrder(orderId);
+    } else {
+      tokenState = getPetTranslatorTokenState(req.body?.token);
+    }
 
     const result = await analyzePetAudio({
       audioInput,
@@ -382,7 +391,15 @@ const handlePetTranslator = async (req, res) => {
       textInput
     });
 
-    const usage = commitPetTranslatorUsage(tokenState);
+    const usage = tokenState ? commitPetTranslatorUsage(tokenState) : null;
+    if (paidOrder) {
+      db.orders.set(paidOrder.id, {
+        ...paidOrder,
+        petTranslatorUsedAt: new Date().toISOString(),
+        petTranslatorMode: mode,
+        petTranslatorAnimal: animal
+      });
+    }
 
     if (mode === 'command') {
       return res.json({
@@ -398,11 +415,16 @@ const handlePetTranslator = async (req, res) => {
           transcript: result.transcript,
           durationSeconds: result.durationSeconds
         },
-        usage: {
-          usageCount: usage.usage_count,
-          dailyLimit: PET_DAILY_LIMIT,
-          lastUsedDate: usage.last_used_date
-        }
+        usage: usage
+          ? {
+              usageCount: usage.usage_count,
+              dailyLimit: PET_DAILY_LIMIT,
+              lastUsedDate: usage.last_used_date
+            }
+          : {
+              paymentMode: paidOrder?.paymentMode ?? paymentMode,
+              orderId: paidOrder?.id ?? orderId
+            }
       });
     }
 
@@ -415,11 +437,16 @@ const handlePetTranslator = async (req, res) => {
       description: result.description,
       transcript: result.transcript,
       durationSeconds: result.durationSeconds,
-      usage: {
-        usageCount: usage.usage_count,
-        dailyLimit: PET_DAILY_LIMIT,
-        lastUsedDate: usage.last_used_date
-      }
+      usage: usage
+        ? {
+            usageCount: usage.usage_count,
+            dailyLimit: PET_DAILY_LIMIT,
+            lastUsedDate: usage.last_used_date
+          }
+        : {
+            paymentMode: paidOrder?.paymentMode ?? paymentMode,
+            orderId: paidOrder?.id ?? orderId
+          }
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'pet translator failed';
@@ -436,6 +463,19 @@ const handlePetTranslator = async (req, res) => {
 
 app.post('/pet', maybeAudioUpload, handlePetTranslator);
 app.post('/api/pet', maybeAudioUpload, handlePetTranslator);
+
+const ensurePetTranslatorOrder = async (orderId) => {
+  if (!orderId) throw new Error('orderId is required');
+  const current = db.orders.get(orderId);
+  const order = await refreshOrderFromPolarIfNeeded(current);
+  if (!order) throw new Error('order not found');
+  if (order.productType !== 'ai_pet_translator') throw new Error('invalid order product type');
+  if (order.status !== 'paid') throw new Error('payment required');
+  if (order.petTranslatorUsedAt) {
+    throw new Error('this order has already been used');
+  }
+  return order;
+};
 
 const ensureVideoOrder = async (orderId) => {
   if (!orderId) throw new Error('orderId is required');
