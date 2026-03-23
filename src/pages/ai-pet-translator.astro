@@ -244,7 +244,8 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
     </section>
 
     <script is:inline define:vars={{ apiBase }}>
-      const API_BASE = apiBase || (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'
+      const IS_LOCAL_HOST = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost';
+      const API_BASE = apiBase || (IS_LOCAL_HOST
         ? 'http://127.0.0.1:8787'
         : 'https://api.manytool.net');
       const TOKEN_STORAGE_KEY = 'manytool.pet.token';
@@ -302,9 +303,9 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       let pressActivated = false;
       let apiReady = false;
       let tokenReady = false;
-      let paymentMode = 'mock';
-      let orderReady = false;
-      let configLoaded = false;
+      let paymentMode = IS_LOCAL_HOST ? 'mock' : 'polar';
+      let orderReady = true;
+      let configLoaded = true;
       let serviceReady = true;
       let currentOrderId = '';
       let shouldAutoResumeAfterPayment = false;
@@ -361,13 +362,13 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       const syncCommandButtonState = () => {
         if (!commandSubmitEl) return;
         const hasText = Boolean((commandTextEl?.value || '').trim());
-        const blocked = !configLoaded || !apiReady || !serviceReady || (paymentMode === 'polar' && !orderReady);
+        const blocked = !apiReady || !serviceReady || (paymentMode === 'polar' && !orderReady);
         commandSubmitEl.disabled = currentMode !== MODE_COMMAND || !hasText || blocked;
       };
 
       const syncRecordButtonState = () => {
         if (!recordHoldEl) return;
-        const blocked = !configLoaded || !apiReady || !serviceReady || (paymentMode === 'polar' && !orderReady);
+        const blocked = !apiReady || !serviceReady || (paymentMode === 'polar' && !orderReady);
         recordHoldEl.disabled = blocked;
         if (!blocked && !isRecording) recordHoldEl.textContent = '길게 눌러 녹음 시작';
       };
@@ -376,12 +377,9 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         apiReady = Boolean(API_BASE);
         tokenReady = Boolean(getStoredToken());
         currentOrderId = getStoredOrderId();
-        const blocked = !configLoaded || !apiReady || !serviceReady || (paymentMode === 'polar' && !orderReady);
+        const blocked = !apiReady || !serviceReady || (paymentMode === 'polar' && !orderReady);
 
-        if (!configLoaded) {
-          setDiagnostic(true, 'Loading', '결제 및 API 설정을 확인하는 중입니다.');
-          setStatus('설정 확인이 끝나면 요청을 시작할 수 있습니다.');
-        } else if (!apiReady) {
+        if (!apiReady) {
           setDiagnostic(true, 'API Missing', '현재 페이지에 PUBLIC_NODE_API_BASE가 연결되지 않았습니다. 프론트 배포 환경 변수 확인이 필요합니다.');
           setStatus('API 서버 주소가 연결되지 않아 요청을 보낼 수 없습니다.');
         } else if (!serviceReady) {
@@ -746,7 +744,6 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
 
       const loadConfig = async () => {
         if (!API_BASE) {
-          configLoaded = true;
           serviceReady = false;
           orderReady = false;
           refreshAvailability();
@@ -754,17 +751,19 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         }
 
         try {
-          const response = await fetch(`${API_BASE}/config`);
+          const controller = new AbortController();
+          const timeoutId = window.setTimeout(() => controller.abort(), 4000);
+          const response = await fetch(`${API_BASE}/config`, { signal: controller.signal });
+          window.clearTimeout(timeoutId);
           const payload = await response.json().catch(() => null);
           if (!response.ok || !payload) throw new Error('config fetch failed');
           serviceReady = Boolean(payload?.readiness?.petTranslatorReady);
           paymentMode = payload?.paymentMode === 'polar' ? 'polar' : 'mock';
           orderReady = paymentMode === 'polar' ? Boolean(payload?.paymentProducts?.ai_pet_translator) : true;
-          configLoaded = true;
         } catch {
-          configLoaded = true;
-          serviceReady = false;
-          orderReady = false;
+          paymentMode = IS_LOCAL_HOST ? 'mock' : 'polar';
+          serviceReady = true;
+          orderReady = true;
         }
 
         refreshAvailability();
@@ -773,10 +772,6 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       const callPetApi = async (body, loadingLabel) => {
         const token = getStoredToken();
         const animal = animalEl?.value || 'dog';
-
-        if (!configLoaded) {
-          await loadConfig();
-        }
 
         if (!API_BASE) {
           setStatus('PUBLIC_NODE_API_BASE 설정이 필요합니다.');
