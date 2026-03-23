@@ -360,13 +360,13 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       const syncCommandButtonState = () => {
         if (!commandSubmitEl) return;
         const hasText = Boolean((commandTextEl?.value || '').trim());
-        const blocked = !apiReady || !hasPaidAccess() || !serviceReady || (paymentMode === 'polar' && !orderReady);
+        const blocked = !apiReady || !serviceReady || (paymentMode === 'polar' && !orderReady);
         commandSubmitEl.disabled = currentMode !== MODE_COMMAND || !hasText || blocked;
       };
 
       const syncRecordButtonState = () => {
         if (!recordHoldEl) return;
-        const blocked = !apiReady || !hasPaidAccess() || !serviceReady || (paymentMode === 'polar' && !orderReady);
+        const blocked = !apiReady || !serviceReady || (paymentMode === 'polar' && !orderReady);
         recordHoldEl.disabled = blocked;
         if (!blocked && !isRecording) recordHoldEl.textContent = '길게 눌러 녹음 시작';
       };
@@ -375,7 +375,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         apiReady = Boolean(API_BASE);
         tokenReady = Boolean(getStoredToken());
         currentOrderId = getStoredOrderId();
-        const blocked = !apiReady || !hasPaidAccess() || !serviceReady || (paymentMode === 'polar' && !orderReady);
+        const blocked = !apiReady || !serviceReady || (paymentMode === 'polar' && !orderReady);
 
         if (!apiReady) {
           setDiagnostic(true, 'API Missing', '현재 페이지에 PUBLIC_NODE_API_BASE가 연결되지 않았습니다. 프론트 배포 환경 변수 확인이 필요합니다.');
@@ -903,7 +903,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
 
       const handleRecordPressStart = async (event) => {
         event.preventDefault();
-        if (currentMode !== MODE_ANALYZE || isRecording || pressActivated || !apiReady || !hasPaidAccess() || !serviceReady) return;
+        if (currentMode !== MODE_ANALYZE || isRecording || pressActivated || !apiReady || !serviceReady || (paymentMode === 'polar' && !orderReady)) return;
         pressActivated = true;
         await startRecordingNow();
       };
@@ -917,7 +917,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
 
       const handleRecordButtonClick = async (event) => {
         event.preventDefault();
-        if (currentMode !== MODE_ANALYZE || pressActivated || !apiReady || !hasPaidAccess() || !serviceReady) return;
+        if (currentMode !== MODE_ANALYZE || pressActivated || !apiReady || !serviceReady || (paymentMode === 'polar' && !orderReady)) return;
         if (isRecording) {
           stopRecording();
           return;
