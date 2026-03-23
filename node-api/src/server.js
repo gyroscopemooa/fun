@@ -33,6 +33,9 @@ const polarCheckoutUrl = `${polarServer}/v1/checkouts`;
 const resendApiUrl = 'https://api.resend.com/emails';
 const ffmpegBinary = (process.env.FFMPEG_PATH ?? 'ffmpeg').trim() || 'ffmpeg';
 const VIDEO_MAX_BYTES = Math.floor(1.5 * 1024 * 1024 * 1024);
+const PET_ACCESS_LINK_TTL_MS = 20 * 60 * 1000;
+const PET_SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+const PET_SESSION_COOKIE = 'manytool_pet_session';
 const ffmpegReady = (() => {
   try {
     const result = spawnSync(ffmpegBinary, ['-version'], { stdio: 'ignore' });
@@ -88,6 +91,7 @@ const corsOptions = {
     }
     callback(new Error(`CORS blocked for origin: ${origin}`));
   },
+  credentials: true,
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type']
 };
@@ -123,6 +127,50 @@ const getResendConfig = () => ({
   apiKey: getFirstEnv('RESEND_API_KEY'),
   fromEmail: getFirstEnv('RESEND_FROM_EMAIL')
 });
+
+const normalizeEmail = (value) => {
+  const normalized = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  return normalized && normalized.includes('@') ? normalized : '';
+};
+
+const getPublicWebBaseUrl = () => getFirstEnv('PUBLIC_WEB_BASE_URL') ?? 'https://manytool.net';
+const getPublicApiBaseUrl = () => getFirstEnv('PUBLIC_NODE_API_BASE', 'PUBLIC_API_BASE_URL') ?? 'https://api.manytool.net';
+
+const getPetSessionCookieDomain = () => {
+  const configured = getFirstEnv('COOKIE_DOMAIN');
+  if (configured) return configured;
+  const base = getPublicWebBaseUrl();
+  try {
+    const hostname = new URL(base).hostname;
+    if (hostname === 'manytool.net' || hostname.endsWith('.manytool.net')) return '.manytool.net';
+  } catch {
+  }
+  return null;
+};
+
+const parseCookies = (headerValue) => Object.fromEntries(
+  String(headerValue ?? '')
+    .split(';')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => {
+      const index = part.indexOf('=');
+      return index >= 0
+        ? [part.slice(0, index), decodeURIComponent(part.slice(index + 1))]
+        : [part, ''];
+    })
+);
+
+const buildCookieHeader = (name, value, options = {}) => {
+  const segments = [`${name}=${encodeURIComponent(value)}`];
+  if (options.maxAge !== undefined) segments.push(`Max-Age=${Math.max(0, Math.floor(options.maxAge))}`);
+  if (options.domain) segments.push(`Domain=${options.domain}`);
+  segments.push(`Path=${options.path ?? '/'}`);
+  if (options.httpOnly !== false) segments.push('HttpOnly');
+  if (options.sameSite) segments.push(`SameSite=${options.sameSite}`);
+  if (options.secure !== false) segments.push('Secure');
+  return segments.join('; ');
+};
 
 const PET_DAILY_LIMIT = 5;
 const PET_COOLDOWN_MS = 5000;
@@ -262,6 +310,72 @@ const resolveCustomerEmail = (payload) => (
   ?? null
 );
 
+const findPetTranslatorSubscriptionByEmail = (email) => {
+  const normalized = normalizeEmail(email);
+  if (!normalized) return null;
+
+  const now = Date.now();
+  let matchedOrder = null;
+  for (const order of db.orders.values()) {
+    if (order?.productType !== 'ai_pet_translator') continue;
+    if (order?.status !== 'paid') continue;
+    if (normalizeEmail(order?.customerEmail) !== normalized) continue;
+    const paidAt = Date.parse(order?.paidAt ?? order?.createdAt ?? '');
+    if (!Number.isFinite(paidAt)) continue;
+    if (now - paidAt > PET_SESSION_TTL_MS) continue;
+    if (!matchedOrder || paidAt > Date.parse(matchedOrder?.paidAt ?? matchedOrder?.createdAt ?? '')) {
+      matchedOrder = order;
+    }
+  }
+  return matchedOrder;
+};
+
+const cleanupExpiredPetAccessState = () => {
+  const now = Date.now();
+  for (const [token, link] of db.petTranslatorAccessLinks.entries()) {
+    const expiresAt = Date.parse(link?.expiresAt ?? '');
+    if (!Number.isFinite(expiresAt) || expiresAt <= now || link?.usedAt) {
+      db.petTranslatorAccessLinks.delete(token);
+    }
+  }
+  for (const [token, session] of db.petTranslatorSessions.entries()) {
+    const expiresAt = Date.parse(session?.expiresAt ?? '');
+    if (!Number.isFinite(expiresAt) || expiresAt <= now) {
+      db.petTranslatorSessions.delete(token);
+    }
+  }
+};
+
+const createPetTranslatorSession = (email) => {
+  cleanupExpiredPetAccessState();
+  const token = uuidv4();
+  const expiresAt = new Date(Date.now() + PET_SESSION_TTL_MS).toISOString();
+  const session = {
+    token,
+    email: normalizeEmail(email),
+    createdAt: new Date().toISOString(),
+    expiresAt
+  };
+  db.petTranslatorSessions.set(token, session);
+  return session;
+};
+
+const getPetTranslatorSession = (req) => {
+  cleanupExpiredPetAccessState();
+  const token = parseCookies(req.headers.cookie ?? '')[PET_SESSION_COOKIE] ?? '';
+  if (!token) return null;
+  const session = db.petTranslatorSessions.get(token);
+  if (!session) return null;
+  const expiresAt = Date.parse(session.expiresAt ?? '');
+  if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
+    db.petTranslatorSessions.delete(token);
+    return null;
+  }
+  const subscriptionOrder = findPetTranslatorSubscriptionByEmail(session.email);
+  if (!subscriptionOrder) return null;
+  return { ...session, subscriptionOrder };
+};
+
 const getProviderDiagnostics = () => {
   const externalAiEnabled = isExternalAiEnabled();
   const removeBgMissing = ['REMOVE_BG_API_KEY'].filter((key) => !getFirstEnv(key));
@@ -375,11 +489,14 @@ const handlePetTranslator = async (req, res) => {
       audio: req.body?.audio,
       audioMimeType: req.body?.audioMimeType
     });
+    const petSession = getPetTranslatorSession(req);
 
     let tokenState = null;
     let paidOrder = null;
     if (orderId) {
       paidOrder = await ensurePetTranslatorOrder(orderId);
+    } else if (petSession?.subscriptionOrder) {
+      paidOrder = petSession.subscriptionOrder;
     } else {
       tokenState = getPetTranslatorTokenState(req.body?.token);
     }
@@ -463,6 +580,91 @@ const handlePetTranslator = async (req, res) => {
 
 app.post('/pet', maybeAudioUpload, handlePetTranslator);
 app.post('/api/pet', maybeAudioUpload, handlePetTranslator);
+
+app.get('/pet-access/status', (req, res) => {
+  const session = getPetTranslatorSession(req);
+  res.json({
+    ok: true,
+    authenticated: Boolean(session),
+    email: session?.email ?? null,
+    expiresAt: session?.expiresAt ?? null
+  });
+});
+
+app.post('/pet-access/request-link', async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body?.email);
+    if (!email) return res.status(400).json({ error: 'valid email is required' });
+    const subscriptionOrder = findPetTranslatorSubscriptionByEmail(email);
+    if (!subscriptionOrder) return res.status(404).json({ error: 'active subscription not found for this email' });
+
+    cleanupExpiredPetAccessState();
+    const accessToken = uuidv4();
+    db.petTranslatorAccessLinks.set(accessToken, {
+      token: accessToken,
+      email,
+      createdAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + PET_ACCESS_LINK_TTL_MS).toISOString(),
+      orderId: subscriptionOrder.id,
+      usedAt: null
+    });
+
+    await sendPetTranslatorAccessLinkEmail({ email, accessToken });
+    return res.json({ ok: true });
+  } catch (error) {
+    return res.status(500).json({ error: error instanceof Error ? error.message : 'failed to send access link' });
+  }
+});
+
+app.get('/pet-access/verify', (req, res) => {
+  cleanupExpiredPetAccessState();
+  const token = typeof req.query?.token === 'string' ? req.query.token.trim() : '';
+  const record = db.petTranslatorAccessLinks.get(token);
+  const redirectUrl = `${getPublicWebBaseUrl()}/ai-pet-translator/`;
+
+  if (!record) {
+    return res.redirect(`${redirectUrl}?petLogin=invalid`);
+  }
+
+  const expiresAt = Date.parse(record.expiresAt ?? '');
+  if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
+    db.petTranslatorAccessLinks.delete(token);
+    return res.redirect(`${redirectUrl}?petLogin=expired`);
+  }
+
+  const subscriptionOrder = findPetTranslatorSubscriptionByEmail(record.email);
+  if (!subscriptionOrder) {
+    db.petTranslatorAccessLinks.delete(token);
+    return res.redirect(`${redirectUrl}?petLogin=inactive`);
+  }
+
+  record.usedAt = new Date().toISOString();
+  db.petTranslatorAccessLinks.set(token, record);
+
+  const session = createPetTranslatorSession(record.email);
+  res.setHeader('Set-Cookie', buildCookieHeader(PET_SESSION_COOKIE, session.token, {
+    maxAge: PET_SESSION_TTL_MS / 1000,
+    domain: getPetSessionCookieDomain(),
+    path: '/',
+    sameSite: 'Lax',
+    secure: true
+  }));
+  return res.redirect(`${redirectUrl}?petLogin=success`);
+});
+
+app.post('/pet-access/logout', (req, res) => {
+  const cookies = parseCookies(req.headers.cookie ?? '');
+  const token = cookies[PET_SESSION_COOKIE];
+  if (token) db.petTranslatorSessions.delete(token);
+  res.setHeader('Set-Cookie', buildCookieHeader(PET_SESSION_COOKIE, '', {
+    maxAge: 0,
+    domain: getPetSessionCookieDomain(),
+    path: '/',
+    sameSite: 'Lax',
+    secure: true
+  }));
+  res.json({ ok: true });
+});
 
 const ensurePetTranslatorOrder = async (orderId) => {
   if (!orderId) throw new Error('orderId is required');
@@ -918,6 +1120,43 @@ const applyJobSummaryFilters = (items, {
   }
 
   return filtered;
+};
+
+const sendPetTranslatorAccessLinkEmail = async ({ email, accessToken }) => {
+  const resend = getResendConfig();
+  if (!resend.apiKey || !resend.fromEmail) throw new Error('Resend is not configured');
+
+  const verifyUrl = `${getPublicApiBaseUrl()}/pet-access/verify?token=${encodeURIComponent(accessToken)}`;
+  const response = await fetch(resendApiUrl, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${resend.apiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      from: resend.fromEmail,
+      to: [email],
+      subject: 'ManyTool 펫 번역기 로그인 링크',
+      html: `
+        <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
+          <h2 style="margin:0 0 12px">ManyTool 펫 번역기 로그인</h2>
+          <p style="margin:0 0 12px">아래 버튼을 누르면 구독 세션이 30일 동안 유지됩니다.</p>
+          <p style="margin:20px 0">
+            <a href="${verifyUrl}" style="display:inline-block;background:#111827;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:700">로그인 링크 열기</a>
+          </p>
+          <p style="margin:0 0 8px">링크는 20분 동안만 유효합니다.</p>
+          <p style="margin:0;color:#475569;font-size:13px">${verifyUrl}</p>
+        </div>
+      `
+    })
+  });
+
+  if (!response.ok) {
+    const reason = await response.text();
+    throw new Error(`resend email send failed: ${response.status} ${reason}`);
+  }
+
+  return response.json().catch(() => ({}));
 };
 
 const getAiImageJobPayload = (job) => {

@@ -71,6 +71,20 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
             </div>
           </div>
 
+          <div class="mt-6 rounded-[24px] border border-slate-200 bg-slate-50 p-4">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <p class="text-sm font-black text-slate-900">구독 로그인</p>
+                <p id="pet-auth-copy" class="mt-1 text-sm leading-6 text-slate-600">구독 중인 이메일로 로그인 링크를 받으면 30일 동안 바로 사용할 수 있습니다.</p>
+              </div>
+              <button id="pet-auth-logout" type="button" class="hidden rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-black text-slate-700">로그아웃</button>
+            </div>
+            <div class="mt-4 flex flex-col gap-3 sm:flex-row">
+              <input id="pet-auth-email" type="email" inputmode="email" autocomplete="email" placeholder="구독에 사용한 이메일" class="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:ring-4 focus:ring-slate-100" />
+              <button id="pet-auth-submit" type="button" class="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-black text-white transition hover:translate-y-[-1px] disabled:cursor-not-allowed disabled:opacity-60">로그인 링크 받기</button>
+            </div>
+          </div>
+
           <div class="mt-6 grid gap-3 sm:grid-cols-2">
             <label class="block">
               <span class="mb-2 block text-sm font-bold text-slate-800">반려동물</span>
@@ -152,7 +166,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
             <ul class="mt-2 space-y-1.5">
               <li>이 번역기는 짧은 소리를 빠르게 분석하도록 설계돼 있어 긴 파일 업로드 없이 바로 시작할 수 있습니다.</li>
               <li>명령 생성은 텍스트 입력을 우선 사용해 STT 비용을 줄이도록 구성했습니다.</li>
-              <li>토큰은 화면에 노출하지 않고 URL 또는 로컬 저장 방식으로만 사용합니다.</li>
+              <li>결제 완료 주문 또는 URL 토큰이 있을 때만 요청을 보냅니다.</li>
             </ul>
           </div>
         </section>
@@ -257,6 +271,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       const ANALYZE_MAX_MS = 4000;
       const PET_PRICE_CENTS = 199;
       const PET_CURRENCY = 'USD';
+      const PET_AUTH_QUERY_KEY = 'petLogin';
 
       const animalEl = document.getElementById('pet-animal');
       const modeButtons = Array.from(document.querySelectorAll('.pet-mode-btn'));
@@ -274,6 +289,10 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       const diagnosticBannerEl = document.getElementById('pet-diagnostic-banner');
       const diagnosticTitleEl = document.getElementById('pet-diagnostic-title');
       const diagnosticMessageEl = document.getElementById('pet-diagnostic-message');
+      const authEmailEl = document.getElementById('pet-auth-email');
+      const authSubmitEl = document.getElementById('pet-auth-submit');
+      const authLogoutEl = document.getElementById('pet-auth-logout');
+      const authCopyEl = document.getElementById('pet-auth-copy');
       const usageEl = document.getElementById('pet-usage');
       const textEl = document.getElementById('pet-text');
       const emotionEl = document.getElementById('pet-emotion');
@@ -309,6 +328,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       let serviceReady = true;
       let currentOrderId = '';
       let shouldAutoResumeAfterPayment = false;
+      let subscriptionSession = null;
 
       const getStoredToken = () => {
         const params = new URLSearchParams(window.location.search);
@@ -321,11 +341,41 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
 
       const getStoredOrderId = () => window.localStorage.getItem(ORDER_STORAGE_KEY)?.trim() || '';
 
-      const hasPaidAccess = () => tokenReady || paymentMode !== 'polar' || Boolean(currentOrderId);
+      const hasPaidAccess = () => tokenReady || paymentMode !== 'polar' || Boolean(currentOrderId) || Boolean(subscriptionSession?.authenticated);
 
       const clearPaidOrder = () => {
         currentOrderId = '';
         window.localStorage.removeItem(ORDER_STORAGE_KEY);
+      };
+
+      const syncSubscriptionUi = () => {
+        const authenticated = Boolean(subscriptionSession?.authenticated);
+        if (authEmailEl) {
+          authEmailEl.disabled = authenticated;
+          if (authenticated && subscriptionSession?.email) authEmailEl.value = subscriptionSession.email;
+        }
+        if (authSubmitEl) {
+          authSubmitEl.disabled = authenticated;
+          authSubmitEl.textContent = authenticated ? '구독 인증 완료' : '로그인 링크 받기';
+        }
+        if (authLogoutEl) authLogoutEl.classList.toggle('hidden', !authenticated);
+        if (authCopyEl) {
+          authCopyEl.textContent = authenticated
+            ? `${subscriptionSession.email} 계정으로 인증되었습니다. 세션이 유지되는 동안 바로 사용할 수 있습니다.`
+            : '구독 중인 이메일로 로그인 링크를 받으면 30일 동안 바로 사용할 수 있습니다.';
+        }
+      };
+
+      const loadSubscriptionStatus = async () => {
+        if (!API_BASE) return;
+        try {
+          const response = await fetch(`${API_BASE}/pet-access/status`, { credentials: 'include' });
+          const payload = await response.json().catch(() => null);
+          subscriptionSession = response.ok && payload?.authenticated ? payload : null;
+        } catch {
+          subscriptionSession = null;
+        }
+        syncSubscriptionUi();
       };
 
       const setStatus = (message) => {
@@ -352,8 +402,11 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       const setDiagnostic = (visible, title = '', message = '') => {
         if (!diagnosticBannerEl) return;
         diagnosticBannerEl.classList.toggle('hidden', !visible);
-        if (diagnosticTitleEl && title) diagnosticTitleEl.textContent = title;
-        if (diagnosticMessageEl && message) diagnosticMessageEl.textContent = message;
+        if (diagnosticTitleEl) {
+          diagnosticTitleEl.textContent = title;
+          diagnosticTitleEl.classList.toggle('hidden', !title);
+        }
+        if (diagnosticMessageEl) diagnosticMessageEl.textContent = message;
       };
 
       const syncCommandButtonState = () => {
@@ -386,8 +439,8 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           setDiagnostic(true, 'Token Missing', '현재 토큰이 없어 요청을 보낼 수 없습니다. URL의 token 또는 petToken 파라미터, 또는 저장된 토큰이 필요합니다.');
           setStatus('사용 가능한 토큰을 먼저 연결해 주세요.');
         } else if (!hasPaidAccess()) {
-          setDiagnostic(true, 'Payment Required', '寃곗젣 ?꾨즺 ?먮뒗 湲곗〈 ?좏겙 ?곌껐 ???붿껌??蹂대궪 ???놁뒿?덈떎.');
-          setStatus('寃곗젣 ?꾨즺 ?먮뒗 ?좏겙 ?곌껐 ???붿껌??蹂대궪 ???놁뒿?덈떎.');
+          setDiagnostic(true, '', '결제를 완료하면 바로 사용할 수 있습니다.');
+          setStatus('결제가 필요합니다.');
         } else {
           setDiagnostic(false);
         }
@@ -558,11 +611,52 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         }
       };
 
+      const requestSubscriptionLoginLink = async () => {
+        const email = (authEmailEl?.value || '').trim();
+        if (!email) {
+          setStatus('구독에 사용한 이메일을 입력해 주세요.');
+          authEmailEl?.focus();
+          return;
+        }
+
+        if (authSubmitEl) authSubmitEl.disabled = true;
+        try {
+          const response = await fetch(`${API_BASE}/pet-access/request-link`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ email })
+          });
+          const payload = await response.json().catch(() => null);
+          if (!response.ok) throw new Error(payload?.error || 'failed to send access link');
+          setStatus('이메일로 로그인 링크를 보냈습니다.');
+        } catch (error) {
+          setStatus(error instanceof Error ? error.message : '로그인 링크 전송에 실패했습니다.');
+        } finally {
+          syncSubscriptionUi();
+        }
+      };
+
+      const logoutSubscriptionSession = async () => {
+        try {
+          await fetch(`${API_BASE}/pet-access/logout`, {
+            method: 'POST',
+            credentials: 'include'
+          });
+        } catch {
+        }
+        subscriptionSession = null;
+        syncSubscriptionUi();
+        refreshAvailability();
+        setStatus('구독 로그아웃이 완료되었습니다.');
+      };
+
       const requestPetCheckout = async () => {
         const currentUrl = window.location.href.split('?')[0];
         const response = await fetch(`${API_BASE}/checkout`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({
             productType: 'ai_pet_translator',
             amount: PET_PRICE_CENTS,
@@ -581,7 +675,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       const verifyExistingOrder = async (orderId) => {
         if (!orderId || !API_BASE) return false;
         try {
-          const response = await fetch(`${API_BASE}/order/${encodeURIComponent(orderId)}`);
+          const response = await fetch(`${API_BASE}/order/${encodeURIComponent(orderId)}`, { credentials: 'include' });
           const payload = await response.json().catch(() => null);
           if (!response.ok || !payload) {
             clearPaidOrder();
@@ -770,6 +864,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
 
       const callPetApi = async (body, loadingLabel) => {
         const token = getStoredToken();
+        const sessionActive = Boolean(subscriptionSession?.authenticated);
         const animal = animalEl?.value || 'dog';
 
         if (!API_BASE) {
@@ -797,7 +892,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
             return null;
           }
         }
-        if (!token && !currentOrderId) {
+        if (!token && !currentOrderId && !sessionActive) {
           setStatus('사용 가능한 토큰을 찾지 못했습니다. 결제 또는 발급 흐름을 먼저 연결해 주세요.');
           refreshAvailability();
           return null;
@@ -821,7 +916,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
             const formData = new FormData();
             if (currentOrderId) {
               formData.append('orderId', currentOrderId);
-            } else {
+            } else if (token) {
               formData.append('token', token);
             }
             formData.append('animal', animal);
@@ -836,7 +931,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           } else {
             headers = { 'Content-Type': 'application/json' };
             requestBody = JSON.stringify({
-              ...(currentOrderId ? { orderId: currentOrderId } : { token }),
+              ...(currentOrderId ? { orderId: currentOrderId } : (token ? { token } : {})),
               animal,
               mode: currentMode,
               ...body
@@ -845,6 +940,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
 
           const response = await fetch(`${API_BASE}/api/pet`, {
             method: 'POST',
+            credentials: 'include',
             ...(headers ? { headers } : {}),
             body: requestBody
           });
@@ -942,6 +1038,12 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           if (!commandSubmitEl?.disabled) void submitCommandText();
         }
       });
+      authSubmitEl?.addEventListener('click', () => {
+        void requestSubscriptionLoginLink();
+      });
+      authLogoutEl?.addEventListener('click', () => {
+        void logoutSubscriptionSession();
+      });
 
       modeButtons.forEach((button) => {
         button.addEventListener('click', () => setMode(button.dataset.mode));
@@ -975,15 +1077,23 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       });
 
       window.addEventListener('storage', (event) => {
-        if (event.key === TOKEN_STORAGE_KEY || event.key === ORDER_STORAGE_KEY) refreshAvailability();
+        if (event.key === ORDER_STORAGE_KEY) refreshAvailability();
       });
 
       void (async () => {
         if (typeof window === 'undefined') return;
         window.localStorage.removeItem(TOKEN_STORAGE_KEY);
         const params = new URLSearchParams(window.location.search);
+        const petLogin = params.get(PET_AUTH_QUERY_KEY);
         const orderId = params.get('orderId');
         const savedOrderId = orderId || getStoredOrderId();
+
+        await loadSubscriptionStatus();
+        if (petLogin === 'success') {
+          setStatus('구독 인증이 완료되었습니다.');
+        } else if (petLogin === 'expired' || petLogin === 'invalid' || petLogin === 'inactive') {
+          setStatus('이메일 로그인 링크가 만료되었거나 더 이상 유효하지 않습니다.');
+        }
 
         if (savedOrderId) {
           const verified = await verifyExistingOrder(savedOrderId);
@@ -1002,7 +1112,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           }
         }
 
-        if (orderId) {
+        if (orderId || petLogin) {
           window.history.replaceState({}, '', window.location.pathname);
         }
       })();
@@ -1010,6 +1120,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       resetAudioOutput();
       refreshMeter(false);
       setRecordingUi(false);
+      syncSubscriptionUi();
       setMode(MODE_ANALYZE);
       refreshAvailability();
       loadConfig();

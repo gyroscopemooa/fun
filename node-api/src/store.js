@@ -6,6 +6,8 @@ const aiPersonalColorJobs = new Map();
 const aiManseryeokJobs = new Map();
 const videoJobs = new Map();
 const petTranslatorTokens = new Map();
+const petTranslatorAccessLinks = new Map();
+const petTranslatorSessions = new Map();
 
 export const db = {
   photos,
@@ -15,5 +17,7 @@ export const db = {
   aiPersonalColorJobs,
   aiManseryeokJobs,
   videoJobs,
-  petTranslatorTokens
+  petTranslatorTokens,
+  petTranslatorAccessLinks,
+  petTranslatorSessions
 };
