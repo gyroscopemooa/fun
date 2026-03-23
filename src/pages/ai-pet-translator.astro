@@ -246,7 +246,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
     <script is:inline define:vars={{ apiBase }}>
       const API_BASE = apiBase || (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'
         ? 'http://127.0.0.1:8787'
-        : '');
+        : 'https://api.manytool.net');
       const TOKEN_STORAGE_KEY = 'manytool.pet.token';
       const ORDER_STORAGE_KEY = 'manytool.pet.orderId';
       const DRAFT_STORAGE_KEY = 'manytool.pet.draft.v1';
