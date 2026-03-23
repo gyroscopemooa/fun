@@ -586,17 +586,19 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         try {
           const response = await fetch(`${API_BASE}/order/${encodeURIComponent(orderId)}`);
           const payload = await response.json().catch(() => null);
-          if (!response.ok || !payload) return false;
+          if (!response.ok || !payload) {
+            clearPaidOrder();
+            return false;
+          }
           if (payload.status === 'paid' && payload.productType === 'ai_pet_translator' && !payload.petTranslatorUsedAt) {
             currentOrderId = orderId;
             window.localStorage.setItem(ORDER_STORAGE_KEY, orderId);
             return true;
           }
-          if (payload.petTranslatorUsedAt) {
-            clearPaidOrder();
-          }
+          clearPaidOrder();
           return false;
         } catch {
+          clearPaidOrder();
           return false;
         }
       };
@@ -782,16 +784,16 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           try {
             await persistDraftForCheckout();
             const checkout = await requestPetCheckout();
-            if (checkout?.orderId) {
-              currentOrderId = checkout.orderId;
-              window.localStorage.setItem(ORDER_STORAGE_KEY, checkout.orderId);
-            }
             if (!checkout?.paid) {
               if (checkout?.checkoutUrl) {
                 window.location.href = checkout.checkoutUrl;
                 return null;
               }
               throw new Error('checkout url is missing');
+            }
+            if (checkout?.orderId) {
+              const verified = await verifyExistingOrder(checkout.orderId);
+              if (!verified) throw new Error('paid order verification failed');
             }
           } catch (error) {
             setStatus(error instanceof Error ? error.message : '寃곗젣 ?쒖옉???ㅽ뙣?덉뒿?덈떎.');
