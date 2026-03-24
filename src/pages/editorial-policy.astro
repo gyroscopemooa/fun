@@ -1,4 +1,4 @@
-﻿---
+---
 import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
@@ -8,27 +8,50 @@ import Footer from '../components/Footer.astro';
   <Header />
   <main class="mx-auto max-w-3xl px-4 py-8">
     <h1 class="text-2xl font-bold">콘텐츠 운영 원칙</h1>
-    <p class="mt-3 text-slate-700">최종 업데이트: 2026-03-08</p>
+    <p class="mt-3 text-slate-700">최종 업데이트: 2026-03-24</p>
 
     <section class="mt-6 rounded-xl border border-slate-200 bg-white p-5 text-slate-700">
       <h2 class="text-lg font-semibold text-slate-900">1. 제작 기준</h2>
       <p class="mt-2">각 페이지는 하나의 주제에 집중하고, 사용자가 즉시 이해할 수 있는 제목과 설명을 제공합니다.</p>
       <p class="mt-2">중복 문서 양산보다 실제 사용 가능한 기능 페이지 중심으로 업데이트합니다.</p>
+      <p class="mt-2">검색 유입만을 위한 얇은 문서, 의미 없는 자동 생성 문서, 기능 없는 랜딩 페이지는 운영 대상에서 제외합니다.</p>
     </section>
 
     <section class="mt-6 rounded-xl border border-slate-200 bg-white p-5 text-slate-700">
-      <h2 class="text-lg font-semibold text-slate-900">2. 품질 관리</h2>
+      <h2 class="text-lg font-semibold text-slate-900">2. 독창성과 정보 가치</h2>
       <ul class="mt-2 list-disc space-y-1 pl-5">
-        <li>깨진 링크, 오작동 요소, 오래된 문구를 정기 점검</li>
-        <li>사용자 피드백 기반 오탈자/오정보 수정</li>
-        <li>정책 페이지와 연락 수단 상시 공개</li>
+        <li>페이지별로 다른 제목, 설명, 사용 맥락, 결과 안내를 제공합니다.</li>
+        <li>다른 사이트 문서를 그대로 복제하거나 거의 동일한 내용을 반복 게시하지 않습니다.</li>
+        <li>사용자가 기능을 이해하기 어려운 경우 사용법, 주의사항, 관련 페이지 링크를 보강합니다.</li>
       </ul>
     </section>
 
     <section class="mt-6 rounded-xl border border-slate-200 bg-white p-5 text-slate-700">
-      <h2 class="text-lg font-semibold text-slate-900">3. 광고 운영 원칙</h2>
+      <h2 class="text-lg font-semibold text-slate-900">3. 품질 관리</h2>
+      <ul class="mt-2 list-disc space-y-1 pl-5">
+        <li>깨진 링크, 오작동 요소, 오래된 문구를 정기 점검</li>
+        <li>사용자 피드백 기반 오탈자/오정보 수정</li>
+        <li>정책 페이지와 연락 수단 상시 공개</li>
+        <li>준비 중이거나 테스트용인 페이지는 검색엔진 인덱싱 대상에서 제외</li>
+      </ul>
+    </section>
+
+    <section class="mt-6 rounded-xl border border-slate-200 bg-white p-5 text-slate-700">
+      <h2 class="text-lg font-semibold text-slate-900">4. 사용자 경험 기준</h2>
+      <p class="mt-2">내비게이션, 링크 정확성, 모바일 가독성, 버튼 동작 여부를 우선 확인합니다.</p>
+      <p class="mt-2">콘텐츠보다 광고 영역, 빈 컨테이너, 혼동을 주는 버튼이 더 눈에 띄는 화면은 수정 대상입니다.</p>
+    </section>
+
+    <section class="mt-6 rounded-xl border border-slate-200 bg-white p-5 text-slate-700">
+      <h2 class="text-lg font-semibold text-slate-900">5. 광고 운영 원칙</h2>
       <p class="mt-2">광고는 콘텐츠를 가리지 않는 위치에 배치하며, 오인 클릭을 유도하는 UI를 사용하지 않습니다.</p>
       <p class="mt-2">페이지 가치보다 광고가 많아지지 않도록 콘텐츠 본문량과 사용자 경험을 우선합니다.</p>
+    </section>
+
+    <section class="mt-6 rounded-xl border border-slate-200 bg-white p-5 text-slate-700">
+      <h2 class="text-lg font-semibold text-slate-900">6. 수정 요청 및 검토</h2>
+      <p class="mt-2">오류, 권리 침해, 오래된 정보, 저품질 페이지 제보는 <a href="/contact" class="font-medium text-slate-900 underline underline-offset-4">문의 페이지</a>를 통해 접수합니다.</p>
+      <p class="mt-2">문제 확인 시 수정, 비공개, noindex 처리 중 적절한 방법으로 반영합니다.</p>
     </section>
   </main>
   <Footer />

@@ -4,14 +4,14 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 ---
 
-<Layout title="Solo Dining Map | ManyTool" description="혼밥 가능 식당 공유 지도 도구 소개와 사용 가이드 페이지입니다.">
+<Layout noindex={true} title="Solo Dining Map | ManyTool" description="혼밥 가능 식당 공유 지도 도구 소개와 사용 가이드 페이지입니다.">
   <Header />
   <main class="mx-auto max-w-4xl px-4 py-8">
     <h1 class="text-3xl font-black">Solo Dining Map</h1>
     <section class="mt-4 space-y-3 text-slate-700">
-      <h2 class="text-xl font-bold">도구 설명</h2><p>혼자 방문하기 편한 식당을 지도 기반으로 공유/탐색하는 도구입니다.</p>
-      <h2 class="text-xl font-bold">사용 방법</h2><p>지역/식당명 검색 또는 지도 선택 후 제보를 등록합니다.</p>
-      <h2 class="text-xl font-bold">예시</h2><p>출장/여행 중 혼밥 가능한 식당 찾기에 활용합니다.</p>
+      <h2 class="text-xl font-bold">도구 설명</h2><p>혼밥 가능한 식당을 지도 기반으로 공유하고 탐색하는 도구입니다.</p>
+      <h2 class="text-xl font-bold">사용 방법</h2><p>지역 또는 식당명을 검색하거나 제보를 등록합니다.</p>
+      <h2 class="text-xl font-bold">예시</h2><p>출장이나 여행 중 혼자 식사하기 편한 장소를 찾을 때 활용할 수 있습니다.</p>
       <h2 class="text-xl font-bold">FAQ</h2><p>Q. 제보도 가능한가요? A. 가능합니다.</p>
       <p><a class="underline" href="/maps/solo-dining">실행 페이지로 이동</a></p>
     </section>

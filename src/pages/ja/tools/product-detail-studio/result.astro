@@ -5,7 +5,7 @@ import ProductDetailStudioResult from '../../../../components/home/ProductDetail
 import Layout from '../../../../layouts/Layout.astro';
 ---
 
-<Layout title="商品詳細ページ生成結果 | ManyTool" description="決済済みの商品詳細ページ結果とダウンロード画面です。">
+<Layout noindex={true} title="商品詳細ページ生成結果 | ManyTool" description="決済済みの商品詳細ページ結果とダウンロード画面です。">
   <Header />
   <ProductDetailStudioResult client:load locale="ja" />
   <Footer />

@@ -5,7 +5,7 @@ import ProductDetailStudioResult from '../../../../components/home/ProductDetail
 import Layout from '../../../../layouts/Layout.astro';
 ---
 
-<Layout title="Product Detail Studio Result | ManyTool" description="Paid detail page result and downloads.">
+<Layout noindex={true} title="Product Detail Studio Result | ManyTool" description="Paid detail page result and downloads.">
   <Header />
   <ProductDetailStudioResult client:load locale="en" />
   <Footer />

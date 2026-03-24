@@ -7,8 +7,11 @@ const t = await createTranslator(locale);
 ---
 
 <footer class="mt-12 border-t border-slate-200 bg-white">
-  <div class="mx-auto grid max-w-5xl gap-2 px-4 py-6 text-sm text-slate-600 md:grid-cols-2">
-    <p>ⓒ {new Date().getFullYear()} ManyTool. {t('footer.rights')}</p>
+  <div class="mx-auto grid max-w-5xl gap-4 px-4 py-6 text-sm text-slate-600 md:grid-cols-2">
+    <div class="space-y-1">
+      <p>&copy; {new Date().getFullYear()} ManyTool. {t('footer.rights')}</p>
+      <p class="text-xs text-slate-500">운영 문의: <a href="mailto:mooameensoo@gmail.com" class="underline underline-offset-4">mooameensoo@gmail.com</a></p>
+    </div>
     <div class="flex flex-wrap gap-3 md:justify-end">
       <a href={withLocalePath(locale, '/about')} class="hover:underline">{t('footer.about')}</a>
       <a href={withLocalePath(locale, '/privacy')} class="hover:underline">{t('footer.privacy')}</a>
