@@ -40,7 +40,9 @@ function resolveFaceHint(metadata, faceHint) {
       height: clamp(boxHeight, Math.max(1, height * 0.12), height)
     },
     leftEye: getPoint(faceHint.leftEye ?? faceHint.keypoints?.leftEye ?? null, width, height),
-    rightEye: getPoint(faceHint.rightEye ?? faceHint.keypoints?.rightEye ?? null, width, height)
+    rightEye: getPoint(faceHint.rightEye ?? faceHint.keypoints?.rightEye ?? null, width, height),
+    sourcePhotoType: typeof faceHint.sourcePhotoType === 'string' ? faceHint.sourcePhotoType : null,
+    frontalScore: typeof faceHint.frontalScore === 'number' ? faceHint.frontalScore : null
   };
 }
 

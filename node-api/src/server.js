@@ -28,6 +28,7 @@ const app = express();
 const port = Number(process.env.PORT ?? 8787);
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 12 * 1024 * 1024 } });
 const paymentMode = process.env.PAYMENT_MODE ?? 'mock';
+const isProduction = process.env.NODE_ENV === 'production';
 const polarServer = process.env.POLAR_SERVER === 'sandbox' ? 'https://sandbox-api.polar.sh' : 'https://api.polar.sh';
 const polarCheckoutUrl = `${polarServer}/v1/checkouts`;
 const resendApiUrl = 'https://api.resend.com/emails';
@@ -44,6 +45,16 @@ const ffmpegReady = (() => {
     return false;
   }
 })();
+
+const logSecurityEvent = (event, details = {}) => {
+  console.warn('[manytool-security]', JSON.stringify({
+    event,
+    at: new Date().toISOString(),
+    paymentMode,
+    environment: isProduction ? 'production' : 'non-production',
+    ...details
+  }));
+};
 
 const thisFile = fileURLToPath(import.meta.url);
 const thisDir = path.dirname(thisFile);
@@ -722,6 +733,44 @@ const ensureAiManseryeokOrder = async (orderId) => {
     const existingJob = db.aiManseryeokJobs.get(order.aiManseryeokJobId);
     if (existingJob && existingJob.status !== 'failed') {
       throw new Error('this order has already been used');
+    }
+  }
+  return order;
+};
+
+const ensureAiPhotoOrder = async (orderId) => {
+  if (!orderId) throw new Error('orderId is required');
+  const current = db.orders.get(orderId);
+  const order = await refreshOrderFromPolarIfNeeded(current);
+  if (!order) {
+    logSecurityEvent('ai_photo_order_not_found', { orderId });
+    const error = new Error('order not found');
+    error.statusCode = 404;
+    throw error;
+  }
+  if (order.productType !== 'base') {
+    logSecurityEvent('ai_photo_invalid_order_type', { orderId, productType: order.productType });
+    const error = new Error('invalid order product type');
+    error.statusCode = 400;
+    throw error;
+  }
+  if (order.status !== 'paid') {
+    logSecurityEvent('ai_photo_unpaid_attempt', { orderId, status: order.status });
+    const error = new Error('payment required');
+    error.statusCode = 402;
+    throw error;
+  }
+  if (order.aiPhotoJobId) {
+    const existingJob = db.jobs.get(order.aiPhotoJobId);
+    if (existingJob && existingJob.status !== 'failed') {
+      logSecurityEvent('ai_photo_order_reuse_attempt', {
+        orderId,
+        aiPhotoJobId: order.aiPhotoJobId,
+        jobStatus: existingJob.status
+      });
+      const error = new Error('this order has already been used');
+      error.statusCode = 409;
+      throw error;
     }
   }
   return order;
@@ -1900,8 +1949,18 @@ app.post('/upload', upload.single('image'), async (req, res) => {
 
 app.post('/generate', async (req, res) => {
   const { photoId, toolType = 'id_photo', outfitType = 'current', faceHint = null, provider = null } = req.body ?? {};
+  const orderId = typeof req.body?.orderId === 'string' ? req.body.orderId.trim() : '';
   if (!photoId) {
     return res.status(400).json({ error: 'photoId is required' });
+  }
+  if (paymentMode === 'polar' && !orderId) {
+    logSecurityEvent('ai_photo_missing_order_id', {
+      photoId,
+      toolType,
+      outfitType,
+      ip: req.ip ?? null
+    });
+    return res.status(402).json({ error: 'payment required' });
   }
   const requestedProvider = normalizeRequestedProvider(provider);
   if (provider != null && !requestedProvider) {
@@ -1925,6 +1984,10 @@ app.post('/generate', async (req, res) => {
   db.jobs.set(jobId, job);
 
   try {
+    let order = null;
+    if (paymentMode === 'polar') {
+      order = await ensureAiPhotoOrder(orderId);
+    }
     const generation = await generateCandidatesWithProvider({
       inputPath: photo.originalPath,
       storageDir: generatedDir,
@@ -1952,6 +2015,13 @@ app.post('/generate', async (req, res) => {
     job.pipelineReport = generation?.pipelineReport ?? null;
     job.completedAt = new Date().toISOString();
     job.originalUrl = `/files/originals/${path.basename(photo.originalPath)}`;
+    if (order?.id) {
+      db.orders.set(order.id, {
+        ...order,
+        aiPhotoJobId: jobId,
+        aiPhotoUsedAt: new Date().toISOString()
+      });
+    }
     await persistJobSnapshot(job);
 
     return res.status(201).json({
@@ -1967,7 +2037,8 @@ app.post('/generate', async (req, res) => {
     job.error = error.message;
     job.originalUrl = `/files/originals/${path.basename(photo.originalPath)}`;
     await persistJobSnapshot(job);
-    return res.status(500).json({ error: `generate failed: ${error.message}`, jobId });
+    const statusCode = Number.isFinite(error?.statusCode) ? error.statusCode : 500;
+    return res.status(statusCode).json({ error: statusCode === 402 ? 'payment required' : `generate failed: ${error.message}`, jobId });
   }
 });
 
@@ -2936,6 +3007,8 @@ app.post('/checkout', async (req, res) => {
     jobId,
     videoJobId: null,
     aiImageJobId: null,
+    aiPhotoJobId: null,
+    aiPhotoUsedAt: null,
     aiPersonalColorJobId: null,
     aiManseryeokJobId: null,
     provider,

@@ -7,9 +7,9 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
 ---
 
 <Layout
-  title="AI 여권사진 생성기 | ManyTool"
-  description="셀카 업로드 또는 카메라 촬영으로 AI 여권사진 후보 3장을 만들고 1장을 선택해 다운로드하세요."
-  keywords="AI 여권사진, 여권사진 만들기, 온라인 여권사진, 셀카 여권사진, passport photo maker"
+  title="AI 여권사진 생성기 | 온라인 여권사진 만들기, 셀카 여권사진 편집 | ManyTool"
+  description="셀카 업로드 또는 카메라 촬영으로 AI 여권사진 후보 3장을 만들고 비교한 뒤 원하는 1장을 다운로드하는 온라인 여권사진 생성 페이지입니다."
+  keywords="AI 여권사진, 여권사진 만들기, 온라인 여권사진, 셀카 여권사진, passport photo maker, 여권사진 편집"
 >
   <Header />
   <main class="mx-auto max-w-5xl px-4 py-8 pb-28 md:pb-8">
@@ -156,7 +156,6 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       <article class="rounded-2xl border border-slate-200 bg-white p-5">
         <h2 class="text-xl font-bold text-slate-900">2) 후보 선택</h2>
         <p class="mt-2 text-sm text-slate-600">후보 중 1장을 선택하면 다운로드가 활성화됩니다. 생성 후 바로 비교해서 고르면 됩니다.</p>
-        <p class="mt-1 text-xs text-slate-500">결제 전 미리보기에는 가벼운 워터마크가 표시됩니다.</p>
         <div id="candidate-grid" class="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           <p class="text-sm text-slate-500">생성 결과가 여기에 표시됩니다.</p>
         </div>
@@ -193,9 +192,6 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           <img id="compare-before" alt="원본" class="h-full w-full object-cover" />
           <div id="compare-after-wrap" class="absolute inset-y-0 left-0 w-1/2 overflow-hidden border-r-2 border-white">
             <img id="compare-after" alt="결과" class="h-full w-full object-cover" />
-            <div class="pointer-events-none absolute inset-0 flex items-center justify-center bg-[repeating-linear-gradient(-32deg,rgba(15,23,42,0.18)_0,rgba(15,23,42,0.18)_18px,transparent_18px,transparent_48px)]">
-              <span class="rotate-[-18deg] rounded-full border border-white/35 bg-slate-900/32 px-5 py-1.5 text-base font-black tracking-[0.24em] text-white/82">PREVIEW</span>
-            </div>
           </div>
           <div class="pointer-events-none absolute inset-x-0 bottom-2 text-center text-xs font-semibold text-white">드래그로 비교</div>
         </div>
@@ -312,6 +308,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     const mobileDownloadBtn = document.getElementById('mobile-download-selected');
 
     const API_BASE = apiBase;
+    const allowLocalFallback = import.meta.env.DEV;
     const PAGE_STATE_KEY = 'manytool:ai-passport-photo:v1';
 
     let stream = null;
@@ -1160,9 +1157,6 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
             <div class="absolute left-3 top-3 flex items-center gap-2">
               <span class="rounded-full bg-white/92 px-2.5 py-1 text-[11px] font-black text-slate-900 shadow-sm">옵션 ${idx + 1}</span>
             </div>
-            <div class="pointer-events-none absolute inset-0 flex items-center justify-center bg-[repeating-linear-gradient(-32deg,rgba(15,23,42,0.08)_0,rgba(15,23,42,0.08)_12px,transparent_12px,transparent_44px)]">
-              <span class="rotate-[-18deg] rounded-full border border-white/35 bg-slate-900/30 px-3 py-1 text-[10px] font-black tracking-[0.16em] text-white/82">PREVIEW</span>
-            </div>
           </div>
           <div class="mt-2 flex items-center justify-between px-1">
             <p class="text-sm font-bold text-slate-800">후보 ${idx + 1}</p>
@@ -1350,7 +1344,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       return cachedPhotoId;
     };
 
-    const requestServerCandidates = async (count = 3) => {
+    const requestServerCandidates = async (count = 3, orderId = null) => {
       const photoId = await uploadSourceIfNeeded();
       const outfit = outfitEl instanceof HTMLSelectElement ? outfitEl.value : 'current';
       const rounds = Math.ceil(count / 3);
@@ -1366,6 +1360,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
             photoId,
             toolType: 'passport_photo',
             outfitType: outfit,
+            orderId: paymentMode === 'polar' ? orderId : null,
             provider: getSelectedProvider()
           })
         });
@@ -1394,12 +1389,12 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       };
     };
 
-    const generateCandidates = async (count = 3, append = false) => {
+    const generateCandidates = async (count = 3, append = false, orderId = null) => {
       if (!sourceDataUrl || isGenerating) return;
       setBusy(true);
       setStatus('후보를 생성하고 있습니다...');
       try {
-        const generation = await requestServerCandidates(count);
+        const generation = await requestServerCandidates(count, orderId);
         candidates = append ? [...candidates, ...generation.candidates] : generation.candidates;
         renderPipelineReport(generation.pipelineReport ?? null);
         renderJobDebugLink(generation.jobId ?? null, generation.pipelineReport ?? null);
@@ -1410,7 +1405,18 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           : (generation.pipelineReport?.resolvedProvider ?? 'unknown');
         renderProviderResultBadge(generation.pipelineReport ?? null);
         setStatus(`Node API 생성 완료. provider=${resolvedProvider}. 현재 ${candidates.length}장 후보가 준비되었습니다. ${generation.pipelineReport?.qualitySummary ?? ''}`.trim());
-      } catch {
+      } catch (error) {
+        if (paymentMode === 'polar' || !allowLocalFallback) {
+          if (!append) candidates = [];
+          renderPipelineReport(null);
+          renderJobDebugLink(null);
+          renderQualityFeedback(null);
+          renderProviderResultBadge(null);
+          setStatus(paymentMode === 'polar'
+            ? (error instanceof Error ? error.message : '결제 모드에서는 무료 대체 생성을 사용할 수 없습니다.')
+            : '운영 환경에서는 자동 무료 대체 생성을 사용하지 않습니다.');
+          throw error;
+        }
         if (!append) candidates = [];
         try {
           await generateCandidatesLocalFallback(count);
@@ -1479,6 +1485,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       if (!res.ok) throw new Error(`checkout failed: ${res.status}`);
       return res.json();
     };
+
     const formatCheckoutAmount = (checkout) => {
       const amount = Number(checkout?.amount ?? 0);
       const currency = String(checkout?.currency ?? 'USD').toUpperCase();
@@ -1490,7 +1497,6 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       }
     };
 
-
     const moveToCheckoutIfPending = (checkout, pendingMessage, persistBaseOrder = false) => {
       if (!checkout || !checkout.checkoutUrl || checkout.paid) return false;
       if (persistBaseOrder) {
@@ -1501,6 +1507,51 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       setStatus(amountLabel ? `${pendingMessage} Final amount ${amountLabel}` : pendingMessage);
       window.location.href = checkout.checkoutUrl;
       return true;
+    };
+
+    const ensureBaseCheckoutForGeneration = async () => {
+      if (paymentMode !== 'polar') return null;
+      if (!apiOnline) {
+        throw new Error('결제 모드에서는 API 연결이 필요합니다.');
+      }
+      if (basePaid && baseOrderId) return baseOrderId;
+
+      if (baseOrderId) {
+        const existingOrder = await fetchOrder(baseOrderId);
+        if (existingOrder?.status === 'paid') {
+          basePaid = true;
+          if (!creditedBaseOrders.includes(baseOrderId)) {
+            creditedBaseOrders.push(baseOrderId);
+          }
+          savePageState();
+          return baseOrderId;
+        }
+        if (existingOrder?.status === 'pending' && existingOrder?.checkoutUrl) {
+          window.location.href = existingOrder.checkoutUrl;
+          return null;
+        }
+        if (existingOrder?.status === 'refunded' || existingOrder?.status === 'failed' || existingOrder?.status === 'expired') {
+          baseOrderId = null;
+          savePageState();
+        }
+      }
+
+      setStatus('기본 결제를 확인하고 있습니다...');
+      const checkout = await requestBaseCheckout();
+      if (!checkout.paid) {
+        baseOrderId = checkout.orderId ?? baseOrderId;
+        savePageState();
+        if (moveToCheckoutIfPending(checkout, '결제 페이지로 이동합니다. 결제 후 돌아오면 생성을 시작할 수 있습니다.', true)) return null;
+        throw new Error('결제가 완료되지 않았습니다.');
+      }
+
+      basePaid = true;
+      baseOrderId = checkout.orderId ?? null;
+      if (baseOrderId && !creditedBaseOrders.includes(baseOrderId)) {
+        creditedBaseOrders.push(baseOrderId);
+      }
+      savePageState();
+      return baseOrderId;
     };
 
     if (compareSliderEl instanceof HTMLInputElement && compareAfterWrapEl instanceof HTMLElement) {
@@ -1666,7 +1717,23 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     }
 
     if (generateBtn instanceof HTMLButtonElement) {
-      generateBtn.addEventListener('click', () => generateCandidates(3, false));
+      generateBtn.addEventListener('click', async () => {
+        try {
+          const generationOrderId = await ensureBaseCheckoutForGeneration();
+          if (paymentMode === 'polar' && !generationOrderId && !basePaid) return;
+          await generateCandidates(3, false, generationOrderId ?? baseOrderId ?? null);
+        } catch (error) {
+          if (error instanceof Error && error.message.includes('not configured')) {
+            setStatus('기본 결제용 Polar 상품 ID가 아직 설정되지 않았습니다.');
+            return;
+          }
+          if (error instanceof Error && error.message.includes('API 연결')) {
+            setStatus(error.message);
+            return;
+          }
+          setStatus('기본 결제 확인에 실패했습니다. 잠시 후 다시 시도해주세요.');
+        }
+      });
     }
 
     addButtons.forEach((buttonEl) => {
@@ -1679,6 +1746,14 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         }
         if (isGenerating) return;
         if (!apiOnline) {
+          if (paymentMode === 'polar') {
+            setStatus('결제 모드에서는 API 연결이 필요합니다. 잠시 후 다시 시도해주세요.');
+            return;
+          }
+          if (!allowLocalFallback) {
+            setStatus('운영 환경에서는 API 미연결 시 무료 대체 생성을 사용하지 않습니다.');
+            return;
+          }
           setStatus(`API 미연결 상태입니다. 결제 확인 없이 +${count}장 로컬 추가 생성을 진행합니다.`);
           await generateCandidates(count, true);
           return;
@@ -1690,7 +1765,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
             if (existingOrder?.status === 'paid') {
               setStatus(`결제 완료(+${count}장). 추가 후보를 생성합니다...`);
               try {
-                await generateCandidates(count, true);
+                await generateCandidates(count, true, existingOrderId);
                 addonOrders[productType] = null;
                 savePageState();
                 return;
@@ -1722,7 +1797,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           }
           setStatus(`결제 완료(+${count}장). 추가 후보를 생성합니다...`);
           try {
-            await generateCandidates(count, true);
+            await generateCandidates(count, true, checkout.orderId ?? null);
           } catch {
             await requestRefund(checkout.orderId, 'service_disruption');
             setStatus(`추가 생성 처리에 실패해 +${count}장 결제를 환불 요청했습니다.`);
@@ -1748,6 +1823,10 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         }
         if (isGenerating) return;
         if (!apiOnline) {
+          if (paymentMode === 'polar' && !basePaid) {
+            setStatus('결제 모드에서는 다운로드 전 결제 확인이 필요합니다.');
+            return;
+          }
           try {
             setStatus('API 미연결 상태입니다. 결제 확인 없이 다운로드를 시작합니다.');
             await downloadCandidate(selected[0], 1, 'manytool-passport-photo');

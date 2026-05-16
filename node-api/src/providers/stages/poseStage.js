@@ -4,18 +4,18 @@ const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
 const POSE_PROFILES = {
   standard: {
-    yawMultiplier: 1.2,
-    shearMultiplier: 0.16,
-    verticalMultiplier: 0.35,
-    translationMultiplier: 0.08,
-    rotationMultiplier: 0.58
-  },
-  assertive: {
-    yawMultiplier: 1.45,
-    shearMultiplier: 0.2,
+    yawMultiplier: 1.35,
+    shearMultiplier: 0.18,
     verticalMultiplier: 0.42,
     translationMultiplier: 0.1,
-    rotationMultiplier: 0.68
+    rotationMultiplier: 0.72
+  },
+  assertive: {
+    yawMultiplier: 1.7,
+    shearMultiplier: 0.24,
+    verticalMultiplier: 0.54,
+    translationMultiplier: 0.14,
+    rotationMultiplier: 0.88
   },
   soft: {
     yawMultiplier: 1,
@@ -45,15 +45,19 @@ export async function facePoseCorrectionStage({ inputBuffer, geometry = null, to
   const height = metadata.height ?? (toolType === 'headshot' ? 1000 : 800);
   const centerBias = (geometry.faceCenterRatioX ?? 0.5) - 0.5;
   const eyeBias = (geometry.eyeLineRatio ?? 0.38) - (toolType === 'headshot' ? 0.36 : toolType === 'passport_photo' ? 0.42 : 0.38);
-  const roll = clamp(Number(geometry.rotation ?? 0) * poseProfile.rotationMultiplier, -5, 5);
-  const yawBias = clamp(centerBias * poseProfile.yawMultiplier, -0.08, 0.08);
-  const verticalBias = clamp(eyeBias * poseProfile.verticalMultiplier, -0.035, 0.035);
-  const shearX = clamp(-yawBias * poseProfile.shearMultiplier, -0.018, 0.018);
+  const rollLimit = toolType === 'headshot' ? 6 : 7.5;
+  const horizontalLimit = toolType === 'headshot' ? 0.08 : 0.11;
+  const verticalLimit = toolType === 'headshot' ? 0.04 : 0.055;
+  const shearLimit = toolType === 'headshot' ? 0.022 : 0.03;
+  const roll = clamp(Number(geometry.rotation ?? 0) * poseProfile.rotationMultiplier, -rollLimit, rollLimit);
+  const yawBias = clamp(centerBias * poseProfile.yawMultiplier, -horizontalLimit, horizontalLimit);
+  const verticalBias = clamp(eyeBias * poseProfile.verticalMultiplier, -verticalLimit, verticalLimit);
+  const shearX = clamp(-yawBias * poseProfile.shearMultiplier, -shearLimit, shearLimit);
   const translation = [
-    clamp(yawBias * width * poseProfile.translationMultiplier, -width * 0.025, width * 0.025),
-    clamp(-verticalBias * height * 0.08, -height * 0.018, height * 0.018)
+    clamp(yawBias * width * poseProfile.translationMultiplier, -width * 0.04, width * 0.04),
+    clamp(-verticalBias * height * 0.16, -height * 0.04, height * 0.04)
   ];
-  const shouldApply = Math.abs(shearX) > 0.01 || Math.abs(translation[0]) > 3 || Math.abs(translation[1]) > 3 || Math.abs(roll) > 1.5;
+  const shouldApply = Math.abs(shearX) > 0.008 || Math.abs(translation[0]) > 2 || Math.abs(translation[1]) > 2 || Math.abs(roll) > 1;
 
   if (!shouldApply) {
     return {

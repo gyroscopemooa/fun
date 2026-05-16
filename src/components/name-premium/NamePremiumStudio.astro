@@ -38,6 +38,21 @@ const config = mode === 'recommend'
     <p class="text-xs text-slate-500">현재 기준: 단성 지원, 추천 풀/성씨 DB 확장 진행 중</p>
   </div>
 
+  <div class="mt-5 grid gap-3 lg:grid-cols-3">
+    <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+      <p class="text-xs font-black uppercase tracking-[0.18em] text-amber-700">현재 지원</p>
+      <p class="mt-2 text-sm leading-6 text-amber-900">단성 기준, 이름 한자 1~2자, 현재 등록된 한자 DB 범위 안에서만 계산합니다.</p>
+    </div>
+    <div class="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4">
+      <p class="text-xs font-black uppercase tracking-[0.18em] text-sky-700">일관성 원칙</p>
+      <p class="mt-2 text-sm leading-6 text-sky-900">이름풀이, 개명추천, 개명풀이 모두 동일한 획수/오격/81수 기준을 공통으로 사용합니다.</p>
+    </div>
+    <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
+      <p class="text-xs font-black uppercase tracking-[0.18em] text-emerald-700">참고용 안내</p>
+      <p class="mt-2 text-sm leading-6 text-emerald-900">현재 버전은 빠른 런칭용 프리미엄 베타입니다. 데이터가 없는 한자는 fallback 안내로 처리됩니다.</p>
+    </div>
+  </div>
+
   <form class="name-premium-form mt-6 grid gap-4 lg:grid-cols-4" data-mode={mode}>
     <label class="flex flex-col gap-2">
       <span class="text-sm font-semibold text-slate-700">성씨 한자</span>
@@ -86,6 +101,10 @@ const config = mode === 'recommend'
   </div>
 
   <div class="mt-6 hidden rounded-[28px] border border-slate-200 bg-slate-50 p-5" data-result></div>
+
+  <p class="mt-4 text-xs leading-6 text-slate-500">
+    본 결과는 참고용입니다. 현재는 복성, 희귀 한자, 유파별 보정 규칙 전체를 모두 반영하지 않습니다.
+  </p>
 </section>
 
 <script is:inline define:vars={{ mode, rawApiBase, endpoint: config.endpoint }}>

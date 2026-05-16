@@ -7,9 +7,9 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
 ---
 
 <Layout
-  title="AI 증명사진 생성기 | ManyTool"
-  description="셀카 업로드 또는 카메라 촬영으로 AI 증명사진 후보 3장을 만들고 1장을 선택해 다운로드하세요."
-  keywords="AI 증명사진, 증명사진 만들기, 온라인 증명사진, 셀카 증명사진, 3x4 증명사진"
+  title="AI 증명사진 생성기 | 셀카로 증명사진 만들기, 온라인 증명사진 편집 | ManyTool"
+  description="셀카 업로드 또는 카메라 촬영으로 AI 증명사진 후보 3장을 만들고 비교한 뒤 원하는 1장을 다운로드하는 온라인 증명사진 생성 페이지입니다."
+  keywords="AI 증명사진, 증명사진 만들기, 온라인 증명사진, 셀카 증명사진, 3x4 증명사진, 증명사진 편집"
 >
   <Header />
   <main class="mx-auto max-w-5xl px-4 py-8 pb-28 md:pb-8">
@@ -177,7 +177,6 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       <article class="rounded-2xl border border-slate-200 bg-white p-5">
         <h2 class="text-xl font-bold text-slate-900">2) 후보 선택</h2>
         <p class="mt-2 text-sm text-slate-600">후보 중 1장을 선택하면 다운로드가 활성화됩니다. 생성 후 바로 비교해서 고르면 됩니다.</p>
-        <p class="mt-1 text-xs text-slate-500">결제 전 미리보기에는 가벼운 워터마크가 표시됩니다.</p>
         <div id="candidate-grid" class="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           <p class="text-sm text-slate-500">생성 결과가 여기에 표시됩니다.</p>
         </div>
@@ -214,9 +213,6 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           <img id="compare-before" alt="원본" class="h-full w-full object-cover" />
           <div id="compare-after-wrap" class="absolute inset-y-0 left-0 w-1/2 overflow-hidden border-r-2 border-white">
             <img id="compare-after" alt="결과" class="h-full w-full object-cover" />
-            <div class="pointer-events-none absolute inset-0 flex items-center justify-center bg-[repeating-linear-gradient(-32deg,rgba(15,23,42,0.18)_0,rgba(15,23,42,0.18)_18px,transparent_18px,transparent_48px)]">
-              <span class="rotate-[-18deg] rounded-full border border-white/35 bg-slate-900/32 px-5 py-1.5 text-base font-black tracking-[0.24em] text-white/82">PREVIEW</span>
-            </div>
           </div>
           <div class="pointer-events-none absolute inset-x-0 bottom-2 text-center text-xs font-semibold text-white">드래그로 비교</div>
         </div>
@@ -337,6 +333,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     const mobileDownloadBtn = document.getElementById('mobile-download-selected');
 
     const API_BASE = apiBase;
+    const allowLocalFallback = import.meta.env.DEV;
     const PAGE_STATE_KEY = 'manytool:ai-id-photo:v1';
 
     let stream = null;
@@ -546,6 +543,12 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       const messages = Array.isArray(assessment?.messages) ? assessment.messages.filter(Boolean) : [];
       const isCameraMode = sourceInputMode === 'camera';
       const actionLabel = isCameraMode ? '다시 촬영' : '다른 사진 선택';
+      const photoTypeLabelMap = {
+        selfie: '셀카형',
+        upper_body: '상반신형',
+        full_body: '전신형',
+        unknown: '미분류'
+      };
       if (!messages.length) {
         uploadGuidanceEl.innerHTML = '';
         uploadGuidanceEl.className = 'mt-3 hidden rounded-xl border p-3 text-xs';
@@ -574,6 +577,10 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         ? 'mt-3 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-900'
         : 'mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900';
       uploadGuidanceEl.innerHTML = `
+        <div class="mb-2 flex flex-wrap items-center gap-2">
+          <span class="rounded-full bg-white/80 px-3 py-1 font-bold">${photoTypeLabelMap[assessment?.photoType ?? 'unknown'] ?? '미분류'}</span>
+          <span class="rounded-full bg-white/80 px-3 py-1 font-bold">정면성 ${Math.max(0, Math.min(100, Math.round(assessment?.frontalScore ?? 0)))}</span>
+        </div>
         <p class="font-bold">${blocking ? (isCameraMode ? '다시 촬영하는 편이 좋습니다.' : '이 사진은 다른 사진으로 바꾸는 편이 좋습니다.') : '이 사진은 결과가 흔들릴 수 있습니다.'}</p>
         <ul class="mt-2 list-disc space-y-1 pl-4">${messages.map((message) => `<li>${message}</li>`).join('')}</ul>
         ${tips.length ? `<div class="mt-3 flex flex-wrap gap-2">${tips.map((tip) => `<span class="rounded-full bg-white/80 px-3 py-1 font-semibold">${tip}</span>`).join('')}</div>` : ''}
@@ -603,13 +610,16 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       const tiltPenalty = eyeTilt * 900;
       const warningPenalty = (Array.isArray(assessment?.messages) ? assessment.messages.length : 0) * 6;
       const hardPenalty = assessment?.blocking ? 18 : 0;
+      const frontalPenalty = Math.max(0, 100 - Number(assessment?.frontalScore ?? 100)) * 0.45;
       const alignment = clampScore(100 - centerPenalty - tiltPenalty);
-      const cropFit = clampScore(100 - centerPenalty * 0.55 - sizePenalty - tiltPenalty * 0.4 - hardPenalty);
-      const retakeNeed = clampScore(18 + warningPenalty + hardPenalty + centerPenalty * 0.35 + sizePenalty * 0.3 + tiltPenalty * 0.2);
+      const cropFit = clampScore(100 - centerPenalty * 0.55 - sizePenalty - tiltPenalty * 0.4 - hardPenalty - frontalPenalty);
+      const retakeNeed = clampScore(18 + warningPenalty + hardPenalty + centerPenalty * 0.35 + sizePenalty * 0.3 + tiltPenalty * 0.2 + frontalPenalty * 0.6);
       return {
         alignment,
         cropFit,
         retakeNeed,
+        frontal: clampScore(Number(assessment?.frontalScore ?? 0)),
+        photoType: assessment?.photoType ?? 'unknown',
         summary: assessment?.blocking
           ? '재촬영 권장'
           : (cropFit >= 85 ? '바로 생성 가능' : '생성 가능하지만 구도 보정 여지 있음')
@@ -647,6 +657,10 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
             <p class="mt-1 text-base font-black ${score.retakeNeed >= 70 ? 'text-rose-600' : 'text-slate-900'}">${score.retakeNeed}</p>
           </div>
         </div>
+        <div class="mt-2 flex flex-wrap gap-2 text-[11px] font-semibold">
+          <span class="rounded-full bg-white px-3 py-1 text-slate-700">사진유형 ${score.photoType}</span>
+          <span class="rounded-full bg-white px-3 py-1 text-slate-700">정면성 ${score.frontal}</span>
+        </div>
       `;
     };
 
@@ -663,7 +677,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       readyToGenerateEl.classList.remove('hidden');
       readyToGenerateEl.innerHTML = `
         <p class="font-bold">지금 바로 생성해도 좋은 상태입니다.</p>
-        <p class="mt-2">얼굴 위치와 수평이 안정적입니다. 현재 구도로 생성하면 결과가 비교적 안정적일 가능성이 높습니다.</p>
+        <p class="mt-2">${assessment?.photoType === 'upper_body' ? '상반신 재구성 모드로 진행합니다. 셀카보다 결과 편차는 있지만 현재 구도에서 시도할 수 있습니다.' : '얼굴 위치와 수평이 안정적입니다. 현재 구도로 생성하면 결과가 비교적 안정적일 가능성이 높습니다.'}</p>
       `;
     };
 
@@ -935,13 +949,21 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       return mediaPipeDetectorLoading;
     };
 
+    const classifyInputPhotoType = ({ faceRatio = 0, faceCenterY = 0.5, imageAspectRatio = 1 }) => {
+      if (faceRatio < 0.16) return 'full_body';
+      if (faceRatio < 0.22) return 'upper_body';
+      if (faceCenterY > 0.58 && faceRatio < 0.28) return 'upper_body';
+      if (imageAspectRatio < 0.78 && faceRatio < 0.24) return 'upper_body';
+      return 'selfie';
+    };
+
     const buildFaceAssessmentFromDetections = (detections, width, height) => {
-      if (detections.length === 0) return { messages: ['얼굴을 인식하지 못했습니다. 정면 사진으로 다시 촬영해 주세요.'], blocking: true, faceHint: null };
-      if (detections.length > 1) return { messages: ['여러 얼굴이 감지되었습니다. 1인 사진으로 다시 촬영해 주세요.'], blocking: true, faceHint: null };
+      if (detections.length === 0) return { messages: ['얼굴을 인식하지 못했습니다. 정면 사진으로 다시 촬영해 주세요.'], blocking: true, faceHint: null, photoType: 'unknown', frontalScore: 0 };
+      if (detections.length > 1) return { messages: ['여러 얼굴이 감지되었습니다. 1인 사진으로 다시 촬영해 주세요.'], blocking: true, faceHint: null, photoType: 'unknown', frontalScore: 0 };
 
       const detection = detections[0];
       const box = detection?.boundingBox;
-      if (!box) return { messages: [], blocking: false, faceHint: null };
+      if (!box) return { messages: [], blocking: false, faceHint: null, photoType: 'unknown', frontalScore: 0 };
       const keypoints = Array.isArray(detection?.keypoints) ? detection.keypoints : [];
 
       const faceHint = {
@@ -964,6 +986,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       let blocking = false;
 
       const faceRatio = Number(box.width || 0) / Math.max(1, width);
+      const faceCenterY = (Number(box.originY || 0) + Number(box.height || 0) / 2) / Math.max(1, height);
       if (faceRatio < 0.14) {
         blocking = true;
         messages.push('얼굴이 너무 작습니다. 얼굴이 더 크게 나온 사진으로 다시 촬영해 주세요.');
@@ -985,8 +1008,19 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         messages.push('얼굴이 화면 중앙에서 벗어나 있습니다. 중앙 정렬 사진을 권장합니다.');
       }
 
+      const photoType = classifyInputPhotoType({ faceRatio, faceCenterY, imageAspectRatio: width / Math.max(1, height) });
+      faceHint.sourcePhotoType = photoType;
+      if (photoType === 'full_body') {
+        blocking = true;
+        messages.push('전신 사진에 가까워 증명사진 변환이 불안정할 수 있습니다. 상반신 또는 셀카 사진을 권장합니다.');
+      } else if (photoType === 'upper_body') {
+        messages.push('상반신 사진으로 보입니다. 셀카보다 결과 편차가 클 수 있습니다.');
+      }
+
+      let frontalScore = 100 - Math.abs(centerX - 0.5) * 180;
       if (faceHint.leftEye && faceHint.rightEye) {
         const eyeTilt = Math.abs(faceHint.leftEye.y - faceHint.rightEye.y);
+        frontalScore -= eyeTilt * 900;
         if (eyeTilt > 0.06) {
           blocking = true;
           messages.push('고개 기울기가 큽니다. 얼굴을 수평에 가깝게 맞춰 다시 촬영해 주세요.');
@@ -994,7 +1028,14 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           messages.push('고개가 약간 기울어져 있습니다. 얼굴을 조금만 더 수평으로 맞추면 더 좋습니다.');
         }
       }
-      return { messages, blocking, faceHint };
+      if (Math.abs(centerX - 0.5) > 0.12) frontalScore -= 18;
+      if (faceCenterY < 0.28 || faceCenterY > 0.7) frontalScore -= 10;
+      frontalScore = Math.max(0, Math.min(100, Math.round(frontalScore)));
+      faceHint.frontalScore = frontalScore;
+      if (frontalScore < 55) {
+        messages.push('정면 느낌이 약한 사진입니다. 카메라를 보고 찍은 사진이 훨씬 잘 맞습니다.');
+      }
+      return { messages, blocking, faceHint, photoType, frontalScore };
     };
 
     const getFaceQualityHint = async (img, width, height) => {
@@ -1030,7 +1071,9 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         return {
           messages,
           blocking: blocking || Boolean(faceAssessment.blocking),
-          faceHint: faceAssessment.faceHint ?? null
+          faceHint: faceAssessment.faceHint ?? null,
+          photoType: faceAssessment.photoType ?? 'unknown',
+          frontalScore: faceAssessment.frontalScore ?? 0
         };
       } finally {
         URL.revokeObjectURL(objectUrl);
@@ -1203,9 +1246,6 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
             <img src="${item.url}" alt="후보 ${idx + 1}" class="h-56 w-full rounded-xl object-cover sm:h-48" />
             <div class="absolute left-3 top-3 flex items-center gap-2">
               <span class="rounded-full bg-white/92 px-2.5 py-1 text-[11px] font-black text-slate-900 shadow-sm">옵션 ${idx + 1}</span>
-            </div>
-            <div class="pointer-events-none absolute inset-0 flex items-center justify-center bg-[repeating-linear-gradient(-32deg,rgba(15,23,42,0.08)_0,rgba(15,23,42,0.08)_12px,transparent_12px,transparent_44px)]">
-              <span class="rotate-[-18deg] rounded-full border border-white/35 bg-slate-900/30 px-3 py-1 text-[10px] font-black tracking-[0.16em] text-white/82">PREVIEW</span>
             </div>
           </div>
           <div class="mt-2 flex items-center justify-between px-1">
@@ -1447,7 +1487,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       return cachedPhotoId;
     };
 
-    const requestServerCandidates = async (count = 3) => {
+    const requestServerCandidates = async (count = 3, orderId = null) => {
       const photoId = await uploadSourceIfNeeded();
       const outfit = outfitEl instanceof HTMLSelectElement ? outfitEl.value : 'current';
       const rounds = Math.ceil(count / 3);
@@ -1463,6 +1503,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
             photoId,
             toolType: 'id_photo',
             outfitType: outfit,
+            orderId: paymentMode === 'polar' ? orderId : null,
             provider: getSelectedProvider()
           })
         });
@@ -1491,12 +1532,12 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       };
     };
 
-    const generateCandidates = async (count = 3, append = false) => {
+    const generateCandidates = async (count = 3, append = false, orderId = null) => {
       if (!sourceDataUrl || isGenerating) return;
       setBusy(true);
       setStatus('후보를 생성하고 있습니다...');
       try {
-        const generation = await requestServerCandidates(count);
+        const generation = await requestServerCandidates(count, orderId);
         candidates = append ? [...candidates, ...generation.candidates] : generation.candidates;
         renderPipelineReport(generation.pipelineReport ?? null);
         renderJobDebugLink(generation.jobId ?? null, generation.pipelineReport ?? null);
@@ -1507,7 +1548,18 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           : (generation.pipelineReport?.resolvedProvider ?? 'unknown');
         renderProviderResultBadge(generation.pipelineReport ?? null);
         setStatus(`Node API 생성 완료. provider=${resolvedProvider}. 현재 ${candidates.length}장 후보가 준비되었습니다. ${generation.pipelineReport?.qualitySummary ?? ''}`.trim());
-      } catch {
+      } catch (error) {
+        if (paymentMode === 'polar' || !allowLocalFallback) {
+          if (!append) candidates = [];
+          renderPipelineReport(null);
+          renderJobDebugLink(null);
+          renderQualityFeedback(null);
+          renderProviderResultBadge(null);
+          setStatus(paymentMode === 'polar'
+            ? (error instanceof Error ? error.message : '결제 모드에서는 무료 대체 생성을 사용할 수 없습니다.')
+            : '운영 환경에서는 자동 무료 대체 생성을 사용하지 않습니다.');
+          throw error;
+        }
         if (!append) candidates = [];
         try {
           await generateCandidatesLocalFallback(count);
@@ -1576,6 +1628,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       if (!res.ok) throw new Error(`checkout failed: ${res.status}`);
       return res.json();
     };
+
     const formatCheckoutAmount = (checkout) => {
       const amount = Number(checkout?.amount ?? 0);
       const currency = String(checkout?.currency ?? 'USD').toUpperCase();
@@ -1587,7 +1640,6 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       }
     };
 
-
     const moveToCheckoutIfPending = (checkout, pendingMessage, persistBaseOrder = false) => {
       if (!checkout || !checkout.checkoutUrl || checkout.paid) return false;
       if (persistBaseOrder) {
@@ -1598,6 +1650,51 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       setStatus(amountLabel ? `${pendingMessage} Final amount ${amountLabel}` : pendingMessage);
       window.location.href = checkout.checkoutUrl;
       return true;
+    };
+
+    const ensureBaseCheckoutForGeneration = async () => {
+      if (paymentMode !== 'polar') return null;
+      if (!apiOnline) {
+        throw new Error('결제 모드에서는 API 연결이 필요합니다.');
+      }
+      if (basePaid && baseOrderId) return baseOrderId;
+
+      if (baseOrderId) {
+        const existingOrder = await fetchOrder(baseOrderId);
+        if (existingOrder?.status === 'paid') {
+          basePaid = true;
+          if (!creditedBaseOrders.includes(baseOrderId)) {
+            creditedBaseOrders.push(baseOrderId);
+          }
+          savePageState();
+          return baseOrderId;
+        }
+        if (existingOrder?.status === 'pending' && existingOrder?.checkoutUrl) {
+          window.location.href = existingOrder.checkoutUrl;
+          return null;
+        }
+        if (existingOrder?.status === 'refunded' || existingOrder?.status === 'failed' || existingOrder?.status === 'expired') {
+          baseOrderId = null;
+          savePageState();
+        }
+      }
+
+      setStatus('기본 결제를 확인하고 있습니다...');
+      const checkout = await requestBaseCheckout();
+      if (!checkout.paid) {
+        baseOrderId = checkout.orderId ?? baseOrderId;
+        savePageState();
+        if (moveToCheckoutIfPending(checkout, '결제 페이지로 이동합니다. 결제 후 돌아오면 생성을 시작할 수 있습니다.', true)) return null;
+        throw new Error('결제가 완료되지 않았습니다.');
+      }
+
+      basePaid = true;
+      baseOrderId = checkout.orderId ?? null;
+      if (baseOrderId && !creditedBaseOrders.includes(baseOrderId)) {
+        creditedBaseOrders.push(baseOrderId);
+      }
+      savePageState();
+      return baseOrderId;
     };
 
     if (compareSliderEl instanceof HTMLInputElement && compareAfterWrapEl instanceof HTMLElement) {
@@ -1794,7 +1891,23 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     }
 
     if (generateBtn instanceof HTMLButtonElement) {
-      generateBtn.addEventListener('click', () => generateCandidates(3, false));
+      generateBtn.addEventListener('click', async () => {
+        try {
+          const generationOrderId = await ensureBaseCheckoutForGeneration();
+          if (paymentMode === 'polar' && !generationOrderId && !basePaid) return;
+          await generateCandidates(3, false, generationOrderId ?? baseOrderId ?? null);
+        } catch (error) {
+          if (error instanceof Error && error.message.includes('not configured')) {
+            setStatus('기본 결제용 Polar 상품 ID가 아직 설정되지 않았습니다.');
+            return;
+          }
+          if (error instanceof Error && error.message.includes('API 연결')) {
+            setStatus(error.message);
+            return;
+          }
+          setStatus('기본 결제 확인에 실패했습니다. 잠시 후 다시 시도해주세요.');
+        }
+      });
     }
 
     addButtons.forEach((buttonEl) => {
@@ -1807,6 +1920,14 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         }
         if (isGenerating) return;
         if (!apiOnline) {
+          if (paymentMode === 'polar') {
+            setStatus('결제 모드에서는 API 연결이 필요합니다. 잠시 후 다시 시도해주세요.');
+            return;
+          }
+          if (!allowLocalFallback) {
+            setStatus('운영 환경에서는 API 미연결 시 무료 대체 생성을 사용하지 않습니다.');
+            return;
+          }
           setStatus(`API 미연결 상태입니다. 결제 확인 없이 +${count}장 로컬 추가 생성을 진행합니다.`);
           await generateCandidates(count, true);
           return;
@@ -1818,7 +1939,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
             if (existingOrder?.status === 'paid') {
               setStatus(`결제 완료(+${count}장). 추가 후보를 생성합니다...`);
               try {
-                await generateCandidates(count, true);
+                await generateCandidates(count, true, existingOrderId);
                 addonOrders[productType] = null;
                 savePageState();
                 return;
@@ -1850,7 +1971,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           }
           setStatus(`결제 완료(+${count}장). 추가 후보를 생성합니다...`);
           try {
-            await generateCandidates(count, true);
+            await generateCandidates(count, true, checkout.orderId ?? null);
           } catch {
             await requestRefund(checkout.orderId, 'service_disruption');
             setStatus(`추가 생성 처리에 실패해 +${count}장 결제를 환불 요청했습니다.`);
@@ -1876,6 +1997,10 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         }
         if (isGenerating) return;
         if (!apiOnline) {
+          if (paymentMode === 'polar' && !basePaid) {
+            setStatus('결제 모드에서는 다운로드 전 결제 확인이 필요합니다.');
+            return;
+          }
           try {
             setStatus('API 미연결 상태입니다. 결제 확인 없이 다운로드를 시작합니다.');
             await downloadCandidate(selected[0], 1, 'manytool-id-photo');

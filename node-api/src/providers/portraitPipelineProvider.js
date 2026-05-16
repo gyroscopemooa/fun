@@ -17,8 +17,23 @@ const VALIDATION_PROFILES = [
   { name: 'tight_center', centerShift: 0, topShift: -0.03, zoomMultiplier: 1.14 },
   { name: 'tight_headroom', centerShift: 0, topShift: -0.01, zoomMultiplier: 1.2 },
   { name: 'wide_headroom', centerShift: 0, topShift: 0.02, zoomMultiplier: 0.96 },
+  { name: 'lower_face', centerShift: 0, topShift: 0.05, zoomMultiplier: 1.02 },
+  { name: 'extra_headroom', centerShift: 0, topShift: 0.08, zoomMultiplier: 0.94 },
+  { name: 'tight_lower_face', centerShift: 0, topShift: 0.04, zoomMultiplier: 1.08 },
   { name: 'left_nudge', centerShift: -0.025, topShift: -0.01, zoomMultiplier: 1.08 },
-  { name: 'right_nudge', centerShift: 0.025, topShift: -0.01, zoomMultiplier: 1.08 }
+  { name: 'right_nudge', centerShift: 0.025, topShift: -0.01, zoomMultiplier: 1.08 },
+  { name: 'left_balance_headroom', centerShift: -0.03, topShift: 0.04, zoomMultiplier: 1.02 },
+  { name: 'right_balance_headroom', centerShift: 0.03, topShift: 0.04, zoomMultiplier: 1.02 }
+];
+const FAR_SHOT_VALIDATION_PROFILES = [
+  { name: 'far_shot_primary', centerShift: 0, topShift: 0.06, zoomMultiplier: 1.34 },
+  { name: 'far_shot_headroom', centerShift: 0, topShift: 0.1, zoomMultiplier: 1.26 },
+  { name: 'far_shot_left', centerShift: -0.02, topShift: 0.06, zoomMultiplier: 1.32 },
+  { name: 'far_shot_right', centerShift: 0.02, topShift: 0.06, zoomMultiplier: 1.32 }
+];
+const UPPER_BODY_VALIDATION_PROFILES = [
+  { name: 'upper_body_primary', centerShift: 0, topShift: 0.05, zoomMultiplier: 1.2 },
+  { name: 'upper_body_headroom', centerShift: 0, topShift: 0.08, zoomMultiplier: 1.14 }
 ];
 
 const BACKGROUND_TONES = {
@@ -44,9 +59,13 @@ const IDENTITY_RETRY_PROFILE = {
 const FINAL_QUALITY_RETRY_PROFILES = [
   { name: 'center_reframe', microOffset: { x: 0, y: -8 }, relightStrength: 1.04 },
   { name: 'headroom_relax', microOffset: { x: 0, y: 10 }, relightStrength: 1.02 },
+  { name: 'lower_face_reframe', microOffset: { x: 0, y: 18 }, relightStrength: 1.01 },
   { name: 'left_balance', microOffset: { x: 8, y: -4 }, relightStrength: 1.03 },
-  { name: 'right_balance', microOffset: { x: -8, y: -4 }, relightStrength: 1.03 }
+  { name: 'right_balance', microOffset: { x: -8, y: -4 }, relightStrength: 1.03 },
+  { name: 'left_balance_lower', microOffset: { x: 10, y: 12 }, relightStrength: 1.02 },
+  { name: 'right_balance_lower', microOffset: { x: -10, y: 12 }, relightStrength: 1.02 }
 ];
+const PIPELINE_CACHE_VERSION = 'v9';
 
 function getVariantModifiers(toolType, index) {
   const tonePalette = BACKGROUND_TONES[toolType] ?? BACKGROUND_TONES.id_photo;
@@ -90,6 +109,16 @@ function buildIdentitySummary(pipelineReport) {
     variantCount: entries.length,
     averageIdentityScore: pipelineReport.identityScore
   };
+}
+
+function getValidationProfilesForHint(faceHint) {
+  if (faceHint?.sourcePhotoType === 'full_body') {
+    return [...FAR_SHOT_VALIDATION_PROFILES, ...VALIDATION_PROFILES];
+  }
+  if (faceHint?.sourcePhotoType === 'upper_body') {
+    return [...UPPER_BODY_VALIDATION_PROFILES, ...VALIDATION_PROFILES];
+  }
+  return VALIDATION_PROFILES;
 }
 
 async function applyMicroCropOffset(inputBuffer, offset, background) {
@@ -143,7 +172,9 @@ export async function generatePortraitPipeline({
   await fs.mkdir(storageDir, { recursive: true });
   const inputBuffer = await fs.readFile(inputPath);
   const preset = getToolPreset(toolType);
-  const cacheBaseName = cacheKey ? `${cacheKey}-${backgroundProvider}-${toolType}` : `${jobId}-${backgroundProvider}-${toolType}`;
+  const cacheBaseName = cacheKey
+    ? `${cacheKey}-${backgroundProvider}-${toolType}-${PIPELINE_CACHE_VERSION}`
+    : `${jobId}-${backgroundProvider}-${toolType}-${PIPELINE_CACHE_VERSION}`;
   const alignedPath = path.join(storageDir, `${cacheBaseName}-aligned.jpg`);
   const cutoutPath = path.join(storageDir, `${cacheBaseName}-cutout.png`);
   const flattenedPath = path.join(storageDir, `${cacheBaseName}-flattened.jpg`);
@@ -209,7 +240,8 @@ export async function generatePortraitPipeline({
     let aligned = null;
     let quality = null;
     const alignStartedAt = Date.now();
-    for (const profile of VALIDATION_PROFILES) {
+    const validationProfiles = getValidationProfilesForHint(faceHint);
+    for (const profile of validationProfiles) {
       aligned = await alignFaceStage({
         inputBuffer,
         toolType,
@@ -242,7 +274,7 @@ export async function generatePortraitPipeline({
   let posed = standardPose;
   pipelineReport.poseAttempts.push(standardPose.poseMetrics);
   const poseSeverity = Math.abs(standardPose.poseMetrics.roll ?? 0) + Math.abs((standardPose.poseMetrics.yawBias ?? 0) * 100);
-  if (poseSeverity > 10) {
+  if (poseSeverity > 6) {
     const assertivePose = await facePoseCorrectionStage({
       inputBuffer: alignedBuffer,
       geometry,
@@ -269,7 +301,8 @@ export async function generatePortraitPipeline({
     const cutoutStartedAt = Date.now();
     cutout = await backgroundRemovalStage({
       inputBuffer: alignedBuffer,
-      provider: backgroundProvider
+      provider: backgroundProvider,
+      geometry
     });
     pipelineReport.timings.cutout = Date.now() - cutoutStartedAt;
     pipelineReport.externalBackgroundCall = backgroundProvider !== 'local_sharp';

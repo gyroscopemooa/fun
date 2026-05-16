@@ -1,4 +1,4 @@
----
+﻿---
 import Footer from '../../components/Footer.astro';
 import Header from '../../components/Header.astro';
 import Layout from '../../layouts/Layout.astro';
@@ -8,18 +8,18 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
 ---
 
 <Layout
-  title="?�영??MP4 변?�기 | ?�라???�상 변??| 최�? 1.5GB | ManyTool"
-  description="?�라???�영??MP4 변?�기?�니?? MKV, MOV, AVI, M4V ?�일??최�? 1.5GB까�? ?�로?�해 MP4�?변?�할 ???�습?�다."
-  keywords="?�영??변?�기, ?�라???�영??변?? ?�상 변?? video to mp4, mkv to mp4, mov to mp4, avi to mp4, m4v to mp4, ?�?�량 ?�영??변?�기"
+  title="동영상 MP4 변환기 | 온라인 영상 변환 | 최대 1.5GB | ManyTool"
+  description="온라인 동영상 MP4 변환기입니다. MKV, MOV, AVI, M4V 파일을 최대 1.5GB까지 업로드해 MP4로 변환할 수 있습니다."
+  keywords="동영상 변환기, 온라인 동영상 변환, 영상 변환, video to mp4, mkv to mp4, mov to mp4, avi to mp4, m4v to mp4, 대용량 동영상 변환기"
   canonical="https://manytool.net/tools/video-to-mp4"
 >
   <Header />
   <main class="mx-auto max-w-5xl px-4 py-8">
     <section class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
       <p class="text-sm font-semibold uppercase tracking-[0.2em] text-sky-600">Online Video Converter</p>
-      <h1 class="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">?�영??MP4 변?�기</h1>
+      <h1 class="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">동영상 MP4 변환기</h1>
       <p class="mt-3 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
-        ?�라?�에???�?�량 ?�영?�을 MP4�?변?�합?�다. 최�? 1.5GB ?�로?��? 지?�하�?        MKV, MOV, AVI, M4V ?�일??MP4�?바�? ???�습?�다.
+        온라인에서 대용량 동영상을 MP4로 변환합니다. 최대 1.5GB 업로드를 지원하며 MKV, MOV, AVI, M4V 파일을 MP4로 바꿀 수 있습니다.
       </p>
     </section>
 
@@ -31,41 +31,41 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
             <div id="video-progress-bar" class="h-full w-[8%] rounded-full bg-sky-500 transition-all duration-300"></div>
           </div>
           <div class="mt-4 flex items-center justify-between gap-3">
-            <p id="video-progress-label" class="text-sm font-semibold text-slate-900">?�일 ?�택 ?��?/p>
+            <p id="video-progress-label" class="text-sm font-semibold text-slate-900">파일 선택 대기</p>
             <p id="video-progress-percent" class="text-sm font-black text-sky-700">0%</p>
           </div>
           <div class="mt-4 space-y-2 text-sm text-slate-600">
-            <div id="video-step-file" class="font-semibold text-sky-700">1. ?�일 ?�택</div>
-            <div id="video-step-payment">2. 결제 ?�인</div>
-            <div id="video-step-convert">3. 변??진행</div>
-            <div id="video-step-download">4. ?�운로드</div>
+            <div id="video-step-file" class="font-semibold text-sky-700">1. 파일 선택</div>
+            <div id="video-step-payment">2. 결제 확인</div>
+            <div id="video-step-convert">3. 변환 진행</div>
+            <div id="video-step-download">4. 다운로드</div>
           </div>
         </div>
 
         <div class="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
-          <p class="font-semibold text-slate-900">지??범위</p>
+          <p class="font-semibold text-slate-900">지원 범위</p>
           <ul class="mt-2 list-disc space-y-1 pl-5">
-            <li>최�? ?�로?? 1.5GB</li>
-            <li>?�력 ?�식: MKV, MOV, AVI, M4V</li>
-            <li>출력 ?�식: MP4</li>
-            <li>결제 1?�당 1�??�일 변??/li>
+            <li>최대 업로드: 1.5GB</li>
+            <li>입력 형식: MKV, MOV, AVI, M4V</li>
+            <li>출력 형식: MP4</li>
+            <li>결제 1회당 1개 파일 변환</li>
           </ul>
         </div>
 
         <p id="video-checkout-status" class="mt-4 text-sm leading-6 text-slate-500">
-          ?�일???�린 ??변???�작???�르�?결제 ?�는 변?�이 진행?�니??
+          파일을 올린 뒤 변환 시작을 누르면 결제 또는 변환이 진행됩니다.
         </p>
       </aside>
 
       <section class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 class="text-lg font-bold text-slate-950">?�로??�?변??/h2>
-            <p class="mt-1 text-sm text-slate-600">?�래그앤?�롭 ?�는 ?�릭?�로 ?�상???�린 ??바로 변?�을 ?�작?????�습?�다.</p>
+            <h2 class="text-lg font-bold text-slate-950">업로드 및 변환</h2>
+            <p class="mt-1 text-sm text-slate-600">드래그앤드롭 또는 클릭으로 영상을 올린 뒤 바로 변환을 시작할 수 있습니다.</p>
           </div>
           <div class="rounded-3xl bg-sky-50 px-5 py-4">
             <p class="text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">Status</p>
-            <p id="video-job-status" class="mt-2 text-xl font-black text-sky-900">?�일 ?�택 ?��?/p>
+            <p id="video-job-status" class="mt-2 text-xl font-black text-sky-900">파일 선택 대기</p>
           </div>
         </div>
 
@@ -75,22 +75,22 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         >
           <input id="video-file-input" type="file" accept=".mkv,.mov,.avi,.m4v,video/*" class="hidden" />
           <div class="space-y-3">
-            <p class="text-base font-semibold text-slate-900">?�영???�일 ?�택</p>
+            <p class="text-base font-semibold text-slate-900">동영상 파일 선택</p>
             <p id="video-file-label" class="text-sm leading-6 text-slate-500">
-              MKV, MOV, AVI, M4V ?�일???�래그하거나 ?�릭???�로?�하?�요.
+              MKV, MOV, AVI, M4V 파일을 드래그하거나 클릭해 업로드하세요.
             </p>
           </div>
         </label>
 
         <button id="video-convert-button" class="mt-4 w-full rounded-2xl bg-sky-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-sky-500 disabled:cursor-not-allowed disabled:bg-slate-300" disabled>
-          변???�작
+          변환 시작
         </button>
 
         <div class="mt-5 rounded-[24px] border border-slate-200 bg-slate-50 p-5">
           <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Result</p>
-          <p id="video-result-message" class="mt-2 text-sm leading-6 text-slate-700">?�직 변??결과가 ?�습?�다.</p>
+          <p id="video-result-message" class="mt-2 text-sm leading-6 text-slate-700">아직 변환 결과가 없습니다.</p>
           <a id="video-download-link" href="#" class="mt-4 hidden inline-flex rounded-2xl bg-slate-950 px-5 py-3 text-sm font-bold text-white" download>
-            MP4 ?�운로드
+            MP4 다운로드
           </a>
         </div>
       </section>
@@ -181,12 +181,12 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         if (fileLabel) {
           fileLabel.textContent = `${file.name} / ${(file.size / (1024 * 1024)).toFixed(1)}MB`;
         }
-        setJobStatus('변??준�??�료');
-        updateProgress(20, '?�일 ?�택 ?�료', 1);
+        setJobStatus('변환 준비 완료');
+        updateProgress(20, '파일 선택 완료', 1);
         if (file.size > MAX_VIDEO_BYTES) {
-          setResultMessage('?�일 ?�량??1.5GB�?초과?�습?�다.');
+          setResultMessage('파일 용량이 1.5GB를 초과했습니다.');
         } else {
-          setResultMessage('변???�작???�르�?결제 ?�는 변?�이 진행?�니??');
+          setResultMessage('변환 시작을 누르면 결제 또는 변환이 진행됩니다.');
         }
         syncButtons();
       };
@@ -201,8 +201,8 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       const setPaidState = (orderId) => {
         currentOrderId = orderId;
         if (orderId) window.localStorage.setItem(ORDER_STORAGE_KEY, orderId);
-        setCheckoutStatus('결제가 ?�인?�었?�니?? 변?�을 계속 진행?�니??');
-        updateProgress(45, '결제 ?�인 ?�료', 2);
+        setCheckoutStatus('결제가 확인되었습니다. 변환을 계속 진행합니다.');
+        updateProgress(45, '결제 확인 완료', 2);
       };
 
       const verifyExistingOrder = async (orderId) => {
@@ -250,8 +250,8 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           if (!event.lengthComputable) return;
           const rawPercent = Math.max(0, Math.min(100, Math.round((event.loaded / event.total) * 100)));
           const progressPercentValue = Math.min(79, 55 + Math.round(rawPercent * 0.24));
-          setJobStatus(`?�로??�?${rawPercent}%`);
-          updateProgress(progressPercentValue, `?�일 ?�로??�?${rawPercent}%`, 3);
+          setJobStatus(`업로드 중 ${rawPercent}%`);
+          updateProgress(progressPercentValue, `파일 업로드 중 ${rawPercent}%`, 3);
         });
 
         xhr.addEventListener('load', () => {
@@ -260,11 +260,11 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
             resolve(payload);
             return;
           }
-          reject(new Error(payload?.error || '변???�업???�작?��? 못했?�니??'));
+          reject(new Error(payload?.error || '변환 작업을 시작하지 못했습니다.'));
         });
 
         xhr.addEventListener('error', () => {
-          reject(new Error('?�로??�??�트?�크 ?�류가 발생?�습?�다.'));
+          reject(new Error('업로드 중 네트워크 오류가 발생했습니다.'));
         });
 
         xhr.send(formData);
@@ -275,22 +275,22 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           const response = await fetch(`${API_BASE}/video/mkv-mp4/job/${encodeURIComponent(jobId)}`);
           const payload = await response.json().catch(() => null);
           if (!response.ok || !payload?.job) {
-            throw new Error(payload?.error || '?�업 ?�태�?불러?��? 못했?�니??');
+            throw new Error(payload?.error || '작업 상태를 불러오지 못했습니다.');
           }
 
           const { job } = payload;
           if (job.status === 'queued') {
-            setJobStatus('변???��?�?);
-            updateProgress(60, '변???��?�?, 3);
+            setJobStatus('변환 대기 중');
+            updateProgress(82, '변환 대기 중', 3);
           }
           if (job.status === 'processing') {
-            setJobStatus('?�영??변??�?);
-            updateProgress(80, '?�영??변??�?, 3);
+            setJobStatus('동영상 변환 중');
+            updateProgress(92, '동영상 변환 중', 3);
           }
           if (job.status === 'done') {
-            setJobStatus('변???�료');
-            updateProgress(100, '?�운로드 준�??�료', 4);
-            setResultMessage(`${job.outputName} ?�운로드가 준비되?�습?�다.`);
+            setJobStatus('변환 완료');
+            updateProgress(100, '다운로드 준비 완료', 4);
+            setResultMessage(`${job.outputName} 다운로드가 준비되었습니다.`);
             if (downloadLink instanceof HTMLAnchorElement) {
               downloadLink.href = toApiUrl(job.outputUrl);
               downloadLink.classList.remove('hidden');
@@ -298,7 +298,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
             return;
           }
           if (job.status === 'failed') {
-            throw new Error(job.error || '변?�에 ?�패?�습?�다.');
+            throw new Error(job.error || '변환에 실패했습니다.');
           }
 
           await new Promise((resolve) => window.setTimeout(resolve, 2500));
@@ -345,15 +345,15 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
 
         const selectedFile = fileInput.files[0];
         if (selectedFile.size > MAX_VIDEO_BYTES) {
-          setJobStatus('?�패');
-          setResultMessage('?�일 ?�량??1.5GB�?초과?�습?�다.');
+          setJobStatus('실패');
+          setResultMessage('파일 용량이 1.5GB를 초과했습니다.');
           return;
         }
 
         if (!currentOrderId && paymentMode === 'polar') {
           try {
-            setCheckoutStatus('결제 ?�보�??�성?�는 중입?�다...');
-            updateProgress(30, '결제 준�?�?, 2);
+            setCheckoutStatus('결제 정보를 생성하는 중입니다...');
+            updateProgress(30, '결제 준비 중', 2);
             const checkout = await requestCheckout();
             if (checkout.orderId) {
               currentOrderId = checkout.orderId;
@@ -368,8 +368,8 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
               throw new Error('checkout url is missing');
             }
           } catch (error) {
-            setJobStatus('결제 ?�패');
-            setResultMessage(error instanceof Error ? error.message : '결제�??�작?��? 못했?�니??');
+            setJobStatus('결제 실패');
+            setResultMessage(error instanceof Error ? error.message : '결제를 시작하지 못했습니다.');
             return;
           }
         }
@@ -381,26 +381,25 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           }
           formData.append('video', selectedFile);
 
-          setJobStatus('?�로??�?);
-          updateProgress(55, '?�일 ?�로??�?, 3);
-          setResultMessage('?�일 ?�로?��? 변???�업 ?�성??진행 중입?�다.');
+          setJobStatus('업로드 중 0%');
+          updateProgress(55, '파일 업로드 중 0%', 3);
+          setResultMessage('파일 업로드와 변환 작업 생성이 진행 중입니다.');
           resetDownloadLink();
 
           const payload = await uploadVideoWithProgress(formData);
-
           await pollJob(payload.jobId);
         } catch (error) {
-          setJobStatus('?�패');
-          setResultMessage(error instanceof Error ? error.message : '변?�에 ?�패?�습?�다.');
+          setJobStatus('실패');
+          setResultMessage(error instanceof Error ? error.message : '변환에 실패했습니다.');
         }
       });
 
       (async () => {
-        updateProgress(0, '?�일 ?�택 ?��?, 1);
+        updateProgress(0, '파일 선택 대기', 1);
         if (!API_BASE) {
           converterReady = false;
-          setCheckoutStatus('API ?�버 주소가 ?�정?��? ?�았?�니??');
-          setJobStatus('?�정 ?�요');
+          setCheckoutStatus('API 서버 주소가 설정되지 않았습니다.');
+          setJobStatus('설정 필요');
           syncButtons();
           return;
         }
@@ -412,15 +411,15 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
 
           if (!config?.readiness?.videoConverterReady) {
             converterReady = false;
-            setCheckoutStatus('?�버???�영??변??기능???�직 준비되지 ?�았?�니??');
-            setJobStatus('?�버 준�??�요');
+            setCheckoutStatus('서버의 동영상 변환 기능이 아직 준비되지 않았습니다.');
+            setJobStatus('서버 준비 필요');
             syncButtons();
             return;
           }
           if (paymentMode === 'polar' && !config?.paymentProducts?.video_mkv_mp4) {
             converterReady = false;
-            setCheckoutStatus('비디??변??결제 ?�품???�직 ?�정?��? ?�았?�니??');
-            setJobStatus('?�품 ?�정 ?�요');
+            setCheckoutStatus('비디오 변환 결제 상품이 아직 설정되지 않았습니다.');
+            setJobStatus('상품 설정 필요');
             syncButtons();
             return;
           }
@@ -429,14 +428,14 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           const restored = await verifyExistingOrder(savedOrderId);
           if (!restored) {
             setCheckoutStatus(paymentMode === 'mock'
-              ? 'mock 모드?�서??바로 변?�됩?�다.'
-              : '?�일???�택????변???�작???�르�?결제가 ?�립?�다.');
+              ? 'mock 모드에서는 바로 변환됩니다.'
+              : '파일을 선택한 뒤 변환 시작을 누르면 결제가 열립니다.');
           }
           syncButtons();
         } catch {
           converterReady = false;
-          setCheckoutStatus('초기 ?�정??불러?��? 못했?�니??');
-          setJobStatus('?�정 ?�인 ?�요');
+          setCheckoutStatus('초기 설정을 불러오지 못했습니다.');
+          setJobStatus('설정 확인 필요');
           syncButtons();
         }
       })();
@@ -444,4 +443,3 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
   </main>
   <Footer />
 </Layout>
-
