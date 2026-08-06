@@ -59,7 +59,8 @@ const paths = [
   '/maps/fishbread',
   '/maps/solo-dining',
   '/maps/hidden-cafe',
-  '/maps/local-eats'
+  '/maps/local-eats',
+  '/new-tools'
 ];
 
 const localePaths = ['en', 'ja'].flatMap((locale) =>
