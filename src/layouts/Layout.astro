@@ -1,4 +1,4 @@
-﻿---
+---
 import '../styles/global.css';
 import AdSense from '../components/AdSense.astro';
 import SiteProviders from '../components/providers/SiteProviders';
@@ -138,16 +138,7 @@ const organizationJsonLd = {
   '@type': 'Organization',
   name: 'ManyTool',
   url: siteUrl,
-  logo: new URL('/logo.png', siteUrl).toString(),
-  email: 'mailto:mooameensoo@gmail.com',
-  contactPoint: [
-    {
-      '@type': 'ContactPoint',
-      contactType: 'customer support',
-      email: 'mooameensoo@gmail.com',
-      availableLanguage: ['Korean', 'English', 'Japanese']
-    }
-  ]
+  logo: new URL('/logo.png', siteUrl).toString()
 };
 
 const faqJsonLd = {
