@@ -523,5 +523,13 @@ const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.r
         }
       });
     </script>
+    <script is:inline src="//wcs.pstatic.net/wcslog.js"></script>
+    <script is:inline>
+      if (!window.wcs_add) window.wcs_add = {};
+      window.wcs_add["wa"] = "1b918f03cf28070";
+      if (window.wcs) {
+        window.wcs_do();
+      }
+    </script>
   </body>
 </html>
