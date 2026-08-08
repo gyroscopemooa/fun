@@ -251,7 +251,7 @@ const sidebarText = {
   ]
 };
 
-const disabledSidebarPaths = new Set(['/ai-id-photo', '/ai-passport-photo', '/ai-headshot']);
+const disabledSidebarPaths = new Set(['/ai-id-photo', '/ai-passport-photo', '/ai-headshot', '/ai-calorie-calculator', '/ai-manseryeok']);
 const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.replace(/^\/(en|ja)(?=\/|$)/, '') || '/'));
 ---
 
