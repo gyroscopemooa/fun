@@ -1,5 +1,6 @@
 ---
 import { createTranslator, detectLocale, stripLocale, withLocalePath } from '../lib/i18n';
+import FamilyPromo from './FamilyPromo.astro';
 
 const pathname = Astro.url.pathname;
 const locale = detectLocale(pathname);
@@ -46,3 +47,4 @@ const langLinks = [
     </div>
   </div>
 </header>
+<FamilyPromo />
