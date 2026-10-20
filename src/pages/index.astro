@@ -4,6 +4,7 @@ import AdSense from '../components/AdSense.astro';
 import SponsorBanner from '../components/SponsorBanner.astro';
 import Recommend from '../components/Recommend.astro';
 import Footer from '../components/Footer.astro';
+import HomeFamilyShowcase from '../components/HomeFamilyShowcase.astro';
 import { createTranslator, detectLocale, stripLocale, withLocalePath } from '../lib/i18n';
 
 const rawApiBase = (import.meta.env.PUBLIC_NODE_API_BASE ?? '').trim();
@@ -282,6 +283,8 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
           ))}
         </div>
       </section>
+
+      <HomeFamilyShowcase />
 
       <div class="px-4 pb-4 lg:px-10">
         <section class="space-y-4">
