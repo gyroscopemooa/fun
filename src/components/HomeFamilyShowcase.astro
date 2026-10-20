@@ -2,35 +2,64 @@
 import { familyServices } from '../data/family-services';
 ---
 
-<section class="px-4 pb-6 lg:px-10" aria-labelledby="family-showcase-title">
-  <div class="overflow-hidden rounded-[28px] bg-[#090b11] p-5 text-white shadow-[0_18px_50px_rgba(15,23,42,0.14)] sm:p-7">
-    <div class="flex flex-wrap items-end justify-between gap-3">
-      <div>
-        <p class="font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-lime-300">LIVE SUB FAMILY</p>
-        <h2 id="family-showcase-title" class="mt-2 text-2xl font-black tracking-tight sm:text-3xl">같이 만든 8개의 서비스</h2>
-        <p class="mt-2 text-sm text-slate-400">언어, 건강, 일과 생활에 필요한 서비스를 만나보세요.</p>
-      </div>
-      <a href="https://live-sub.com/" target="_blank" rel="noopener noreferrer" class="rounded-full border border-white/15 px-4 py-2 text-xs font-bold text-slate-200 transition hover:border-lime-300 hover:text-lime-300">패밀리 사이트 전체보기 ↗</a>
-    </div>
-
-    <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+<section class="px-4 pb-5 lg:px-10" aria-label="live sub 패밀리 서비스 광고">
+  <div class="mx-auto max-w-[970px]">
+    <p class="mb-1.5 text-center text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">Family promotion</p>
+    <div class="home-family-ad" data-home-family-ad>
       {familyServices.map((service, index) => (
-        <a
-          href={service.href}
-          target="_blank"
-          rel="noopener noreferrer"
-          class="group relative min-h-40 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.045] p-5 transition duration-300 hover:-translate-y-1 hover:border-white/25 hover:bg-white/[0.075]"
-          style={`--family-accent:${service.accent}`}
-        >
-          <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--family-accent)] to-transparent opacity-70"></div>
-          <div class="flex items-center justify-between gap-3">
-            <span class="font-mono text-[10px] font-bold tracking-[0.13em] text-[var(--family-accent)]">{String(index + 1).padStart(2, '0')} · {service.eyebrow}</span>
-            <span class="grid h-8 w-8 place-items-center rounded-full border border-white/15 text-sm transition group-hover:border-[var(--family-accent)] group-hover:text-[var(--family-accent)]">↗</span>
-          </div>
-          <h3 class="mt-7 text-xl font-black tracking-tight text-white">{service.name}</h3>
-          <p class="mt-2 text-sm leading-6 text-slate-400">{service.copy}</p>
+        <a href={service.href} target="_blank" rel="noopener noreferrer" class:list={['home-family-ad__slide', index === 0 && 'is-active']} data-home-family-slide aria-hidden={index === 0 ? 'false' : 'true'} style={`--ad-accent:${service.accent}`}>
+          <span class="home-family-ad__index">{String(index + 1).padStart(2, '0')} / {String(familyServices.length).padStart(2, '0')}</span>
+          <span class="home-family-ad__brand">{service.name}</span>
+          <span class="home-family-ad__copy">{service.copy}</span>
+          <span class="home-family-ad__cta">바로가기 <b aria-hidden="true">↗</b></span>
         </a>
       ))}
     </div>
   </div>
 </section>
+
+<script>
+  document.querySelectorAll('[data-home-family-ad]').forEach((banner) => {
+    const slides = Array.from(banner.querySelectorAll('[data-home-family-slide]'));
+    if (slides.length < 2) return;
+    let current = 0;
+    let timer;
+    const next = () => {
+      slides[current]?.classList.remove('is-active');
+      slides[current]?.setAttribute('aria-hidden', 'true');
+      current = (current + 1) % slides.length;
+      slides[current]?.classList.add('is-active');
+      slides[current]?.setAttribute('aria-hidden', 'false');
+    };
+    const start = () => { window.clearInterval(timer); timer = window.setInterval(next, 6500); };
+    const stop = () => window.clearInterval(timer);
+    banner.addEventListener('mouseenter', stop);
+    banner.addEventListener('mouseleave', start);
+    banner.addEventListener('focusin', stop);
+    banner.addEventListener('focusout', start);
+    start();
+  });
+</script>
+
+<style>
+  .home-family-ad { position: relative; height: 92px; overflow: hidden; border: 1px solid rgb(30 41 59); border-radius: 14px; background: #090b11; box-shadow: 0 10px 28px rgb(15 23 42 / .1); }
+  .home-family-ad::before { position: absolute; inset: 0; content: ''; background: linear-gradient(110deg, transparent 0%, rgb(255 255 255 / .035) 48%, transparent 72%); pointer-events: none; }
+  .home-family-ad__slide { position: absolute; inset: 0; display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; align-items: center; gap: 18px; padding: 0 24px; color: white; opacity: 0; pointer-events: none; transform: translateX(28px); transition: opacity 700ms ease, transform 700ms ease; }
+  .home-family-ad__slide.is-active { opacity: 1; pointer-events: auto; transform: translateX(0); }
+  .home-family-ad__index { color: var(--ad-accent); font: 700 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .1em; }
+  .home-family-ad__brand { font-size: 21px; font-weight: 900; white-space: nowrap; }
+  .home-family-ad__copy { overflow: hidden; color: rgb(203 213 225); font-size: 13px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+  .home-family-ad__cta { border: 1px solid rgb(255 255 255 / .16); border-radius: 999px; padding: 9px 13px; color: rgb(226 232 240); font-size: 11px; font-weight: 800; white-space: nowrap; transition: border-color 200ms, color 200ms; }
+  .home-family-ad__slide:hover .home-family-ad__cta, .home-family-ad__slide:focus-visible .home-family-ad__cta { border-color: var(--ad-accent); color: var(--ad-accent); }
+  .home-family-ad__slide:focus-visible { outline: 2px solid var(--ad-accent); outline-offset: -3px; }
+  @media (max-width: 640px) {
+    .home-family-ad { height: 86px; }
+    .home-family-ad__slide { grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; padding: 0 14px; }
+    .home-family-ad__index { display: none; }
+    .home-family-ad__brand { font-size: 17px; }
+    .home-family-ad__copy { font-size: 11px; }
+    .home-family-ad__cta { padding: 8px; font-size: 0; }
+    .home-family-ad__cta b { font-size: 13px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .home-family-ad__slide { transition: none; } }
+</style>
