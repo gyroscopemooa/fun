@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import AdsterraBanner from '../components/ads/AdsterraBanner.astro';
 
 const rawApiBase = (import.meta.env.PUBLIC_NODE_API_BASE ?? '').trim();
 const apiBase = rawApiBase.replace(/\/+$/, '');
@@ -172,6 +173,10 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         </section>
       </div>
     </section>
+
+    <div class="mx-auto max-w-[1180px] px-4 sm:px-6 lg:px-8">
+      <AdsterraBanner placement="top" />
+    </div>
 
     <section class="mx-auto mt-8 max-w-[1180px] px-4 sm:px-6 lg:px-8">
       <div class="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
@@ -1125,5 +1130,6 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       refreshAvailability();
       loadConfig();
     </script>
+    <AdsterraBanner placement="bottom" />
   </main>
 </Layout>

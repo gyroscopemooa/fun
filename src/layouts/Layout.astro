@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import AdSense from '../components/AdSense.astro';
+import AdsterraGlobal from '../components/ads/AdsterraGlobal.astro';
 import SiteProviders from '../components/providers/SiteProviders';
 import globalCssUrl from '../styles/global.css?url';
 import { createTranslator, detectLocale, stripLocale, withLocalePath } from '../lib/i18n';
@@ -438,6 +439,7 @@ const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.r
       <AdSense slotName="글로벌 본문 상단" />
       <slot />
       <AdSense slotName="글로벌 본문 하단" />
+      <AdsterraGlobal />
     </div>
 
     <script is:inline define:vars={{ apiBase, locale, donateText: sidebarText }}>

@@ -1,5 +1,6 @@
 ---
 import AiImageGenerator from '../../components/home/AiImageGenerator';
+import AdsterraBanner from '../../components/ads/AdsterraBanner.astro';
 import Footer from '../../components/Footer.astro';
 import Header from '../../components/Header.astro';
 import Layout from '../../layouts/Layout.astro';
@@ -23,6 +24,7 @@ const { entry } = Astro.props;
       <h1 class="mt-2 text-3xl font-black tracking-tight text-slate-900">{entry.heading}</h1>
       <p class="mt-3 max-w-4xl text-sm leading-7 text-slate-600">{entry.intro}</p>
     </section>
+    <AdsterraBanner placement="top" />
 
     <AiImageGenerator client:load locale="ko" initialMode={entry.mode} />
 
@@ -37,6 +39,7 @@ const { entry } = Astro.props;
         ))}
       </div>
     </section>
+    <AdsterraBanner placement="bottom" />
   </main>
   <Footer />
 </Layout>

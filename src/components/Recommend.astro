@@ -1,5 +1,6 @@
 ---
 import { createTranslator, detectLocale, withLocalePath } from '../lib/i18n';
+import AdsterraNative from './ads/AdsterraNative.astro';
 
 const pathname = Astro.url.pathname;
 const locale = detectLocale(pathname);
@@ -45,6 +46,8 @@ const items = [
   { href: '/korean-study-today', label: t('recommend.items.koreanStudy') }
 ].map((item) => ({ href: withLocalePath(locale, item.href), label: item.label }));
 ---
+
+<AdsterraNative />
 
 <section class="mt-10">
   <h2 class="mb-3 text-lg font-semibold">{labels.title}</h2>

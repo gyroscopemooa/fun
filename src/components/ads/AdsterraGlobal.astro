@@ -1,0 +1,35 @@
+---
+// 페이지 전체에 붙는 Adsterra 형식(팝언더, 소셜바, 스마트링크). Layout 에서 한 번만 렌더링한다.
+// - 각 형식은 src/lib/ads-config.ts 의 개별 플래그로 켜고 끄며 기본값은 OFF.
+// - 결제·로그인·정책·관리자 등 제외 페이지에는 넣지 않는다.
+// - 팝언더·소셜바는 상위 창에서 동작하는 형식이라 배너처럼 iframe 으로 격리하지 않는다.
+import { adsterra } from '../../lib/ads-config';
+import { detectLocale, stripLocale } from '../../lib/i18n';
+
+const allowed = adsterra.allowsPage(stripLocale(Astro.url.pathname));
+const locale = detectLocale(Astro.url.pathname);
+const smartlinkText = locale === 'ko'
+  ? { label: '광고', cta: '오늘의 스폰서 추천 보기' }
+  : locale === 'ja'
+    ? { label: '広告', cta: '今日のスポンサーおすすめ' }
+    : { label: 'AD', cta: "Today's sponsored pick" };
+---
+
+{
+  allowed && adsterra.smartlink.enabled && (
+    <aside class="mx-auto max-w-5xl px-4 pb-8" aria-label={smartlinkText.label}>
+      <a
+        href={adsterra.smartlink.url}
+        target="_blank"
+        rel="sponsored noopener nofollow"
+        class="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 transition hover:border-slate-300 hover:bg-slate-50"
+      >
+        <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-slate-500">{smartlinkText.label}</span>
+        <span class="font-semibold text-slate-800">{smartlinkText.cta}</span>
+        <span aria-hidden="true">↗</span>
+      </a>
+    </aside>
+  )
+}
+{allowed && adsterra.popunder.enabled && <script is:inline data-cfasync="false" src={adsterra.popunder.scriptSrc}></script>}
+{allowed && adsterra.socialBar.enabled && <script is:inline data-cfasync="false" src={adsterra.socialBar.scriptSrc}></script>}

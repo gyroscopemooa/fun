@@ -23,6 +23,13 @@ const units = {
     scriptSrc: 'https://bauval.org/22/ceb8b22c3d32a41d1b0ef043ccd845f4',
     width: 320,
     height: 50
+  },
+  // Banner 160x600 (31846704) - 메인 홈 양쪽 여백, 넓은 화면 전용
+  skyscraper: {
+    key: '8b72351cdd6100b56412440f07995c64',
+    scriptSrc: 'https://bauval.org/22/8b72351cdd6100b56412440f07995c64',
+    width: 160,
+    height: 600
   }
 } satisfies Record<string, AdsterraUnit>;
 
@@ -35,26 +42,13 @@ export type AdsterraUnitName = keyof typeof units;
 export type AdsterraPlacement = 'home' | 'top' | 'bottom';
 
 // 광고를 넣지 않는 페이지(로케일 접두어 제외 경로). 접두어 일치(하위 경로 포함).
-// 결제, 서버 업로드·카메라·얼굴 사진, 로그인, 정책·문의, 관리자 화면.
+// 로그인, 정책·문의, 관리자, 이동용 페이지.
+// AI·업로드 도구는 결제 연동 전이라 광고를 허용한다. PG 결제 연동 후 결제 화면은 다시 검토.
 const excludedPaths = [
-  '/ai-calorie-calculator',
-  '/ai-id-photo',
-  '/ai-passport-photo',
-  '/ai-personal-color',
-  '/ai-pet-translator',
-  '/ai-photoshop',
-  '/ai-manseryeok',
-  '/ai-headshot',
-  '/ai-image-generator',
-  '/name-premium',
-  '/tools/product-detail-studio',
-  '/tools/video-to-mp4',
   '/tools/mkv-to-mp4',
   '/tools/ai-photo-admin',
   '/tools/ai-photo-debug',
   '/tools/ai-photo-ops',
-  '/animal-test',
-  '/personal-color',
   '/maps/fishbread',
   '/privacy',
   '/terms',
@@ -88,6 +82,31 @@ const normalize = (path: string) => path.replace(/\/+$/, '') || '/';
 export const adsterra = {
   enabled: import.meta.env.PUBLIC_ADSTERRA_BANNERS === 'true',
   units,
+  // 페이지 전체에 붙는 형식. 각각 별도 플래그로 켜고 끄며 기본값은 OFF.
+  // 대시보드 발급 주소. 임의 변경 금지.
+  popunder: {
+    enabled: import.meta.env.PUBLIC_ADSTERRA_POPUNDER === 'true',
+    scriptSrc: 'https://abscloud.org/1/3a22868ab4b5cc35ecc4d9485b483b24'
+  },
+  socialBar: {
+    enabled: import.meta.env.PUBLIC_ADSTERRA_SOCIALBAR === 'true',
+    scriptSrc: 'https://bauval.org/14/f2905e5c7620ab85b06c432649543fc5'
+  },
+  smartlink: {
+    enabled: import.meta.env.PUBLIC_ADSTERRA_SMARTLINK === 'true',
+    url: 'https://araplhn.org/4/4df0e07ec46912aae86f312e3e3c3196'
+  },
+  // Native Banner (31846700), 위젯 레이아웃 4:1. 실시간 인기 콘텐츠 위에 표시.
+  native: {
+    enabled: import.meta.env.PUBLIC_ADSTERRA_NATIVE === 'true',
+    key: 'b9207d0e3d06c0bc5f77c2189fd8e6fa',
+    scriptSrc: 'https://bauval.org/21/b9207d0e3d06c0bc5f77c2189fd8e6fa'
+  },
+  // 홈 포함, 제외 목록이 아닌 페이지인지 (페이지 전체 형식용)
+  allowsPage(path: string) {
+    const normalized = normalize(path);
+    return normalized === '/' || !matches(excludedPaths, normalized);
+  },
   // 광고 스크립트를 격리 실행하는 같은 출처 iframe 문서 경로 (+ /{unit})
   framePath: '/ads/adsterra',
   // path 는 로케일 접두어를 제거한 경로

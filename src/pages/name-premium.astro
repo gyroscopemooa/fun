@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import AdsterraBanner from '../components/ads/AdsterraBanner.astro';
 import NamePremiumHub from '../components/name-premium/NamePremiumHub.astro';
 ---
 
@@ -37,6 +38,7 @@ import NamePremiumHub from '../components/name-premium/NamePremiumHub.astro';
         </div>
       </div>
     </section>
+    <AdsterraBanner placement="top" />
 
     <NamePremiumHub initialView="analysis" />
 
@@ -60,5 +62,6 @@ import NamePremiumHub from '../components/name-premium/NamePremiumHub.astro';
         </article>
       </div>
     </section>
+    <AdsterraBanner placement="bottom" />
   </main>
 </Layout>
