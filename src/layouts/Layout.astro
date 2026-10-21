@@ -251,7 +251,9 @@ const sidebarText = {
   ]
 };
 
-const disabledSidebarPaths = new Set(['/ai-id-photo', '/ai-passport-photo', '/ai-headshot', '/ai-calorie-calculator', '/ai-manseryeok']);
+const disabledSidebarPaths = new Set(['/ai-id-photo', '/ai-passport-photo', '/ai-headshot']);
+// 기부하기: 운영에서는 PG 심사 전까지 숨기고, 로컬 개발 서버나 PUBLIC_SHOW_DONATE=true 일 때만 표시
+const showDonate = import.meta.env.DEV || import.meta.env.PUBLIC_SHOW_DONATE === 'true';
 const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.replace(/^\/(en|ja)(?=\/|$)/, '') || '/'));
 ---
 
@@ -388,8 +390,7 @@ const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.r
         </ul>
       </nav>
 
-      <!-- 기부하기: 임시 숨김 (hidden 제거 시 다시 표시) -->
-      <div class="hidden border-t border-slate-200 p-4">
+      <div class:list={['border-t border-slate-200 p-4', !showDonate && 'hidden']}>
         <div class="rounded-[24px] bg-gradient-to-br from-amber-50 via-rose-50 to-sky-50 p-4">
           <p class="text-sm font-bold text-slate-950">{sidebarText.donate}</p>
           <p class="mt-2 text-xs leading-5 text-slate-600">{sidebarText.donateHint}</p>

@@ -9,6 +9,8 @@ import AdsterraBanner from '../components/ads/AdsterraBanner.astro';
 import { createTranslator, detectLocale, stripLocale, withLocalePath } from '../lib/i18n';
 
 const rawApiBase = (import.meta.env.PUBLIC_NODE_API_BASE ?? '').trim();
+// 기부하기: 운영에서는 PG 심사 전까지 숨기고, 로컬 개발 서버나 PUBLIC_SHOW_DONATE=true 일 때만 표시
+const showDonate = import.meta.env.DEV || import.meta.env.PUBLIC_SHOW_DONATE === 'true';
 const apiBase = rawApiBase.replace(/\/+$/, '');
 
 const pathname = Astro.url.pathname;
@@ -358,8 +360,7 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
           <p class="mt-2 text-slate-700">
             {t.guideP2}
           </p>
-          <!-- 기부하기: 임시 숨김 (hidden 제거 시 다시 표시) -->
-          <div class="mt-5 hidden rounded-2xl bg-slate-50 p-4">
+          <div class:list={['mt-5 rounded-2xl bg-slate-50 p-4', !showDonate && 'hidden']}>
             <p class="text-sm text-slate-600">{t.guideDonateHint}</p>
             <button
               id="home-donate-button"
