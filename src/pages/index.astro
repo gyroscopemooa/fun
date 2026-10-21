@@ -353,7 +353,8 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
           <p class="mt-2 text-slate-700">
             {t.guideP2}
           </p>
-          <div class="mt-5 rounded-2xl bg-slate-50 p-4">
+          <!-- 기부하기: 임시 숨김 (hidden 제거 시 다시 표시) -->
+          <div class="mt-5 hidden rounded-2xl bg-slate-50 p-4">
             <p class="text-sm text-slate-600">{t.guideDonateHint}</p>
             <button
               id="home-donate-button"
