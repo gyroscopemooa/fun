@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import AdsterraBanner from '../components/ads/AdsterraBanner.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import AdSense from '../components/AdSense.astro';
@@ -58,6 +59,7 @@ const t = {
     <h1 class="text-3xl font-black">{t.h1}</h1>
     <p class="mt-2 text-slate-700">{t.sub}</p>
     <AdSense slotName="본문 상단" />
+    <AdsterraBanner placement="top" />
     <section class="mt-5 rounded-xl border border-slate-200 bg-white p-6">
       <label for="team-input" class="text-sm font-semibold text-slate-700">{t.input}</label>
       <textarea id="team-input" class="mt-2 h-32 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder={t.placeholder}></textarea>
@@ -74,6 +76,7 @@ const t = {
 
     <section id="team-result" class="mt-5 grid gap-3 md:grid-cols-2"></section>
     <AdSense slotName="본문 하단" />
+    <AdsterraBanner placement="bottom" />
     <Recommend />
   </main>
   <Footer />

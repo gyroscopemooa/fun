@@ -2,6 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import AdsterraBanner from '../components/ads/AdsterraBanner.astro';
 ---
 
 <Layout noindex={true} title="ManyTool SEO Helper | ManyTool" description="ManyTool SEO 관련 링크 및 키워드 안내 페이지입니다.">
@@ -14,6 +15,7 @@ import Footer from '../components/Footer.astro';
       <li><a class="underline" href="/ai-search">AI Search Guide</a></li>
     </ul>
     <p class="mt-4 text-slate-700">ManyTool은 온라인 도구, 테스트, 지도, 미니게임 키워드를 중심으로 구성됩니다.</p>
-  </main>
+      <AdsterraBanner placement="top" />
+    </main>
   <Footer />
 </Layout>

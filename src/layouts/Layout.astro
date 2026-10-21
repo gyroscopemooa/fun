@@ -388,7 +388,8 @@ const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.r
         </ul>
       </nav>
 
-      <div class="border-t border-slate-200 p-4">
+      <!-- 기부하기: 임시 숨김 (hidden 제거 시 다시 표시) -->
+      <div class="hidden border-t border-slate-200 p-4">
         <div class="rounded-[24px] bg-gradient-to-br from-amber-50 via-rose-50 to-sky-50 p-4">
           <p class="text-sm font-bold text-slate-950">{sidebarText.donate}</p>
           <p class="mt-2 text-xs leading-5 text-slate-600">{sidebarText.donateHint}</p>

@@ -5,6 +5,7 @@ import SponsorBanner from '../components/SponsorBanner.astro';
 import Recommend from '../components/Recommend.astro';
 import Footer from '../components/Footer.astro';
 import HomeFamilyShowcase from '../components/HomeFamilyShowcase.astro';
+import AdsterraBanner from '../components/ads/AdsterraBanner.astro';
 import { createTranslator, detectLocale, stripLocale, withLocalePath } from '../lib/i18n';
 
 const rawApiBase = (import.meta.env.PUBLIC_NODE_API_BASE ?? '').trim();
@@ -252,7 +253,7 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
       </header>
 
       <section class="px-4 py-5 lg:px-10">
-        <div class="max-w-md">
+        <div class="mx-auto max-w-md">
           <input
             id="tool-search"
             class="w-full rounded-full border border-sky-100 bg-white px-4 py-3 text-sm outline-none focus:border-sky-400"
@@ -261,12 +262,13 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
           />
         </div>
 
-        <div class="mt-5">
+        <div class="mt-5 text-center">
           <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{t.heroTitle}</h1>
           <p class="mt-1 text-slate-500">{t.heroDesc}</p>
         </div>
 
-        <div class="mt-4 flex gap-2 overflow-x-auto pb-2">
+        <div class="mt-4 overflow-x-auto pb-2">
+          <div class="mx-auto flex w-max gap-2">
           {t.tabs.map((tab, idx) => (
             <button
               data-tab={idx === 0 ? 'all' : idx === 1 ? 'games' : idx === 2 ? 'tools' : idx === 3 ? 'art' : idx === 4 ? 'etc' : 'new'}
@@ -281,7 +283,10 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
               {tab}
             </button>
           ))}
+          </div>
         </div>
+
+        <AdsterraBanner placement="home" class="mt-4" />
       </section>
 
       <HomeFamilyShowcase />
@@ -353,7 +358,8 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
           <p class="mt-2 text-slate-700">
             {t.guideP2}
           </p>
-          <div class="mt-5 rounded-2xl bg-slate-50 p-4">
+          <!-- 기부하기: 임시 숨김 (hidden 제거 시 다시 표시) -->
+          <div class="mt-5 hidden rounded-2xl bg-slate-50 p-4">
             <p class="text-sm text-slate-600">{t.guideDonateHint}</p>
             <button
               id="home-donate-button"
