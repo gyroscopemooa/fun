@@ -722,6 +722,25 @@ const ensureAiPersonalColorOrder = async (orderId) => {
   return order;
 };
 
+const orderError = (message, status) => Object.assign(new Error(message), { status });
+
+// Calorie orders are single-use: the order is claimed before the OpenAI call and released again if it fails.
+const claimCalorieOrder = async (orderId) => {
+  if (!orderId) throw orderError('orderId is required', 402);
+  const order = await refreshOrderFromPolarIfNeeded(db.orders.get(orderId));
+  if (!order) throw orderError('order not found', 402);
+  if (order.productType !== 'calorie') throw orderError('invalid order product type', 402);
+  if (order.status !== 'paid') throw orderError('payment required', 402);
+  // No await between this check and the claim below, so concurrent requests cannot both pass.
+  const latest = db.orders.get(orderId) ?? order;
+  if (latest.calorieStatus === 'processing' || latest.calorieStatus === 'done') {
+    throw orderError('this order has already been used', 409);
+  }
+  const claimed = { ...latest, calorieStatus: 'processing', calorieClaimedAt: new Date().toISOString() };
+  db.orders.set(orderId, claimed);
+  return claimed;
+};
+
 const ensureAiManseryeokOrder = async (orderId) => {
   if (!orderId) throw new Error('orderId is required');
   const current = db.orders.get(orderId);
@@ -2156,6 +2175,7 @@ app.post('/ai-image-generator/generate', upload.single('image'), async (req, res
 });
 
 app.post('/ai-calorie-calculator/analyze', upload.single('image'), async (req, res) => {
+  let claimedOrderId = null;
   try {
     if (!req.file?.buffer) {
       return res.status(400).json({ error: 'image file is required (field name: image)' });
@@ -2167,15 +2187,35 @@ app.post('/ai-calorie-calculator/analyze', upload.single('image'), async (req, r
       return res.status(503).json({ error: 'OPENAI_API_KEY is not configured' });
     }
 
+    const orderId = typeof req.body?.orderId === 'string' ? req.body.orderId.trim() : '';
+    const order = await claimCalorieOrder(orderId);
+    claimedOrderId = order.id;
+
     const imageDataUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
-    const analysis = await analyzeMealCalories({ imageDataUrl });
+    const goal = typeof req.body?.goal === 'string' ? req.body.goal.trim() : 'maintain';
+    const locale = req.body?.locale === 'en' ? 'en' : 'ko';
+    const analysis = await analyzeMealCalories({ imageDataUrl, goal, locale });
+
+    // A photo with no food gives the buyer nothing, so the order stays usable for a retake.
+    db.orders.set(order.id, {
+      ...db.orders.get(order.id),
+      calorieStatus: analysis.isFood === false ? 'retake' : 'done',
+      calorieCompletedAt: new Date().toISOString()
+    });
 
     return res.json({
       ok: true,
+      orderId: order.id,
       analysis
     });
   } catch (error) {
-    return res.status(500).json({ error: error.message || 'analysis failed' });
+    if (claimedOrderId) {
+      db.orders.set(claimedOrderId, { ...db.orders.get(claimedOrderId), calorieStatus: 'failed', calorieError: error.message || 'analysis failed' });
+    }
+    if (error?.status) {
+      logSecurityEvent('calorie_order_rejected', { reason: error.message, ip: req.ip ?? null });
+    }
+    return res.status(error?.status ?? 500).json({ error: error.message || 'analysis failed' });
   }
 });
 

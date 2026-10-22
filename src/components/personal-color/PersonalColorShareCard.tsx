@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { Download, X } from 'lucide-react';
 
+import { saveNodeAsPng } from '@/lib/save-node-as-png';
 import { DrapeStage } from './DrapeStudio';
 import type { ReportData } from './PersonalColorReport';
 
@@ -19,12 +20,7 @@ export function PersonalColorShareCard({ report, photoUrl, onClose }: Props) {
     setSaving(true);
     setError('');
     try {
-      const { toPng } = await import('html-to-image');
-      const dataUrl = await toPng(cardRef.current, { pixelRatio: 3, cacheBust: true });
-      const link = document.createElement('a');
-      link.href = dataUrl;
-      link.download = `manytool-personal-color-${tone.id}.png`;
-      link.click();
+      await saveNodeAsPng(cardRef.current, `manytool-personal-color-${tone.id}.png`);
     } catch {
       setError('이미지 저장에 실패했어요. 잠시 후 다시 시도해 주세요.');
     } finally {
