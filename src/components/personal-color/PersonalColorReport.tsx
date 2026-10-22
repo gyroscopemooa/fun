@@ -226,9 +226,9 @@ function Dot({ swatch, label }: { swatch: Swatch; label: string }) {
   );
 }
 
-type Props = { analysis: PersonalColorAnalysis; photoUrl?: string; sample?: boolean };
+type Props = { analysis: PersonalColorAnalysis; photoUrl?: string; comparePhotoUrl?: string; sample?: boolean };
 
-export function PersonalColorReport({ analysis, photoUrl, sample = false }: Props) {
+export function PersonalColorReport({ analysis, photoUrl, comparePhotoUrl, sample = false }: Props) {
   const report = useMemo(() => toReport(analysis), [analysis]);
   const [copiedHex, setCopiedHex] = useState('');
   const [shareOpen, setShareOpen] = useState(false);
@@ -294,7 +294,7 @@ export function PersonalColorReport({ analysis, photoUrl, sample = false }: Prop
 
       {shareOpen ? <PersonalColorShareCard report={report} photoUrl={photoUrl} onClose={() => setShareOpen(false)} /> : null}
 
-      <DrapeStudio report={report} photoUrl={photoUrl} />
+      <DrapeStudio report={report} photoUrl={photoUrl} comparePhotoUrl={comparePhotoUrl} />
 
       <section className="rounded-[24px] border border-slate-200 bg-white p-5">
         <div className="flex flex-wrap items-end justify-between gap-2">

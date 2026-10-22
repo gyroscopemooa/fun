@@ -92,7 +92,9 @@ const SAMPLES: { id: string; label: string; analysis: PersonalColorAnalysis }[] 
   }
 ];
 
-export function PersonalColorSampleShowcase() {
+type ShowcaseProps = { leftPhotoUrl?: string; rightPhotoUrl?: string };
+
+export function PersonalColorSampleShowcase({ leftPhotoUrl, rightPhotoUrl }: ShowcaseProps) {
   const [active, setActive] = useState(SAMPLES[0].id);
   const sample = SAMPLES.find((item) => item.id === active) ?? SAMPLES[0];
 
@@ -118,7 +120,7 @@ export function PersonalColorSampleShowcase() {
         })}
       </div>
       <div className="mt-4">
-        <PersonalColorReport key={sample.id} analysis={sample.analysis} sample />
+        <PersonalColorReport key={sample.id} analysis={sample.analysis} photoUrl={leftPhotoUrl} comparePhotoUrl={rightPhotoUrl} sample />
       </div>
     </div>
   );

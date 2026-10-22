@@ -85,7 +85,8 @@ export function DrapeStage({ drape, features, photoUrl, capeTop, lipHex, blushHe
 
 type Mode = 'best' | 'avoid' | 'compare';
 
-export function DrapeStudio({ report, photoUrl }: { report: ReportData; photoUrl?: string }) {
+// comparePhotoUrl lets the sample show a second person on the right-hand (worst) stage.
+export function DrapeStudio({ report, photoUrl, comparePhotoUrl }: { report: ReportData; photoUrl?: string; comparePhotoUrl?: string }) {
   const [mode, setMode] = useState<Mode>('compare');
   const [index, setIndex] = useState(0);
   const [capeTop, setCapeTop] = useState(photoUrl ? 70 : 72);
@@ -122,7 +123,7 @@ export function DrapeStudio({ report, photoUrl }: { report: ReportData; photoUrl
         {mode === 'compare' ? (
           <div className="grid grid-cols-2 gap-3">
             <DrapeStage {...stageBase} drape={report.best[pairIndex]} caption={`BEST · ${report.best[pairIndex].name}`} tone="best" />
-            <DrapeStage {...stageBase} drape={report.avoid[pairIndex]} caption={`WORST · ${report.avoid[pairIndex].name}`} tone="avoid" />
+            <DrapeStage {...stageBase} photoUrl={comparePhotoUrl ?? photoUrl} drape={report.avoid[pairIndex]} caption={`WORST · ${report.avoid[pairIndex].name}`} tone="avoid" />
           </div>
         ) : (
           <div className="mx-auto w-full max-w-[320px]">
