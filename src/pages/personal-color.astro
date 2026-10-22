@@ -1,4 +1,4 @@
-﻿---
+---
 import Layout from '../layouts/Layout.astro';
 import AdsterraBanner from '../components/ads/AdsterraBanner.astro';
 import Header from '../components/Header.astro';
@@ -17,16 +17,27 @@ import Recommend from '../components/Recommend.astro';
     <AdsterraBanner placement="top" />
     <section class="mt-4 rounded-xl border border-slate-200 bg-white p-5">
       <input id="color-file" accept="image/*" class="block w-full text-sm" type="file" />
-      <img id="color-preview" class="mt-3 hidden max-h-72 w-full rounded-lg object-contain" alt="미리보기" loading="lazy" decoding="async" />
+      <img id="color-preview" class="mt-3 hidden max-h-72 w-full rounded-lg object-contain" alt="미리보기" />
       <button id="color-run" class="mt-3 rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white">분석하기</button>
       <p id="color-result" class="mt-3 rounded-md bg-slate-100 px-3 py-3 text-sm text-slate-700">이미지를 올리고 분석 버튼을 눌러주세요.</p>
+      <div id="color-card" class="mt-3 hidden rounded-2xl border border-slate-200 p-4">
+        <div class="flex items-center gap-3">
+          <span id="color-skin" class="h-12 w-12 shrink-0 rounded-full border-4 border-white shadow"></span>
+          <div>
+            <p class="text-xs font-semibold text-slate-500">추정 피부색 <span id="color-skin-hex" class="font-mono"></span></p>
+            <p id="color-tone" class="text-xl font-black text-slate-900"></p>
+          </div>
+        </div>
+        <p id="color-tagline" class="mt-2 text-sm text-slate-600"></p>
+        <div id="color-palette" class="mt-3 grid grid-cols-4 gap-2"></div>
+      </div>
       <canvas id="color-canvas" class="hidden"></canvas>
     </section>
 
     <AdsterraBanner placement="bottom" />
     <section class="mt-5 rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-700">
       <h2 class="text-lg font-semibold text-slate-900">퍼스널컬러 자가진단이란?</h2>
-      <p class="mt-1">이미지의 평균 색온도를 바탕으로 봄/여름/가을/겨울 톤을 재미형으로 안내합니다.</p>
+      <p class="mt-1">사진 가운데 얼굴 피부 영역의 색만 골라 웜/쿨, 명도, 채도를 계산하고 12톤 중 가까운 톤을 재미형으로 안내합니다.</p>
       <h2 class="mt-4 text-lg font-semibold text-slate-900">사용 방법</h2>
       <p class="mt-1">얼굴 사진 업로드 후 분석하기를 누르면 결과를 바로 확인할 수 있습니다.</p>
       <h2 class="mt-4 text-lg font-semibold text-slate-900">FAQ</h2>
@@ -50,61 +61,107 @@ import Recommend from '../components/Recommend.astro';
   </main>
   <Footer />
 
-  <script is:inline>
-    const fileEl = document.getElementById('color-file');
-    const previewEl = document.getElementById('color-preview');
+  <script>
+    import { TONE_MAP, type ToneId } from '../lib/personal-color-tones';
+
+    const fileEl = document.getElementById('color-file') as HTMLInputElement | null;
+    const previewEl = document.getElementById('color-preview') as HTMLImageElement | null;
     const runEl = document.getElementById('color-run');
     const resultEl = document.getElementById('color-result');
-    const canvasEl = document.getElementById('color-canvas');
+    const canvasEl = document.getElementById('color-canvas') as HTMLCanvasElement | null;
+    const cardEl = document.getElementById('color-card');
 
     let ready = false;
 
     fileEl?.addEventListener('change', () => {
       const file = fileEl.files?.[0];
-      if (!file || !(previewEl instanceof HTMLImageElement)) return;
+      if (!file || !previewEl) return;
       previewEl.src = URL.createObjectURL(file);
       previewEl.classList.remove('hidden');
       ready = true;
     });
 
+    // Samples only skin-like pixels from the centre of the frame so background and clothes don't skew the tone.
+    const sampleSkin = (img: HTMLImageElement, canvas: HTMLCanvasElement) => {
+      const size = 128;
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      if (!ctx) return null;
+      const side = Math.min(img.naturalWidth, img.naturalHeight);
+      ctx.drawImage(img, (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side, 0, 0, size, size);
+      const data = ctx.getImageData(0, 0, size, size).data;
+      let r = 0; let g = 0; let b = 0; let n = 0;
+      for (let y = 0; y < size; y += 1) {
+        for (let x = 0; x < size; x += 1) {
+          const dx = (x - size / 2) / (size * 0.22);
+          const dy = (y - size * 0.45) / (size * 0.28);
+          if (dx * dx + dy * dy > 1) continue;
+          const i = (y * size + x) * 4;
+          const [pr, pg, pb] = [data[i], data[i + 1], data[i + 2]];
+          if (pr < 70 || pr <= pg || pg < pb * 0.85 || pr - pb < 12) continue;
+          r += pr; g += pg; b += pb; n += 1;
+        }
+      }
+      return n > 80 ? { r: r / n, g: g / n, b: b / n } : null;
+    };
+
+    const classify = ({ r, g, b }: { r: number; g: number; b: number }): ToneId => {
+      const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      const sat = (Math.max(r, g, b) - Math.min(r, g, b)) / Math.max(r, g, b);
+      // Skin hue sits around 0-40deg: pinker (cool) skin is near red, yellower (warm) skin drifts toward orange.
+      const hue = (60 * (g - b)) / Math.max(1, Math.max(r, g, b) - Math.min(r, g, b));
+      if (hue >= 19) {
+        if (lum > 0.8) return 'spring-light';
+        if (sat > 0.4 && lum > 0.62) return 'spring-bright';
+        if (lum > 0.66) return 'spring-true';
+        if (lum < 0.5) return 'autumn-deep';
+        return sat < 0.26 ? 'autumn-mute' : 'autumn-true';
+      }
+      if (lum > 0.8) return 'summer-light';
+      if (sat < 0.24) return 'summer-mute';
+      if (lum < 0.5) return 'winter-deep';
+      if (sat > 0.4) return 'winter-bright';
+      return lum > 0.66 ? 'summer-true' : 'winter-true';
+    };
+
+    const toHex = (v: number) => Math.round(v).toString(16).padStart(2, '0');
+
     runEl?.addEventListener('click', () => {
-      if (!ready || !(previewEl instanceof HTMLImageElement) || !(canvasEl instanceof HTMLCanvasElement)) {
+      if (!ready || !previewEl || !canvasEl || !previewEl.complete) {
         if (resultEl) resultEl.textContent = '먼저 이미지를 업로드해 주세요.';
         return;
       }
-
-      const ctx = canvasEl.getContext('2d');
-      if (!ctx) return;
-
-      canvasEl.width = 64;
-      canvasEl.height = 64;
-      ctx.drawImage(previewEl, 0, 0, 64, 64);
-      const data = ctx.getImageData(0, 0, 64, 64).data;
-
-      let sumR = 0;
-      let sumG = 0;
-      let sumB = 0;
-      for (let i = 0; i < data.length; i += 4) {
-        sumR += data[i];
-        sumG += data[i + 1];
-        sumB += data[i + 2];
+      const skin = sampleSkin(previewEl, canvasEl);
+      if (!skin) {
+        cardEl?.classList.add('hidden');
+        if (resultEl) resultEl.textContent = '얼굴 피부 영역을 찾지 못했어요. 얼굴이 가운데 오도록 정면 사진을 올려 주세요.';
+        return;
       }
-
-      const px = data.length / 4;
-      const r = sumR / px;
-      const g = sumG / px;
-      const b = sumB / px;
-
-      const warm = r - b;
-      const bright = (r + g + b) / 3;
-
-      let tone = '여름 쿨';
-      if (warm > 18 && bright > 150) tone = '봄 웜';
-      else if (warm > 18 && bright <= 150) tone = '가을 웜';
-      else if (warm <= 18 && bright > 150) tone = '여름 쿨';
-      else tone = '겨울 쿨';
-
-      if (resultEl) resultEl.textContent = `분석 결과: ${tone}`;
+      const tone = TONE_MAP[classify(skin)];
+      const hex = `#${toHex(skin.r)}${toHex(skin.g)}${toHex(skin.b)}`.toUpperCase();
+      if (resultEl) resultEl.textContent = `분석 결과: ${tone.label} (재미용 간이 추정)`;
+      const set = (id: string, text: string) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+      set('color-tone', tone.label);
+      set('color-tagline', tone.tagline);
+      set('color-skin-hex', hex);
+      const skinEl = document.getElementById('color-skin');
+      if (skinEl) skinEl.style.background = hex;
+      const paletteEl = document.getElementById('color-palette');
+      if (paletteEl) {
+        paletteEl.replaceChildren(...tone.best.slice(0, 4).map((item) => {
+          const cell = document.createElement('div');
+          const chip = document.createElement('div');
+          chip.className = 'h-10 rounded-lg border border-black/5';
+          chip.style.background = item.hex;
+          const label = document.createElement('p');
+          label.className = 'mt-1 truncate text-[11px] font-semibold text-slate-600';
+          label.textContent = item.name;
+          cell.append(chip, label);
+          return cell;
+        }));
+      }
+      cardEl?.classList.remove('hidden');
     });
   </script>
 </Layout>

@@ -1483,7 +1483,7 @@ const sendAiPersonalColorResultEmail = async ({ order, job }) => {
   if (!job?.analysis?.summary) throw new Error('personal color analysis result is missing');
 
   const resultPageUrl = buildAiPersonalColorResultPageUrl(job.id);
-  const season = String(job.analysis.season ?? '').trim() || '퍼스널컬러 결과';
+  const season = String(job.analysis.toneLabel ?? job.analysis.season ?? '').trim() || '퍼스널컬러 결과';
   const response = await fetch(resendApiUrl, {
     method: 'POST',
     headers: {

@@ -1,6 +1,36 @@
 import OpenAI from 'openai';
 
-const DEFAULT_MODEL = process.env.OPENAI_VISION_MODEL?.trim() || 'gpt-4.1-mini';
+const DEFAULT_MODEL = process.env.OPENAI_PERSONAL_COLOR_MODEL?.trim() || process.env.OPENAI_VISION_MODEL?.trim() || 'gpt-5';
+
+// 12-tone system: 4 seasons x 3 sub tones. Labels must stay in sync with src/lib/personal-color-tones.ts.
+const TONES = {
+  'spring-light': { season: '봄 웜', sub: '라이트' },
+  'spring-true': { season: '봄 웜', sub: '트루' },
+  'spring-bright': { season: '봄 웜', sub: '브라이트' },
+  'summer-light': { season: '여름 쿨', sub: '라이트' },
+  'summer-true': { season: '여름 쿨', sub: '트루' },
+  'summer-mute': { season: '여름 쿨', sub: '뮤트' },
+  'autumn-mute': { season: '가을 웜', sub: '뮤트' },
+  'autumn-true': { season: '가을 웜', sub: '트루' },
+  'autumn-deep': { season: '가을 웜', sub: '딥' },
+  'winter-true': { season: '겨울 쿨', sub: '트루' },
+  'winter-bright': { season: '겨울 쿨', sub: '브라이트' },
+  'winter-deep': { season: '겨울 쿨', sub: '딥' }
+};
+const TONE_IDS = Object.keys(TONES);
+const toneLabel = (id) => `${TONES[id].season} ${TONES[id].sub}`;
+const toneGuide = TONE_IDS.map((id) => `${id}=${toneLabel(id)}`).join(', ');
+
+const swatchSchema = (extraKey) => ({
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    name: { type: 'string' },
+    hex: { type: 'string' },
+    [extraKey]: { type: 'string' }
+  },
+  required: ['name', 'hex', extraKey]
+});
 
 const personalColorSchema = {
   name: 'personal_color_analysis',
@@ -11,11 +41,9 @@ const personalColorSchema = {
     properties: {
       summary: { type: 'string' },
       confidence: { type: 'string', enum: ['low', 'medium', 'high'] },
-      season: { type: 'string', enum: ['봄 웜', '여름 쿨', '가을 웜', '겨울 쿨'] },
-      secondary_tone: {
-        type: 'string',
-        enum: ['라이트', '소프트', '뮤트', '브라이트', '딥', '클리어']
-      },
+      tone_id: { type: 'string', enum: TONE_IDS },
+      runner_up_tone_id: { type: 'string', enum: TONE_IDS },
+      match_percent: { type: 'number' },
       undertone: { type: 'string' },
       chroma: { type: 'string' },
       contrast: { type: 'string' },
@@ -23,52 +51,62 @@ const personalColorSchema = {
       brightness_score: { type: 'number' },
       saturation_score: { type: 'number' },
       contrast_score: { type: 'number' },
-      signature_keywords: {
-        type: 'array',
-        items: { type: 'string' }
+      feature_colors: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          skin_hex: { type: 'string' },
+          hair_hex: { type: 'string' },
+          eye_hex: { type: 'string' }
+        },
+        required: ['skin_hex', 'hair_hex', 'eye_hex']
       },
-      best_colors: {
-        type: 'array',
-        items: { type: 'string' }
+      photo_check: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          score: { type: 'number' },
+          lighting: { type: 'string' },
+          issues: { type: 'array', items: { type: 'string' } }
+        },
+        required: ['score', 'lighting', 'issues']
       },
-      avoid_colors: {
-        type: 'array',
-        items: { type: 'string' }
-      },
+      signature_keywords: { type: 'array', items: { type: 'string' } },
+      best_colors: { type: 'array', items: swatchSchema('use') },
+      avoid_colors: { type: 'array', items: swatchSchema('reason') },
       makeup: {
         type: 'object',
         additionalProperties: false,
         properties: {
           base: { type: 'string' },
           lip: { type: 'string' },
+          lip_hex: { type: 'string' },
           blush: { type: 'string' },
-          eye: { type: 'string' }
+          blush_hex: { type: 'string' },
+          eye: { type: 'string' },
+          eye_hex: { type: 'string' }
         },
-        required: ['base', 'lip', 'blush', 'eye']
+        required: ['base', 'lip', 'lip_hex', 'blush', 'blush_hex', 'eye', 'eye_hex']
       },
       hair: {
         type: 'object',
         additionalProperties: false,
         properties: {
           best: { type: 'string' },
+          best_hex: { type: 'string' },
           avoid: { type: 'string' }
         },
-        required: ['best', 'avoid']
+        required: ['best', 'best_hex', 'avoid']
       },
-      styling_tips: {
-        type: 'array',
-        items: { type: 'string' }
-      },
-      cautions: {
-        type: 'array',
-        items: { type: 'string' }
-      }
+      styling_tips: { type: 'array', items: { type: 'string' } },
+      cautions: { type: 'array', items: { type: 'string' } }
     },
     required: [
       'summary',
       'confidence',
-      'season',
-      'secondary_tone',
+      'tone_id',
+      'runner_up_tone_id',
+      'match_percent',
       'undertone',
       'chroma',
       'contrast',
@@ -76,6 +114,8 @@ const personalColorSchema = {
       'brightness_score',
       'saturation_score',
       'contrast_score',
+      'feature_colors',
+      'photo_check',
       'signature_keywords',
       'best_colors',
       'avoid_colors',
@@ -106,40 +146,95 @@ const extractJson = (content) => {
   return JSON.parse(content.slice(start, end + 1));
 };
 
+const text = (value) => (typeof value === 'string' ? value.trim() : '');
+
 const normalizeList = (items) => (
   Array.isArray(items)
     ? items.filter((item) => typeof item === 'string' && item.trim()).map((item) => item.trim())
     : []
 );
 
-const normalizeAnalysis = (payload) => ({
-  summary: typeof payload?.summary === 'string' ? payload.summary.trim() : '',
-  confidence: ['low', 'medium', 'high'].includes(payload?.confidence) ? payload.confidence : 'low',
-  season: typeof payload?.season === 'string' ? payload.season.trim() : '',
-  secondaryTone: typeof payload?.secondary_tone === 'string' ? payload.secondary_tone.trim() : '',
-  undertone: typeof payload?.undertone === 'string' ? payload.undertone.trim() : '',
-  chroma: typeof payload?.chroma === 'string' ? payload.chroma.trim() : '',
-  contrast: typeof payload?.contrast === 'string' ? payload.contrast.trim() : '',
-  warmthScore: Number.isFinite(Number(payload?.warmth_score)) ? Math.max(0, Math.min(100, Number(payload.warmth_score))) : 50,
-  brightnessScore: Number.isFinite(Number(payload?.brightness_score)) ? Math.max(0, Math.min(100, Number(payload.brightness_score))) : 50,
-  saturationScore: Number.isFinite(Number(payload?.saturation_score)) ? Math.max(0, Math.min(100, Number(payload.saturation_score))) : 50,
-  contrastScore: Number.isFinite(Number(payload?.contrast_score)) ? Math.max(0, Math.min(100, Number(payload.contrast_score))) : 50,
-  signatureKeywords: normalizeList(payload?.signature_keywords),
-  bestColors: normalizeList(payload?.best_colors),
-  avoidColors: normalizeList(payload?.avoid_colors),
-  makeup: {
-    base: typeof payload?.makeup?.base === 'string' ? payload.makeup.base.trim() : '',
-    lip: typeof payload?.makeup?.lip === 'string' ? payload.makeup.lip.trim() : '',
-    blush: typeof payload?.makeup?.blush === 'string' ? payload.makeup.blush.trim() : '',
-    eye: typeof payload?.makeup?.eye === 'string' ? payload.makeup.eye.trim() : ''
-  },
-  hair: {
-    best: typeof payload?.hair?.best === 'string' ? payload.hair.best.trim() : '',
-    avoid: typeof payload?.hair?.avoid === 'string' ? payload.hair.avoid.trim() : ''
-  },
-  stylingTips: normalizeList(payload?.styling_tips),
-  cautions: normalizeList(payload?.cautions)
-});
+const normalizeHex = (value) => {
+  const raw = text(value).replace(/^#/, '');
+  if (/^[0-9a-f]{3}$/i.test(raw)) return `#${raw.split('').map((c) => c + c).join('')}`.toUpperCase();
+  if (/^[0-9a-f]{6}$/i.test(raw)) return `#${raw}`.toUpperCase();
+  return '';
+};
+
+const score = (value, fallback = 50) => (
+  Number.isFinite(Number(value)) ? Math.round(Math.max(0, Math.min(100, Number(value)))) : fallback
+);
+
+const normalizeSwatches = (items, extraKey) => (
+  Array.isArray(items)
+    ? items
+      .map((item) => ({ name: text(item?.name), hex: normalizeHex(item?.hex), [extraKey]: text(item?.[extraKey]) }))
+      .filter((item) => item.name && item.hex)
+    : []
+);
+
+const normalizeAnalysis = (payload) => {
+  const toneId = TONE_IDS.includes(payload?.tone_id) ? payload.tone_id : 'summer-true';
+  const runnerUp = TONE_IDS.includes(payload?.runner_up_tone_id) && payload.runner_up_tone_id !== toneId
+    ? payload.runner_up_tone_id
+    : '';
+  const bestPalette = normalizeSwatches(payload?.best_colors, 'use');
+  const avoidPalette = normalizeSwatches(payload?.avoid_colors, 'reason');
+
+  return {
+    version: 2,
+    summary: text(payload?.summary),
+    confidence: ['low', 'medium', 'high'].includes(payload?.confidence) ? payload.confidence : 'low',
+    toneId,
+    toneLabel: toneLabel(toneId),
+    runnerUpToneId: runnerUp,
+    matchPercent: score(payload?.match_percent, 70),
+    // season/secondaryTone/bestColors are kept for the result email and older readers.
+    season: TONES[toneId].season,
+    secondaryTone: TONES[toneId].sub,
+    undertone: text(payload?.undertone),
+    chroma: text(payload?.chroma),
+    contrast: text(payload?.contrast),
+    warmthScore: score(payload?.warmth_score),
+    brightnessScore: score(payload?.brightness_score),
+    saturationScore: score(payload?.saturation_score),
+    contrastScore: score(payload?.contrast_score),
+    featureColors: {
+      skin: normalizeHex(payload?.feature_colors?.skin_hex),
+      hair: normalizeHex(payload?.feature_colors?.hair_hex),
+      eye: normalizeHex(payload?.feature_colors?.eye_hex)
+    },
+    photoCheck: {
+      score: score(payload?.photo_check?.score, 60),
+      lighting: text(payload?.photo_check?.lighting),
+      issues: normalizeList(payload?.photo_check?.issues)
+    },
+    signatureKeywords: normalizeList(payload?.signature_keywords),
+    bestPalette,
+    avoidPalette,
+    bestColors: bestPalette.map((item) => item.name),
+    avoidColors: avoidPalette.map((item) => item.name),
+    makeup: {
+      base: text(payload?.makeup?.base),
+      lip: text(payload?.makeup?.lip),
+      lipHex: normalizeHex(payload?.makeup?.lip_hex),
+      blush: text(payload?.makeup?.blush),
+      blushHex: normalizeHex(payload?.makeup?.blush_hex),
+      eye: text(payload?.makeup?.eye),
+      eyeHex: normalizeHex(payload?.makeup?.eye_hex)
+    },
+    hair: {
+      best: text(payload?.hair?.best),
+      bestHex: normalizeHex(payload?.hair?.best_hex),
+      avoid: text(payload?.hair?.avoid)
+    },
+    stylingTips: normalizeList(payload?.styling_tips),
+    cautions: normalizeList(payload?.cautions)
+  };
+};
+
+// Reasoning-only parameters are rejected by older chat models such as gpt-4.1.
+const reasoningOptions = (model) => (/^(gpt-5|o\d)/.test(model) ? { reasoning_effort: 'low' } : {});
 
 export const analyzePersonalColor = async ({ imageDataUrl, notes = '' }) => {
   if (typeof imageDataUrl !== 'string' || !imageDataUrl.startsWith('data:image/')) {
@@ -148,22 +243,26 @@ export const analyzePersonalColor = async ({ imageDataUrl, notes = '' }) => {
 
   const completion = await getClient().chat.completions.create({
     model: DEFAULT_MODEL,
+    ...reasoningOptions(DEFAULT_MODEL),
     messages: [
       {
         role: 'system',
         content: [
-          'You analyze personal color tendencies from a face photo.',
-          'Return strict JSON only.',
-          'Do not overclaim certainty.',
-          'All human-readable fields must be written in natural Korean.',
-          'Give practical styling guidance, not medical statements.',
-          'The main season must be one of exactly these four labels: 봄 웜, 여름 쿨, 가을 웜, 겨울 쿨.',
-          'The secondary tone must be one of exactly these six labels: 라이트, 소프트, 뮤트, 브라이트, 딥, 클리어.',
-          'Keep the secondary tone consistent with the main season. Favor 라이트, 소프트, 뮤트 for 여름 쿨; 브라이트, 딥, 클리어 for 겨울 쿨; 라이트, 브라이트, 클리어 for 봄 웜; 소프트, 뮤트, 딥 for 가을 웜.',
-          'Prioritize natural skin, eye, brow, and hair contrast over clothes, accessories, and background.',
-          'Treat heavy makeup, dyed hair, studio lighting, white balance shifts, and colored backgrounds as unreliable signals.',
-          'If evidence is mixed, keep the closest stable season and lower confidence instead of flipping to a very different season.',
-          'Do not let crop size, upper-body framing, or background color alone change warm/cool judgment.'
+          'You are a professional Korean personal color consultant analyzing a face photo.',
+          'Return strict JSON only. All human-readable fields must be natural Korean.',
+          `Classify into exactly one of the 12 tones: ${toneGuide}.`,
+          'Judge in this order: 1) undertone from skin (yellow/peach vs pink/blue base, jaw and neck area), 2) value from skin lightness and hair/eye depth, 3) chroma from how clear or grayish the overall coloring looks, 4) contrast between skin, hair, brows and eyes.',
+          'light = high value, low-mid contrast. true = the season center. bright = high chroma and clarity. mute = low chroma, grayish softness. deep = low value, high depth.',
+          'Pick runner_up_tone_id as the closest neighboring tone and match_percent (55-95) as how strongly the photo fits tone_id over it.',
+          'Prioritize natural skin, eye, brow and hair over clothes, accessories and background.',
+          'Treat heavy makeup, dyed hair, filters, colored lighting and white balance shifts as unreliable; mention them in photo_check.issues and lower confidence.',
+          'If evidence is mixed, keep the closest stable tone, lower confidence and add cautions instead of jumping to a distant season.',
+          'feature_colors are your best estimate of natural skin (cheek), hair and iris colors as #RRGGBB hex.',
+          'best_colors: exactly 8 colors that fit tone_id, each with a Korean color name, an accurate #RRGGBB hex, and a short use (where to wear it, e.g. 상의, 포인트, 아우터).',
+          'avoid_colors: exactly 4 colors with Korean name, #RRGGBB hex and a short reason why they clash.',
+          'makeup lip_hex, blush_hex, eye_hex and hair best_hex must be realistic product-like shades as #RRGGBB.',
+          'photo_check.score (0-100) rates how reliable the photo is for color analysis; lighting describes the light briefly.',
+          'Give 3-5 signature_keywords, 3-5 styling_tips and 1-3 cautions. Give practical styling guidance, not medical statements.'
         ].join(' ')
       },
       {
@@ -172,24 +271,16 @@ export const analyzePersonalColor = async ({ imageDataUrl, notes = '' }) => {
           {
             type: 'text',
             text: [
-              'Analyze this face photo for personal color guidance.',
-              'Estimate the most likely main season, undertone, chroma, and contrast.',
-              'Also choose one secondary tone label from 라이트, 소프트, 뮤트, 브라이트, 딥, 클리어.',
-              'Also provide numeric 0-100 scores for warmth, brightness, saturation, and contrast.',
-              'For season, output only one of these four exact values: 봄 웜, 여름 쿨, 가을 웜, 겨울 쿨.',
-              'Keep the secondary tone aligned with the main season and do not output a contradictory combination.',
-              'Use Korean personal color terminology such as 저채도, 고채도, 저명도, 고명도, soft, clear when appropriate.',
-              'Ignore clothing color, accessories, background, red carpet walls, and crop framing as much as possible.',
-              'Base the result mainly on skin undertone, eye-hair contrast, overall facial contrast, and natural brightness/chroma.',
-              'If the image is ambiguous, keep confidence low or medium and add cautions instead of changing season aggressively.',
-              'Recommend colors, makeup, hair color, and styling tips.',
-              'If the image is unclear, lower confidence and mention caution.',
+              'Analyze this face photo for 12-tone personal color.',
+              'summary: 2 sentences describing why this tone fits, citing visible skin, hair and eye traits.',
+              'undertone, chroma, contrast: short Korean terms such as 옐로 베이스, 저채도, 중간 대비.',
+              'Scores 0-100: warmth (0 = very cool, 100 = very warm), brightness, saturation, contrast.',
               notes ? `Additional note from user: ${notes}` : ''
             ].filter(Boolean).join(' ')
           },
           {
             type: 'image_url',
-            image_url: { url: imageDataUrl }
+            image_url: { url: imageDataUrl, detail: 'high' }
           }
         ]
       }
