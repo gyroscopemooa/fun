@@ -62,7 +62,10 @@ const paths = [
   '/maps/solo-dining',
   '/maps/hidden-cafe',
   '/maps/local-eats',
-  '/new-tools'
+  '/new-tools',
+  '/lol-champion-recommender',
+  '/valorant-agent-picker',
+  '/overwatch-hero-picker'
 ];
 
 // 한국어 페이지를 그대로 감싼 en/ja 래퍼는 canonical이 한국어 URL이라 sitemap에서 제외한다.
