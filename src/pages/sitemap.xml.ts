@@ -66,7 +66,11 @@ const paths = [
   '/new-tools',
   '/lol-champion-recommender',
   '/valorant-agent-picker',
-  '/overwatch-hero-picker'
+  '/overwatch-hero-picker',
+  '/game-team-balancer',
+  '/rank-goal-calculator',
+  '/mbti-game-character',
+  '/today-lucky-color'
 ];
 
 // 한국어 페이지를 그대로 감싼 en/ja 래퍼는 canonical이 한국어 URL이라 sitemap에서 제외한다.

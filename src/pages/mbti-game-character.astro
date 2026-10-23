@@ -1,0 +1,18 @@
+---
+import GameToolPage from '../components/game-tools/GameToolPage.astro';
+import MbtiGameMatch from '../components/game-tools/MbtiGameMatch';
+---
+
+<GameToolPage
+  title="MBTI 게임 캐릭터 궁합 | MBTI별 발로란트·오버워치·롤 추천 | ManyTool"
+  description="내 MBTI에 어울리는 발로란트 요원, 오버워치 영웅, 롤 챔피언과 찰떡 역할을 추천해주는 재미 테스트입니다."
+  keywords="MBTI 게임 캐릭터, MBTI 발로란트 요원, MBTI 오버워치 영웅, MBTI 롤 챔피언, MBTI 게임 궁합"
+  eyebrow="MBTI x Game"
+  heading="MBTI 게임 캐릭터 궁합"
+  intro="MBTI 네 글자로 나와 잘 맞는 역할과 캐릭터를 찾아보세요. 같은 MBTI는 언제나 같은 결과가 나와요."
+  accent="#8B5CF6"
+  howTo="MBTI와 게임을 고르면 성향에 맞는 역할과 대표 캐릭터, 같은 역할 추천 캐릭터를 보여드려요. 결과 공유 문구를 복사해 친구에게 보내 보세요."
+  related={[{ href: '/game-team-balancer', label: '⚖️ 팀 나누기' }, { href: '/rank-goal-calculator', label: '🏁 랭크 목표 계산기' }, { href: '/mbti-game-character', label: '🧠 MBTI 캐릭터 궁합' }, { href: '/valorant-agent-picker', label: '🎲 캐릭터 랜덤 추천' }]}
+>
+  <MbtiGameMatch client:load />
+</GameToolPage>
