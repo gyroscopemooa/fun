@@ -89,6 +89,39 @@ const paths = [
   ,'/time-zone-converter'
   ,'/tip-calculator'
   ,'/age-calculator'
+  // Working Korean pages that were missing from the sitemap.
+  ,'/ai-pet-translator'
+  ,'/balance-game'
+  ,'/bulk-file-renamer'
+  ,'/choseong-quiz'
+  ,'/date-calculator'
+  ,'/food-taste-test'
+  ,'/fortune-card'
+  ,'/friend-type-test'
+  ,'/game-damage-calculator'
+  ,'/game-keybinds'
+  ,'/game-session-tracker'
+  ,'/ideal-world-cup'
+  ,'/image-blur'
+  ,'/image-compressor'
+  ,'/image-resizer'
+  ,'/json-formatter'
+  ,'/korean-quiz'
+  ,'/logo-quiz'
+  ,'/lol-terrain-quiz'
+  ,'/menu-roulette'
+  ,'/mid-lease-loan-calculator'
+  ,'/name-character'
+  ,'/past-life-test'
+  ,'/penalty-picker'
+  ,'/qr-generator'
+  ,'/refund-policy'
+  ,'/severance-calculator'
+  ,'/song-initial-quiz'
+  ,'/typing-speed'
+  ,'/url-encoder'
+  ,'/villain-test'
+  ,'/youtube-thumbnail'
 ];
 
 // 한국어 페이지를 그대로 감싼 en/ja 래퍼는 canonical이 한국어 URL이라 sitemap에서 제외한다.
@@ -118,7 +151,21 @@ const seoLandingPaths = seoLocaleCodes.filter((locale) => !localeCodes.includes(
   `/${locale}/age-calculator`,
 ]);
 const aiImageSeoPaths = getAiImageSeoPathEntries().map((entry) => entry.path);
-const allPaths = [...new Set([...paths, ...localePaths, ...seoLandingPaths, ...aiImageSeoPaths])];
+// Locale pages are noindex for now (see indexLocalePages in Layout.astro), so only Korean pages are listed.
+const indexLocalePages = false;
+// Some paths above only exist as locale pages; listing them in Korean would point crawlers at missing pages.
+const koreanRoutes = new Set(
+  Object.keys(import.meta.glob('./**/*.astro'))
+    .filter((file) => !file.includes('['))
+    .map((file) => file.replace(/^\./, '').replace(/\.astro$/, '').replace(/\/index$/, '') || '/')
+);
+const allPaths = [...new Set([
+  ...paths.filter((path) => koreanRoutes.has(path)),
+  ...(indexLocalePages ? [...localePaths, ...seoLandingPaths] : []),
+  ...aiImageSeoPaths.filter((path) => indexLocalePages || !path.startsWith('/en/'))
+])];
+// Pages are served from /path/ and /path redirects there, so list the final URL.
+const withSlash = (path: string) => (path === '/' || path.endsWith('/') ? path : `${path}/`);
 
 export const GET: APIRoute = ({ site }) => {
   const base = site ?? new URL('https://manytool.net');
@@ -159,7 +206,7 @@ export const GET: APIRoute = ({ site }) => {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${allPaths
   .map((path) => {
-    const loc = new URL(path, base).toString();
+    const loc = new URL(withSlash(path), base).toString();
     return `  <url><loc>${loc}</loc><lastmod>${now}</lastmod><changefreq>${changefreqFor(path)}</changefreq><priority>${priorityFor(path)}</priority></url>`;
   })
   .join('\n')}
