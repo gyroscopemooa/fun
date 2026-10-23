@@ -4,7 +4,7 @@ import AdSense from '../components/AdSense.astro';
 import AdsterraGlobal from '../components/ads/AdsterraGlobal.astro';
 import SiteProviders from '../components/providers/SiteProviders';
 import globalCssUrl from '../styles/global.css?url';
-import { createTranslator, detectLocale, stripLocale, withLocalePath } from '../lib/i18n';
+import { createTranslator, detectLocale, hasTranslation, stripLocale, withLocalePath } from '../lib/i18n';
 
 interface Props {
   title?: string;
@@ -22,7 +22,6 @@ const {
   noindex = false
 } = Astro.props;
 
-const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).toString();
 const ogImage = new URL(image, Astro.site ?? Astro.url.origin).toString();
 const siteUrl = Astro.site?.toString() ?? Astro.url.origin;
 const locale = detectLocale(Astro.url.pathname);
@@ -33,6 +32,12 @@ const pathNoLocale = stripLocale(Astro.url.pathname);
 const koHref = new URL(pathNoLocale, siteUrl).toString();
 const enHref = new URL(pathNoLocale === '/' ? '/en' : `/en${pathNoLocale}`, siteUrl).toString();
 const jaHref = new URL(pathNoLocale === '/' ? '/ja' : `/ja${pathNoLocale}`, siteUrl).toString();
+// 번역되지 않은 en/ja 래퍼 페이지는 한국어 원본을 canonical로 지정해 중복 색인을 막는다.
+const canonical = hasTranslation(locale, pathNoLocale)
+  ? new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).toString()
+  : koHref;
+const hasEn = hasTranslation('en', pathNoLocale);
+const hasJa = hasTranslation('ja', pathNoLocale);
 const gaId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID ?? 'G-J48EQSQQD8';
 const gtmId = 'GTM-NX7VHS5V';
 const clarityId = 'vwq6krnuzx';
@@ -307,8 +312,8 @@ const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.r
     <meta name="author" content="ManyTool" />
     <meta name="google-adsense-account" content={adsenseClient} />
     <link rel="alternate" hrefLang="ko-KR" href={koHref} />
-    <link rel="alternate" hrefLang="en" href={enHref} />
-    <link rel="alternate" hrefLang="ja" href={jaHref} />
+    {hasEn && <link rel="alternate" hrefLang="en" href={enHref} />}
+    {hasJa && <link rel="alternate" hrefLang="ja" href={jaHref} />}
     <link rel="alternate" hrefLang="x-default" href={koHref} />
     {googleSiteVerification && <meta name="google-site-verification" content={googleSiteVerification} />}
     {naverSiteVerification && <meta name="naver-site-verification" content={naverSiteVerification} />}

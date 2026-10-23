@@ -381,6 +381,19 @@ export function stripLocale(pathname: string) {
   return pathname.replace(/^\/(en|ja)(?=\/|$)/, '') || '/';
 }
 
+// /en, /ja 페이지 대부분은 한국어 페이지를 그대로 렌더링하는 래퍼라서,
+// 본문까지 실제 번역된 경로만 여기에 등록한다. (locale prefix 제외 경로 기준)
+const translatedPaths: Record<Exclude<Locale, 'ko'>, RegExp[]> = {
+  en: [/^\/ai-image-generator(\/[^/]+)?$/, /^\/tools\/product-detail-studio(\/result)?$/],
+  ja: [/^\/tools\/product-detail-studio(\/result)?$/],
+};
+
+export function hasTranslation(locale: Locale, path: string) {
+  if (locale === 'ko') return true;
+  const normalized = path.length > 1 ? path.replace(/\/+$/, '') : path;
+  return translatedPaths[locale].some((pattern) => pattern.test(normalized));
+}
+
 export function getLocalePrefix(locale: Locale) {
   return locale === 'ko' ? '' : `/${locale}`;
 }
