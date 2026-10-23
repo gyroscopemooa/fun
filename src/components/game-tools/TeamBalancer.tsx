@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Copy, Plus, RefreshCw, Scale, Trash2, Users } from 'lucide-react';
+import { Copy, Dices, Plus, RefreshCw, Scale, Trash2, Users } from 'lucide-react';
 
 import { RANK_GAMES, ladderOf, ratingOf, stepOfRating, type RankGame } from '@/lib/game-ranks';
+import { GAMES } from '@/lib/game-picker/games';
+import { assignTeamComp, uniqueAcrossTeams, type CompPick } from '@/lib/game-picker/team-comp';
+import type { GameCharacter } from '@/lib/game-picker/types';
 
 type Player = { id: number; name: string; step: string; points: number; wins: number; losses: number; position: string };
 type Split = { a: Player[]; b: Player[]; score: number; diff: number; duplicates: number };
@@ -72,7 +75,7 @@ const bestSplits = (game: RankGame, players: Player[]): Split[] => {
 // Elo-style estimate; 400 rating ≈ four divisions.
 const winChance = (ratingA: number, ratingB: number) => 1 / (1 + 10 ** ((ratingB - ratingA) / 400));
 
-function TeamCard({ title, color, team, game, chance }: { title: string; color: string; team: Player[]; game: RankGame; chance: number }) {
+function TeamCard({ title, color, team, game, chance, comp }: { title: string; color: string; team: Player[]; game: RankGame; chance: number; comp?: Map<number, CompPick> }) {
   const average = avg(game, team);
   const step = stepOfRating(game, average);
   return (
@@ -85,10 +88,20 @@ function TeamCard({ title, color, team, game, chance }: { title: string; color: 
       <ul className="mt-3 space-y-1.5">
         {[...team].sort((x, y) => effectiveRating(game, y) - effectiveRating(game, x)).map((p) => {
           const s = ladderOf(game).find((item) => item.id === p.step);
+          const pick = comp?.get(p.id);
           return (
-            <li key={p.id} className="flex items-center justify-between gap-2 rounded-xl bg-slate-50 px-3 py-2 text-sm">
-              <span className="min-w-0 truncate font-bold text-slate-900">{p.name || `플레이어 ${p.id}`}{p.position ? <span className="ml-1.5 text-xs font-semibold text-slate-400">{p.position}</span> : null}</span>
-              <span className="shrink-0 text-xs font-bold" style={{ color: s?.color }}>{s?.label}</span>
+            <li key={p.id} className="rounded-xl bg-slate-50 px-3 py-2 text-sm">
+              <div className="flex items-center justify-between gap-2">
+                <span className="min-w-0 truncate font-bold text-slate-900">{p.name || `플레이어 ${p.id}`}{p.position ? <span className="ml-1.5 text-xs font-semibold text-slate-400">{p.position}</span> : null}</span>
+                <span className="shrink-0 text-xs font-bold" style={{ color: s?.color }}>{s?.label}</span>
+              </div>
+              {pick ? (
+                <div className="mt-2 flex items-center gap-2 border-t border-slate-200 pt-2">
+                  <img src={pick.character.icon} alt="" className="h-8 w-8 shrink-0 rounded-lg bg-slate-800 object-cover" />
+                  <span className="min-w-0 truncate text-sm font-black text-slate-900">{pick.character.name}</span>
+                  <span className="ml-auto shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold text-white" style={{ background: pick.role.color }}>{pick.role.emoji} {pick.role.label}</span>
+                </div>
+              ) : null}
             </li>
           );
         })}
@@ -102,6 +115,9 @@ export function TeamBalancer() {
   const [players, setPlayers] = useState<Player[]>(() => Array.from({ length: 10 }, (_, i) => newPlayer('lol', i + 1)));
   const [result, setResult] = useState<{ splits: Split[]; index: number } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [rosters, setRosters] = useState<Partial<Record<RankGame, GameCharacter[]>>>({});
+  const [comps, setComps] = useState<{ a: Map<number, CompPick>; b: Map<number, CompPick> } | null>(null);
+  const [rollingComp, setRollingComp] = useState(false);
   const meta = RANK_GAMES[game];
   const ladder = useMemo(() => ladderOf(game), [game]);
 
@@ -151,10 +167,23 @@ export function TeamBalancer() {
     setResult(null);
   };
 
-  const balance = () => setResult({ splits: bestSplits(game, players), index: 0 });
+  const balance = () => {
+    setComps(null);
+    setResult({ splits: bestSplits(game, players), index: 0 });
+  };
+
+  // Latest character list for the comp roll; the bundled snapshot is used until (or if) it loads.
+  useEffect(() => {
+    if (!result || rosters[game]) return;
+    GAMES[game].load().then((list) => list.length && setRosters((prev) => ({ ...prev, [game]: list }))).catch(() => undefined);
+  }, [result, game, rosters]);
 
   // "다시 나누기" walks through other splits that are still within 2% of the best balance.
-  const reroll = () => setResult((prev) => {
+  const reroll = () => {
+    setComps(null);
+    rerollSplit();
+  };
+  const rerollSplit = () => setResult((prev) => {
     if (!prev) return prev;
     const best = prev.splits[0].score;
     const fair = prev.splits.filter((s) => s.score <= best + Math.max(8, best * 0.02)).length;
@@ -167,11 +196,27 @@ export function TeamBalancer() {
   // 100% means a 50:50 predicted match; every point of predicted edge costs two points of balance.
   const balanceScore = split ? Math.max(0, 100 - Math.abs(winChance(ratingA, ratingB) - 0.5) * 200) : 0;
 
+  const rollComps = () => {
+    if (!split) return;
+    setRollingComp(true);
+    window.setTimeout(() => {
+      const roster = rosters[game] ?? GAMES[game].fallback;
+      const a = assignTeamComp(game, roster, split.a);
+      const taken = uniqueAcrossTeams(game) ? new Set([...a.values()].map((pick) => pick.character.id)) : new Set<string>();
+      setComps({ a, b: assignTeamComp(game, roster, split.b, taken) });
+      setRollingComp(false);
+    }, 500);
+  };
+
   const copyResult = async () => {
     if (!split) return;
-    const line = (team: Player[]) => team.map((p) => p.name || `플레이어 ${p.id}`).join(', ');
+    const line = (team: Player[], comp?: Map<number, CompPick>) => team.map((p) => {
+      const name = p.name || `플레이어 ${p.id}`;
+      const pick = comp?.get(p.id);
+      return pick ? `${name}(${pick.character.name})` : name;
+    }).join(', ');
     try {
-      await navigator.clipboard.writeText(`[ManyTool 팀 나누기] ${meta.label}\n블루팀: ${line(split.a)}\n레드팀: ${line(split.b)}\n밸런스 ${balanceScore.toFixed(1)}%`);
+      await navigator.clipboard.writeText(`[ManyTool 팀 나누기] ${meta.label}\n블루팀: ${line(split.a, comps?.a)}\n레드팀: ${line(split.b, comps?.b)}\n밸런스 ${balanceScore.toFixed(1)}%`);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1500);
     } catch {
@@ -245,6 +290,7 @@ export function TeamBalancer() {
               </div>
               <div className="flex gap-2">
                 <button type="button" onClick={reroll} className="inline-flex items-center gap-1.5 rounded-xl bg-white/10 px-3 py-2 text-sm font-bold hover:bg-white/20"><RefreshCw className="h-4 w-4" /> 다시 나누기</button>
+                <button type="button" onClick={rollComps} disabled={rollingComp} className="inline-flex items-center gap-1.5 rounded-xl bg-amber-400 px-3 py-2 text-sm font-black text-slate-950 hover:bg-amber-300 disabled:opacity-60"><Dices className={`h-4 w-4 ${rollingComp ? 'animate-spin' : ''}`} /> {comps ? '조합 다시 굴리기' : '팀별 조합 굴리기'}</button>
                 <button type="button" onClick={copyResult} className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3 py-2 text-sm font-bold text-slate-900"><Copy className="h-4 w-4" /> {copied ? '복사됨' : '결과 복사'}</button>
               </div>
             </div>
@@ -254,8 +300,8 @@ export function TeamBalancer() {
             </div>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            <TeamCard title="블루팀" color="#2563EB" team={split.a} game={game} chance={winChance(ratingA, ratingB)} />
-            <TeamCard title="레드팀" color="#DC2626" team={split.b} game={game} chance={winChance(ratingB, ratingA)} />
+            <TeamCard title="블루팀" color="#2563EB" team={split.a} game={game} chance={winChance(ratingA, ratingB)} comp={comps?.a} />
+            <TeamCard title="레드팀" color="#DC2626" team={split.b} game={game} chance={winChance(ratingB, ratingA)} comp={comps?.b} />
           </div>
         </section>
       ) : null}
