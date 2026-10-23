@@ -7,7 +7,7 @@ import Footer from '../components/Footer.astro';
 import HomeFamilyShowcase from '../components/HomeFamilyShowcase.astro';
 import AdsterraBanner from '../components/ads/AdsterraBanner.astro';
 import AdsterraRail from '../components/ads/AdsterraRail.astro';
-import { createTranslator, detectLocale, stripLocale, withLocalePath } from '../lib/i18n';
+import { createTranslator, detectLocale, rolloutLocales, seoLocaleCodes, stripLocale, withLocalePath } from '../lib/i18n';
 
 const rawApiBase = (import.meta.env.PUBLIC_NODE_API_BASE ?? '').trim();
 // 기부하기: 운영에서는 PG 심사 전까지 숨기고, 로컬 개발 서버나 PUBLIC_SHOW_DONATE=true 일 때만 표시
@@ -19,11 +19,13 @@ const locale = detectLocale(pathname);
 const tRaw = await createTranslator(locale);
 const withLocale = (path: string) => withLocalePath(locale, path);
 const strippedPath = stripLocale(pathname);
-const langLinks = [
-  { code: 'ko', label: '한국어', href: `${strippedPath}`.replace(/\/{2,}/g, '/') || '/' },
-  { code: 'en', label: 'English', href: `/en${strippedPath}`.replace(/\/{2,}/g, '/') || '/en' },
-  { code: 'ja', label: '日本語', href: `/ja${strippedPath}`.replace(/\/{2,}/g, '/') || '/ja' }
-];
+const langLinks = rolloutLocales.map((lang) => ({
+  code: lang.code,
+  label: lang.nativeName,
+  href: lang.code === 'ko'
+    ? `${strippedPath}`.replace(/\/{2,}/g, '/') || '/'
+    : `/${lang.code}${strippedPath}`.replace(/\/{2,}/g, '/') || `/${lang.code}`
+}));
 
 const t = {
   tabs: [
@@ -846,6 +848,44 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
     });
 
     
+  </script>
+
+  <script is:inline define:vars={{ locale, strippedPath, supportedLocales: seoLocaleCodes }}>
+    const languageStorageKey = 'manytool-locale';
+    const localePath = (nextLocale) => {
+      const path = strippedPath === '/' ? '' : strippedPath;
+      return nextLocale === 'ko' ? (path || '/') : `/${nextLocale}${path || '/'}`;
+    };
+    const localePrefixPattern = new RegExp(`^/(${supportedLocales.filter((code) => code !== 'ko').join('|')})(?:/|$)`);
+
+    document.querySelectorAll('header a[href]').forEach((link) => {
+      const href = link.getAttribute('href') || '';
+      const match = href.match(localePrefixPattern);
+      const nextLocale = match ? match[1] : href.startsWith('/') ? 'ko' : null;
+      if (nextLocale && supportedLocales.includes(nextLocale)) {
+        link.addEventListener('click', () => localStorage.setItem(languageStorageKey, nextLocale));
+      }
+    });
+
+    const isCanonicalKoreanPath = locale === 'ko' && !location.pathname.match(localePrefixPattern);
+    if (isCanonicalKoreanPath && !localStorage.getItem(languageStorageKey)) {
+      const browserLocale = (navigator.languages || [navigator.language || 'ko'])
+        .map((value) => value.toLowerCase().split('-')[0])
+        .find((value) => supportedLocales.includes(value));
+      if (browserLocale && browserLocale !== 'ko') {
+        location.replace(localePath(browserLocale));
+      } else {
+        fetch('/api/locale', { headers: { Accept: 'application/json' } })
+          .then((response) => response.ok ? response.json() : null)
+          .then((data) => {
+            const detectedLocale = data?.locale;
+            if (detectedLocale && supportedLocales.includes(detectedLocale) && detectedLocale !== 'ko') {
+              location.replace(localePath(detectedLocale));
+            }
+          })
+          .catch(() => undefined);
+      }
+    }
   </script>
 
 </Layout>
