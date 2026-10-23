@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Copy, Dices, Plus, RefreshCw, Scale, Trash2, Users } from 'lucide-react';
 
 import { RANK_GAMES, ladderOf, ratingOf, stepOfRating, type RankGame } from '@/lib/game-ranks';
@@ -126,6 +126,8 @@ export function TeamBalancer() {
   const [comps, setComps] = useState<{ a: Map<number, CompPick>; b: Map<number, CompPick> } | null>(null);
   const [rollingComp, setRollingComp] = useState(false);
   const [shared, setShared] = useState(false);
+  // The first save would run with the default roster before a saved or shared one is loaded.
+  const skipFirstSave = useRef(true);
   const meta = RANK_GAMES[game];
   const ladder = useMemo(() => ladderOf(game), [game]);
 
@@ -169,6 +171,10 @@ export function TeamBalancer() {
   }, []);
 
   useEffect(() => {
+    if (skipFirstSave.current) {
+      skipFirstSave.current = false;
+      return;
+    }
     if (shared) return;
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ game, players }));
