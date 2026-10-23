@@ -6,7 +6,8 @@ import { AI_SAMPLES, AI_SAMPLE_CATEGORIES, categoryOf, sampleFull, sampleThumb, 
 
 const MOBILE_PREVIEW_COUNT = 8;
 
-type Props = { onUseStyle: (mode: AiImageMode) => void; title: string; locale?: 'ko' | 'en' };
+type SupportedLocale = 'ko' | 'en' | 'ja' | 'zh' | 'es' | 'de' | 'fr' | 'pt' | 'vi' | 'id';
+type Props = { onUseStyle: (mode: AiImageMode) => void; title: string; locale?: SupportedLocale };
 
 const COPY = {
   ko: { intro: 'ManyTool AI로 실제 만든 결과예요. 마음에 드는 스타일을 눌러 바로 시작해 보세요.', all: '전체', view: '크게 보기', more: (n: number) => `${n}장 더 보기`, use: (label: string) => `${label} 스타일로 만들기`, close: '닫기', prev: '이전', next: '다음' },
@@ -16,8 +17,8 @@ const COPY = {
 const EN_CATEGORY_LABELS: Record<AiSampleCategory, string> = { figure: 'Figure', body: 'Body Profile', free: 'Free Style', animation: 'Animation' };
 
 export function AiSampleGallery({ onUseStyle, title, locale = 'ko' }: Props) {
-  const copy = COPY[locale];
-  const labelOf = (id: AiSampleCategory) => (locale === 'en' ? EN_CATEGORY_LABELS[id] : categoryOf(id).label);
+  const copy = COPY[locale] ?? COPY.en;
+  const labelOf = (id: AiSampleCategory) => (locale === 'ko' ? categoryOf(id).label : EN_CATEGORY_LABELS[id]);
   const [filter, setFilter] = useState<AiSampleCategory | 'all'>('all');
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [expanded, setExpanded] = useState(false);

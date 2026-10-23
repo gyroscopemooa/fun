@@ -1,0 +1,41 @@
+---
+import AiImageGenerator from '../../components/home/AiImageGenerator';
+import Footer from '../../components/Footer.astro';
+import Header from '../../components/Header.astro';
+import Layout from '../../layouts/Layout.astro';
+
+const locales = {
+  zh: { title: 'AI 图片生成器 | ManyTool', description: '使用照片生成 AI 风格图片、旅行背景、头像和服装变化。', heading: 'AI 图片风格工具', body: '上传一张照片，选择想要的风格并生成新的 AI 图片。' },
+  es: { title: 'Generador de imágenes con IA | ManyTool', description: 'Crea imágenes con IA, fondos de viaje, retratos y cambios de ropa a partir de una foto.', heading: 'Herramientas de estilos con IA', body: 'Sube una foto, elige un estilo y genera una nueva imagen con IA.' },
+  de: { title: 'KI-Bildgenerator | ManyTool', description: 'Erstelle KI-Bilder, Reisehintergründe, Profilbilder und Outfit-Varianten aus einem Foto.', heading: 'KI-Bildstile', body: 'Lade ein Foto hoch, wähle einen Stil und erstelle ein neues KI-Bild.' },
+  fr: { title: "Générateur d'images IA | ManyTool", description: "Créez des images IA, des arrière-plans de voyage, des portraits et des changements de tenue à partir d'une photo.", heading: 'Styles d’images IA', body: 'Importez une photo, choisissez un style et créez une nouvelle image avec l’IA.' },
+  pt: { title: 'Gerador de imagens com IA | ManyTool', description: 'Crie imagens com IA, fundos de viagem, retratos e mudanças de roupa a partir de uma foto.', heading: 'Estilos de imagem com IA', body: 'Envie uma foto, escolha um estilo e gere uma nova imagem com IA.' },
+  vi: { title: 'Trình tạo ảnh AI | ManyTool', description: 'Tạo ảnh AI, ảnh du lịch, ảnh đại diện và thay đổi trang phục từ một bức ảnh.', heading: 'Công cụ phong cách ảnh AI', body: 'Tải ảnh lên, chọn phong cách và tạo ảnh mới bằng AI.' },
+  id: { title: 'Generator Gambar AI | ManyTool', description: 'Buat gambar AI, latar perjalanan, foto profil, dan perubahan pakaian dari satu foto.', heading: 'Gaya gambar AI', body: 'Unggah foto, pilih gaya, lalu buat gambar baru dengan AI.' },
+};
+
+export function getStaticPaths() {
+  return ['zh', 'es', 'de', 'fr', 'pt', 'vi', 'id'].map((locale) => ({ params: { locale }, props: { locale } }));
+}
+
+const { locale } = Astro.props;
+const copy = locales[locale as keyof typeof locales];
+const styleLinks = ['figure', 'body-profile', 'travel-background', 'snapshot', 'kakao-profile', 'instagram-photo', 'outfit-change', 'hairstyle', 'interior', 'free-style'];
+---
+
+<Layout title={copy.title} description={copy.description} keywords={`${copy.title}, AI image generator, ManyTool`}>
+  <Header />
+  <main>
+    <section class="mx-auto max-w-6xl px-4 pt-8">
+      <div class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
+        <h1 class="text-2xl font-black tracking-tight text-slate-900">{copy.heading}</h1>
+        <p class="mt-2 text-sm leading-6 text-slate-600">{copy.body}</p>
+        <div class="mt-5 flex flex-wrap gap-3">
+          {styleLinks.map((style) => <a href={`/${locale}/ai-image-generator/${style}`} class="rounded-full border border-slate-300 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-900 hover:bg-white">AI {style.replaceAll('-', ' ')}</a>)}
+        </div>
+      </div>
+    </section>
+    <AiImageGenerator client:load locale={locale} />
+  </main>
+  <Footer />
+</Layout>

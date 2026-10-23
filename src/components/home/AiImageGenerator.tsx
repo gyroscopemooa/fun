@@ -12,7 +12,7 @@ export type AiImageMode = 'figure' | 'body' | 'travel' | 'europe' | 'proofshot' 
 type Mode = AiImageMode;
 type Provider = 'openai' | 'xai';
 type GenerationPhase = 'idle' | 'payment' | 'generating' | 'done' | 'error';
-type Locale = 'ko' | 'en';
+type Locale = 'ko' | 'en' | 'ja' | 'zh' | 'es' | 'de' | 'fr' | 'pt' | 'vi' | 'id';
 
 type ModeContent = {
   tabLabel: string;
@@ -647,7 +647,10 @@ type AiImageGeneratorProps = {
 };
 
 export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure' }: AiImageGeneratorProps) {
-  const modeContentMap = locale === 'en' ? EN_MODE_CONTENT : MODE_CONTENT;
+  // Until each locale has a reviewed copy deck, non-Korean locales use the
+  // English UI instead of accidentally showing Korean strings. The locale is
+  // still preserved so translated dictionaries can be added incrementally.
+  const modeContentMap = locale === 'ko' ? MODE_CONTENT : EN_MODE_CONTENT;
   const [mode, setMode] = useState<Mode>(initialMode);
   const [userInputs, setUserInputs] = useState<Record<Mode, string>>({
     figure: '',
@@ -1254,7 +1257,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
               </p>
               {!activeContent.inputRequired ? (
                 <p className="mt-1 text-[11px] leading-5 text-amber-700">
-                  {locale === 'en' ? 'Short prompts work better. Long prompts can reduce quality.' : '짧은 프롬프트가 더 잘 나옵니다. 긴 프롬프트는 품질이 오히려 떨어질 수 있습니다.'}
+                  {locale === 'ko' ? '짧은 프롬프트가 더 잘 나옵니다. 긴 프롬프트는 품질이 오히려 떨어질 수 있습니다.' : 'Short prompts work better. Long prompts can reduce quality.'}
                 </p>
               ) : null}
             </div>
@@ -1330,7 +1333,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
           </aside>
         </section>
 
-        <AiSampleGallery title={locale === 'en' ? EN_LABELS.moreExamples : '스타일별 샘플 갤러리'} onUseStyle={useStyleFromGallery} locale={locale} />
+        <AiSampleGallery title={locale === 'ko' ? '스타일별 샘플 갤러리' : EN_LABELS.moreExamples} onUseStyle={useStyleFromGallery} locale={locale} />
       </div>
 
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/80 bg-white/92 px-4 py-4 backdrop-blur">
@@ -1359,7 +1362,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
               <div>
                 <p className="text-sm font-semibold text-slate-500">처리 상태</p>
                 <p className="mt-2 text-[11px] leading-5 text-slate-500">
-                  {locale === 'en' ? 'Discount code: manytool50' : '할인코드: manytool50'}
+                  {locale === 'ko' ? '할인코드: manytool50' : 'Discount code: manytool50'}
                 </p>
                 <h3 className="mt-1 text-2xl font-black tracking-tight text-slate-950">
                   {generationPhase === 'payment' && `${PROVIDER_LABELS[activeProvider]} 요청 준비 중`}

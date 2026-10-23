@@ -1,0 +1,73 @@
+---
+import Footer from '../../components/Footer.astro';
+import Header from '../../components/Header.astro';
+import Layout from '../../layouts/Layout.astro';
+
+const supportedLocales = ['zh', 'es', 'de', 'fr', 'pt', 'vi', 'id'];
+const tools = {
+  'ai-personal-color': ['AI Personal Color Analysis', 'Analyze your season and find colors that fit your style.'],
+  'ai-calorie-calculator': ['AI Calorie Calculator', 'Estimate calories and get a practical nutrition summary.'],
+  'ai-manseryeok': ['AI Saju Analysis', 'Explore a Korean-style birth chart reading with an AI-assisted report.'],
+  'ai-id-photo': ['AI ID Photo Generator', 'Create a clean ID photo from an uploaded portrait.'],
+  'ai-headshot': ['AI Headshot Generator', 'Create a professional profile photo from one portrait.'],
+  'ai-pet-translator': ['AI Pet Translator', 'Turn your pet photo and behavior notes into a playful AI report.']
+  , 'valorant-agent-picker': ['Valorant Agent Picker', 'Find a Valorant agent suggestion based on your preferred role and play style.']
+  , 'crosshair-generator': ['FPS Crosshair Generator', 'Create and copy a clean crosshair setup for your FPS games.']
+  , 'fps-aim-sensitivity': ['FPS Sensitivity Calculator', 'Convert and compare mouse sensitivity settings for competitive FPS games.']
+  , 'fps-aim-trainer': ['FPS Aim Trainer', 'Practice reaction speed and aim control directly in your browser.']
+  , 'fps-sensitivity-converter': ['FPS Sensitivity Converter', 'Convert sensitivity between popular FPS games.']
+  , 'dpi-edpi-calculator': ['DPI and eDPI Calculator', 'Calculate effective DPI and compare aiming settings.']
+  , 'fov-calculator': ['FOV Calculator', 'Compare field of view settings for your game and monitor.']
+  , 'name-compatibility': ['Name Compatibility', 'Compare two names with a simple compatibility reading.']
+  , 'nickname-generator': ['Nickname Generator', 'Generate memorable nicknames for games, streams, and social profiles.']
+  , 'name-meaning': ['Name Meaning', 'Explore the meaning and character of a name.']
+  , 'random-picker': ['Random Picker', 'Pick one item fairly from a custom list.']
+  , 'chat-random-picker': ['Chat Random Picker', 'Choose a winner or participant from a live chat list.']
+  , 'lol-champion-recommender': ['League Champion Recommender', 'Get a League of Legends champion suggestion for your next game.']
+  , 'game-character-picker': ['Game Character Picker', 'Randomly choose a game character for your next challenge.']
+};
+const localizedLabels = {
+  zh: ['AI 工具', '上传内容，选择工具，并开始使用 ManyTool 的 AI 功能。'],
+  es: ['Herramientas de IA', 'Sube tu contenido y empieza a usar las herramientas de IA de ManyTool.'],
+  de: ['KI-Werkzeuge', 'Lade deine Inhalte hoch und starte die KI-Werkzeuge von ManyTool.'],
+  fr: ['Outils IA', 'Importez votre contenu et commencez à utiliser les outils IA de ManyTool.'],
+  pt: ['Ferramentas de IA', 'Envie seu conteúdo e comece a usar as ferramentas de IA da ManyTool.'],
+  vi: ['Công cụ AI', 'Tải nội dung lên và bắt đầu sử dụng các công cụ AI của ManyTool.'],
+  id: ['Alat AI', 'Unggah konten dan mulai gunakan alat AI ManyTool.']
+};
+
+export function getStaticPaths() {
+  const rolloutLocales = ['zh', 'es', 'de', 'fr', 'pt', 'vi', 'id'];
+  const toolSlugs = ['ai-personal-color', 'ai-calorie-calculator', 'ai-manseryeok', 'ai-id-photo', 'ai-headshot', 'ai-pet-translator', 'valorant-agent-picker', 'crosshair-generator', 'fps-aim-sensitivity', 'fps-aim-trainer', 'fps-sensitivity-converter', 'dpi-edpi-calculator', 'fov-calculator', 'name-compatibility', 'nickname-generator', 'name-meaning', 'random-picker', 'chat-random-picker', 'lol-champion-recommender', 'game-character-picker'];
+  return rolloutLocales.flatMap((locale) => toolSlugs.map((tool) => ({ params: { locale, tool }, props: { locale, tool } })));
+}
+
+const { locale, tool } = Astro.props;
+const toolCopy = tools[tool as keyof typeof tools];
+const localizedCopy = localizedLabels[locale as keyof typeof localizedLabels];
+const canonicalPath = `/${tool}`;
+---
+
+<Layout title={`${toolCopy[0]} | ManyTool`} description={toolCopy[1]} keywords={`${toolCopy[0]}, AI tool, ManyTool`}>
+  <Header />
+  <main class="mx-auto max-w-5xl px-4 py-8">
+    <section class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+      <p class="text-xs font-bold uppercase tracking-[0.2em] text-cyan-600">ManyTool · {localizedCopy[0]}</p>
+      <h1 class="mt-3 text-3xl font-black tracking-tight text-slate-900">{toolCopy[0]}</h1>
+      <p class="mt-3 max-w-2xl text-sm leading-7 text-slate-600">{localizedCopy[1]} {toolCopy[1]}</p>
+      <div class="mt-6 flex flex-wrap gap-3">
+        <a href={canonicalPath} class="rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white hover:bg-slate-800">Start tool</a>
+        <a href={`/${locale}/ai-image-generator`} class="rounded-full border border-slate-300 px-5 py-3 text-sm font-bold text-slate-700 hover:border-slate-900">AI Image Generator</a>
+      </div>
+    </section>
+    <section class="mt-6 grid gap-4 sm:grid-cols-3">
+      {Object.entries(tools).filter(([slug]) => slug !== tool).slice(0, 3).map(([slug, copy]) => (
+        <a href={`/${locale}/${slug}`} class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:-translate-y-0.5 hover:border-cyan-300">
+          <h2 class="font-bold text-slate-900">{copy[0]}</h2>
+          <p class="mt-2 text-sm leading-6 text-slate-600">{copy[1]}</p>
+        </a>
+      ))}
+    </section>
+  </main>
+  <Footer />
+</Layout>
