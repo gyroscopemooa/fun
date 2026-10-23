@@ -20,6 +20,19 @@ interface Props {
 }
 
 const { title, description, keywords, eyebrow, heading, intro, accent, howTo, related = [], hub = true } = Astro.props;
+const locale = Astro.url.pathname.split('/')[1] || 'ko';
+const pageUi = {
+  ko: { hub: '게임 허브', how: '사용 방법' },
+  en: { hub: 'Game hub', how: 'How to use' },
+  zh: { hub: '游戏中心', how: '使用方法' },
+  es: { hub: 'Centro de juegos', how: 'Cómo usarlo' },
+  de: { hub: 'Spiele-Hub', how: 'So funktioniert es' },
+  fr: { hub: 'Hub de jeux', how: 'Mode d’emploi' },
+  pt: { hub: 'Central de jogos', how: 'Como usar' },
+  vi: { hub: 'Trung tâm game', how: 'Cách sử dụng' },
+  id: { hub: 'Hub game', how: 'Cara menggunakan' }
+} as const;
+const ui = pageUi[locale as keyof typeof pageUi] ?? pageUi.en;
 ---
 
 <Layout title={title} description={description} keywords={keywords}>
@@ -31,7 +44,7 @@ const { title, description, keywords, eyebrow, heading, intro, accent, howTo, re
       <p class="mt-3 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">{intro}</p>
       {related.length ? (
         <div class="mt-5 flex flex-wrap gap-2">
-          {hub ? <a href="/games" class="rounded-full border border-white bg-white px-4 py-2 text-sm font-bold text-slate-950 transition hover:bg-white/90">🎮 게임 허브</a> : null}
+          {hub ? <a href="/games" class="rounded-full border border-white bg-white px-4 py-2 text-sm font-bold text-slate-950 transition hover:bg-white/90">🎮 {ui.hub}</a> : null}
           {related.map((item) => (
             <a href={item.href} class="rounded-full border border-white/20 px-4 py-2 text-sm font-bold text-white/80 transition hover:border-white/60 hover:text-white">{item.label}</a>
           ))}
@@ -43,7 +56,7 @@ const { title, description, keywords, eyebrow, heading, intro, accent, howTo, re
       <slot />
     </section>
     <section class="mt-6 rounded-[28px] border border-slate-200 bg-white p-6 text-sm leading-7 text-slate-600 shadow-sm">
-      <h2 class="text-lg font-bold text-slate-950">사용 방법</h2>
+      <h2 class="text-lg font-bold text-slate-950">{ui.how}</h2>
       <p class="mt-1">{howTo}</p>
     </section>
     <AdsterraBanner placement="bottom" />

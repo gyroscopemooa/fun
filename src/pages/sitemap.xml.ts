@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 
 import { getAiImageSeoPathEntries } from '../lib/ai-image-seo';
-import { hasTranslation, localeCodes } from '../lib/i18n';
+import { hasTranslation, localeCodes, seoLocaleCodes } from '../lib/i18n';
 
 const paths = [
   '/',
@@ -78,6 +78,17 @@ const paths = [
   ,'/dpi-edpi-calculator'
   ,'/fov-calculator'
   ,'/game-character-picker'
+  ,'/image-compressor'
+  ,'/image-resizer'
+  ,'/image-blur'
+  ,'/image-cropper'
+  ,'/unit-converter'
+  ,'/bmi-calculator'
+  ,'/percentage-calculator'
+  ,'/color-converter'
+  ,'/time-zone-converter'
+  ,'/tip-calculator'
+  ,'/age-calculator'
 ];
 
 // 한국어 페이지를 그대로 감싼 en/ja 래퍼는 canonical이 한국어 URL이라 sitemap에서 제외한다.
@@ -86,8 +97,28 @@ const localePaths = localeCodes.filter((locale) => locale !== 'ko').flatMap((loc
     .filter((path) => hasTranslation(locale, path))
     .map((path) => (path === '/' ? `/${locale}` : `/${locale}${path}`))
 );
+const seoLandingPaths = seoLocaleCodes.filter((locale) => !localeCodes.includes(locale as typeof localeCodes[number])).flatMap((locale) => [
+  `/${locale}`,
+  `/${locale}/ai-personal-color`,
+  `/${locale}/ai-calorie-calculator`,
+  `/${locale}/valorant-agent-picker`,
+  `/${locale}/crosshair-generator`,
+  `/${locale}/name-compatibility`,
+  `/${locale}/random-picker`,
+  `/${locale}/image-compressor`,
+  `/${locale}/image-resizer`,
+  `/${locale}/image-blur`,
+  `/${locale}/image-cropper`,
+  `/${locale}/unit-converter`,
+  `/${locale}/bmi-calculator`,
+  `/${locale}/percentage-calculator`,
+  `/${locale}/color-converter`,
+  `/${locale}/time-zone-converter`,
+  `/${locale}/tip-calculator`,
+  `/${locale}/age-calculator`,
+]);
 const aiImageSeoPaths = getAiImageSeoPathEntries().map((entry) => entry.path);
-const allPaths = [...new Set([...paths, ...localePaths, ...aiImageSeoPaths])];
+const allPaths = [...new Set([...paths, ...localePaths, ...seoLandingPaths, ...aiImageSeoPaths])];
 
 export const GET: APIRoute = ({ site }) => {
   const base = site ?? new URL('https://manytool.net');

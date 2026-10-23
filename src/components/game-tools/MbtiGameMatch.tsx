@@ -4,6 +4,21 @@ import { Copy } from 'lucide-react';
 import { GAMES, type GameId } from '@/lib/game-picker/games';
 import type { GameCharacter, RoleDef } from '@/lib/game-picker/types';
 
+const MATCH_UI = {
+  ko: { mbti: '내 MBTI', game: '게임', fit: '찰떡 역할', same: '같은 역할 추천', copy: '결과 공유 문구 복사', copied: '복사됨', note: 'MBTI와 게임 역할을 재미로 연결한 결과예요. 실력과 취향이 더 중요해요!', match: '역할과 잘 맞아요.', tryRole: '역할로 새로운 플레이를 시도해 보세요.', share: '의 궁합' },
+  en: { mbti: 'My MBTI', game: 'Game', fit: 'Best-fit role', same: 'More picks for this role', copy: 'Copy share text', copied: 'Copied', note: 'This is a fun MBTI-to-game match. Skill and preference matter more!', match: 'is a great fit for this role.', tryRole: 'Try a new play style with this role.', share: ' match' },
+  ja: { mbti: '自分のMBTI', game: 'ゲーム', fit: '相性のよい役割', same: '同じ役割のおすすめ', copy: '共有文をコピー', copied: 'コピーしました', note: 'MBTIとゲーム役割を楽しく組み合わせた結果です。実力と好みがより大切です！', match: 'の役割と相性が良いです。', tryRole: 'この役割で新しいプレイを試してみましょう。', share: 'の相性' },
+  zh: { mbti: '我的 MBTI', game: '游戏', fit: '最适合的定位', same: '同定位推荐', copy: '复制分享文案', copied: '已复制', note: '这是 MBTI 与游戏定位的趣味匹配，实力和喜好更重要！', match: '与该定位很匹配。', tryRole: '试试这个定位的新玩法吧。', share: '的匹配' },
+  es: { mbti: 'Mi MBTI', game: 'Juego', fit: 'Rol ideal', same: 'Más recomendaciones para este rol', copy: 'Copiar texto para compartir', copied: 'Copiado', note: 'Es una combinación divertida entre MBTI y rol. ¡La habilidad y el gusto importan más!', match: 'encaja muy bien con este rol.', tryRole: 'Prueba un nuevo estilo con este rol.', share: ' combinación' },
+  de: { mbti: 'Mein MBTI', game: 'Spiel', fit: 'Passende Rolle', same: 'Weitere Empfehlungen für diese Rolle', copy: 'Text zum Teilen kopieren', copied: 'Kopiert', note: 'Eine spielerische MBTI-Rollen-Zuordnung. Können und Vorlieben zählen mehr!', match: 'passt gut zu dieser Rolle.', tryRole: 'Probiere mit dieser Rolle einen neuen Spielstil.', share: '-Match' },
+  fr: { mbti: 'Mon MBTI', game: 'Jeu', fit: 'Rôle idéal', same: 'Autres recommandations pour ce rôle', copy: 'Copier le texte à partager', copied: 'Copié', note: 'Une association ludique entre MBTI et rôle. Le talent et les préférences comptent davantage !', match: 'correspond bien à ce rôle.', tryRole: 'Essayez un nouveau style avec ce rôle.', share: ' : compatibilité' },
+  pt: { mbti: 'Meu MBTI', game: 'Jogo', fit: 'Função ideal', same: 'Mais recomendações para esta função', copy: 'Copiar texto para compartilhar', copied: 'Copiado', note: 'Uma combinação divertida de MBTI e função. Habilidade e preferência importam mais!', match: 'combina bem com esta função.', tryRole: 'Experimente um novo estilo com esta função.', share: ' combinação' },
+  vi: { mbti: 'MBTI của tôi', game: 'Trò chơi', fit: 'Vai trò phù hợp', same: 'Gợi ý khác cho vai trò này', copy: 'Sao chép nội dung chia sẻ', copied: 'Đã sao chép', note: 'Đây là kết quả ghép MBTI và vai trò để giải trí. Kỹ năng và sở thích quan trọng hơn!', match: 'rất hợp với vai trò này.', tryRole: 'Hãy thử lối chơi mới với vai trò này.', share: ' tương hợp' },
+  id: { mbti: 'MBTI saya', game: 'Game', fit: 'Peran paling cocok', same: 'Rekomendasi lain untuk peran ini', copy: 'Salin teks untuk dibagikan', copied: 'Tersalin', note: 'Ini adalah pencocokan MBTI dan peran untuk hiburan. Kemampuan dan selera lebih penting!', match: 'sangat cocok dengan peran ini.', tryRole: 'Coba gaya bermain baru dengan peran ini.', share: ' cocok' }
+} as const;
+
+const getPathLocale = () => (typeof window !== 'undefined' ? window.location.pathname.split('/')[1] : 'ko');
+
 const MBTI_TYPES = ['ISTJ', 'ISFJ', 'INFJ', 'INTJ', 'ISTP', 'ISFP', 'INFP', 'INTP', 'ESTP', 'ESFP', 'ENFP', 'ENTP', 'ESTJ', 'ESFJ', 'ENFJ', 'ENTJ'];
 
 // Short, original one-liners for each type's play style.
@@ -37,6 +52,7 @@ const pickRole = (game: GameId, mbti: string) => {
 };
 
 export function MbtiGameMatch() {
+  const ui = MATCH_UI[getPathLocale() as keyof typeof MATCH_UI] ?? MATCH_UI.en;
   const [mbti, setMbti] = useState('ENFP');
   const [game, setGame] = useState<GameId>('valorant');
   const [rosters, setRosters] = useState<Record<GameId, GameCharacter[]>>({ valorant: GAMES.valorant.fallback, overwatch: GAMES.overwatch.fallback, lol: GAMES.lol.fallback });
@@ -62,7 +78,7 @@ export function MbtiGameMatch() {
   const copy = async () => {
     if (!main) return;
     try {
-      await navigator.clipboard.writeText(`[ManyTool] ${mbti}의 ${config.unit} 궁합\n${match.roleDef.label} · ${main.name}\n${MBTI_STYLE[mbti]}\nmanytool.net/mbti-game-character`);
+      await navigator.clipboard.writeText(`[ManyTool] ${mbti}${ui.share} ${config.unit}\n${match.roleDef.label} · ${main.name}\n${MBTI_STYLE[mbti]}\nmanytool.net/mbti-game-character`);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1500);
     } catch {
@@ -73,7 +89,7 @@ export function MbtiGameMatch() {
   return (
     <div className="space-y-5">
       <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
-        <p className="text-sm font-bold text-slate-800">내 MBTI</p>
+        <p className="text-sm font-bold text-slate-800">{ui.mbti}</p>
         <div className="mt-3 grid grid-cols-4 gap-2">
           {MBTI_TYPES.map((type) => (
             <button key={type} type="button" onClick={() => setMbti(type)} className={`rounded-2xl border py-3 text-sm font-black tracking-wide transition ${mbti === type ? 'border-violet-600 bg-violet-600 text-white shadow-md' : 'border-slate-200 bg-white text-slate-700 hover:border-violet-300'}`}>
@@ -81,7 +97,7 @@ export function MbtiGameMatch() {
             </button>
           ))}
         </div>
-        <p className="mt-4 text-sm font-bold text-slate-800">게임</p>
+        <p className="mt-4 text-sm font-bold text-slate-800">{ui.game}</p>
         <div className="mt-2 flex flex-wrap gap-2">
           {([['valorant', '🎯 발로란트'], ['overwatch', '🛡️ 오버워치'], ['lol', '⚔️ 리그 오브 레전드']] as const).map(([id, label]) => (
             <button key={id} type="button" onClick={() => setGame(id)} className={`rounded-full border px-4 py-2 text-sm font-bold transition ${game === id ? 'border-slate-950 bg-slate-950 text-white' : 'border-slate-200 bg-white text-slate-700 hover:border-slate-400'}`}>
@@ -101,14 +117,14 @@ export function MbtiGameMatch() {
               <p className="text-sm font-black tracking-[0.2em] text-violet-300">{mbti}</p>
               <p className="mt-1 text-sm text-white/70">{MBTI_STYLE[mbti]}</p>
               <h2 className="mt-3 text-4xl font-black">{main.name}</h2>
-              <p className="mt-1 text-sm font-bold" style={{ color: match.roleDef.color }}>{match.roleDef.emoji} 찰떡 역할 · {match.roleDef.label}</p>
+              <p className="mt-1 text-sm font-bold" style={{ color: match.roleDef.color }}>{match.roleDef.emoji} {ui.fit} · {match.roleDef.label}</p>
             </div>
           </div>
           <div className="border-t border-white/10 bg-white/5 px-6 py-4 text-sm leading-6 text-white/80">
             <p>
               {match.letters.length
-                ? `${match.letters.map((l) => LETTER_TRAIT[l]).join(', ')}이(가) ${match.roleDef.label} 역할과 잘 맞아요.`
-                : `${match.roleDef.label} 역할로 새로운 플레이를 시도해 보세요.`}{' '}
+                ? `${match.letters.map((l) => LETTER_TRAIT[l]).join(', ')} ${match.roleDef.label} ${ui.match}`
+                : `${match.roleDef.label} ${ui.tryRole}`}{' '}
               {match.roleDef.tip}
             </p>
           </div>
@@ -117,7 +133,7 @@ export function MbtiGameMatch() {
 
       {match.picks.length > 1 ? (
         <section className="rounded-[24px] border border-slate-200 bg-white p-5">
-          <p className="text-sm font-black text-slate-900">같은 역할 추천 {config.unit}</p>
+          <p className="text-sm font-black text-slate-900">{ui.same} · {config.unit}</p>
           <div className="mt-3 flex flex-wrap gap-3">
             {match.picks.slice(1).map((c) => (
               <div key={c.id} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 py-2 pl-2 pr-4">
@@ -127,11 +143,11 @@ export function MbtiGameMatch() {
             ))}
           </div>
           <button type="button" onClick={copy} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white">
-            <Copy className="h-4 w-4" /> {copied ? '복사됨' : '결과 공유 문구 복사'}
+            <Copy className="h-4 w-4" /> {copied ? ui.copied : ui.copy}
           </button>
         </section>
       ) : null}
-      <p className="text-center text-xs text-slate-400">MBTI와 게임 역할을 재미로 연결한 결과예요. 실력과 취향이 더 중요해요!</p>
+      <p className="text-center text-xs text-slate-400">{ui.note}</p>
     </div>
   );
 }

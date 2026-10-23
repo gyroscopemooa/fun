@@ -1,0 +1,30 @@
+---
+import Footer from '../../components/Footer.astro';
+import Header from '../../components/Header.astro';
+import GameCharacterPicker from '../../components/game-picker/GameCharacterPicker';
+import Layout from '../../layouts/Layout.astro';
+import { seoLocaleCodes } from '../../lib/i18n';
+const copy = {
+  zh: ['游戏角色随机推荐', '选择一个角色定位，随机获得下一场游戏的挑战角色。'],
+  es: ['Selector aleatorio de personajes', 'Elige un rol y recibe un personaje al azar para tu próxima partida.'],
+  de: ['Zufällige Charakterauswahl', 'Wähle eine Rolle und erhalte einen Charakter für dein nächstes Spiel.'],
+  fr: ['Sélecteur de personnages', 'Choisissez un rôle et obtenez un personnage au hasard pour votre prochaine partie.'],
+  pt: ['Sorteador de personagens', 'Escolha uma função e receba um personagem aleatório para sua próxima partida.'],
+  vi: ['Trình chọn nhân vật', 'Chọn vai trò và nhận một nhân vật ngẫu nhiên cho trận tiếp theo.'],
+  id: ['Pemilih karakter acak', 'Pilih peran dan dapatkan karakter acak untuk permainan berikutnya.'],
+  it: ['Selettore casuale dei personaggi', 'Scegli un ruolo e ricevi un personaggio casuale per la prossima partita.'],
+  nl: ['Willekeurige personagekiezer', 'Kies een rol en krijg een willekeurig personage voor je volgende game.'],
+  ru: ['Случайный выбор персонажа', 'Выберите роль и получите случайного персонажа для следующей игры.'],
+  ar: ['اختيار شخصية عشوائية', 'اختر دوراً واحصل على شخصية عشوائية لمباراتك القادمة.'],
+  hi: ['गेम कैरेक्टर पिकर', 'एक रोल चुनें और अगले गेम के लिए रैंडम कैरेक्टर पाएं।'],
+  tr: ['Rastgele oyun karakteri seçici', 'Bir rol seçin ve sonraki oyununuz için rastgele karakter alın.'],
+  pl: ['Losowanie postaci z gry', 'Wybierz rolę i otrzymaj losową postać do następnej gry.'],
+  th: ['ตัวเลือกตัวละครเกมแบบสุ่ม', 'เลือกบทบาทเพื่อรับตัวละครแบบสุ่มสำหรับเกมถัดไป'],
+  sv: ['Slumpväljare för spelkaraktärer', 'Välj en roll och få en slumpmässig karaktär till nästa match.'],
+  uk: ['Випадковий вибір персонажа', 'Оберіть роль і отримайте випадкового персонажа для наступної гри.'],
+  en: ['Random game character picker', 'Choose a role and get a random character for your next game.']
+};
+export function getStaticPaths() { return seoLocaleCodes.filter((locale) => locale !== 'ko').map((locale) => ({ params: { locale }, props: { locale } })); }
+const { locale } = Astro.props; const text = copy[locale as keyof typeof copy] ?? copy.en;
+---
+<Layout title={`${text[0]} | ManyTool`} description={text[1]} keywords={`${text[0]}, game character picker, ManyTool`}><Header /><main class="mx-auto max-w-5xl px-4 py-8"><section class="rounded-[28px] bg-slate-950 p-6 text-white shadow-sm sm:p-8"><p class="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">ManyTool Game Tools</p><h1 class="mt-2 text-3xl font-black">{text[0]}</h1><p class="mt-3 max-w-2xl text-sm leading-7 text-slate-300">{text[1]}</p></section><section class="mt-6"><GameCharacterPicker client:load game="valorant" locale={locale} /></section></main><Footer /></Layout>
