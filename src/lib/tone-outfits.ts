@@ -37,6 +37,19 @@ const sat = (hex: string) => {
 // Deterministic pick so the same shuffle number always gives the same board.
 const pick = <T,>(list: T[], seed: number, offset = 0) => list[(seed + offset) % list.length];
 
+// Fills slots in order, stepping past colours already used in the same look.
+const distinct = (choices: [LookSlot, Swatch[], number][], seed: number) => {
+  const used = new Set<string>();
+  const items = {} as Record<LookSlot, Swatch>;
+  for (const [slot, list, offset] of choices) {
+    let chosen = pick(list, seed, offset);
+    for (let step = 1; used.has(chosen.hex) && step < list.length; step += 1) chosen = pick(list, seed, offset + step);
+    used.add(chosen.hex);
+    items[slot] = chosen;
+  }
+  return items;
+};
+
 export const buildLooks = (tone: ToneInfo, seed: number): Look[] => {
   const palette = [...tone.best];
   const byLight = [...palette].sort((a, b) => lum(b.hex) - lum(a.hex));
@@ -53,13 +66,7 @@ export const buildLooks = (tone: ToneInfo, seed: number): Look[] => {
       title: '데일리 룩',
       emoji: '☕',
       bottomType: seed % 2 ? 'skirt' : 'pants',
-      items: {
-        outer: pick(neutrals, seed, 1),
-        top: pick(light, seed),
-        bottom: pick(deep, seed, 1),
-        shoes: pick(neutrals, seed),
-        bag: pick(vivid, seed, 2)
-      },
+      items: distinct([['top', light, 0], ['bottom', deep, 1], ['outer', neutrals, 1], ['bag', vivid, 2], ['shoes', neutrals, 0]], seed),
       tip: '밝은 상의로 얼굴 주변을 환하게, 하의는 한 톤 깊게 잡아 안정감을 줘요.'
     },
     {
@@ -67,13 +74,7 @@ export const buildLooks = (tone: ToneInfo, seed: number): Look[] => {
       title: '오피스 룩',
       emoji: '💼',
       bottomType: 'pants',
-      items: {
-        outer: pick(deep, seed),
-        top: pick(neutrals, seed, 0),
-        bottom: pick([...deep, neutrals[2]], seed, 2),
-        shoes: pick(deep, seed, 2),
-        bag: pick(neutrals, seed, 2)
-      },
+      items: distinct([['outer', deep, 0], ['top', neutrals, 0], ['bottom', [...deep, neutrals[2]], 2], ['bag', neutrals, 2], ['shoes', deep, 2]], seed),
       tip: '깊은 톤 아우터에 뉴트럴 이너를 받치면 차분하면서도 얼굴이 묻히지 않아요.'
     },
     {
@@ -81,13 +82,7 @@ export const buildLooks = (tone: ToneInfo, seed: number): Look[] => {
       title: '데이트 룩',
       emoji: '💗',
       bottomType: seed % 2 ? 'pants' : 'skirt',
-      items: {
-        outer: pick(light, seed, 2),
-        top: pick(vivid, seed),
-        bottom: pick(light, seed, 1),
-        shoes: pick(all, seed, 3),
-        bag: pick(vivid, seed, 1)
-      },
+      items: distinct([['top', vivid, 0], ['bottom', light, 1], ['outer', light, 2], ['bag', vivid, 1], ['shoes', all, 3]], seed),
       tip: '가장 선명한 베스트 컬러를 상의 포인트로 써서 혈색과 생기를 살려요.'
     }
   ];
