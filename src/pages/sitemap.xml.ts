@@ -28,6 +28,7 @@ const paths = [
   '/personal-color',
   '/ai-personal-color',
   '/lip-color-simulator',
+  '/tone-outfit-board',
   '/ai-manseryeok',
   '/magic-book',
   '/pinball',
