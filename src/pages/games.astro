@@ -3,28 +3,145 @@ import Layout from '../layouts/Layout.astro';
 import AdsterraBanner from '../components/ads/AdsterraBanner.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+
+type GameTag = 'lol' | 'valorant' | 'overwatch' | 'fps';
+
+const filters: { id: 'all' | GameTag; label: string }[] = [
+  { id: 'all', label: '🎮 전체' },
+  { id: 'lol', label: '⚔️ 롤' },
+  { id: 'valorant', label: '🎯 발로란트' },
+  { id: 'overwatch', label: '🛡️ 오버워치' },
+  { id: 'fps', label: '🔫 FPS 공통' }
+];
+
+const gameTools: { href: string; title: string; desc: string; icon: string; tags: GameTag[]; accent: string }[] = [
+  { href: '/game-team-balancer', title: '게임 내전 팀 나누기', desc: '티어·포인트·최근 승패로 공정한 5:5, 팀별 캐릭터 조합까지', icon: '⚖️', tags: ['lol', 'valorant', 'overwatch'], accent: '#3B82F6' },
+  { href: '/valorant-agent-picker', title: '발로란트 요원 추천기', desc: '주사위로 요원 한 명 또는 5인 조합 뽑기', icon: '🎯', tags: ['valorant'], accent: '#FF4655' },
+  { href: '/overwatch-hero-picker', title: '오버워치 영웅 추천기', desc: '돌격·공격·지원 영웅과 1-2-2 조합 뽑기', icon: '🛡️', tags: ['overwatch'], accent: '#F99E1A' },
+  { href: '/lol-champion-recommender', title: '롤 챔피언 추천기', desc: '포지션·플레이 스타일별 챔피언과 5인 조합', icon: '⚔️', tags: ['lol'], accent: '#06B6D4' },
+  { href: '/rank-goal-calculator', title: '랭크 목표 계산기', desc: '목표 티어까지 몇 판, 필요한 승률은?', icon: '🏁', tags: ['lol', 'valorant', 'overwatch'], accent: '#22C55E' },
+  { href: '/mbti-game-character', title: 'MBTI 게임 캐릭터 궁합', desc: 'MBTI로 찰떡 역할과 캐릭터 찾기', icon: '🧠', tags: ['lol', 'valorant', 'overwatch'], accent: '#8B5CF6' },
+  { href: '/crosshair-generator', title: '크로스헤어 생성기', desc: '조준선을 만들고 공유 카드로 저장', icon: '➕', tags: ['valorant', 'overwatch', 'fps'], accent: '#22D3EE' },
+  { href: '/fps-sensitivity-converter', title: 'FPS 감도 변환기', desc: '게임별 감도와 eDPI 변환', icon: '🖱️', tags: ['valorant', 'overwatch', 'fps'], accent: '#64748B' },
+  { href: '/fps-aim-trainer', title: 'FPS 조준 훈련', desc: '움직이는 타겟 클릭 연습', icon: '🎯', tags: ['valorant', 'overwatch', 'fps'], accent: '#EF4444' },
+  { href: '/lol-terrain-quiz', title: '롤 지형 맞히기', desc: '맵 일부를 보고 위치를 맞히는 퀴즈', icon: '🗺️', tags: ['lol'], accent: '#0EA5E9' }
+];
+
+// The original mini-game list (pinball, reaction test, ladder) stays first; party games follow.
+const miniGames: { href: string; title: string; icon: string }[] = [
+  { href: '/pinball', title: '핀볼 게임', icon: '🎮' },
+  { href: '/reaction-test', title: '반응속도 테스트', icon: '⚡' },
+  { href: '/ladder-game', title: '사다리타기', icon: '🪜' },
+  { href: '/balance-game', title: '밸런스 게임', icon: '⚖️' },
+  { href: '/choseong-quiz', title: '초성 퀴즈', icon: '🔤' },
+  { href: '/song-initial-quiz', title: '노래 초성 퀴즈', icon: '🎵' },
+  { href: '/ideal-world-cup', title: '음식 이상형 월드컵', icon: '🏆' },
+  { href: '/typing-speed', title: '타자속도 대결', icon: '⌨️' },
+  { href: '/roulette', title: '룰렛', icon: '🎡' },
+  { href: '/team-split', title: '랜덤 팀나누기', icon: '👥' },
+  { href: '/penalty-picker', title: '랜덤 벌칙 뽑기', icon: '🎲' },
+  { href: '/logo-quiz', title: '브랜드 로고 퀴즈', icon: '🏷️' }
+];
+
+const flow = [
+  { href: '/game-team-balancer', step: '1', title: '공정하게 팀 나누기', desc: '티어·최근 승패 반영' },
+  { href: '/game-team-balancer', step: '2', title: '팀별 조합 굴리기', desc: '포지션별 캐릭터 자동 배정' },
+  { href: '/rank-goal-calculator', step: '3', title: '다음 목표 정하기', desc: '목표 티어까지 몇 판?' }
+];
 ---
 
 <Layout
-  title="무료 브라우저 게임 | 설치 없는 미니게임 모음 | ManyTool"
-  description="핀볼, 반응속도 테스트, 사다리타기처럼 설치 없이 바로 즐길 수 있는 무료 브라우저 게임과 미니게임을 모아둔 페이지입니다."
-  keywords="무료 브라우저 게임, 무료 미니게임, 설치 없는 게임, 핀볼 게임, 반응속도 테스트, 사다리타기"
+  title="무료 브라우저 게임·게임 도구 모음 | 롤·발로란트·오버워치 도구와 미니게임 | ManyTool"
+  description="롤·발로란트·오버워치 내전 팀 나누기, 캐릭터 랜덤 추천, 랭크 계산기와 핀볼, 반응속도 테스트, 사다리타기처럼 설치 없이 바로 즐기는 무료 브라우저 게임을 모아둔 페이지입니다."
+  keywords="무료 브라우저 게임, 무료 미니게임, 설치 없는 게임, 핀볼 게임, 반응속도 테스트, 사다리타기, 롤 내전 팀 나누기, 발로란트 요원 추천, 오버워치 영웅 추천, 게임 도구"
 >
   <Header />
   <main class="mx-auto max-w-5xl px-4 py-8">
-    <h1 class="text-3xl font-black">무료 브라우저 게임 모음</h1>
-    <p class="mt-3 text-slate-700">설치 없이 브라우저에서 바로 플레이할 수 있는 무료 미니게임 모음입니다. 가볍게 즐기는 게임, 반응속도 테스트, 랜덤형 게임을 한 곳에서 찾을 수 있습니다.</p>
+    <section class="rounded-[28px] p-6 text-white shadow-sm sm:p-8" style="background: radial-gradient(circle at 90% 0%, rgba(59,130,246,0.45), transparent 45%), radial-gradient(circle at 0% 100%, rgba(255,70,85,0.35), transparent 45%), #020617">
+
+      <p class="text-sm font-semibold uppercase tracking-[0.2em] text-sky-300">ManyTool Game Hub</p>
+      <h1 class="mt-2 text-3xl font-black tracking-tight sm:text-4xl">무료 브라우저 게임 모음</h1>
+      <p class="mt-3 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">설치 없이 브라우저에서 바로 플레이할 수 있는 무료 미니게임 모음입니다. 롤·발로란트·오버워치 내전과 랭크에 쓰는 게임 도구도 한 곳에서 찾을 수 있어요.</p>
+      <div class="mt-6 grid gap-2 sm:grid-cols-3">
+        {flow.map((item) => (
+          <a href={item.href} class="flex items-center gap-3 rounded-2xl border border-white/15 bg-white/5 p-3 transition hover:bg-white/10">
+            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-sm font-black text-slate-950">{item.step}</span>
+            <span>
+              <span class="block text-sm font-black">{item.title}</span>
+              <span class="block text-xs text-white/60">{item.desc}</span>
+            </span>
+          </a>
+        ))}
+      </div>
+      <p class="mt-2 text-xs text-white/50">친구들과 내전 한 판, 이 순서대로 하면 끝나요.</p>
+    </section>
     <AdsterraBanner placement="top" />
-    <section class="mt-6 rounded-xl border border-slate-200 bg-white p-5">
-      <h2 class="text-xl font-bold">게임 리스트</h2>
-      <ul class="mt-3 list-disc space-y-1 pl-5 text-slate-700">
-        <li><a href="/pinball" class="underline">핀볼 게임</a></li>
-        <li><a href="/reaction-test" class="underline">반응속도 테스트</a></li>
-        <li><a href="/ladder-game" class="underline">사다리타기</a></li>
+
+    <section class="mt-6 rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <div class="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p class="text-xs font-bold uppercase tracking-[0.18em] text-sky-600">Game Tools</p>
+          <h2 class="mt-1 text-xl font-black text-slate-950">게임별 도구</h2>
+        </div>
+        <div class="flex flex-wrap gap-2" id="game-filter" role="tablist" aria-label="게임 선택">
+          {filters.map((f, i) => (
+            <button type="button" data-filter={f.id} role="tab" aria-selected={i === 0 ? 'true' : 'false'} class:list={['game-filter-btn rounded-full border px-3.5 py-2 text-sm font-bold transition', i === 0 ? 'border-slate-950 bg-slate-950 text-white' : 'border-slate-200 bg-white text-slate-700 hover:border-slate-400']}>
+              {f.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" id="game-tool-grid">
+        {gameTools.map((tool) => (
+          <a href={tool.href} data-tags={tool.tags.join(' ')} class="game-tool-card group flex gap-3 rounded-2xl border border-slate-200 bg-white p-4 transition hover:-translate-y-0.5 hover:shadow-md">
+            <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-2xl" style={`background: ${tool.accent}1f`}>{tool.icon}</span>
+            <span class="min-w-0">
+              <span class="block font-black text-slate-950 group-hover:underline">{tool.title}</span>
+              <span class="mt-0.5 block text-sm leading-5 text-slate-500">{tool.desc}</span>
+              <span class="mt-2 flex flex-wrap gap-1">
+                {tool.tags.map((tag) => <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500">{filters.find((f) => f.id === tag)?.label.split(' ')[1]}</span>)}
+              </span>
+            </span>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <section class="mt-6 rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <p class="text-xs font-bold uppercase tracking-[0.18em] text-rose-500">Mini Games</p>
+      <h2 class="mt-1 text-xl font-bold">게임 리스트</h2>
+      <ul class="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+        {miniGames.map((g) => (
+          <li>
+            <a href={g.href} class="flex items-center gap-2 rounded-2xl border border-slate-200 px-3 py-3 text-sm font-bold text-slate-800 transition hover:border-slate-400 hover:bg-slate-50">
+              <span class="text-xl">{g.icon}</span>{g.title}
+            </a>
+          </li>
+        ))}
       </ul>
+      <a href="/new-tools" class="mt-4 inline-flex items-center gap-2 rounded-full border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">🆕 새로 나온 게임 도구 보기</a>
     </section>
     <AdsterraBanner placement="bottom" />
   </main>
   <Footer />
 </Layout>
-        <li><a href="/new-tools" class="underline">?? ???? ?? ??</a></li>
+
+<script>
+  const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>('.game-filter-btn'));
+  const cards = Array.from(document.querySelectorAll<HTMLElement>('.game-tool-card'));
+  const active = 'border-slate-950 bg-slate-950 text-white';
+  const idle = 'border-slate-200 bg-white text-slate-700 hover:border-slate-400';
+  buttons.forEach((button) => {
+    button.addEventListener('click', () => {
+      const filter = button.dataset.filter ?? 'all';
+      buttons.forEach((b) => {
+        const on = b === button;
+        b.setAttribute('aria-selected', String(on));
+        b.className = `game-filter-btn rounded-full border px-3.5 py-2 text-sm font-bold transition ${on ? active : idle}`;
+      });
+      cards.forEach((card) => {
+        card.hidden = filter !== 'all' && !(card.dataset.tags ?? '').split(' ').includes(filter);
+      });
+    });
+  });
+</script>

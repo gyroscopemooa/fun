@@ -15,9 +15,11 @@ interface Props {
   accent: string;
   howTo: string;
   related?: { href: string; label: string }[];
+  /** Show the game hub link (off for non-game tools sharing this frame). */
+  hub?: boolean;
 }
 
-const { title, description, keywords, eyebrow, heading, intro, accent, howTo, related = [] } = Astro.props;
+const { title, description, keywords, eyebrow, heading, intro, accent, howTo, related = [], hub = true } = Astro.props;
 ---
 
 <Layout title={title} description={description} keywords={keywords}>
@@ -29,6 +31,7 @@ const { title, description, keywords, eyebrow, heading, intro, accent, howTo, re
       <p class="mt-3 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">{intro}</p>
       {related.length ? (
         <div class="mt-5 flex flex-wrap gap-2">
+          {hub ? <a href="/games" class="rounded-full border border-white bg-white px-4 py-2 text-sm font-bold text-slate-950 transition hover:bg-white/90">🎮 게임 허브</a> : null}
           {related.map((item) => (
             <a href={item.href} class="rounded-full border border-white/20 px-4 py-2 text-sm font-bold text-white/80 transition hover:border-white/60 hover:text-white">{item.label}</a>
           ))}
