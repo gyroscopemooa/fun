@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from 'react';
-import { AlertCircle, Download, ImagePlus, LoaderCircle, Share2, UploadCloud, X } from 'lucide-react';
+import { AlertCircle, Check, Download, ImagePlus, LoaderCircle, RefreshCw, Share2, UploadCloud, X } from 'lucide-react';
 import { Autoplay, Pagination } from 'swiper/modules';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
 import 'swiper/css/pagination';
+
+import { sampleThumb, samplesForMode } from '@/lib/ai-image-samples';
+import { AiSampleGallery } from './AiSampleGallery';
 
 export type AiImageMode = 'figure' | 'body' | 'travel' | 'europe' | 'proofshot' | 'kakao' | 'instagram' | 'hanbok' | 'kimono' | 'outfit' | 'streamer' | 'pethuman' | 'hairstyle' | 'interior' | 'animation' | 'free';
 type Mode = AiImageMode;
@@ -630,6 +633,14 @@ const SLA_HERO_IMAGES = [
 ];
 const SLA_SUPPORT_IMAGES = SLA_ALL_IMAGES;
 
+const GENERATION_STEPS = [
+  { label: '사진 분석', detail: '얼굴과 포즈를 읽고 있어요', afterSeconds: 0 },
+  { label: '얼굴 보정', detail: '얼굴 디테일을 선명하게 다듬어요', afterSeconds: 8 },
+  { label: '스타일 변환', detail: '선택한 스타일을 입히고 있어요', afterSeconds: 20 },
+  { label: '마무리', detail: '색감과 디테일을 정리하고 있어요', afterSeconds: 45 }
+];
+const QUICK_SWITCH_MODES: Mode[] = ['figure', 'body', 'instagram', 'animation', 'hanbok', 'travel'];
+
 type AiImageGeneratorProps = {
   locale?: Locale;
   initialMode?: Mode;
@@ -660,6 +671,8 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
   const [previewUrl, setPreviewUrl] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [compareSplit, setCompareSplit] = useState(50);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [generationPhase, setGenerationPhase] = useState<GenerationPhase>('idle');
   const [resultImageUrl, setResultImageUrl] = useState('');
   const [resultPrompt, setResultPrompt] = useState('');
@@ -974,6 +987,23 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
     }
   };
 
+  const heroImages = useMemo(() => samplesForMode(mode)?.map(sampleThumb) ?? SLA_HERO_IMAGES, [mode]);
+
+  useEffect(() => {
+    if (generationPhase !== 'generating' && generationPhase !== 'payment') {
+      setElapsedSeconds(0);
+      return;
+    }
+    const startedAt = Date.now();
+    const timer = window.setInterval(() => setElapsedSeconds(Math.floor((Date.now() - startedAt) / 1000)), 1000);
+    return () => window.clearInterval(timer);
+  }, [generationPhase]);
+
+  const useStyleFromGallery = (nextMode: Mode) => {
+    setMode(nextMode);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const closeModal = () => {
     setIsModalOpen(false);
     setGenerationPhase('idle');
@@ -1241,9 +1271,10 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
                   ManyTool AI Picks
                 </div>
                 <Swiper
+                  key={mode}
                   modules={[Autoplay, Pagination]}
                   slidesPerView={1}
-                  loop={SLA_HERO_IMAGES.length > 1}
+                  loop={heroImages.length > 1}
                   autoplay={{
                     delay: 2800,
                     disableOnInteraction: false,
@@ -1252,7 +1283,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
                   pagination={{ clickable: true }}
                   className="promo-swiper h-full"
                 >
-                  {SLA_HERO_IMAGES.map((image, index) => (
+                  {heroImages.map((image, index) => (
                     <SwiperSlide key={image}>
                       <div className="flex min-h-[260px] items-center justify-center sm:min-h-[320px] lg:min-h-[360px] xl:min-h-[420px]">
                         <img
@@ -1273,9 +1304,17 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
 
             <div className="mt-5 space-y-3">
               <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">2-Step Pipeline</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  1단계에서 얼굴 디테일을 먼저 보정하고, 2단계에서 최종 스타일 변환을 적용합니다. 마지막 변환이 실패하면 자동으로 1회 재시도합니다.
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">How it works</p>
+                <ol className="mt-3 grid grid-cols-3 gap-2 text-center">
+                  {[['📷', '사진 업로드'], ['🪄', '얼굴 보정'], ['🖼️', '스타일 완성']].map(([icon, label], index) => (
+                    <li key={label} className="rounded-2xl bg-white px-2 py-3 shadow-sm">
+                      <span className="block text-xl">{icon}</span>
+                      <span className="mt-1 block text-[11px] font-bold text-slate-700">{index + 1}. {label}</span>
+                    </li>
+                  ))}
+                </ol>
+                <p className="mt-3 text-sm leading-6 text-slate-600">
+                  얼굴 디테일을 먼저 보정한 뒤 최종 스타일을 입혀요. 마지막 단계가 실패하면 자동으로 한 번 더 시도해요.
                 </p>
               </div>
               <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
@@ -1291,63 +1330,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
           </aside>
         </section>
 
-        <section className="rounded-[32px] border border-slate-200/80 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-7">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <h2 className="text-xl font-black tracking-tight text-slate-950">{locale === 'en' ? EN_LABELS.moreExamples : 'More Examples'}</h2>
-            <span className="text-xs font-medium text-slate-400">{SLA_SUPPORT_IMAGES.length} images</span>
-          </div>
-          <div className="lg:hidden">
-            <Swiper
-              modules={[Autoplay]}
-              slidesPerView={1.6}
-              spaceBetween={12}
-              loop={SLA_SUPPORT_IMAGES.length > 4}
-              autoplay={{
-                delay: 2400,
-                disableOnInteraction: false,
-                pauseOnMouseEnter: true
-              }}
-              breakpoints={{
-                640: {
-                  slidesPerView: 2.4,
-                  spaceBetween: 14
-                }
-              }}
-              className="support-swiper"
-            >
-              {SLA_SUPPORT_IMAGES.map((image, index) => (
-                <SwiperSlide key={image} className="pb-2">
-                  <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-slate-50">
-                    <img
-                      src={image}
-                      alt={`support example ${index + 1}`}
-                      loading="lazy"
-                      onError={(event) => {
-                        event.currentTarget.src = exampleImage;
-                      }}
-                      className="aspect-[3/4] h-full w-full object-cover"
-                    />
-                  </div>
-                </SwiperSlide>
-              ))}
-            </Swiper>
-          </div>
-          <div className="hidden lg:grid lg:grid-cols-4 lg:gap-4 xl:grid-cols-5">
-            {SLA_SUPPORT_IMAGES.map((image, index) => (
-              <div key={image} className="overflow-hidden rounded-[24px] border border-slate-200 bg-slate-50">
-                <img
-                  src={image}
-                  alt={`support example ${index + 1}`}
-                  loading="lazy"
-                  onError={(event) => {
-                    event.currentTarget.src = exampleImage;
-                  }}
-                  className="aspect-[3/4] h-full w-full object-cover"
-                />
-              </div>
-            ))}
-          </div>
-        </section>
+        <AiSampleGallery title={locale === 'en' ? EN_LABELS.moreExamples : '스타일별 샘플 갤러리'} onUseStyle={useStyleFromGallery} locale={locale} />
       </div>
 
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/80 bg-white/92 px-4 py-4 backdrop-blur">
@@ -1406,6 +1389,26 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
                 <p className="mt-3 max-w-sm text-sm leading-6 text-slate-500">
                   얼굴 보정 후 최종 스타일 변환을 진행하고 있습니다. 마지막 단계가 실패하면 자동으로 한 번 더 시도합니다.
                 </p>
+                {generationPhase === 'generating' ? (
+                  <ol className="mt-6 w-full max-w-xs space-y-2 text-left">
+                    {GENERATION_STEPS.map((step, index) => {
+                      const current = GENERATION_STEPS.filter((item) => elapsedSeconds >= item.afterSeconds).length - 1;
+                      const state = index < current ? 'done' : index === current ? 'active' : 'todo';
+                      return (
+                        <li key={step.label} className={`flex items-center gap-3 rounded-2xl px-3 py-2 ${state === 'active' ? 'bg-white shadow-sm' : ''}`}>
+                          <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-black ${state === 'done' ? 'bg-emerald-500 text-white' : state === 'active' ? 'bg-slate-950 text-white' : 'bg-slate-200 text-slate-500'}`}>
+                            {state === 'done' ? <Check className="h-4 w-4" /> : state === 'active' ? <LoaderCircle className="h-4 w-4 animate-spin" /> : index + 1}
+                          </span>
+                          <span>
+                            <span className={`block text-sm font-bold ${state === 'todo' ? 'text-slate-400' : 'text-slate-900'}`}>{step.label}</span>
+                            {state === 'active' ? <span className="block text-xs text-slate-500">{step.detail}</span> : null}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                ) : null}
+                <p className="mt-4 text-xs font-semibold text-slate-400">{elapsedSeconds}초 경과 · 보통 30초~1분 걸려요</p>
               </div>
             )}
 
@@ -1416,16 +1419,41 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Engine</p>
                     <p className="mt-1 text-sm font-semibold text-slate-900">{ENGINE_LABEL}</p>
                   </div>
-                  <div className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-500">
-                    One unified result flow
+                  <div className={`rounded-full bg-gradient-to-r ${activeContent.accentClass} px-3 py-1 text-xs font-black text-white shadow-sm`}>
+                    {activeContent.tabLabel} 완성
                   </div>
                 </div>
                 <div className="flex min-h-[260px] sm:min-h-[360px] items-center justify-center overflow-hidden rounded-[28px] border border-slate-200 bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.14),_transparent_40%),linear-gradient(180deg,_#f8fafc_0%,_#e2e8f0_100%)] p-4">
-                  <img src={resultImageUrl} alt="생성 결과" className={`${imageClass} max-h-[240px] sm:max-h-[328px] rounded-[20px]`} />
+                  {previewUrl ? (
+                    <div className="relative w-full max-w-[360px] overflow-hidden rounded-[20px]">
+                      <img src={resultImageUrl} alt="생성 결과" className="block h-auto w-full" />
+                      <img
+                        src={previewUrl}
+                        alt="원본 사진"
+                        className="absolute inset-0 h-full w-full object-cover"
+                        style={{ clipPath: `inset(0 ${100 - compareSplit}% 0 0)` }}
+                      />
+                      <div className="pointer-events-none absolute inset-y-0 w-0.5 bg-white shadow" style={{ left: `${compareSplit}%` }} />
+                      <span className="pointer-events-none absolute left-2 top-2 rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-bold text-white">BEFORE</span>
+                      <span className="pointer-events-none absolute right-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold text-slate-900">AFTER</span>
+                      <input
+                        type="range"
+                        min={0}
+                        max={100}
+                        value={compareSplit}
+                        onChange={(event) => setCompareSplit(Number(event.target.value))}
+                        className="absolute inset-0 h-full w-full cursor-ew-resize opacity-0"
+                        aria-label="원본과 결과 비교"
+                      />
+                    </div>
+                  ) : (
+                    <img src={resultImageUrl} alt="생성 결과" className={`${imageClass} max-h-[240px] sm:max-h-[328px] rounded-[20px]`} />
+                  )}
                 </div>
+                {previewUrl ? <p className="-mt-2 text-center text-xs text-slate-400">이미지를 좌우로 밀면 원본과 비교할 수 있어요</p> : null}
                 <div className="rounded-3xl border border-emerald-100 bg-emerald-50 px-4 py-3">
                   <p className="text-sm font-semibold text-emerald-700">최종 결과 이미지입니다.</p>
-                  <p className="mt-1 text-sm text-emerald-600">썸네일과 상세페이지에 같은 이미지를 사용할 수 있도록 1장만 반환합니다.</p>
+                  <p className="mt-1 text-sm text-emerald-600">고화질 원본으로 저장돼요. 프로필이나 SNS에 바로 공유해 보세요.</p>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <button
@@ -1448,6 +1476,24 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
                 {resultActionMessage ? (
                   <p className="text-center text-xs font-medium text-slate-500">{resultActionMessage}</p>
                 ) : null}
+                <div className="rounded-3xl border border-slate-200 bg-white px-4 py-3">
+                  <p className="flex items-center gap-1.5 text-xs font-bold text-slate-500">
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    같은 사진으로 다른 스타일 만들기
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {QUICK_SWITCH_MODES.filter((item) => item !== mode).slice(0, 5).map((item) => (
+                      <button
+                        key={item}
+                        type="button"
+                        onClick={() => { setMode(item); closeModal(); }}
+                        className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:border-slate-900 hover:bg-white"
+                      >
+                        {modeContentMap[item].tabLabel}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 {resultPrompt ? (
                   <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3">
                     <button
