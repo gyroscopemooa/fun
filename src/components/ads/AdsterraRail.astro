@@ -1,0 +1,122 @@
+---
+// 본문 양쪽 여백의 Adsterra 160x600 세로 배너.
+// - 부모 요소(position: relative)의 바깥 좌/우에 붙고, 부모 영역 안에서 스크롤을 따라 내려온다.
+// - 사이드바·화면 크기 때문에 여백이 모자라면 숨기고 광고도 요청하지 않는다(축소 표시 없음).
+// - 광고 스크립트는 같은 출처 iframe 문서에서만 실행되며 상위 창 이동 권한을 주지 않는다.
+import { adsterra } from '../../lib/ads-config';
+import { detectLocale } from '../../lib/i18n';
+
+interface Props {
+  side: 'left' | 'right';
+}
+
+const { side } = Astro.props;
+const label = detectLocale(Astro.url.pathname) === 'ko' ? '광고' : 'AD';
+const { skyscraper } = adsterra.units;
+---
+
+{
+  adsterra.enabled && (
+    <aside class:list={['adsterra-rail', `adsterra-rail--${side}`]} aria-label={label} data-adsterra-rail hidden>
+      <div class="adsterra-rail__sticky">
+        <p class="adsterra-rail__label">{label}</p>
+        <div
+          class="adsterra-rail__frame"
+          style={`width:${skyscraper.width}px;height:${skyscraper.height}px`}
+          data-src={`${adsterra.framePath}/skyscraper`}
+          data-width={skyscraper.width}
+          data-height={skyscraper.height}
+        ></div>
+      </div>
+    </aside>
+  )
+}
+
+<style>
+  .adsterra-rail {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 160px;
+  }
+  .adsterra-rail[hidden] {
+    display: none;
+  }
+  .adsterra-rail--left {
+    right: 100%;
+    margin-right: 24px;
+  }
+  .adsterra-rail--right {
+    left: 100%;
+    margin-left: 24px;
+  }
+  .adsterra-rail__sticky {
+    position: sticky;
+    top: 24px;
+  }
+  .adsterra-rail__label {
+    margin: 0 0 4px;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: rgb(148 163 184);
+    line-height: 1;
+  }
+  .adsterra-rail__frame {
+    overflow: hidden;
+    border-radius: 6px;
+    background: rgb(226 232 240 / 0.6);
+  }
+</style>
+
+<script>
+  const rails = Array.from(document.querySelectorAll<HTMLElement>('[data-adsterra-rail]'));
+
+  // 여백 안에 온전히 들어가는지: 왼쪽은 고정 사이드바(본문 셸 패딩) 오른쪽, 오른쪽은 화면 안.
+  const fits = (rail: HTMLElement) => {
+    const shell = document.getElementById('manytool-shell');
+    const contentLeft = shell
+      ? shell.getBoundingClientRect().left + parseFloat(getComputedStyle(shell).paddingLeft)
+      : 0;
+    const wasHidden = rail.hidden;
+    rail.hidden = false;
+    const rect = rail.getBoundingClientRect();
+    rail.hidden = wasHidden;
+    return rect.left >= contentLeft && rect.right <= document.documentElement.clientWidth;
+  };
+
+  const mount = (rail: HTMLElement) => {
+    const host = rail.querySelector<HTMLElement>('.adsterra-rail__frame');
+    if (!host || host.dataset.mounted === 'true') return;
+    host.dataset.mounted = 'true';
+    const frame = document.createElement('iframe');
+    frame.src = host.dataset.src ?? '';
+    frame.width = host.dataset.width ?? '160';
+    frame.height = host.dataset.height ?? '600';
+    frame.title = 'Advertisement';
+    frame.scrolling = 'no';
+    frame.style.border = '0';
+    frame.style.display = 'block';
+    // allow-top-navigation 미부여: 광고가 메인 페이지를 강제로 이동시킬 수 없다. 클릭 시 새 탭만 허용.
+    frame.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox');
+    host.appendChild(frame);
+  };
+
+  const update = () => {
+    rails.forEach((rail) => {
+      const ok = fits(rail);
+      rail.hidden = !ok;
+      if (ok) mount(rail);
+    });
+  };
+
+  if (rails.length) {
+    update();
+    window.addEventListener('resize', update);
+    // 사이드바 열고 닫기(셸 패딩 전환) 후 다시 계산
+    const shell = document.getElementById('manytool-shell');
+    shell?.addEventListener('transitionend', update);
+    if (shell) new MutationObserver(update).observe(shell, { attributes: true, attributeFilter: ['class'] });
+  }
+</script>

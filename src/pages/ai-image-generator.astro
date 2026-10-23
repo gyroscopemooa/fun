@@ -1,5 +1,6 @@
 ---
 import AiImageGenerator from '../components/home/AiImageGenerator';
+import AdsterraBanner from '../components/ads/AdsterraBanner.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import Layout from '../layouts/Layout.astro';
@@ -44,7 +45,13 @@ const seoLinks = [
         </div>
       </div>
     </section>
+    <div class="mx-auto max-w-6xl px-4">
+      <AdsterraBanner placement="top" />
+    </div>
     <AiImageGenerator client:load locale="ko" />
+    <div class="mx-auto max-w-6xl px-4 pb-8">
+      <AdsterraBanner placement="bottom" />
+    </div>
   </main>
   <Footer />
 </Layout>

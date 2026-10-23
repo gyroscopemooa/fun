@@ -1,0 +1,41 @@
+---
+// Adsterra 배너 전용 iframe 문서 (/ads/adsterra/leaderboard, /ads/adsterra/mobile).
+// 공식 코드를 이 문서 안에서만 실행해 전역 atOptions 가 메인 페이지와 충돌하지 않게 한다.
+// 광고 OFF 빌드에서는 광고 스크립트 없이 빈 문서만 생성된다.
+import { adsterra, type AdsterraUnitName } from '../../../lib/ads-config';
+
+export function getStaticPaths() {
+  return Object.keys(adsterra.units).map((unit) => ({ params: { unit } }));
+}
+
+const ad = adsterra.units[Astro.params.unit as AdsterraUnitName];
+---
+
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content={`width=${ad.width}`} />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>AD</title>
+    <style is:inline>
+      html, body { margin: 0; padding: 0; overflow: hidden; background: transparent; }
+    </style>
+  </head>
+  <body>
+    {adsterra.enabled && (
+      <>
+        <script is:inline define:vars={{ key: ad.key, width: ad.width, height: ad.height }}>
+          window.atOptions = {
+            'key' : key,
+            'format' : 'iframe',
+            'height' : height,
+            'width' : width,
+            'params' : {}
+          };
+        </script>
+        <script is:inline src={ad.scriptSrc}></script>
+      </>
+    )}
+  </body>
+</html>

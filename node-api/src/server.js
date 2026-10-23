@@ -26,7 +26,8 @@ import { buildNameExplanation } from './naming/description.js';
 
 const app = express();
 const port = Number(process.env.PORT ?? 8787);
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 12 * 1024 * 1024 } });
+const IMAGE_MAX_BYTES = 12 * 1024 * 1024;
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: IMAGE_MAX_BYTES } });
 const paymentMode = process.env.PAYMENT_MODE ?? 'mock';
 const isProduction = process.env.NODE_ENV === 'production';
 const polarServer = process.env.POLAR_SERVER === 'sandbox' ? 'https://sandbox-api.polar.sh' : 'https://api.polar.sh';
@@ -720,6 +721,25 @@ const ensureAiPersonalColorOrder = async (orderId) => {
     }
   }
   return order;
+};
+
+const orderError = (message, status) => Object.assign(new Error(message), { status });
+
+// Calorie orders are single-use: the order is claimed before the OpenAI call and released again if it fails.
+const claimCalorieOrder = async (orderId) => {
+  if (!orderId) throw orderError('orderId is required', 402);
+  const order = await refreshOrderFromPolarIfNeeded(db.orders.get(orderId));
+  if (!order) throw orderError('order not found', 402);
+  if (order.productType !== 'calorie') throw orderError('invalid order product type', 402);
+  if (order.status !== 'paid') throw orderError('payment required', 402);
+  // No await between this check and the claim below, so concurrent requests cannot both pass.
+  const latest = db.orders.get(orderId) ?? order;
+  if (latest.calorieStatus === 'processing' || latest.calorieStatus === 'done') {
+    throw orderError('this order has already been used', 409);
+  }
+  const claimed = { ...latest, calorieStatus: 'processing', calorieClaimedAt: new Date().toISOString() };
+  db.orders.set(orderId, claimed);
+  return claimed;
 };
 
 const ensureAiManseryeokOrder = async (orderId) => {
@@ -1483,7 +1503,7 @@ const sendAiPersonalColorResultEmail = async ({ order, job }) => {
   if (!job?.analysis?.summary) throw new Error('personal color analysis result is missing');
 
   const resultPageUrl = buildAiPersonalColorResultPageUrl(job.id);
-  const season = String(job.analysis.season ?? '').trim() || '퍼스널컬러 결과';
+  const season = String(job.analysis.toneLabel ?? job.analysis.season ?? '').trim() || '퍼스널컬러 결과';
   const response = await fetch(resendApiUrl, {
     method: 'POST',
     headers: {
@@ -2156,6 +2176,7 @@ app.post('/ai-image-generator/generate', upload.single('image'), async (req, res
 });
 
 app.post('/ai-calorie-calculator/analyze', upload.single('image'), async (req, res) => {
+  let claimedOrderId = null;
   try {
     if (!req.file?.buffer) {
       return res.status(400).json({ error: 'image file is required (field name: image)' });
@@ -2167,15 +2188,35 @@ app.post('/ai-calorie-calculator/analyze', upload.single('image'), async (req, r
       return res.status(503).json({ error: 'OPENAI_API_KEY is not configured' });
     }
 
+    const orderId = typeof req.body?.orderId === 'string' ? req.body.orderId.trim() : '';
+    const order = await claimCalorieOrder(orderId);
+    claimedOrderId = order.id;
+
     const imageDataUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
-    const analysis = await analyzeMealCalories({ imageDataUrl });
+    const goal = typeof req.body?.goal === 'string' ? req.body.goal.trim() : 'maintain';
+    const locale = req.body?.locale === 'en' ? 'en' : 'ko';
+    const analysis = await analyzeMealCalories({ imageDataUrl, goal, locale });
+
+    // A photo with no food gives the buyer nothing, so the order stays usable for a retake.
+    db.orders.set(order.id, {
+      ...db.orders.get(order.id),
+      calorieStatus: analysis.isFood === false ? 'retake' : 'done',
+      calorieCompletedAt: new Date().toISOString()
+    });
 
     return res.json({
       ok: true,
+      orderId: order.id,
       analysis
     });
   } catch (error) {
-    return res.status(500).json({ error: error.message || 'analysis failed' });
+    if (claimedOrderId) {
+      db.orders.set(claimedOrderId, { ...db.orders.get(claimedOrderId), calorieStatus: 'failed', calorieError: error.message || 'analysis failed' });
+    }
+    if (error?.status) {
+      logSecurityEvent('calorie_order_rejected', { reason: error.message, ip: req.ip ?? null });
+    }
+    return res.status(error?.status ?? 500).json({ error: error.message || 'analysis failed' });
   }
 });
 
@@ -2265,6 +2306,7 @@ app.post('/ai-personal-color/analyze', upload.single('image'), async (req, res) 
         });
       }
     }
+    if (message === 'orderId is required') return res.status(402).json({ error: message });
     if (message === 'order not found') return res.status(404).json({ error: message });
     if (message === 'invalid order product type') return res.status(400).json({ error: message });
     if (message === 'payment required') return res.status(402).json({ error: message });
@@ -2375,6 +2417,7 @@ app.post('/ai-manseryeok/analyze', async (req, res) => {
         });
       }
     }
+    if (message === 'orderId is required') return res.status(402).json({ error: message });
     if (message === 'order not found') return res.status(404).json({ error: message });
     if (message === 'invalid order product type') return res.status(400).json({ error: message });
     if (message === 'payment required') return res.status(402).json({ error: message });
@@ -3199,9 +3242,15 @@ app.get('/download/:candidateId', (req, res) => {
   return res.status(404).json({ error: 'candidate not found' });
 });
 
-app.use((err, _req, res, _next) => {
+app.use((err, req, res, _next) => {
   if (err?.code === 'LIMIT_FILE_SIZE') {
-    return res.status(413).json({ error: `file too large (max ${Math.round(VIDEO_MAX_BYTES / (1024 * 1024))}MB for video uploads)` });
+    const isVideo = req.path.startsWith('/video/');
+    const maxMb = Math.round((isVideo ? VIDEO_MAX_BYTES : IMAGE_MAX_BYTES) / (1024 * 1024));
+    return res.status(413).json({ error: `file too large (max ${maxMb}MB${isVideo ? ' for video uploads' : ''})` });
+  }
+  // body-parser/multer mark client mistakes (malformed JSON, bad multipart) as exposable 4xx errors.
+  if (err?.expose && err.status >= 400 && err.status < 500) {
+    return res.status(err.status).json({ error: err.type === 'entity.parse.failed' ? 'invalid JSON body' : err.message });
   }
   return res.status(500).json({ error: 'internal server error' });
 });

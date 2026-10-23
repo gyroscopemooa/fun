@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from 'react';
-import { AlertCircle, Download, ImagePlus, LoaderCircle, Share2, Sparkles, UploadCloud, X } from 'lucide-react';
+import { AlertCircle, Download, ImagePlus, LoaderCircle, Share2, UploadCloud, X } from 'lucide-react';
 import { Autoplay, Pagination } from 'swiper/modules';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
@@ -1114,7 +1114,6 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
         <section className="flex items-start justify-between gap-4">
           <div>
             <p className="mb-2 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 shadow-sm">
-              <Sparkles className="h-3.5 w-3.5" />
               {ENGINE_LABEL}
             </p>
             <h1 className="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">{activeContent.title}</h1>

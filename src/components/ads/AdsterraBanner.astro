@@ -1,0 +1,106 @@
+---
+// Adsterra 가로 배너 슬롯. 노출 여부는 src/lib/ads-config.ts 의 규칙(ON/OFF, 제외 페이지, 위치)이 정한다.
+// - 렌더링하지 않는 경우 아무것도 출력하지 않는다(스크립트·iframe 미생성).
+// - 슬롯 폭이 728px 이상이면 728x90, 그 미만이면 320x50 중 하나만 한 번 로드한다.
+// - 높이는 CSS 로 먼저 확보해 광고 로드 전후 레이아웃 이동이 없다.
+// - 화면 가까이 왔을 때 로드하며, 광고 스크립트는 같은 출처 iframe 문서에서만 실행된다.
+import { adsterra, type AdsterraPlacement } from '../../lib/ads-config';
+import { detectLocale, stripLocale } from '../../lib/i18n';
+
+interface Props {
+  placement: AdsterraPlacement;
+  class?: string;
+}
+
+const { placement } = Astro.props;
+const path = stripLocale(Astro.url.pathname);
+// 클릭형 게임은 플레이 영역과 하단 광고 사이 여백을 넓혀 오클릭을 줄인다.
+const defaultClass = placement === 'bottom' && adsterra.isClickGame(path) ? 'mt-12' : 'mt-6';
+const className = Astro.props.class ?? defaultClass;
+const visible = adsterra.shouldRender(placement, path);
+const label = detectLocale(Astro.url.pathname) === 'ko' ? '광고' : 'AD';
+const { leaderboard, mobile } = adsterra.units;
+---
+
+{
+  visible && (
+    <aside class:list={['adsterra-banner @container', className]} aria-label={label} data-adsterra-placement={placement}>
+      <p class="adsterra-banner__label">{label}</p>
+      <div
+        class="adsterra-banner__frame"
+        data-adsterra-frame-host
+        data-src={adsterra.framePath}
+        data-wide-unit="leaderboard"
+        data-wide-width={leaderboard.width}
+        data-wide-height={leaderboard.height}
+        data-narrow-unit="mobile"
+        data-narrow-width={mobile.width}
+        data-narrow-height={mobile.height}
+      ></div>
+    </aside>
+  )
+}
+
+<style>
+  .adsterra-banner__label {
+    margin: 0 0 4px;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: rgb(148 163 184);
+    line-height: 1;
+  }
+  .adsterra-banner__frame {
+    margin: 0 auto;
+    width: 320px;
+    height: 50px;
+    overflow: hidden;
+    border-radius: 6px;
+    background: rgb(226 232 240 / 0.6);
+  }
+  @container (min-width: 728px) {
+    .adsterra-banner__frame {
+      width: 728px;
+      height: 90px;
+    }
+  }
+</style>
+
+<script>
+  const mountAdsterraFrame = (host: HTMLElement) => {
+    if (host.dataset.mounted === 'true' || host.offsetParent === null) return;
+    host.dataset.mounted = 'true';
+    // CSS 컨테이너 쿼리가 확보한 크기에 맞는 광고 단위 하나만 로드한다.
+    const wide = host.clientWidth >= Number(host.dataset.wideWidth);
+    const unit = wide ? host.dataset.wideUnit : host.dataset.narrowUnit;
+    const width = (wide ? host.dataset.wideWidth : host.dataset.narrowWidth) ?? '';
+    const height = (wide ? host.dataset.wideHeight : host.dataset.narrowHeight) ?? '';
+    const frame = document.createElement('iframe');
+    frame.src = `${host.dataset.src}/${unit}`;
+    frame.width = width;
+    frame.height = height;
+    frame.title = 'Advertisement';
+    frame.scrolling = 'no';
+    frame.style.border = '0';
+    frame.style.display = 'block';
+    frame.style.margin = '0 auto';
+    // allow-top-navigation 미부여: 광고가 메인 페이지를 강제로 이동시킬 수 없다. 클릭 시 새 탭만 허용.
+    frame.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox');
+    host.appendChild(frame);
+  };
+
+  const hosts = document.querySelectorAll<HTMLElement>('[data-adsterra-frame-host]');
+  if (typeof IntersectionObserver === 'undefined') {
+    hosts.forEach(mountAdsterraFrame);
+  } else {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        observer.unobserve(entry.target);
+        mountAdsterraFrame(entry.target as HTMLElement);
+      });
+    }, { rootMargin: '200px 0px' });
+    hosts.forEach((host) => observer.observe(host));
+  }
+</script>

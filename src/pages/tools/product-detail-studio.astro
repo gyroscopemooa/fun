@@ -1,5 +1,6 @@
 ---
 import Footer from '../../components/Footer.astro';
+import AdsterraBanner from '../../components/ads/AdsterraBanner.astro';
 import Header from '../../components/Header.astro';
 import ProductDetailStudio from '../../components/home/ProductDetailStudio';
 import Layout from '../../layouts/Layout.astro';
@@ -204,6 +205,7 @@ const copy = {
         <p class="mt-2 text-sm leading-6 text-slate-600">{copy.guideBody}</p>
       </div>
     </section>
+    <AdsterraBanner placement="top" />
 
     <ProductDetailStudio client:load locale={locale} />
 
@@ -230,6 +232,7 @@ const copy = {
         ))}
       </div>
     </section>
+    <AdsterraBanner placement="bottom" />
   </main>
   <Footer />
 </Layout>

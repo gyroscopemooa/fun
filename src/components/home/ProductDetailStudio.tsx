@@ -10,7 +10,6 @@ import {
   LoaderCircle,
   RotateCcw,
   ScanSearch,
-  Sparkles,
   Store,
   Wand2
 } from 'lucide-react';
@@ -983,7 +982,6 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
                   <p className="text-xs uppercase tracking-[0.2em] text-white/45">Prompt Quick Fill</p>
                   <p className="mt-1 text-sm text-white/74">자주 쓰는 지시문을 바로 넣을 수 있습니다.</p>
                 </div>
-                <Sparkles className="h-5 w-5 text-white/70" />
               </div>
               <div className="mt-4 grid gap-3 md:grid-cols-3">
                 {[
