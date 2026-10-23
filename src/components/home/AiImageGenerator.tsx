@@ -486,6 +486,38 @@ const EN_LABELS = {
   moreExamples: 'More examples'
 } as const;
 
+const LOCALIZED_UI = {
+  en: { mode: 'Mode', moreExamples: 'More examples', prompt: 'Extra prompt', generate: 'Generate' },
+  zh: { mode: '模式', moreExamples: '更多示例', prompt: '附加提示词', generate: '生成' },
+  es: { mode: 'Modo', moreExamples: 'Más ejemplos', prompt: 'Indicaciones adicionales', generate: 'Generar' },
+  de: { mode: 'Modus', moreExamples: 'Weitere Beispiele', prompt: 'Zusätzlicher Prompt', generate: 'Generieren' },
+  fr: { mode: 'Mode', moreExamples: 'Plus d’exemples', prompt: 'Prompt supplémentaire', generate: 'Générer' },
+  pt: { mode: 'Modo', moreExamples: 'Mais exemplos', prompt: 'Prompt adicional', generate: 'Gerar' },
+  vi: { mode: 'Chế độ', moreExamples: 'Thêm ví dụ', prompt: 'Mô tả bổ sung', generate: 'Tạo' },
+  id: { mode: 'Mode', moreExamples: 'Contoh lainnya', prompt: 'Prompt tambahan', generate: 'Buat' },
+  it: { mode: 'Modalità', moreExamples: 'Altri esempi', prompt: 'Prompt aggiuntivo', generate: 'Genera' },
+  nl: { mode: 'Modus', moreExamples: 'Meer voorbeelden', prompt: 'Extra prompt', generate: 'Genereren' },
+  ru: { mode: 'Режим', moreExamples: 'Больше примеров', prompt: 'Дополнительный запрос', generate: 'Создать' },
+  ar: { mode: 'الوضع', moreExamples: 'المزيد من الأمثلة', prompt: 'وصف إضافي', generate: 'إنشاء' },
+  hi: { mode: 'मोड', moreExamples: 'और उदाहरण', prompt: 'अतिरिक्त प्रॉम्प्ट', generate: 'बनाएं' },
+  tr: { mode: 'Mod', moreExamples: 'Daha fazla örnek', prompt: 'Ek istem', generate: 'Oluştur' },
+  pl: { mode: 'Tryb', moreExamples: 'Więcej przykładów', prompt: 'Dodatkowy prompt', generate: 'Generuj' },
+  th: { mode: 'โหมด', moreExamples: 'ตัวอย่างเพิ่มเติม', prompt: 'พรอมต์เพิ่มเติม', generate: 'สร้าง' },
+  sv: { mode: 'Läge', moreExamples: 'Fler exempel', prompt: 'Extra prompt', generate: 'Skapa' },
+  uk: { mode: 'Режим', moreExamples: 'Більше прикладів', prompt: 'Додатковий запит', generate: 'Створити' }
+} as const;
+
+const localizedModeContent = (locale: Locale): Record<Mode, ModeContent> => {
+  const base = EN_MODE_CONTENT;
+  if (locale === 'ko' || locale === 'en') return locale === 'ko' ? MODE_CONTENT : base;
+  const ui = LOCALIZED_UI[locale as keyof typeof LOCALIZED_UI] ?? LOCALIZED_UI.en;
+  return Object.fromEntries(Object.entries(base).map(([mode, content]) => [mode, {
+    ...content,
+    buttonLabel: content.buttonLabel.replace(/^Generate(?: custom style)?/, ui.generate),
+    inputLabel: content.inputLabel === 'Custom prompt' ? ui.prompt : ui.prompt,
+  }])) as Record<Mode, ModeContent>;
+};
+
 const PROVIDER_LABELS: Record<Provider, string> = {
   openai: ENGINE_LABEL,
   xai: ENGINE_LABEL
@@ -650,7 +682,37 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
   // Until each locale has a reviewed copy deck, non-Korean locales use the
   // English UI instead of accidentally showing Korean strings. The locale is
   // still preserved so translated dictionaries can be added incrementally.
-  const modeContentMap = locale === 'ko' ? MODE_CONTENT : EN_MODE_CONTENT;
+  const modeContentMap = localizedModeContent(locale);
+  const uiLabels = locale === 'ko' ? { mode: '모드', moreExamples: '스타일별 샘플 갤러리' } : locale === 'en' ? EN_LABELS : (LOCALIZED_UI[locale as keyof typeof LOCALIZED_UI] ?? EN_LABELS);
+  const generatorCopy = ({
+    en: { upload: 'Upload image', uploadHint: 'Drag or click to choose an image.', uploadPrompt: 'Upload an image', change: 'Change image', ready: 'Your final image is ready.', saveHint: 'Save the high-resolution original and share it on your profile or social media.', save: 'Save', share: 'Share' },
+    it: { upload: 'Carica immagine', uploadHint: 'Trascina o fai clic per scegliere un’immagine.', uploadPrompt: 'Carica un’immagine', change: 'Cambia immagine', ready: 'La tua immagine finale è pronta.', saveHint: 'Salva l’originale ad alta risoluzione e condividilo sui social.', save: 'Salva', share: 'Condividi' },
+    nl: { upload: 'Afbeelding uploaden', uploadHint: 'Sleep of klik om een afbeelding te kiezen.', uploadPrompt: 'Upload een afbeelding', change: 'Afbeelding wijzigen', ready: 'Je eindafbeelding is klaar.', saveHint: 'Sla het origineel in hoge resolutie op en deel het op sociale media.', save: 'Opslaan', share: 'Delen' },
+    ru: { upload: 'Загрузить изображение', uploadHint: 'Перетащите файл или нажмите, чтобы выбрать изображение.', uploadPrompt: 'Загрузите изображение', change: 'Изменить изображение', ready: 'Итоговое изображение готово.', saveHint: 'Сохраните оригинал в высоком качестве и поделитесь им.', save: 'Сохранить', share: 'Поделиться' },
+    ar: { upload: 'رفع صورة', uploadHint: 'اسحب أو انقر لاختيار صورة.', uploadPrompt: 'ارفع صورة', change: 'تغيير الصورة', ready: 'الصورة النهائية جاهزة.', saveHint: 'احفظ النسخة الأصلية عالية الدقة وشاركها على الشبكات الاجتماعية.', save: 'حفظ', share: 'مشاركة' },
+    hi: { upload: 'इमेज अपलोड करें', uploadHint: 'इमेज चुनने के लिए ड्रैग या क्लिक करें।', uploadPrompt: 'इमेज अपलोड करें', change: 'इमेज बदलें', ready: 'आपकी अंतिम इमेज तैयार है।', saveHint: 'हाई-रिज़ॉल्यूशन मूल इमेज सेव करें और शेयर करें।', save: 'सेव', share: 'शेयर' },
+    tr: { upload: 'Görsel yükle', uploadHint: 'Görsel seçmek için sürükleyin veya tıklayın.', uploadPrompt: 'Bir görsel yükleyin', change: 'Görseli değiştir', ready: 'Son görseliniz hazır.', saveHint: 'Yüksek çözünürlüklü orijinali kaydedin ve paylaşın.', save: 'Kaydet', share: 'Paylaş' },
+    pl: { upload: 'Prześlij obraz', uploadHint: 'Przeciągnij lub kliknij, aby wybrać obraz.', uploadPrompt: 'Prześlij obraz', change: 'Zmień obraz', ready: 'Twój obraz końcowy jest gotowy.', saveHint: 'Zapisz oryginał w wysokiej rozdzielczości i udostępnij go.', save: 'Zapisz', share: 'Udostępnij' },
+    th: { upload: 'อัปโหลดรูปภาพ', uploadHint: 'ลากหรือคลิกเพื่อเลือกรูปภาพ', uploadPrompt: 'อัปโหลดรูปภาพ', change: 'เปลี่ยนรูปภาพ', ready: 'รูปภาพสุดท้ายพร้อมแล้ว', saveHint: 'บันทึกต้นฉบับความละเอียดสูงและแชร์บนโซเชียล', save: 'บันทึก', share: 'แชร์' },
+    sv: { upload: 'Ladda upp bild', uploadHint: 'Dra eller klicka för att välja en bild.', uploadPrompt: 'Ladda upp en bild', change: 'Byt bild', ready: 'Din färdiga bild är klar.', saveHint: 'Spara originalet i hög upplösning och dela det.', save: 'Spara', share: 'Dela' },
+    uk: { upload: 'Завантажити зображення', uploadHint: 'Перетягніть або натисніть, щоб вибрати зображення.', uploadPrompt: 'Завантажте зображення', change: 'Змінити зображення', ready: 'Підсумкове зображення готове.', saveHint: 'Збережіть оригінал у високій якості та поділіться ним.', save: 'Зберегти', share: 'Поділитися' }
+  } as const)[locale as 'en' | 'it' | 'nl' | 'ru' | 'ar' | 'hi' | 'tr' | 'pl' | 'th' | 'sv' | 'uk'] ?? { upload: 'Upload image', uploadHint: 'Drag and drop or click to choose an image.', uploadPrompt: 'Upload an image', change: 'Change image', ready: 'Your final result image is ready.', saveHint: 'Save the high-resolution original and share it to your profile or social media.', save: 'Save', share: 'Share' };
+  const statusCopy = ({
+    en: { generating: 'Generating', done: 'Generation complete', failed: 'Generation failed' }, it: { generating: 'Generazione in corso', done: 'Generazione completata', failed: 'Generazione non riuscita' }, nl: { generating: 'Bezig met genereren', done: 'Generatie voltooid', failed: 'Generatie mislukt' }, ru: { generating: 'Создание', done: 'Создание завершено', failed: 'Не удалось создать' }, ar: { generating: 'جارٍ الإنشاء', done: 'اكتمل الإنشاء', failed: 'فشل الإنشاء' }, hi: { generating: 'बनाया जा रहा है', done: 'जनरेशन पूरा हुआ', failed: 'जनरेशन विफल' }, tr: { generating: 'Oluşturuluyor', done: 'Oluşturma tamamlandı', failed: 'Oluşturma başarısız' }, pl: { generating: 'Generowanie', done: 'Generowanie ukończone', failed: 'Generowanie nie powiodło się' }, th: { generating: 'กำลังสร้าง', done: 'สร้างเสร็จแล้ว', failed: 'สร้างไม่สำเร็จ' }, sv: { generating: 'Skapar', done: 'Skapandet är klart', failed: 'Det gick inte att skapa' }, uk: { generating: 'Створення', done: 'Створення завершено', failed: 'Не вдалося створити' }
+  } as const)[locale as 'en' | 'it' | 'nl' | 'ru' | 'ar' | 'hi' | 'tr' | 'pl' | 'th' | 'sv' | 'uk'] ?? { generating: 'Generating', done: 'Generation complete', failed: 'Generation failed' };
+  const feedbackCopy = ({
+    en: { saved: 'Image saved.', saveFailed: 'Could not save the image. Please try again.', shared: 'Share sheet opened.', copied: 'Result image link copied.', shareFailed: 'Could not complete sharing.' },
+    it: { saved: 'Immagine salvata.', saveFailed: 'Impossibile salvare l’immagine. Riprova.', shared: 'Scheda di condivisione aperta.', copied: 'Link dell’immagine copiato.', shareFailed: 'Condivisione non riuscita.' },
+    nl: { saved: 'Afbeelding opgeslagen.', saveFailed: 'Afbeelding opslaan mislukt. Probeer het opnieuw.', shared: 'Deelvenster geopend.', copied: 'Link naar resultaat gekopieerd.', shareFailed: 'Delen mislukt.' },
+    ru: { saved: 'Изображение сохранено.', saveFailed: 'Не удалось сохранить изображение. Повторите попытку.', shared: 'Окно публикации открыто.', copied: 'Ссылка на изображение скопирована.', shareFailed: 'Не удалось поделиться.' },
+    ar: { saved: 'تم حفظ الصورة.', saveFailed: 'تعذر حفظ الصورة. حاول مرة أخرى.', shared: 'تم فتح نافذة المشاركة.', copied: 'تم نسخ رابط الصورة.', shareFailed: 'تعذرت المشاركة.' },
+    hi: { saved: 'इमेज सेव हो गई।', saveFailed: 'इमेज सेव नहीं हो सकी। फिर कोशिश करें।', shared: 'शेयर शीट खुल गई।', copied: 'रिज़ल्ट इमेज लिंक कॉपी हो गया।', shareFailed: 'शेयर पूरा नहीं हो सका।' },
+    tr: { saved: 'Görsel kaydedildi.', saveFailed: 'Görsel kaydedilemedi. Tekrar deneyin.', shared: 'Paylaşım paneli açıldı.', copied: 'Sonuç görseli bağlantısı kopyalandı.', shareFailed: 'Paylaşım tamamlanamadı.' },
+    pl: { saved: 'Obraz zapisany.', saveFailed: 'Nie udało się zapisać obrazu. Spróbuj ponownie.', shared: 'Otwarto panel udostępniania.', copied: 'Skopiowano link do obrazu.', shareFailed: 'Nie udało się udostępnić.' },
+    th: { saved: 'บันทึกรูปภาพแล้ว', saveFailed: 'บันทึกรูปภาพไม่สำเร็จ กรุณาลองอีกครั้ง', shared: 'เปิดหน้าต่างแชร์แล้ว', copied: 'คัดลอกลิงก์รูปภาพแล้ว', shareFailed: 'แชร์ไม่สำเร็จ' },
+    sv: { saved: 'Bilden har sparats.', saveFailed: 'Det gick inte att spara bilden. Försök igen.', shared: 'Delningspanelen öppnades.', copied: 'Länken till resultatbilden kopierades.', shareFailed: 'Det gick inte att dela.' },
+    uk: { saved: 'Зображення збережено.', saveFailed: 'Не вдалося зберегти зображення. Спробуйте ще раз.', shared: 'Вікно поширення відкрито.', copied: 'Посилання на зображення скопійовано.', shareFailed: 'Не вдалося поділитися.' }
+  } as const)[locale as 'en' | 'it' | 'nl' | 'ru' | 'ar' | 'hi' | 'tr' | 'pl' | 'th' | 'sv' | 'uk'] ?? { saved: 'Image saved.', saveFailed: 'Could not save the image. Please try again.', shared: 'Share sheet opened.', copied: 'Result image link copied.', shareFailed: 'Could not complete sharing.' };
   const [mode, setMode] = useState<Mode>(initialMode);
   const [userInputs, setUserInputs] = useState<Record<Mode, string>>({
     figure: '',
@@ -1029,9 +1091,9 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
       link.click();
       link.remove();
       URL.revokeObjectURL(objectUrl);
-      setResultActionMessage('이미지를 저장했습니다.');
+      setResultActionMessage(feedbackCopy.saved);
     } catch {
-      setResultActionMessage('이미지 저장에 실패했습니다. 다시 시도해 주세요.');
+      setResultActionMessage(feedbackCopy.saveFailed);
     }
   };
 
@@ -1044,13 +1106,13 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
           text: 'ManyTool AI로 생성한 이미지입니다.',
           url: resultImageUrl
         });
-        setResultActionMessage('공유 시트를 열었습니다.');
+        setResultActionMessage(feedbackCopy.shared);
         return;
       }
       await navigator.clipboard.writeText(resultImageUrl);
-      setResultActionMessage('결과 이미지 링크를 복사했습니다.');
+      setResultActionMessage(feedbackCopy.copied);
     } catch {
-      setResultActionMessage('공유를 완료하지 못했습니다.');
+      setResultActionMessage(feedbackCopy.shareFailed);
     }
   };
 
@@ -1072,7 +1134,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
               text: `ManyTool AI generated image\n${sharePageUrl}`,
               files: [file]
             });
-            setResultActionMessage('공유 시트를 열었습니다.');
+            setResultActionMessage(feedbackCopy.shared);
             return;
           }
         } catch {
@@ -1083,13 +1145,13 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
           text: shareText,
           url: sharePageUrl
         });
-        setResultActionMessage('공유 시트를 열었습니다.');
+        setResultActionMessage(feedbackCopy.shared);
         return;
       }
       await navigator.clipboard.writeText(shareText);
-      setResultActionMessage('페이지 링크와 결과 이미지 링크를 복사했습니다.');
+      setResultActionMessage(feedbackCopy.copied);
     } catch {
-      setResultActionMessage('공유를 완료하지 못했습니다.');
+      setResultActionMessage(feedbackCopy.shareFailed);
     }
   };
 
@@ -1098,7 +1160,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
       <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-8 px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
         <section className="rounded-[28px] border border-white/70 bg-white/85 p-3 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
           <div className="mb-3 flex items-center justify-between sm:hidden">
-            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">{EN_LABELS.mode}</span>
+            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">{uiLabels.mode}</span>
             <span className="text-xs font-medium text-slate-500">{modeContentMap[mode].tabLabel}</span>
           </div>
 
@@ -1158,8 +1220,8 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
           <div className="min-w-0 overflow-hidden rounded-[32px] border border-slate-200/80 bg-white p-4 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-6 lg:p-7">
             <div className="mb-5 flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-bold text-slate-950">이미지 업로드</h2>
-                <p className="mt-1 text-sm text-slate-500">드래그하거나 클릭해서 이미지를 선택하세요.</p>
+                <h2 className="text-xl font-bold text-slate-950">{generatorCopy.upload}</h2>
+                <p className="mt-1 text-sm text-slate-500">{generatorCopy.uploadHint}</p>
               </div>
               {uploadedImage ? (
                 <button
@@ -1204,7 +1266,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
                       }}
                       className="inline-flex items-center rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:scale-[1.02] hover:bg-slate-800"
                     >
-                      이미지 변경
+                      {generatorCopy.change}
                     </button>
                   </div>
                 </div>
@@ -1213,7 +1275,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
                   <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-slate-950 text-white shadow-lg shadow-slate-950/10 transition group-hover:scale-105">
                     {isDragging ? <UploadCloud className="h-9 w-9" /> : <ImagePlus className="h-9 w-9" />}
                   </div>
-                  <h3 className="text-xl font-bold text-slate-950">이미지를 업로드하세요</h3>
+                  <h3 className="text-xl font-bold text-slate-950">{generatorCopy.uploadPrompt}</h3>
                   <p className="mt-3 max-w-md text-sm leading-6 text-slate-500">
                     얼굴이 잘 보이는 사진일수록 결과가 안정적입니다. 먼저 얼굴 품질을 보정하고 이후 최종 스타일을 적용합니다.
                   </p>
@@ -1333,7 +1395,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
           </aside>
         </section>
 
-        <AiSampleGallery title={locale === 'ko' ? '스타일별 샘플 갤러리' : EN_LABELS.moreExamples} onUseStyle={useStyleFromGallery} locale={locale} />
+        <AiSampleGallery title={uiLabels.moreExamples} onUseStyle={useStyleFromGallery} locale={locale} />
       </div>
 
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/80 bg-white/92 px-4 py-4 backdrop-blur">
@@ -1366,9 +1428,9 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
                 </p>
                 <h3 className="mt-1 text-2xl font-black tracking-tight text-slate-950">
                   {generationPhase === 'payment' && `${PROVIDER_LABELS[activeProvider]} 요청 준비 중`}
-                  {generationPhase === 'generating' && `${PROVIDER_LABELS[activeProvider]} 생성 중`}
-                  {generationPhase === 'done' && '생성 완료'}
-                  {generationPhase === 'error' && '생성 실패'}
+                  {generationPhase === 'generating' && `${PROVIDER_LABELS[activeProvider]} ${statusCopy.generating}`}
+                  {generationPhase === 'done' && statusCopy.done}
+                  {generationPhase === 'error' && statusCopy.failed}
                 </h3>
               </div>
               <button
@@ -1455,8 +1517,8 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
                 </div>
                 {previewUrl ? <p className="-mt-2 text-center text-xs text-slate-400">이미지를 좌우로 밀면 원본과 비교할 수 있어요</p> : null}
                 <div className="rounded-3xl border border-emerald-100 bg-emerald-50 px-4 py-3">
-                  <p className="text-sm font-semibold text-emerald-700">최종 결과 이미지입니다.</p>
-                  <p className="mt-1 text-sm text-emerald-600">고화질 원본으로 저장돼요. 프로필이나 SNS에 바로 공유해 보세요.</p>
+                  <p className="text-sm font-semibold text-emerald-700">{generatorCopy.ready}</p>
+                  <p className="mt-1 text-sm text-emerald-600">{generatorCopy.saveHint}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <button
@@ -1465,7 +1527,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
                     className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
                   >
                     <Download className="h-4 w-4" />
-                    저장
+                    {generatorCopy.save}
                   </button>
                   <button
                     type="button"
@@ -1473,7 +1535,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
                     className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 transition hover:bg-slate-50"
                   >
                     <Share2 className="h-4 w-4" />
-                    공유
+                    {generatorCopy.share}
                   </button>
                 </div>
                 {resultActionMessage ? (

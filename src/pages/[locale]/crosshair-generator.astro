@@ -1,0 +1,22 @@
+---
+import CrosshairStudio from '../../components/game-tools/CrosshairStudio';
+import GameToolPage from '../../components/game-tools/GameToolPage.astro';
+import { seoLocaleCodes } from '../../lib/i18n';
+
+const copy = {
+  zh: ['FPS 准星生成器', '创建并复制 FPS 游戏准星设置。', '准星生成器'],
+  es: ['Generador de mira FPS', 'Crea y copia una configuración de mira para juegos FPS.', 'Generador de mira'],
+  de: ['FPS-Fadenkreuz-Generator', 'Erstelle und kopiere ein Fadenkreuz für FPS-Spiele.', 'Fadenkreuz-Generator'],
+  fr: ['Générateur de viseur FPS', 'Créez et copiez un viseur pour vos jeux FPS.', 'Générateur de viseur'],
+  pt: ['Gerador de mira FPS', 'Crie e copie uma configuração de mira para jogos FPS.', 'Gerador de mira'],
+  vi: ['Trình tạo tâm ngắm FPS', 'Tạo và sao chép cài đặt tâm ngắm cho game FPS.', 'Trình tạo tâm ngắm'],
+  id: ['Generator Crosshair FPS', 'Buat dan salin pengaturan crosshair untuk game FPS.', 'Generator crosshair'],
+  en: ['FPS crosshair generator', 'Create and copy a crosshair setup for FPS games.', 'Crosshair generator']
+};
+export function getStaticPaths() { return seoLocaleCodes.filter((locale) => locale !== 'ko').map((locale) => ({ params: { locale }, props: { locale } })); }
+const { locale } = Astro.props;
+const text = copy[locale as keyof typeof copy] ?? copy.en;
+---
+<GameToolPage title={`${text[0]} | ManyTool`} description={text[1]} keywords={`${text[0]}, FPS crosshair, ManyTool`} eyebrow="ManyTool Game Tools" heading={text[2]} intro={text[1]} accent="#22D3EE" howTo={text[1]} related={[{ href: `/${locale}/fps-aim-sensitivity`, label: 'FPS Sensitivity' }, { href: `/${locale}/valorant-agent-picker`, label: 'Valorant Agent Picker' }]}>
+  <CrosshairStudio client:load locale={locale} />
+</GameToolPage>

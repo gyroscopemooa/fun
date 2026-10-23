@@ -2,8 +2,8 @@
 import Footer from '../../components/Footer.astro';
 import Header from '../../components/Header.astro';
 import Layout from '../../layouts/Layout.astro';
+import { seoLocaleCodes } from '../../lib/i18n';
 
-const supportedLocales = ['zh', 'es', 'de', 'fr', 'pt', 'vi', 'id'];
 const tools = {
   'ai-personal-color': ['AI Personal Color Analysis', 'Analyze your season and find colors that fit your style.'],
   'ai-calorie-calculator': ['AI Calorie Calculator', 'Estimate calories and get a practical nutrition summary.'],
@@ -27,24 +27,193 @@ const tools = {
   , 'game-character-picker': ['Game Character Picker', 'Randomly choose a game character for your next challenge.']
 };
 const localizedLabels = {
-  zh: ['AI 工具', '上传内容，选择工具，并开始使用 ManyTool 的 AI 功能。'],
-  es: ['Herramientas de IA', 'Sube tu contenido y empieza a usar las herramientas de IA de ManyTool.'],
-  de: ['KI-Werkzeuge', 'Lade deine Inhalte hoch und starte die KI-Werkzeuge von ManyTool.'],
-  fr: ['Outils IA', 'Importez votre contenu et commencez à utiliser les outils IA de ManyTool.'],
-  pt: ['Ferramentas de IA', 'Envie seu conteúdo e comece a usar as ferramentas de IA da ManyTool.'],
-  vi: ['Công cụ AI', 'Tải nội dung lên và bắt đầu sử dụng các công cụ AI của ManyTool.'],
-  id: ['Alat AI', 'Unggah konten dan mulai gunakan alat AI ManyTool.']
+  zh: ['AI 工具', '上传内容，选择工具，并开始使用 ManyTool 的 AI 功能。', '开始使用', 'AI 图片生成器'],
+  es: ['Herramientas de IA', 'Sube tu contenido y empieza a usar las herramientas de IA de ManyTool.', 'Comenzar', 'Generador de imágenes IA'],
+  de: ['KI-Werkzeuge', 'Lade deine Inhalte hoch und starte die KI-Werkzeuge von ManyTool.', 'Tool starten', 'KI-Bildgenerator'],
+  fr: ['Outils IA', 'Importez votre contenu et commencez à utiliser les outils IA de ManyTool.', 'Commencer', "Générateur d’images IA"],
+  pt: ['Ferramentas de IA', 'Envie seu conteúdo e comece a usar as ferramentas de IA da ManyTool.', 'Começar', 'Gerador de imagens IA'],
+  vi: ['Công cụ AI', 'Tải nội dung lên và bắt đầu sử dụng các công cụ AI của ManyTool.', 'Bắt đầu', 'Trình tạo ảnh AI'],
+  id: ['Alat AI', 'Unggah konten dan mulai gunakan alat AI ManyTool.', 'Mulai gunakan', 'Generator Gambar AI'],
+  it: ['Strumenti IA', 'Carica i contenuti e usa gli strumenti IA di ManyTool.', 'Inizia', 'Generatore immagini IA'],
+  nl: ['AI-tools', 'Upload je inhoud en gebruik de AI-tools van ManyTool.', 'Starten', 'AI-afbeeldinggenerator'],
+  ru: ['Инструменты ИИ', 'Загрузите материалы и используйте инструменты ИИ ManyTool.', 'Начать', 'Генератор изображений ИИ'],
+  ar: ['أدوات الذكاء الاصطناعي', 'ارفع المحتوى وابدأ باستخدام أدوات ManyTool.', 'ابدأ الآن', 'مولد الصور بالذكاء الاصطناعي'],
+  hi: ['AI टूल', 'अपनी सामग्री अपलोड करें और ManyTool के AI टूल इस्तेमाल करें।', 'शुरू करें', 'AI इमेज जनरेटर'],
+  tr: ['Yapay Zeka Araçları', 'İçeriğinizi yükleyin ve ManyTool yapay zeka araçlarını kullanın.', 'Başla', 'Yapay Zeka Görsel Üretici'],
+  pl: ['Narzędzia AI', 'Prześlij treść i korzystaj z narzędzi AI ManyTool.', 'Rozpocznij', 'Generator obrazów AI'],
+  th: ['เครื่องมือ AI', 'อัปโหลดเนื้อหาและเริ่มใช้เครื่องมือ AI ของ ManyTool', 'เริ่มใช้งาน', 'เครื่องมือสร้างภาพ AI'],
+  sv: ['AI-verktyg', 'Ladda upp innehåll och använd ManyTools AI-verktyg.', 'Kom igång', 'AI-bildgenerator'],
+  uk: ['Інструменти ШІ', 'Завантажте вміст і почніть користуватися інструментами ManyTool.', 'Почати', 'Генератор зображень ШІ'],
+  ca: ['Eines d’IA', 'Puja el contingut i utilitza les eines d’IA de ManyTool.', 'Comença', 'Generador d’imatges IA'],
+  cs: ['Nástroje AI', 'Nahrajte obsah a používejte AI nástroje ManyTool.', 'Začít', 'Generátor obrázků AI'],
+  da: ['AI-værktøjer', 'Upload indhold og brug ManyTools AI-værktøjer.', 'Kom i gang', 'AI-billedgenerator'],
+  fi: ['Tekoälytyökalut', 'Lataa sisältöä ja käytä ManyToolin tekoälytyökaluja.', 'Aloita', 'Tekoälykuvageneraattori'],
+  no: ['AI-verktøy', 'Last opp innhold og bruk ManyTools AI-verktøy.', 'Start', 'AI-bildegenerator'],
+  ro: ['Instrumente AI', 'Încarcă conținut și folosește instrumentele AI ManyTool.', 'Începe', 'Generator de imagini AI'],
+  el: ['Εργαλεία AI', 'Ανεβάστε περιεχόμενο και χρησιμοποιήστε τα εργαλεία AI του ManyTool.', 'Έναρξη', 'Δημιουργία εικόνων AI'],
+  he: ['כלי AI', 'העלו תוכן והשתמשו בכלי ה-AI של ManyTool.', 'התחלה', 'מחולל תמונות AI'],
+  hu: ['AI-eszközök', 'Tölts fel tartalmat és használd a ManyTool AI-eszközeit.', 'Kezdés', 'AI-képgenerátor'],
+  bn: ['AI টুল', 'কনটেন্ট আপলোড করে ManyTool-এর AI টুল ব্যবহার করুন।', 'শুরু করুন', 'AI ইমেজ জেনারেটর'],
+  mn: ['AI хэрэгслүүд', 'Контент байршуулж ManyTool-ийн AI хэрэгслүүдийг ашиглаарай.', 'Эхлэх', 'AI зураг үүсгэгч'],
+  lo: ['ເຄື່ອງມື AI', 'ອັບໂຫຼດເນື້ອຫາ ແລະໃຊ້ເຄື່ອງມື AI ຂອງ ManyTool.', 'ເລີ່ມໃຊ້', 'ເຄື່ອງສ້າງຮູບ AI'],
+  my: ['AI ကိရိယာများ', 'အကြောင်းအရာတင်ပြီး ManyTool AI ကိရိယာများကို အသုံးပြုပါ။', 'စတင်ရန်', 'AI ပုံဖန်တီးစက်'],
+  uz: ['AI vositalari', 'Kontent yuklang va ManyTool AI vositalaridan foydalaning.', 'Boshlash', 'AI rasm yaratuvchi'],
+  ka: ['AI ხელსაწყოები', 'ატვირთეთ კონტენტი და გამოიყენეთ ManyTool-ის AI ხელსაწყოები.', 'დაწყება', 'AI გამოსახულების გენერატორი'],
+  hy: ['AI գործիքներ', 'Վերբեռնեք բովանդակություն և օգտագործեք ManyTool-ի AI գործիքները։', 'Սկսել', 'AI պատկերների գեներատոր'],
+  lt: ['AI įrankiai', 'Įkelkite turinį ir naudokite ManyTool AI įrankius.', 'Pradėti', 'AI vaizdų generatorius'],
+  lv: ['MI rīki', 'Augšupielādējiet saturu un izmantojiet ManyTool MI rīkus.', 'Sākt', 'MI attēlu ģenerators'],
+  am: ['የAI መሳሪያዎች', 'ይዘት ይጫኑ እና የManyTool AI መሳሪያዎችን ይጠቀሙ።', 'ጀምር', 'AI ምስል ፈጣሪ'],
+  sq: ['Mjete AI', 'Ngarko përmbajtjen dhe përdor mjetet AI të ManyTool.', 'Fillo', 'Gjenerues imazhesh AI'],
+  eu: ['AI tresnak', 'Kargatu edukia eta erabili ManyTool-en AI tresnak.', 'Hasi', 'AI irudi-sortzailea'],
+  mt: ['Għodod tal-AI', 'Tella’ il-kontenut u uża l-għodod tal-AI ta’ ManyTool.', 'Ibda', 'Ġeneratur tal-immaġini AI'],
+  ga: ['Uirlisí AI', 'Uaslódáil d’ábhar agus úsáid uirlisí AI ManyTool.', 'Tosaigh', 'Gineadóir íomhánna AI'],
+  lb: ['AI-Tools', 'Lued den Inhalt erop a benotzt d’AI-Tools vu ManyTool.', 'Starten', 'AI-Bildgenerator'],
+  rw: ['Ibikoresho bya AI', 'Shyiramo ibikubiyemo ukoreshe ibikoresho bya AI bya ManyTool.', 'Tangira', 'Mubatsi w’amashusho AI'],
+  ca: ['Eines d’IA', 'Puja contingut i utilitza les eines d’IA de ManyTool.', 'Comença', 'Generador d’imatges IA'],
+  mk: ['АИ алатки', 'Поставете содржина и користете ги АИ алатките на ManyTool.', 'Започни', 'Генератор на АИ слики'],
+  tl: ['Mga AI tool', 'Mag-upload ng content at gamitin ang AI tool ng ManyTool.', 'Magsimula', 'AI image generator']
 };
 
+const localizedAiTools = {
+  zh: {
+    'ai-personal-color': ['AI 个人色彩分析', '分析你的季节类型，找到适合你的色彩。'], 'ai-calorie-calculator': ['AI 热量计算器', '估算热量并获得实用的营养摘要。'], 'ai-manseryeok': ['AI 사주分析', '通过 AI 辅助报告探索韩国风格的生辰分析。'], 'ai-id-photo': ['AI 证件照生成器', '从上传的人像照片生成整洁的证件照。'], 'ai-headshot': ['AI 职业头像生成器', '用一张人像创建专业的个人资料照片。'], 'ai-pet-translator': ['AI 宠物翻译器', '将宠物照片和行为说明转换为有趣的 AI 报告。']
+  },
+  es: {
+    'ai-personal-color': ['Análisis de color personal con IA', 'Analiza tu estación y encuentra los colores que mejor te quedan.'], 'ai-calorie-calculator': ['Calculadora de calorías con IA', 'Estima las calorías y recibe un resumen nutricional práctico.'], 'ai-manseryeok': ['Análisis de saju con IA', 'Explora una lectura coreana de nacimiento con un informe asistido por IA.'], 'ai-id-photo': ['Generador de fotos de identificación con IA', 'Crea una foto de identificación limpia a partir de un retrato.'], 'ai-headshot': ['Generador de retratos profesionales con IA', 'Crea una foto de perfil profesional usando un retrato.'], 'ai-pet-translator': ['Traductor de mascotas con IA', 'Convierte la foto y las notas de tu mascota en un informe divertido.']
+  },
+  de: {
+    'ai-personal-color': ['KI-Farbanalyse', 'Analysiere deine Jahreszeit und finde Farben, die zu dir passen.'], 'ai-calorie-calculator': ['KI-Kalorienrechner', 'Schätze Kalorien und erhalte eine praktische N Zusammenfassung.'], 'ai-manseryeok': ['KI-Saju-Analyse', 'Entdecke eine koreanische Geburtsanalyse mit KI-gestütztem Bericht.'], 'ai-id-photo': ['KI-Ausweisfoto-Generator', 'Erstelle aus einem Porträt ein sauberes Ausweisfoto.'], 'ai-headshot': ['KI-Porträtgenerator', 'Erstelle aus einem Porträt ein professionelles Profilfoto.'], 'ai-pet-translator': ['KI-Haustierübersetzer', 'Erstelle aus Foto und Verhalten deines Haustiers einen unterhaltsamen Bericht.']
+  },
+  fr: {
+    'ai-personal-color': ['Analyse colorimétrique IA', 'Analyse ta saison et trouve les couleurs qui te vont.'], 'ai-calorie-calculator': ['Calculateur de calories IA', 'Estime les calories et obtiens un résumé nutritionnel pratique.'], 'ai-manseryeok': ['Analyse saju par IA', 'Explore une lecture coréenne de naissance avec un rapport assisté par IA.'], 'ai-id-photo': ['Générateur de photo d’identité IA', 'Crée une photo d’identité nette à partir d’un portrait.'], 'ai-headshot': ['Générateur de portrait professionnel IA', 'Crée une photo de profil professionnelle à partir d’un portrait.'], 'ai-pet-translator': ['Traducteur d’animaux IA', 'Transforme la photo et les notes de ton animal en rapport amusant.']
+  },
+  pt: {
+    'ai-personal-color': ['Análise de coloração pessoal com IA', 'Analise sua estação e encontre as cores que combinam com você.'], 'ai-calorie-calculator': ['Calculadora de calorias com IA', 'Estime calorias e receba um resumo nutricional prático.'], 'ai-manseryeok': ['Análise de saju com IA', 'Explore uma leitura coreana de nascimento com relatório assistido por IA.'], 'ai-id-photo': ['Gerador de foto de documento com IA', 'Crie uma foto de documento limpa a partir de um retrato.'], 'ai-headshot': ['Gerador de retrato profissional com IA', 'Crie uma foto de perfil profissional usando um retrato.'], 'ai-pet-translator': ['Tradutor de animais com IA', 'Transforme a foto e as notas do seu pet em um relatório divertido.']
+  },
+  vi: {
+    'ai-personal-color': ['Phân tích màu cá nhân bằng AI', 'Phân tích mùa màu và tìm những màu hợp với phong cách của bạn.'], 'ai-calorie-calculator': ['Máy tính calo AI', 'Ước tính calo và nhận tóm tắt dinh dưỡng thiết thực.'], 'ai-manseryeok': ['Phân tích saju bằng AI', 'Khám phá lá số phong cách Hàn Quốc với báo cáo có AI hỗ trợ.'], 'ai-id-photo': ['Tạo ảnh thẻ bằng AI', 'Tạo ảnh thẻ gọn gàng từ một ảnh chân dung đã tải lên.'], 'ai-headshot': ['Tạo ảnh chân dung chuyên nghiệp bằng AI', 'Tạo ảnh hồ sơ chuyên nghiệp từ một ảnh chân dung.'], 'ai-pet-translator': ['Dịch ngôn ngữ thú cưng bằng AI', 'Biến ảnh và ghi chú hành vi của thú cưng thành báo cáo vui nhộn.']
+  }
+} as const;
+
+const localizedFpsTools = {
+  zh: {
+    'valorant-agent-picker': ['无畏契约特工推荐器', '根据你喜欢的位置和玩法找到特工建议。'], 'crosshair-generator': ['FPS 准星生成器', '创建并复制简洁的 FPS 游戏准星设置。'], 'fps-aim-sensitivity': ['FPS 灵敏度计算器', '换算并比较竞技 FPS 游戏的鼠标灵敏度。'], 'fps-aim-trainer': ['FPS 瞄准训练器', '直接在浏览器中练习反应速度和瞄准控制。'], 'fps-sensitivity-converter': ['FPS 灵敏度转换器', '在热门 FPS 游戏之间转换灵敏度。'], 'dpi-edpi-calculator': ['DPI 与 eDPI 计算器', '计算有效 DPI 并比较瞄准设置。'], 'fov-calculator': ['FOV 计算器', '比较游戏和显示器的视野设置。']
+  },
+  es: {
+    'valorant-agent-picker': ['Selector de agentes de Valorant', 'Encuentra un agente según tu rol y estilo de juego.'], 'crosshair-generator': ['Generador de miras FPS', 'Crea y copia una configuración de mira para tus juegos FPS.'], 'fps-aim-sensitivity': ['Calculadora de sensibilidad FPS', 'Convierte y compara sensibilidades de ratón para juegos FPS competitivos.'], 'fps-aim-trainer': ['Entrenador de puntería FPS', 'Practica la velocidad de reacción y el control de puntería en el navegador.'], 'fps-sensitivity-converter': ['Conversor de sensibilidad FPS', 'Convierte la sensibilidad entre juegos FPS populares.'], 'dpi-edpi-calculator': ['Calculadora de DPI y eDPI', 'Calcula el DPI efectivo y compara configuraciones de apuntado.'], 'fov-calculator': ['Calculadora de FOV', 'Compara el campo de visión del juego y el monitor.']
+  },
+  de: {
+    'valorant-agent-picker': ['Valorant-Agent-Empfehlung', 'Finde einen Valorant-Agenten passend zu Rolle und Spielstil.'], 'crosshair-generator': ['FPS-Fadenkreuz-Generator', 'Erstelle und kopiere ein klares Fadenkreuz-Setup für FPS-Spiele.'], 'fps-aim-sensitivity': ['FPS-Empfindlichkeitsrechner', 'Vergleiche Maus-Sensitivitäten für kompetitive FPS-Spiele.'], 'fps-aim-trainer': ['FPS-Zieltrainer', 'Trainiere Reaktionsgeschwindigkeit und Zielkontrolle direkt im Browser.'], 'fps-sensitivity-converter': ['FPS-Sensitivitätskonverter', 'Konvertiere Sensitivitäten zwischen beliebten FPS-Spielen.'], 'dpi-edpi-calculator': ['DPI- und eDPI-Rechner', 'Berechne die effektive DPI und vergleiche Zieleinstellungen.'], 'fov-calculator': ['FOV-Rechner', 'Vergleiche Sichtfeld-Einstellungen für Spiel und Monitor.']
+  },
+  fr: {
+    'valorant-agent-picker': ['Sélecteur d’agents Valorant', 'Trouve un agent selon ton rôle et ton style de jeu.'], 'crosshair-generator': ['Générateur de viseur FPS', 'Crée et copie un réglage de viseur pour tes jeux FPS.'], 'fps-aim-sensitivity': ['Calculateur de sensibilité FPS', 'Convertis et compare les sensibilités de souris pour les FPS compétitifs.'], 'fps-aim-trainer': ['Entraîneur de visée FPS', 'Entraîne ta réaction et ton contrôle de visée dans le navigateur.'], 'fps-sensitivity-converter': ['Convertisseur de sensibilité FPS', 'Convertis la sensibilité entre les jeux FPS populaires.'], 'dpi-edpi-calculator': ['Calculateur DPI et eDPI', 'Calcule le DPI effectif et compare les réglages de visée.'], 'fov-calculator': ['Calculateur de FOV', 'Compare le champ de vision du jeu et de l’écran.']
+  },
+  pt: {
+    'valorant-agent-picker': ['Recomendador de agentes Valorant', 'Encontre um agente com base na sua função e estilo de jogo.'], 'crosshair-generator': ['Gerador de mira FPS', 'Crie e copie uma configuração de mira para seus jogos FPS.'], 'fps-aim-sensitivity': ['Calculadora de sensibilidade FPS', 'Converta e compare sensibilidades de mouse para FPS competitivos.'], 'fps-aim-trainer': ['Treinador de mira FPS', 'Pratique velocidade de reação e controle de mira no navegador.'], 'fps-sensitivity-converter': ['Conversor de sensibilidade FPS', 'Converta a sensibilidade entre jogos FPS populares.'], 'dpi-edpi-calculator': ['Calculadora de DPI e eDPI', 'Calcule o DPI efetivo e compare configurações de mira.'], 'fov-calculator': ['Calculadora de FOV', 'Compare configurações de campo de visão do jogo e monitor.']
+  },
+  vi: {
+    'valorant-agent-picker': ['Gợi ý đặc vụ Valorant', 'Tìm đặc vụ dựa trên vai trò và phong cách chơi của bạn.'], 'crosshair-generator': ['Tạo tâm ngắm FPS', 'Tạo và sao chép thiết lập tâm ngắm cho game FPS.'], 'fps-aim-sensitivity': ['Tính độ nhạy FPS', 'Chuyển đổi và so sánh độ nhạy chuột cho FPS cạnh tranh.'], 'fps-aim-trainer': ['Luyện ngắm FPS', 'Luyện tốc độ phản ứng và kiểm soát ngắm ngay trên trình duyệt.'], 'fps-sensitivity-converter': ['Đổi độ nhạy FPS', 'Chuyển đổi độ nhạy giữa các game FPS phổ biến.'], 'dpi-edpi-calculator': ['Tính DPI và eDPI', 'Tính DPI hiệu dụng và so sánh thiết lập ngắm.'], 'fov-calculator': ['Tính FOV', 'So sánh thiết lập góc nhìn của game và màn hình.']
+  }
+} as const;
+
+const localizedSimpleTools = {
+  zh: {
+    'name-compatibility': ['姓名匹配', '用简单的匹配结果比较两个名字。'], 'nickname-generator': ['昵称生成器', '为游戏、直播和社交资料生成好记的昵称。'], 'name-meaning': ['姓名含义', '探索名字的含义和性格印象。'], 'random-picker': ['随机选择器', '从自定义列表中公平地选择一个项目。'], 'chat-random-picker': ['聊天随机抽选器', '从直播聊天列表中选择获胜者或参与者。'], 'lol-champion-recommender': ['英雄联盟英雄推荐', '为你的下一局游戏获取英雄建议。'], 'game-character-picker': ['游戏角色选择器', '为下一次挑战随机选择游戏角色。']
+  },
+  es: {
+    'name-compatibility': ['Compatibilidad de nombres', 'Compara dos nombres con una lectura sencilla de compatibilidad.'], 'nickname-generator': ['Generador de apodos', 'Genera apodos memorables para juegos, streams y perfiles sociales.'], 'name-meaning': ['Significado del nombre', 'Explora el significado y la personalidad asociada a un nombre.'], 'random-picker': ['Selector aleatorio', 'Elige un elemento de forma justa desde una lista personalizada.'], 'chat-random-picker': ['Selector aleatorio del chat', 'Elige un ganador o participante de una lista de chat en directo.'], 'lol-champion-recommender': ['Recomendador de campeones de LoL', 'Obtén un campeón recomendado para tu próxima partida.'], 'game-character-picker': ['Selector de personajes de juegos', 'Elige al azar un personaje para tu próximo desafío.']
+  },
+  de: {
+    'name-compatibility': ['Namenskompatibilität', 'Vergleiche zwei Namen mit einer einfachen Kompatibilitätsauswertung.'], 'nickname-generator': ['Spitznamen-Generator', 'Erstelle einprägsame Spitznamen für Spiele, Streams und Profile.'], 'name-meaning': ['Namensbedeutung', 'Entdecke die Bedeutung und den Charakter eines Namens.'], 'random-picker': ['Zufallsauswahl', 'Wähle fair ein Element aus einer eigenen Liste.'], 'chat-random-picker': ['Chat-Zufallsauswahl', 'Wähle einen Gewinner oder Teilnehmer aus einem Live-Chat.'], 'lol-champion-recommender': ['LoL-Champion-Empfehlung', 'Erhalte eine Champion-Empfehlung für dein nächstes Spiel.'], 'game-character-picker': ['Spielecharakter-Auswahl', 'Wähle zufällig einen Charakter für deine nächste Herausforderung.']
+  },
+  fr: {
+    'name-compatibility': ['Compatibilité des prénoms', 'Compare deux prénoms avec une lecture simple de compatibilité.'], 'nickname-generator': ['Générateur de pseudos', 'Génère des pseudos mémorables pour les jeux, streams et profils.'], 'name-meaning': ['Signification du prénom', 'Découvre la signification et le caractère associés à un prénom.'], 'random-picker': ['Sélecteur aléatoire', 'Choisis équitablement un élément dans une liste personnalisée.'], 'chat-random-picker': ['Sélecteur aléatoire du chat', 'Choisis un gagnant ou un participant dans un chat en direct.'], 'lol-champion-recommender': ['Recommandateur de champions LoL', 'Obtiens une suggestion de champion pour ta prochaine partie.'], 'game-character-picker': ['Sélecteur de personnage de jeu', 'Choisis au hasard un personnage pour ton prochain défi.']
+  },
+  pt: {
+    'name-compatibility': ['Compatibilidade de nomes', 'Compare dois nomes com uma leitura simples de compatibilidade.'], 'nickname-generator': ['Gerador de apelidos', 'Gere apelidos memoráveis para jogos, streams e perfis sociais.'], 'name-meaning': ['Significado do nome', 'Explore o significado e o perfil associado a um nome.'], 'random-picker': ['Seletor aleatório', 'Escolha um item de forma justa em uma lista personalizada.'], 'chat-random-picker': ['Seletor aleatório do chat', 'Escolha um vencedor ou participante de uma lista de chat ao vivo.'], 'lol-champion-recommender': ['Recomendador de campeões de LoL', 'Receba uma sugestão de campeão para sua próxima partida.'], 'game-character-picker': ['Seletor de personagem de jogo', 'Escolha aleatoriamente um personagem para o próximo desafio.']
+  },
+  vi: {
+    'name-compatibility': ['Độ hợp tên', 'So sánh hai cái tên bằng kết quả tương hợp đơn giản.'], 'nickname-generator': ['Tạo biệt danh', 'Tạo biệt danh dễ nhớ cho game, stream và hồ sơ mạng xã hội.'], 'name-meaning': ['Ý nghĩa tên', 'Khám phá ý nghĩa và nét tính cách của một cái tên.'], 'random-picker': ['Chọn ngẫu nhiên', 'Chọn công bằng một mục từ danh sách tùy chỉnh.'], 'chat-random-picker': ['Bốc thăm ngẫu nhiên trong chat', 'Chọn người thắng hoặc người tham gia từ danh sách chat trực tiếp.'], 'lol-champion-recommender': ['Gợi ý tướng Liên Minh', 'Nhận gợi ý tướng cho trận đấu tiếp theo.'], 'game-character-picker': ['Chọn nhân vật game', 'Chọn ngẫu nhiên một nhân vật cho thử thách tiếp theo.']
+  },
+  it: {
+    'name-compatibility': ['Compatibilità dei nomi', 'Confronta due nomi con una semplice lettura della compatibilità.'], 'nickname-generator': ['Generatore di soprannomi', 'Crea soprannomi memorabili per giochi, stream e profili social.'], 'name-meaning': ['Significato del nome', 'Scopri il significato e il carattere associati a un nome.'], 'random-picker': ['Selettore casuale', 'Scegli in modo equo un elemento da una lista personalizzata.'], 'chat-random-picker': ['Estrazione casuale dalla chat', 'Scegli un vincitore o partecipante da una chat dal vivo.'], 'lol-champion-recommender': ['Consigliere campioni LoL', 'Ricevi un suggerimento per il tuo prossimo campione.'], 'game-character-picker': ['Selettore personaggio', 'Scegli casualmente un personaggio per la prossima sfida.']
+  },
+  nl: {
+    'name-compatibility': ['Naamcompatibiliteit', 'Vergelijk twee namen met een eenvoudige compatibiliteitslezing.'], 'nickname-generator': ['Bijnaamgenerator', 'Genereer memorabele bijnamen voor games, streams en profielen.'], 'name-meaning': ['Betekenis van een naam', 'Ontdek de betekenis en het karakter van een naam.'], 'random-picker': ['Willekeurige keuze', 'Kies eerlijk één item uit een aangepaste lijst.'], 'chat-random-picker': ['Willekeurige chatkeuze', 'Kies een winnaar of deelnemer uit een livechat.'], 'lol-champion-recommender': ['LoL-kampioensadvies', 'Krijg een kampioenssuggestie voor je volgende wedstrijd.'], 'game-character-picker': ['Gamepersonagekiezer', 'Kies willekeurig een personage voor je volgende uitdaging.']
+  },
+  ru: {
+    'name-compatibility': ['Совместимость имён', 'Сравните два имени с помощью простой оценки совместимости.'], 'nickname-generator': ['Генератор никнеймов', 'Создавайте запоминающиеся ники для игр, стримов и профилей.'], 'name-meaning': ['Значение имени', 'Узнайте значение и характер имени.'], 'random-picker': ['Случайный выбор', 'Честно выберите один пункт из собственного списка.'], 'chat-random-picker': ['Случайный выбор в чате', 'Выберите победителя или участника из списка живого чата.'], 'lol-champion-recommender': ['Советник по чемпионам LoL', 'Получите совет по чемпиону для следующей игры.'], 'game-character-picker': ['Выбор игрового персонажа', 'Случайно выберите персонажа для следующего испытания.']
+  },
+  ar: {
+    'name-compatibility': ['توافق الأسماء', 'قارن بين اسمين من خلال قراءة بسيطة للتوافق.'], 'nickname-generator': ['مولد الألقاب', 'أنشئ ألقاباً سهلة التذكر للألعاب والبث والملفات الشخصية.'], 'name-meaning': ['معنى الاسم', 'اكتشف معنى الاسم والانطباع المرتبط بشخصيته.'], 'random-picker': ['اختيار عشوائي', 'اختر عن عدل عنصراً من قائمة مخصصة.'], 'chat-random-picker': ['اختيار عشوائي من الدردشة', 'اختر فائزاً أو مشاركاً من قائمة دردشة مباشرة.'], 'lol-champion-recommender': ['اقتراح أبطال League of Legends', 'احصل على اقتراح بطل لمباراتك القادمة.'], 'game-character-picker': ['اختيار شخصية لعبة', 'اختر شخصية عشوائياً لتحديك القادم.']
+  },
+  hi: {
+    'name-compatibility': ['नाम अनुकूलता', 'सरल अनुकूलता परिणाम के साथ दो नामों की तुलना करें।'], 'nickname-generator': ['निकनेम जनरेटर', 'गेम, स्ट्रीम और सोशल प्रोफ़ाइल के लिए यादगार निकनेम बनाएं।'], 'name-meaning': ['नाम का अर्थ', 'नाम का अर्थ और उससे जुड़े व्यक्तित्व को जानें।'], 'random-picker': ['रैंडम पिकर', 'कस्टम सूची से निष्पक्ष रूप से एक आइटम चुनें।'], 'chat-random-picker': ['चैट रैंडम पिकर', 'लाइव चैट सूची से विजेता या प्रतिभागी चुनें।'], 'lol-champion-recommender': ['LoL चैंपियन सुझाव', 'अगले गेम के लिए चैंपियन सुझाव पाएं।'], 'game-character-picker': ['गेम कैरेक्टर पिकर', 'अगली चुनौती के लिए यादृच्छिक गेम कैरेक्टर चुनें।']
+  },
+  tr: {
+    'name-compatibility': ['İsim Uyumu', 'İki ismi basit bir uyum yorumuyla karşılaştırın.'], 'nickname-generator': ['Takma Ad Üretici', 'Oyun, yayın ve sosyal profiller için akılda kalıcı takma adlar üretin.'], 'name-meaning': ['İsim Anlamı', 'Bir ismin anlamını ve karakter çağrışımını keşfedin.'], 'random-picker': ['Rastgele Seçici', 'Özel bir listeden adil biçimde bir öğe seçin.'], 'chat-random-picker': ['Sohbet Rastgele Seçici', 'Canlı sohbet listesinden kazanan veya katılımcı seçin.'], 'lol-champion-recommender': ['LoL Şampiyon Önerisi', 'Sonraki oyununuz için şampiyon önerisi alın.'], 'game-character-picker': ['Oyun Karakteri Seçici', 'Sonraki meydan okumanız için rastgele karakter seçin.']
+  },
+  pl: {
+    'name-compatibility': ['Zgodność imion', 'Porównaj dwa imiona za pomocą prostego odczytu zgodności.'], 'nickname-generator': ['Generator pseudonimów', 'Twórz zapadające w pamięć pseudonimy do gier, streamów i profili.'], 'name-meaning': ['Znaczenie imienia', 'Poznaj znaczenie i charakter związany z imieniem.'], 'random-picker': ['Losowanie', 'Uczciwie wybierz element z własnej listy.'], 'chat-random-picker': ['Losowanie z czatu', 'Wybierz zwycięzcę lub uczestnika z listy czatu na żywo.'], 'lol-champion-recommender': ['Rekomendacja bohatera LoL', 'Otrzymaj sugestię bohatera na następną grę.'], 'game-character-picker': ['Wybór postaci z gry', 'Wylosuj postać do następnego wyzwania.']
+  },
+  th: {
+    'name-compatibility': ['ความเข้ากันได้ของชื่อ', 'เปรียบเทียบชื่อสองชื่อด้วยผลวิเคราะห์ความเข้ากันได้แบบง่าย'], 'nickname-generator': ['เครื่องสร้างชื่อเล่น', 'สร้างชื่อเล่นที่จำง่ายสำหรับเกม สตรีม และโปรไฟล์โซเชียล'], 'name-meaning': ['ความหมายของชื่อ', 'สำรวจความหมายและบุคลิกที่เชื่อมโยงกับชื่อ'], 'random-picker': ['ตัวสุ่มเลือก', 'เลือกหนึ่งรายการจากรายการที่กำหนดอย่างยุติธรรม'], 'chat-random-picker': ['สุ่มเลือกจากแชต', 'เลือกผู้ชนะหรือผู้เข้าร่วมจากรายการแชตสด'], 'lol-champion-recommender': ['แนะนำแชมเปี้ยน LoL', 'รับคำแนะนำแชมเปี้ยนสำหรับเกมถัดไป'], 'game-character-picker': ['ตัวเลือกตัวละครเกม', 'สุ่มเลือกตัวละครสำหรับความท้าทายครั้งต่อไป']
+  },
+  sv: {
+    'name-compatibility': ['Namnkompatibilitet', 'Jämför två namn med en enkel kompatibilitetsanalys.'], 'nickname-generator': ['Smeknamnsgenerator', 'Skapa minnesvärda smeknamn för spel, streams och profiler.'], 'name-meaning': ['Namnbetydelse', 'Utforska betydelsen och karaktären hos ett namn.'], 'random-picker': ['Slumpväljare', 'Välj ett objekt rättvist från en egen lista.'], 'chat-random-picker': ['Slumpväljare för chatt', 'Välj en vinnare eller deltagare från en livechatt.'], 'lol-champion-recommender': ['LoL-mästarrådgivare', 'Få ett mästarförslag inför nästa match.'], 'game-character-picker': ['Spelkaraktärsväljare', 'Välj en spelkaraktär slumpmässigt inför nästa utmaning.']
+  },
+  uk: {
+    'name-compatibility': ['Сумісність імен', 'Порівняйте два імені за допомогою простої оцінки сумісності.'], 'nickname-generator': ['Генератор нікнеймів', 'Створюйте пам’ятні ніки для ігор, стримів і профілів.'], 'name-meaning': ['Значення імені', 'Дізнайтеся значення та характер, пов’язані з іменем.'], 'random-picker': ['Випадковий вибір', 'Чесно виберіть один пункт із власного списку.'], 'chat-random-picker': ['Випадковий вибір у чаті', 'Оберіть переможця або учасника зі списку прямого чату.'], 'lol-champion-recommender': ['Порадник чемпіонів LoL', 'Отримайте пораду щодо чемпіона для наступної гри.'], 'game-character-picker': ['Вибір ігрового персонажа', 'Випадково оберіть персонажа для наступного випробування.']
+  },
+  ca: {
+    'name-compatibility': ['Compatibilitat de noms', 'Compara dos noms amb una lectura senzilla de compatibilitat.'], 'nickname-generator': ['Generador de sobrenoms', 'Crea sobrenoms memorables per a jocs, streams i perfils.'], 'name-meaning': ['Significat del nom', 'Descobreix el significat i el caràcter associats a un nom.'], 'random-picker': ['Selector aleatori', 'Tria un element de manera justa d’una llista personalitzada.'], 'chat-random-picker': ['Selector aleatori del xat', 'Tria un guanyador o participant d’un xat en directe.'], 'lol-champion-recommender': ['Recomanador de campions de LoL', 'Rep una recomanació per a la partida següent.'], 'game-character-picker': ['Selector de personatges', 'Tria un personatge a l’atzar per al repte següent.']
+  },
+  mk: {
+    'name-compatibility': ['Компатибилност на имиња', 'Споредете две имиња со едноставна проценка на компатибилноста.'], 'nickname-generator': ['Генератор на прекари', 'Создајте прекари за игри, стримови и профили.'], 'name-meaning': ['Значење на името', 'Откријте го значењето и карактерот на името.'], 'random-picker': ['Случаен избор', 'Фер изберете ставка од сопствена листа.'], 'chat-random-picker': ['Случаен избор од разговор', 'Изберете победник или учесник од разговор во живо.'], 'lol-champion-recommender': ['Препорака за LoL шампион', 'Добијте предлог шампион за следната игра.'], 'game-character-picker': ['Избор на лик од игра', 'Случајно изберете лик за следниот предизвик.']
+  },
+  tl: {
+    'name-compatibility': ['Pagkakatugma ng pangalan', 'Ihambing ang dalawang pangalan gamit ang simpleng resulta.'], 'nickname-generator': ['Tagagawa ng palayaw', 'Gumawa ng mga palayaw para sa laro, stream, at profile.'], 'name-meaning': ['Kahulugan ng pangalan', 'Alamin ang kahulugan at karakter ng isang pangalan.'], 'random-picker': ['Random picker', 'Pumili nang patas ng isang item mula sa listahan.'], 'chat-random-picker': ['Random picker sa chat', 'Pumili ng panalo o kalahok mula sa live chat.'], 'lol-champion-recommender': ['Rekomendasyon ng LoL champion', 'Tumanggap ng mungkahing champion para sa susunod na laro.'], 'game-character-picker': ['Game character picker', 'Random na pumili ng character para sa susunod na hamon.']
+  }
+} as const;
+
+const localizedImageTools = {
+  zh: { 'image-compressor': ['图片压缩器', '在保持清晰度的同时压缩图片文件。'], 'image-resizer': ['图片尺寸调整器', '快速调整图片尺寸并下载。'], 'image-blur': ['图片模糊工具', '为图片添加可调节的模糊效果。'], 'image-cropper': ['图片裁剪器', '裁剪图片并导出适合分享的尺寸。'] },
+  es: { 'image-compressor': ['Compresor de imágenes', 'Comprime imágenes manteniendo una buena calidad visual.'], 'image-resizer': ['Redimensionador de imágenes', 'Cambia el tamaño de tus imágenes rápidamente y descárgalas.'], 'image-blur': ['Desenfoque de imágenes', 'Añade un efecto de desenfoque ajustable a tus imágenes.'], 'image-cropper': ['Recortador de imágenes', 'Recorta imágenes y expórtalas con el tamaño adecuado.'] },
+  de: { 'image-compressor': ['Bildkompressor', 'Komprimiere Bilder bei guter visueller Qualität.'], 'image-resizer': ['Bildgrößenänderung', 'Ändere Bildgrößen schnell und lade sie herunter.'], 'image-blur': ['Bild-Weichzeichner', 'Füge Bildern einen anpassbaren Unschärfeeffekt hinzu.'], 'image-cropper': ['Bildzuschneider', 'Schneide Bilder zu und exportiere passende Größen.'] },
+  fr: { 'image-compressor': ['Compresseur d’images', 'Compresse les images tout en conservant une bonne qualité visuelle.'], 'image-resizer': ['Redimensionneur d’images', 'Redimensionne rapidement tes images et télécharge-les.'], 'image-blur': ['Flou d’image', 'Ajoute un effet de flou réglable à tes images.'], 'image-cropper': ['Recadrage d’image', 'Recadre les images et exporte une taille adaptée au partage.'] },
+  pt: { 'image-compressor': ['Compressor de imagens', 'Comprima imagens mantendo uma boa qualidade visual.'], 'image-resizer': ['Redimensionador de imagens', 'Redimensione imagens rapidamente e faça o download.'], 'image-blur': ['Desfoque de imagens', 'Adicione um efeito de desfoque ajustável às imagens.'], 'image-cropper': ['Cortador de imagens', 'Corte imagens e exporte tamanhos ideais para compartilhar.'] },
+  vi: { 'image-compressor': ['Nén ảnh', 'Nén ảnh mà vẫn giữ chất lượng hiển thị tốt.'], 'image-resizer': ['Đổi kích thước ảnh', 'Đổi kích thước ảnh nhanh chóng rồi tải xuống.'], 'image-blur': ['Làm mờ ảnh', 'Thêm hiệu ứng làm mờ có thể điều chỉnh cho ảnh.'], 'image-cropper': ['Cắt ảnh', 'Cắt ảnh và xuất kích thước phù hợp để chia sẻ.'] }
+} as const;
+
+const localizedCalculatorTools = {
+  zh: { 'unit-converter': ['单位换算器', '在常用单位之间快速转换数值。'], 'bmi-calculator': ['BMI 计算器', '根据身高和体重计算身体质量指数。'], 'percentage-calculator': ['百分比计算器', '轻松计算百分比、变化量和比例。'], 'color-converter': ['颜色转换器', '在 HEX、RGB 和 HSL 之间转换颜色。'], 'time-zone-converter': ['时区转换器', '比较世界各地的时间并安排跨时区计划。'], 'tip-calculator': ['小费计算器', '计算小费并在多人之间分摊账单。'], 'age-calculator': ['年龄计算器', '根据生日计算准确年龄和日期差。'] },
+  es: { 'unit-converter': ['Conversor de unidades', 'Convierte valores rápidamente entre unidades comunes.'], 'bmi-calculator': ['Calculadora de IMC', 'Calcula el índice de masa corporal con tu altura y peso.'], 'percentage-calculator': ['Calculadora de porcentajes', 'Calcula porcentajes, cambios y proporciones fácilmente.'], 'color-converter': ['Conversor de colores', 'Convierte colores entre HEX, RGB y HSL.'], 'time-zone-converter': ['Conversor de zonas horarias', 'Compara horas del mundo y planifica entre zonas horarias.'], 'tip-calculator': ['Calculadora de propinas', 'Calcula la propina y divide la cuenta entre varias personas.'], 'age-calculator': ['Calculadora de edad', 'Calcula la edad exacta y la diferencia entre fechas.'] },
+  de: { 'unit-converter': ['Einheitenumrechner', 'Konvertiere Werte schnell zwischen gängigen Einheiten.'], 'bmi-calculator': ['BMI-Rechner', 'Berechne den Body-Mass-Index aus Größe und Gewicht.'], 'percentage-calculator': ['Prozentrechner', 'Berechne Prozente, Änderungen und Verhältnisse einfach.'], 'color-converter': ['Farbkonverter', 'Konvertiere Farben zwischen HEX, RGB und HSL.'], 'time-zone-converter': ['Zeitzonenrechner', 'Vergleiche Weltzeiten und plane über Zeitzonen hinweg.'], 'tip-calculator': ['Trinkgeldrechner', 'Berechne Trinkgeld und teile die Rechnung auf.'], 'age-calculator': ['Altersrechner', 'Berechne genaues Alter und Datumsunterschiede.'] },
+  fr: { 'unit-converter': ['Convertisseur d’unités', 'Convertis rapidement des valeurs entre unités courantes.'], 'bmi-calculator': ['Calculateur d’IMC', 'Calcule l’indice de masse corporelle avec ta taille et ton poids.'], 'percentage-calculator': ['Calculateur de pourcentages', 'Calcule facilement pourcentages, variations et proportions.'], 'color-converter': ['Convertisseur de couleurs', 'Convertis les couleurs entre HEX, RGB et HSL.'], 'time-zone-converter': ['Convertisseur de fuseaux horaires', 'Compare les heures du monde et planifie entre fuseaux.'], 'tip-calculator': ['Calculateur de pourboire', 'Calcule le pourboire et partage l’addition.'], 'age-calculator': ['Calculateur d’âge', 'Calcule l’âge exact et l’écart entre deux dates.'] },
+  pt: { 'unit-converter': ['Conversor de unidades', 'Converta valores rapidamente entre unidades comuns.'], 'bmi-calculator': ['Calculadora de IMC', 'Calcule o índice de massa corporal usando altura e peso.'], 'percentage-calculator': ['Calculadora de porcentagens', 'Calcule porcentagens, variações e proporções facilmente.'], 'color-converter': ['Conversor de cores', 'Converta cores entre HEX, RGB e HSL.'], 'time-zone-converter': ['Conversor de fusos horários', 'Compare horários do mundo e planeje entre fusos.'], 'tip-calculator': ['Calculadora de gorjetas', 'Calcule a gorjeta e divida a conta entre pessoas.'], 'age-calculator': ['Calculadora de idade', 'Calcule a idade exata e a diferença entre datas.'] },
+  vi: { 'unit-converter': ['Đổi đơn vị', 'Chuyển đổi nhanh các giá trị giữa những đơn vị thông dụng.'], 'bmi-calculator': ['Tính BMI', 'Tính chỉ số khối cơ thể dựa trên chiều cao và cân nặng.'], 'percentage-calculator': ['Tính phần trăm', 'Dễ dàng tính phần trăm, mức thay đổi và tỷ lệ.'], 'color-converter': ['Đổi màu', 'Chuyển đổi màu giữa HEX, RGB và HSL.'], 'time-zone-converter': ['Đổi múi giờ', 'So sánh giờ thế giới và lập kế hoạch giữa các múi giờ.'], 'tip-calculator': ['Tính tiền tip', 'Tính tiền tip và chia hóa đơn cho nhiều người.'], 'age-calculator': ['Tính tuổi', 'Tính tuổi chính xác và khoảng cách giữa các ngày.'] }
+  , it: { 'unit-converter': ['Convertitore di unità', 'Converti rapidamente i valori tra le unità più comuni.'], 'bmi-calculator': ['Calcolatore BMI', 'Calcola l’indice di massa corporea usando altezza e peso.'], 'percentage-calculator': ['Calcolatore percentuale', 'Calcola facilmente percentuali, variazioni e proporzioni.'], 'color-converter': ['Convertitore di colori', 'Converti i colori tra HEX, RGB e HSL.'], 'time-zone-converter': ['Convertitore di fusi orari', 'Confronta gli orari nel mondo e pianifica tra i fusi.'], 'tip-calculator': ['Calcolatore della mancia', 'Calcola la mancia e dividi il conto.'], 'age-calculator': ['Calcolatore età', 'Calcola l’età esatta e la differenza tra date.'] }
+  , nl: { 'unit-converter': ['Eenhedenconverter', 'Zet waarden snel om tussen veelgebruikte eenheden.'], 'bmi-calculator': ['BMI-calculator', 'Bereken je body mass index met lengte en gewicht.'], 'percentage-calculator': ['Percentagecalculator', 'Bereken eenvoudig percentages, veranderingen en verhoudingen.'], 'color-converter': ['Kleurconverter', 'Zet kleuren om tussen HEX, RGB en HSL.'], 'time-zone-converter': ['Tijdzoneconverter', 'Vergelijk wereldtijden en plan over tijdzones heen.'], 'tip-calculator': ['Fooi-calculator', 'Bereken fooi en deel de rekening.'], 'age-calculator': ['Leeftijdscalculator', 'Bereken exacte leeftijd en datumverschillen.'] }
+  , ru: { 'unit-converter': ['Конвертер единиц', 'Быстро переводите значения между распространёнными единицами.'], 'bmi-calculator': ['Калькулятор ИМТ', 'Рассчитайте индекс массы тела по росту и весу.'], 'percentage-calculator': ['Калькулятор процентов', 'Легко считайте проценты, изменения и соотношения.'], 'color-converter': ['Конвертер цветов', 'Переводите цвета между HEX, RGB и HSL.'], 'time-zone-converter': ['Конвертер часовых поясов', 'Сравнивайте мировое время и планируйте встречи в разных поясах.'], 'tip-calculator': ['Калькулятор чаевых', 'Рассчитайте чаевые и разделите счёт.'], 'age-calculator': ['Калькулятор возраста', 'Рассчитайте точный возраст и разницу между датами.'] }
+  , ar: { 'unit-converter': ['محول الوحدات', 'حوّل القيم بسرعة بين الوحدات الشائعة.'], 'bmi-calculator': ['حاسبة مؤشر كتلة الجسم', 'احسب مؤشر كتلة الجسم باستخدام الطول والوزن.'], 'percentage-calculator': ['حاسبة النسب المئوية', 'احسب النسب والتغييرات والتناسب بسهولة.'], 'color-converter': ['محول الألوان', 'حوّل الألوان بين HEX وRGB وHSL.'], 'time-zone-converter': ['محول المناطق الزمنية', 'قارن الأوقات حول العالم وخطط بين المناطق الزمنية.'], 'tip-calculator': ['حاسبة البقشيش', 'احسب البقشيش واقسم الفاتورة بين الأشخاص.'], 'age-calculator': ['حاسبة العمر', 'احسب العمر بدقة والفرق بين التواريخ.'] }
+} as const;
+
 export function getStaticPaths() {
-  const rolloutLocales = ['zh', 'es', 'de', 'fr', 'pt', 'vi', 'id'];
+  const rolloutLocales = seoLocaleCodes.filter((locale) => locale !== 'ko' && locale !== 'en' && locale !== 'ja');
   const toolSlugs = ['ai-personal-color', 'ai-calorie-calculator', 'ai-manseryeok', 'ai-id-photo', 'ai-headshot', 'ai-pet-translator', 'valorant-agent-picker', 'crosshair-generator', 'fps-aim-sensitivity', 'fps-aim-trainer', 'fps-sensitivity-converter', 'dpi-edpi-calculator', 'fov-calculator', 'name-compatibility', 'nickname-generator', 'name-meaning', 'random-picker', 'chat-random-picker', 'lol-champion-recommender', 'game-character-picker'];
   return rolloutLocales.flatMap((locale) => toolSlugs.map((tool) => ({ params: { locale, tool }, props: { locale, tool } })));
 }
 
 const { locale, tool } = Astro.props;
-const toolCopy = tools[tool as keyof typeof tools];
-const localizedCopy = localizedLabels[locale as keyof typeof localizedLabels];
+const baseToolCopy = tools[tool as keyof typeof tools];
+const toolCopy = localizedAiTools[locale as keyof typeof localizedAiTools]?.[tool as keyof typeof localizedAiTools[keyof typeof localizedAiTools]]
+  ?? localizedFpsTools[locale as keyof typeof localizedFpsTools]?.[tool as keyof typeof localizedFpsTools[keyof typeof localizedFpsTools]]
+  ?? localizedSimpleTools[locale as keyof typeof localizedSimpleTools]?.[tool as keyof typeof localizedSimpleTools[keyof typeof localizedSimpleTools]]
+  ?? localizedImageTools[locale as keyof typeof localizedImageTools]?.[tool as keyof typeof localizedImageTools[keyof typeof localizedImageTools]]
+  ?? localizedCalculatorTools[locale as keyof typeof localizedCalculatorTools]?.[tool as keyof typeof localizedCalculatorTools[keyof typeof localizedCalculatorTools]]
+  ?? baseToolCopy;
+const hasLocalizedToolCopy = toolCopy !== baseToolCopy;
+const localizedCopy = localizedLabels[locale as keyof typeof localizedLabels] ?? ['ManyTool Tools', 'Explore AI tools, games, and practical utilities.', 'Start using', 'AI Image Generator'];
 const canonicalPath = `/${tool}`;
 ---
 
@@ -54,10 +223,10 @@ const canonicalPath = `/${tool}`;
     <section class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
       <p class="text-xs font-bold uppercase tracking-[0.2em] text-cyan-600">ManyTool · {localizedCopy[0]}</p>
       <h1 class="mt-3 text-3xl font-black tracking-tight text-slate-900">{toolCopy[0]}</h1>
-      <p class="mt-3 max-w-2xl text-sm leading-7 text-slate-600">{localizedCopy[1]} {toolCopy[1]}</p>
+      <p class="mt-3 max-w-2xl text-sm leading-7 text-slate-600">{hasLocalizedToolCopy ? toolCopy[1] : `${localizedCopy[1]} ${toolCopy[1]}`}</p>
       <div class="mt-6 flex flex-wrap gap-3">
-        <a href={canonicalPath} class="rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white hover:bg-slate-800">Start tool</a>
-        <a href={`/${locale}/ai-image-generator`} class="rounded-full border border-slate-300 px-5 py-3 text-sm font-bold text-slate-700 hover:border-slate-900">AI Image Generator</a>
+        <a href={canonicalPath} class="rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white hover:bg-slate-800">{localizedCopy[2]}</a>
+        <a href={`/${locale}/ai-image-generator`} class="rounded-full border border-slate-300 px-5 py-3 text-sm font-bold text-slate-700 hover:border-slate-900">{localizedCopy[3]}</a>
       </div>
     </section>
     <section class="mt-6 grid gap-4 sm:grid-cols-3">

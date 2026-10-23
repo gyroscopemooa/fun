@@ -1,0 +1,33 @@
+---
+import Footer from '../../components/Footer.astro';
+import Header from '../../components/Header.astro';
+import Layout from '../../layouts/Layout.astro';
+import { seoLocaleCodes } from '../../lib/i18n';
+const copy = {
+  zh: ['随机选择器', '输入列表，每行一个项目，然后随机选择一个。', '项目列表', '例如：披萨\n寿司\n汉堡', '随机选择', '请至少输入一个项目。'],
+  es: ['Selector aleatorio', 'Escribe un elemento por línea y elige uno al azar.', 'Lista de elementos', 'Ejemplo: pizza\nsushi\nhamburguesa', 'Elegir al azar', 'Escribe al menos un elemento.'],
+  de: ['Zufallsauswahl', 'Gib pro Zeile ein Element ein und wähle eines zufällig aus.', 'Elementliste', 'Beispiel: Pizza\nSushi\nBurger', 'Zufällig wählen', 'Gib mindestens ein Element ein.'],
+  fr: ['Sélecteur aléatoire', 'Saisissez un élément par ligne et choisissez-en un au hasard.', 'Liste des éléments', 'Exemple : pizza\nsushi\nburger', 'Choisir au hasard', 'Saisissez au moins un élément.'],
+  pt: ['Sorteador aleatório', 'Digite um item por linha e escolha um aleatoriamente.', 'Lista de itens', 'Exemplo: pizza\nsushi\nhambúrguer', 'Escolher aleatoriamente', 'Digite pelo menos um item.'],
+  vi: ['Bộ chọn ngẫu nhiên', 'Nhập mỗi mục một dòng rồi chọn ngẫu nhiên một mục.', 'Danh sách mục', 'Ví dụ: pizza\nsushi\nburger', 'Chọn ngẫu nhiên', 'Hãy nhập ít nhất một mục.'],
+  id: ['Pemilih acak', 'Masukkan satu item per baris lalu pilih secara acak.', 'Daftar item', 'Contoh: pizza\nsushi\nburger', 'Pilih acak', 'Masukkan setidaknya satu item.'],
+  it: ['Selettore casuale', 'Inserisci un elemento per riga e scegline uno a caso.', 'Elenco elementi', 'Esempio: pizza\nsushi\nhamburger', 'Scegli a caso', 'Inserisci almeno un elemento.'],
+  nl: ['Willekeurige keuze', 'Voer één item per regel in en kies er willekeurig één.', 'Lijst met items', 'Voorbeeld: pizza\nsushi\nburger', 'Willekeurig kiezen', 'Voer minstens één item in.'],
+  ru: ['Случайный выбор', 'Введите по одному пункту в строке и выберите случайный.', 'Список пунктов', 'Пример: пицца\nсуши\nбургер', 'Выбрать случайно', 'Введите хотя бы один пункт.'],
+  ar: ['اختيار عشوائي', 'أدخل عنصراً في كل سطر واختر واحداً عشوائياً.', 'قائمة العناصر', 'مثال: بيتزا\n寿司\nبرغر', 'اختيار عشوائي', 'أدخل عنصراً واحداً على الأقل.'],
+  hi: ['रैंडम पिकर', 'हर पंक्ति में एक आइटम लिखें और एक को रैंडम चुनें।', 'आइटम सूची', 'उदाहरण: पिज़्ज़ा\nसुशी\nबर्गर', 'रैंडम चुनें', 'कम से कम एक आइटम लिखें।'],
+  tr: ['Rastgele seçici', 'Her satıra bir öğe yazın ve birini rastgele seçin.', 'Öğe listesi', 'Örnek: pizza\nsushi\nburger', 'Rastgele seç', 'En az bir öğe girin.'],
+  pl: ['Losowanie', 'Wpisz jeden element w wierszu i wylosuj jeden.', 'Lista elementów', 'Przykład: pizza\nsushi\nburger', 'Losuj', 'Wpisz co najmniej jeden element.'],
+  th: ['ตัวสุ่มเลือก', 'ป้อนหนึ่งรายการต่อบรรทัดแล้วสุ่มเลือกหนึ่งรายการ', 'รายการ', 'ตัวอย่าง: พิซซ่า\nซูชิ\nเบอร์เกอร์', 'สุ่มเลือก', 'กรุณาป้อนอย่างน้อยหนึ่งรายการ'],
+  sv: ['Slumpväljare', 'Skriv ett objekt per rad och välj ett slumpmässigt.', 'Objektlista', 'Exempel: pizza\nsushi\nburgare', 'Välj slumpmässigt', 'Skriv minst ett objekt.'],
+  uk: ['Випадковий вибір', 'Введіть по одному пункту в рядку та оберіть випадковий.', 'Список пунктів', 'Приклад: піца\nсуші\nбургер', 'Обрати випадково', 'Введіть хоча б один пункт.'],
+  en: ['Random picker', 'Enter one item per line and choose one at random.', 'Item list', 'Example: pizza\nsushi\nburger', 'Pick randomly', 'Enter at least one item.']
+};
+export function getStaticPaths() { return seoLocaleCodes.filter((locale) => locale !== 'ko').map((locale) => ({ params: { locale }, props: { locale } })); }
+const { locale } = Astro.props; const text = copy[locale as keyof typeof copy] ?? copy.en;
+---
+<Layout title={`${text[0]} | ManyTool`} description={text[1]} keywords={`${text[0]}, random picker, ManyTool`}><Header /><main class="mx-auto max-w-4xl px-4 py-8"><section class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm sm:p-8"><h1 class="text-3xl font-black text-slate-950">{text[0]}</h1><p class="mt-3 text-sm leading-7 text-slate-600">{text[1]}</p><label class="mt-6 block text-sm font-bold text-slate-800">{text[2]}<textarea id="items" rows="7" class="mt-2 w-full rounded-xl border border-slate-300 p-4" placeholder={text[3]}></textarea></label><button id="pick" class="mt-4 rounded-xl bg-slate-950 px-5 py-3 text-sm font-bold text-white">{text[4]}</button><p id="message" class="mt-4 min-h-6 text-sm text-rose-600"></p><div id="result" class="mt-5 hidden rounded-2xl bg-cyan-50 p-8 text-center text-3xl font-black text-cyan-900"></div></section></main><Footer /></Layout>
+<script is:inline define:vars={{ text }}>
+  const items = document.querySelector('#items'); const pick = document.querySelector('#pick'); const result = document.querySelector('#result'); const message = document.querySelector('#message');
+  pick.addEventListener('click', () => { const list = items.value.split('\n').map((item) => item.trim()).filter(Boolean); if (!list.length) { message.textContent = text[5]; result.classList.add('hidden'); return; } message.textContent = ''; result.textContent = list[Math.floor(Math.random() * list.length)]; result.classList.remove('hidden'); });
+</script>

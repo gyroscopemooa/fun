@@ -2,6 +2,7 @@
 import Footer from '../../components/Footer.astro';
 import Header from '../../components/Header.astro';
 import Layout from '../../layouts/Layout.astro';
+import { seoLocaleCodes } from '../../lib/i18n';
 
 const copy = {
   zh: ['ManyTool 在线工具', 'AI 工具、游戏工具和实用网页工具。'],
@@ -10,15 +11,35 @@ const copy = {
   fr: ['Outils en ligne ManyTool', 'Outils IA, jeux et utilitaires web pratiques.'],
   pt: ['Ferramentas online ManyTool', 'Ferramentas de IA, jogos e utilidades web.'],
   vi: ['Công cụ trực tuyến ManyTool', 'Công cụ AI, trò chơi và tiện ích web.'],
-  id: ['Alat online ManyTool', 'Alat AI, permainan, dan utilitas web.']
+  id: ['Alat online ManyTool', 'Alat AI, permainan, dan utilitas web.'],
+  it: ['Strumenti online ManyTool', 'Strumenti IA, giochi e utilità web pratiche.'],
+  nl: ['ManyTool online tools', 'AI-tools, games en praktische webhulpmiddelen.'],
+  ru: ['Онлайн-инструменты ManyTool', 'Инструменты ИИ, игры и полезные веб-сервисы.'],
+  ar: ['أدوات ManyTool عبر الإنترنت', 'أدوات ذكاء اصطناعي وألعاب وأدوات ويب مفيدة.'],
+  hi: ['ManyTool ऑनलाइन टूल', 'AI टूल, गेम और उपयोगी वेब टूल।'],
+  tr: ['ManyTool çevrimiçi araçları', 'Yapay zeka araçları, oyunlar ve pratik web araçları.'],
+  pl: ['Narzędzia online ManyTool', 'Narzędzia AI, gry i praktyczne narzędzia internetowe.'],
+  th: ['เครื่องมือออนไลน์ ManyTool', 'เครื่องมือ AI เกม และเครื่องมือเว็บที่มีประโยชน์'],
+  sv: ['ManyTool onlineverktyg', 'AI-verktyg, spel och praktiska webbverktyg.'],
+  uk: ['Онлайн-інструменти ManyTool', 'Інструменти ШІ, ігри та корисні веб-сервіси.'],
+  bn: ['ManyTool অনলাইন টুল', 'AI টুল, গেম এবং ব্যবহারিক ওয়েব টুল।'],
+  ms: ['Alat dalam talian ManyTool', 'Alat AI, permainan dan utiliti web praktikal.'],
+  sw: ['Zana za mtandaoni za ManyTool', 'Zana za AI, michezo na huduma muhimu za wavuti.'],
+  fil: ['Mga online tool ng ManyTool', 'Mga AI tool, laro at praktikal na web utility.'],
+  af: ['ManyTool aanlyn gereedskap', 'KI-gereedskap, speletjies en praktiese webnutsmiddels.'],
+  fa: ['ابزارهای آنلاین ManyTool', 'ابزارهای هوش مصنوعی، بازی‌ها و ابزارهای کاربردی وب.'],
+  ta: ['ManyTool ஆன்லைன் கருவிகள்', 'AI கருவிகள், விளையாட்டுகள் மற்றும் பயனுள்ள வலைக் கருவிகள்.'],
+  te: ['ManyTool ఆన్‌లైన్ టూల్స్', 'AI టూల్స్, గేమ్స్ మరియు ఉపయోగకరమైన వెబ్ టూల్స్.'],
+  ur: ['ManyTool آن لائن ٹولز', 'AI ٹولز، گیمز اور مفید ویب ٹولز۔'],
+  mr: ['ManyTool ऑनलाइन टूल्स', 'AI टूल्स, गेम्स आणि उपयुक्त वेब टूल्स.']
 };
 
 export function getStaticPaths() {
-  return ['zh', 'es', 'de', 'fr', 'pt', 'vi', 'id'].map((locale) => ({ params: { locale }, props: { locale } }));
+  return seoLocaleCodes.filter((locale) => locale !== 'ko' && locale !== 'en' && locale !== 'ja').map((locale) => ({ params: { locale }, props: { locale } }));
 }
 
 const { locale } = Astro.props;
-const [title, description] = copy[locale as keyof typeof copy];
+const [title, description] = copy[locale as keyof typeof copy] ?? ['ManyTool Online Tools', 'AI tools, games, and practical web utilities.'];
 ---
 
 <Layout title={`${title} | ManyTool`} description={description}>

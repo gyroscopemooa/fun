@@ -4,7 +4,7 @@ import AdSense from '../components/AdSense.astro';
 import EzoicPlacements from '../components/ads/EzoicPlacements.astro';
 import SiteProviders from '../components/providers/SiteProviders';
 import globalCssUrl from '../styles/global.css?url';
-import { createTranslator, detectLocale, hasTranslation, localeCodes, stripLocale, withLocalePath } from '../lib/i18n';
+import { createTranslator, detectLocale, hasTranslation, localeCodes, seoLocaleCodes, stripLocale, withLocalePath } from '../lib/i18n';
 
 interface Props {
   title?: string;
@@ -27,13 +27,16 @@ const siteUrl = Astro.site?.toString() ?? Astro.url.origin;
 const locale = detectLocale(Astro.url.pathname);
 const t = await createTranslator(locale);
 const htmlLang = locale;
+const textDirection = ['ar', 'fa', 'he', 'ur'].includes(locale) ? 'rtl' : 'ltr';
 const ogLocale = locale === 'ko' ? 'ko_KR' : locale === 'ja' ? 'ja_JP' : locale === 'zh' ? 'zh_CN' : `${locale}_${locale.toUpperCase()}`;
 const pathNoLocale = stripLocale(Astro.url.pathname);
+const normalizedSeoPath = pathNoLocale.length > 1 ? pathNoLocale.replace(/\/+$/, '') : pathNoLocale;
 const koHref = new URL(pathNoLocale, siteUrl).toString();
 const enHref = new URL(pathNoLocale === '/' ? '/en' : `/en${pathNoLocale}`, siteUrl).toString();
 const jaHref = new URL(pathNoLocale === '/' ? '/ja' : `/ja${pathNoLocale}`, siteUrl).toString();
-const localizedHrefs = localeCodes
-  .filter((code) => code !== 'ko' && hasTranslation(code, pathNoLocale))
+const seoPathPattern = /^\/(ai-personal-color|ai-calorie-calculator|ai-manseryeok|ai-id-photo|ai-headshot|ai-pet-translator|valorant-agent-picker|crosshair-generator|fps-aim-sensitivity|fps-aim-trainer|fps-sensitivity-converter|dpi-edpi-calculator|fov-calculator|name-compatibility|nickname-generator|name-meaning|random-picker|chat-random-picker|lol-champion-recommender|game-character-picker|image-compressor|image-resizer|image-blur|image-cropper|unit-converter|bmi-calculator|percentage-calculator|color-converter|time-zone-converter|tip-calculator|age-calculator)$/;
+const localizedHrefs = seoLocaleCodes
+  .filter((code) => code !== 'ko' && (normalizedSeoPath === '/' || seoPathPattern.test(normalizedSeoPath) || (localeCodes as readonly string[]).includes(code) && hasTranslation(code as typeof localeCodes[number], normalizedSeoPath)))
   .map((code) => ({ code, href: new URL(pathNoLocale === '/' ? `/${code}` : `/${code}${pathNoLocale}`, siteUrl).toString() }));
 // 번역되지 않은 en/ja 래퍼 페이지는 한국어 원본을 canonical로 지정해 중복 색인을 막는다.
 const canonical = hasTranslation(locale, pathNoLocale)
@@ -275,7 +278,7 @@ const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.r
 ---
 
 <!doctype html>
-<html lang={htmlLang} suppressHydrationWarning>
+<html lang={htmlLang} dir={textDirection} suppressHydrationWarning>
   <head>
     <script is:inline data-cfasync="false" src="https://cmp.gatekeeperconsent.com/min.js"></script>
     <script is:inline data-cfasync="false" src="https://the.gatekeeperconsent.com/cmp.min.js"></script>

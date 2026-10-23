@@ -1,0 +1,23 @@
+---
+import Footer from '../../components/Footer.astro';
+import Header from '../../components/Header.astro';
+import Layout from '../../layouts/Layout.astro';
+import { seoLocaleCodes } from '../../lib/i18n';
+const copy = {
+  zh: ['名字角色生成器', '输入名字，生成一个有趣的角色卡片。', '输入名字', '生成角色', '请输入名字。', '攻击力', '幸运值'],
+  es: ['Generador de personaje por nombre', 'Escribe un nombre y crea una tarjeta de personaje divertida.', 'Escribe un nombre', 'Crear personaje', 'Escribe un nombre.', 'Ataque', 'Suerte'],
+  de: ['Charaktergenerator nach Namen', 'Gib einen Namen ein und erstelle eine unterhaltsame Charakterkarte.', 'Name eingeben', 'Charakter erstellen', 'Bitte einen Namen eingeben.', 'Angriff', 'Glück'],
+  fr: ['Générateur de personnage', 'Saisissez un prénom et créez une carte de personnage amusante.', 'Saisir un prénom', 'Créer le personnage', 'Saisissez un prénom.', 'Attaque', 'Chance'],
+  pt: ['Gerador de personagem por nome', 'Digite um nome e crie uma ficha de personagem divertida.', 'Digite um nome', 'Criar personagem', 'Digite um nome.', 'Ataque', 'Sorte'],
+  vi: ['Trình tạo nhân vật theo tên', 'Nhập tên để tạo một thẻ nhân vật thú vị.', 'Nhập tên', 'Tạo nhân vật', 'Hãy nhập tên.', 'Tấn công', 'May mắn'],
+  id: ['Generator karakter dari nama', 'Masukkan nama dan buat kartu karakter yang menyenangkan.', 'Masukkan nama', 'Buat karakter', 'Masukkan nama.', 'Serangan', 'Keberuntungan'],
+  en: ['Name character generator', 'Enter a name and create a fun character card.', 'Enter a name', 'Create character', 'Enter a name.', 'Attack', 'Luck']
+};
+export function getStaticPaths() { return seoLocaleCodes.filter((locale) => locale !== 'ko').map((locale) => ({ params: { locale }, props: { locale } })); }
+const { locale } = Astro.props; const text = copy[locale as keyof typeof copy] ?? copy.en;
+---
+<Layout title={`${text[0]} | ManyTool`} description={text[1]} keywords={`${text[0]}, character generator, ManyTool`}><Header /><main class="mx-auto max-w-4xl px-4 py-8"><section class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm sm:p-8"><h1 class="text-3xl font-black text-slate-950">{text[0]}</h1><p class="mt-3 text-sm leading-7 text-slate-600">{text[1]}</p><input id="name" class="mt-6 w-full rounded-xl border border-slate-300 px-4 py-3" placeholder={text[2]} /><button id="make" class="mt-4 rounded-xl bg-fuchsia-700 px-5 py-3 text-sm font-bold text-white">{text[3]}</button><p id="message" class="mt-4 min-h-6 text-sm text-rose-600"></p><div id="card" class="mt-5 hidden rounded-3xl bg-gradient-to-br from-indigo-950 to-fuchsia-900 p-8 text-center text-white"><div class="text-6xl">⚔️</div><h2 id="character" class="mt-4 text-3xl font-black"></h2><p id="job" class="mt-2 text-fuchsia-200"></p><p id="stats" class="mt-5 text-sm"></p></div></section></main><Footer /></Layout>
+<script is:inline define:vars={{ text }}>
+  const input = document.querySelector('#name'); const button = document.querySelector('#make'); const message = document.querySelector('#message'); const card = document.querySelector('#card'); const character = document.querySelector('#character'); const job = document.querySelector('#job'); const stats = document.querySelector('#stats');
+  button.addEventListener('click', () => { const name = input.value.trim(); if (!name) { message.textContent = text[4]; card.classList.add('hidden'); return; } const jobs = ['Mage', 'Rogue', 'Knight', 'Chef']; character.textContent = name; job.textContent = jobs[Math.floor(Math.random() * jobs.length)]; stats.textContent = `${text[5]} ${50 + Math.floor(Math.random() * 51)} · ${text[6]} ${50 + Math.floor(Math.random() * 51)}`; message.textContent = ''; card.classList.remove('hidden'); });
+</script>

@@ -3,6 +3,7 @@ import AiImageGenerator from '../../components/home/AiImageGenerator';
 import Footer from '../../components/Footer.astro';
 import Header from '../../components/Header.astro';
 import Layout from '../../layouts/Layout.astro';
+import { seoLocaleCodes } from '../../lib/i18n';
 
 const locales = {
   zh: { title: 'AI 图片生成器 | ManyTool', description: '使用照片生成 AI 风格图片、旅行背景、头像和服装变化。', heading: 'AI 图片风格工具', body: '上传一张照片，选择想要的风格并生成新的 AI 图片。' },
@@ -12,14 +13,15 @@ const locales = {
   pt: { title: 'Gerador de imagens com IA | ManyTool', description: 'Crie imagens com IA, fundos de viagem, retratos e mudanças de roupa a partir de uma foto.', heading: 'Estilos de imagem com IA', body: 'Envie uma foto, escolha um estilo e gere uma nova imagem com IA.' },
   vi: { title: 'Trình tạo ảnh AI | ManyTool', description: 'Tạo ảnh AI, ảnh du lịch, ảnh đại diện và thay đổi trang phục từ một bức ảnh.', heading: 'Công cụ phong cách ảnh AI', body: 'Tải ảnh lên, chọn phong cách và tạo ảnh mới bằng AI.' },
   id: { title: 'Generator Gambar AI | ManyTool', description: 'Buat gambar AI, latar perjalanan, foto profil, dan perubahan pakaian dari satu foto.', heading: 'Gaya gambar AI', body: 'Unggah foto, pilih gaya, lalu buat gambar baru dengan AI.' },
+  en: { title: 'AI image generator | ManyTool', description: 'Create AI images, travel backgrounds, portraits, and outfit variations from a photo.', heading: 'AI image styles', body: 'Upload a photo, choose a style, and generate a new AI image.' },
 };
 
 export function getStaticPaths() {
-  return ['zh', 'es', 'de', 'fr', 'pt', 'vi', 'id'].map((locale) => ({ params: { locale }, props: { locale } }));
+  return seoLocaleCodes.filter((locale) => locale !== 'ko').map((locale) => ({ params: { locale }, props: { locale } }));
 }
 
 const { locale } = Astro.props;
-const copy = locales[locale as keyof typeof locales];
+const copy = locales[locale as keyof typeof locales] ?? locales.en;
 const styleLinks = ['figure', 'body-profile', 'travel-background', 'snapshot', 'kakao-profile', 'instagram-photo', 'outfit-change', 'hairstyle', 'interior', 'free-style'];
 ---
 
