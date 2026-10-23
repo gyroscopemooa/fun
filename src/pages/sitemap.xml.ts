@@ -1,4 +1,4 @@
-﻿import type { APIRoute } from 'astro';
+import type { APIRoute } from 'astro';
 
 import { getAiImageSeoPathEntries } from '../lib/ai-image-seo';
 import { hasTranslation } from '../lib/i18n';
@@ -27,6 +27,7 @@ const paths = [
   '/animal-test',
   '/personal-color',
   '/ai-personal-color',
+  '/lip-color-simulator',
   '/ai-manseryeok',
   '/magic-book',
   '/pinball',
