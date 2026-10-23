@@ -2306,6 +2306,7 @@ app.post('/ai-personal-color/analyze', upload.single('image'), async (req, res) 
         });
       }
     }
+    if (message === 'orderId is required') return res.status(402).json({ error: message });
     if (message === 'order not found') return res.status(404).json({ error: message });
     if (message === 'invalid order product type') return res.status(400).json({ error: message });
     if (message === 'payment required') return res.status(402).json({ error: message });
@@ -2416,6 +2417,7 @@ app.post('/ai-manseryeok/analyze', async (req, res) => {
         });
       }
     }
+    if (message === 'orderId is required') return res.status(402).json({ error: message });
     if (message === 'order not found') return res.status(404).json({ error: message });
     if (message === 'invalid order product type') return res.status(400).json({ error: message });
     if (message === 'payment required') return res.status(402).json({ error: message });
