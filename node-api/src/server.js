@@ -26,7 +26,8 @@ import { buildNameExplanation } from './naming/description.js';
 
 const app = express();
 const port = Number(process.env.PORT ?? 8787);
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 12 * 1024 * 1024 } });
+const IMAGE_MAX_BYTES = 12 * 1024 * 1024;
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: IMAGE_MAX_BYTES } });
 const paymentMode = process.env.PAYMENT_MODE ?? 'mock';
 const isProduction = process.env.NODE_ENV === 'production';
 const polarServer = process.env.POLAR_SERVER === 'sandbox' ? 'https://sandbox-api.polar.sh' : 'https://api.polar.sh';
@@ -3239,9 +3240,11 @@ app.get('/download/:candidateId', (req, res) => {
   return res.status(404).json({ error: 'candidate not found' });
 });
 
-app.use((err, _req, res, _next) => {
+app.use((err, req, res, _next) => {
   if (err?.code === 'LIMIT_FILE_SIZE') {
-    return res.status(413).json({ error: `file too large (max ${Math.round(VIDEO_MAX_BYTES / (1024 * 1024))}MB for video uploads)` });
+    const isVideo = req.path.startsWith('/video/');
+    const maxMb = Math.round((isVideo ? VIDEO_MAX_BYTES : IMAGE_MAX_BYTES) / (1024 * 1024));
+    return res.status(413).json({ error: `file too large (max ${maxMb}MB${isVideo ? ' for video uploads' : ''})` });
   }
   return res.status(500).json({ error: 'internal server error' });
 });
