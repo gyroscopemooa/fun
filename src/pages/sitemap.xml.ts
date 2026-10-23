@@ -78,6 +78,8 @@ const paths = [
   ,'/dpi-edpi-calculator'
   ,'/fov-calculator'
   ,'/game-character-picker'
+  ,'/love-type-test'
+  ,'/office-type-test'
 ];
 
 // 한국어 페이지를 그대로 감싼 en/ja 래퍼는 canonical이 한국어 URL이라 sitemap에서 제외한다.
