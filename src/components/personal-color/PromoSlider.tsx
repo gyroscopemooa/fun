@@ -3,13 +3,37 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 type Slide = { src: string; alt: string };
 
-const AUTOPLAY_MS = 4500;
+const AUTOPLAY_MS = 3500;
+// After a swipe, wait this long before autoplay picks up again.
+const RESUME_AFTER_TOUCH_MS = 6000;
 
-// Scroll-snap carousel: swipe on touch, arrows/dots on desktop, autoplay that pauses on hover or touch.
+// Scroll-snap carousel: swipe on touch, arrows/dots on desktop, autoplay that pauses on hover and briefly after a touch.
 export function PromoSlider({ slides }: { slides: Slide[] }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
+  const resumeTimer = useRef<number | undefined>(undefined);
+
+  useEffect(() => () => window.clearTimeout(resumeTimer.current), []);
+
+  const pauseForTouch = () => {
+    window.clearTimeout(resumeTimer.current);
+    setPaused(true);
+  };
+  const resumeAfterTouch = () => {
+    window.clearTimeout(resumeTimer.current);
+    resumeTimer.current = window.setTimeout(() => setPaused(false), RESUME_AFTER_TOUCH_MS);
+  };
+
+  // Read the position from the track itself so autoplay never depends on a scroll event having fired.
+  const currentIndex = () => {
+    const track = trackRef.current;
+    const first = track?.children[0] as HTMLElement | undefined;
+    const second = track?.children[1] as HTMLElement | undefined;
+    if (!track || !first) return 0;
+    const step = second ? second.offsetLeft - first.offsetLeft : first.offsetWidth;
+    return Math.round(track.scrollLeft / Math.max(1, step));
+  };
 
   const goTo = useCallback((index: number) => {
     const track = trackRef.current;
@@ -23,16 +47,13 @@ export function PromoSlider({ slides }: { slides: Slide[] }) {
     const track = trackRef.current;
     // With 2-3 slides visible the track ends before the last index, so wrap once it can't scroll further.
     const atEnd = track ? track.scrollLeft + track.clientWidth >= track.scrollWidth - 4 : false;
-    goTo(atEnd ? 0 : active + 1);
-  }, [active, goTo]);
+    goTo(atEnd ? 0 : currentIndex() + 1);
+  }, [goTo]);
 
   useEffect(() => {
     const track = trackRef.current;
     if (!track) return;
-    const onScroll = () => {
-      const width = (track.children[0] as HTMLElement | undefined)?.offsetWidth || 1;
-      setActive(Math.round(track.scrollLeft / width));
-    };
+    const onScroll = () => setActive(currentIndex());
     track.addEventListener('scroll', onScroll, { passive: true });
     return () => track.removeEventListener('scroll', onScroll);
   }, []);
@@ -46,9 +67,10 @@ export function PromoSlider({ slides }: { slides: Slide[] }) {
   return (
     <div
       className="relative"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-      onTouchStart={() => setPaused(true)}
+      onPointerEnter={(event) => event.pointerType === 'mouse' && setPaused(true)}
+      onPointerLeave={(event) => event.pointerType === 'mouse' && setPaused(false)}
+      onTouchStart={pauseForTouch}
+      onTouchEnd={resumeAfterTouch}
     >
       <div
         ref={trackRef}
@@ -71,7 +93,7 @@ export function PromoSlider({ slides }: { slides: Slide[] }) {
 
       <button
         type="button"
-        onClick={() => goTo(active - 1)}
+        onClick={() => goTo(currentIndex() - 1)}
         className="absolute left-2 top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-slate-800 shadow-md transition hover:bg-white sm:flex"
         aria-label="이전 슬라이드"
       >

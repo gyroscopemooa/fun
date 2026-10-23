@@ -41,7 +41,7 @@ export function PersonalColorShareCard({ report, photoUrl, onClose }: Props) {
       </div>
 
       <div className="mt-4 flex flex-col items-center gap-4 md:flex-row md:items-start">
-        <div className="max-w-full overflow-auto rounded-[20px] shadow-xl">
+        <div className="max-w-full overflow-auto rounded-[20px] shadow-xl max-[419px]:[zoom:0.8]">
           <div ref={cardRef} className="relative flex h-[640px] w-[360px] flex-col overflow-hidden bg-white p-6" style={{ fontFamily: 'inherit' }}>
             <div className="absolute inset-x-0 top-0 h-[260px]" style={{ background: `linear-gradient(160deg, ${report.best[0].hex}, ${report.best[2]?.hex ?? report.best[1].hex})`, opacity: 0.35 }} />
             <div className="relative flex items-center justify-between">
@@ -52,7 +52,7 @@ export function PersonalColorShareCard({ report, photoUrl, onClose }: Props) {
             <div className="relative mt-5 flex items-center gap-4">
               {includePhoto && photoUrl ? (
                 <div className="w-[104px] shrink-0">
-                  <DrapeStage drape={report.best[0]} features={report.features} photoUrl={photoUrl} capeTop={72} lipHex={report.lip.hex} blushHex={report.blush.hex} />
+                  <DrapeStage drape={report.best[0]} features={report.features} photoUrl={photoUrl} lipHex={report.lip.hex} blushHex={report.blush.hex} />
                 </div>
               ) : null}
               <div className="min-w-0">

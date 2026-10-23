@@ -56,7 +56,7 @@ const promoSlides = await Promise.all(
       </div>
     </section>
     <section class="mt-6" aria-label="AI 퍼스널컬러 소개 이미지">
-      <PromoSlider client:visible slides={promoSlides} />
+      <PromoSlider client:load slides={promoSlides} />
     </section>
 
     <AdsterraBanner placement="top" />
