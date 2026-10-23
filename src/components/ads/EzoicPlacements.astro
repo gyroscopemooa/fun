@@ -1,0 +1,73 @@
+---
+// Ezoic Standalone is the only production ad renderer. The placeholders are
+// moved into the page's main content so they never cover forms or controls.
+---
+
+<div id="ezoic-placement-staging" hidden>
+  <aside class="ezoic-ad-slot" data-ezoic-slot="content" aria-label="광고">
+    <span class="ezoic-ad-slot__label">광고</span>
+  </aside>
+  <aside class="ezoic-ad-slot" data-ezoic-slot="footer" aria-label="광고">
+    <span class="ezoic-ad-slot__label">광고</span>
+  </aside>
+</div>
+
+<style>
+  .ezoic-ad-slot {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 90px;
+    margin: 1.5rem auto;
+    padding: 0.5rem 1rem;
+    overflow: hidden;
+    text-align: center;
+  }
+
+  .ezoic-ad-slot__label {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: #94a3b8;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+  }
+</style>
+
+<script is:inline>
+  (() => {
+    if (window.__manytoolEzoicPlacementsInitialized) return;
+    window.__manytoolEzoicPlacementsInitialized = true;
+
+    const mountEzoicPlacements = () => {
+      const main = document.querySelector('#manytool-shell main');
+      if (!main) return;
+
+      const contentSlot = document.querySelector('[data-ezoic-slot="content"]');
+      const footerSlot = document.querySelector('[data-ezoic-slot="footer"]');
+      const firstContentSection = main.querySelector(':scope > section');
+
+      if (contentSlot && !contentSlot.dataset.mounted) {
+        if (firstContentSection) firstContentSection.insertAdjacentElement('afterend', contentSlot);
+        else main.prepend(contentSlot);
+        contentSlot.dataset.mounted = 'true';
+        window.ezstandalone = window.ezstandalone || {};
+        ezstandalone.cmd = ezstandalone.cmd || [];
+        ezstandalone.cmd.push(function(){ ezstandalone.showAds({}); });
+      }
+
+      if (footerSlot && !footerSlot.dataset.mounted) {
+        main.append(footerSlot);
+        footerSlot.dataset.mounted = 'true';
+        window.ezstandalone = window.ezstandalone || {};
+        ezstandalone.cmd = ezstandalone.cmd || [];
+        ezstandalone.cmd.push(function(){ ezstandalone.showAds({}); });
+      }
+    };
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', mountEzoicPlacements, { once: true });
+    } else {
+      mountEzoicPlacements();
+    }
+  })();
+</script>

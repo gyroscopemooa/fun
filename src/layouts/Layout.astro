@@ -1,7 +1,7 @@
 ---
 import '../styles/global.css';
 import AdSense from '../components/AdSense.astro';
-import AdsterraGlobal from '../components/ads/AdsterraGlobal.astro';
+import EzoicPlacements from '../components/ads/EzoicPlacements.astro';
 import SiteProviders from '../components/providers/SiteProviders';
 import globalCssUrl from '../styles/global.css?url';
 import { createTranslator, detectLocale, hasTranslation, stripLocale, withLocalePath } from '../lib/i18n';
@@ -267,6 +267,11 @@ const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.r
 <!doctype html>
 <html lang={htmlLang} suppressHydrationWarning>
   <head>
+    <script is:inline data-cfasync="false" src="https://cmp.gatekeeperconsent.com/min.js"></script>
+    <script is:inline data-cfasync="false" src="https://the.gatekeeperconsent.com/cmp.min.js"></script>
+    <script is:inline async src="//www.ezojs.com/ezoic/sa.min.js"></script>
+    <script is:inline>window.ezstandalone=window.ezstandalone||{};ezstandalone.cmd=ezstandalone.cmd||[];</script>
+    <script is:inline src="//ezoicanalytics.com/analytics.js"></script>
     {gtmId && (
       <script is:inline define:vars={{ gtmId }}>
         (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -324,11 +329,6 @@ const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.r
     <script type="application/ld+json" set:html={JSON.stringify(webPageJsonLd)}></script>
     <script type="application/ld+json" set:html={JSON.stringify(breadcrumbJsonLd)}></script>
     <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)}></script>
-    <script
-      async
-      src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseClient}`}
-      crossorigin="anonymous"
-    ></script>
     {gaId && (
       <>
         <script async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}></script>
@@ -445,7 +445,7 @@ const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.r
       <AdSense slotName="글로벌 본문 상단" />
       <slot />
       <AdSense slotName="글로벌 본문 하단" />
-      <AdsterraGlobal />
+      <EzoicPlacements />
     </div>
 
     <script is:inline define:vars={{ apiBase, locale, donateText: sidebarText }}>
