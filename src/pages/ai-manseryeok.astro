@@ -1,6 +1,7 @@
-﻿---
+---
 import Layout from '../layouts/Layout.astro';
 import AdsterraBanner from '../components/ads/AdsterraBanner.astro';
+import ManseryeokShareCard from '../components/manseryeok/ManseryeokShareCard';
 
 const rawApiBase = (import.meta.env.PUBLIC_NODE_API_BASE ?? '').trim();
 const apiBase = rawApiBase.replace(/\/+$/, '');
@@ -101,8 +102,8 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       </div>
     </div>
 
-    <div class="mx-auto grid max-w-[1440px] gap-0 lg:grid-cols-[240px_minmax(0,1fr)]">
-      <aside class="hidden min-h-[calc(100vh-73px)] border-r border-white/8 px-5 py-8 lg:block">
+    <div class="mx-auto grid max-w-[1440px] grid-cols-[minmax(0,1fr)] gap-0 2xl:grid-cols-[240px_minmax(0,1fr)]">
+      <aside class="hidden min-h-[calc(100vh-73px)] border-r border-white/8 px-5 py-8 2xl:block">
         <div class="space-y-8 sticky top-[88px]">
           <div>
             <p class="ledger-label text-[11px] uppercase tracking-[0.24em] text-[#e9c349]">상세 내역</p>
@@ -135,12 +136,32 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       </aside>
 
       <div>
+        <nav class="sticky top-0 z-20 hidden border-b border-white/8 bg-[#131313]/95 px-4 py-2 backdrop-blur lg:block 2xl:hidden" aria-label="리포트 목차">
+          <div class="flex gap-2 overflow-x-auto text-xs font-semibold text-white/60 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <a href="#saju-form-section" class="shrink-0 rounded-full border border-white/10 px-3 py-1.5 transition hover:border-[#e9c349]/60 hover:text-white">입력 정보</a>
+            <a href="#base-overview" class="shrink-0 rounded-full border border-white/10 px-3 py-1.5 transition hover:border-[#e9c349]/60 hover:text-white">기본 운세</a>
+            <a href="#section-love" class="shrink-0 rounded-full border border-white/10 px-3 py-1.5 transition hover:border-[#e9c349]/60 hover:text-white">연애운</a>
+            <a href="#section-marriage" class="shrink-0 rounded-full border border-white/10 px-3 py-1.5 transition hover:border-[#e9c349]/60 hover:text-white">결혼운</a>
+            <a href="#section-money" class="shrink-0 rounded-full border border-white/10 px-3 py-1.5 transition hover:border-[#e9c349]/60 hover:text-white">재물운</a>
+            <a href="#section-business" class="shrink-0 rounded-full border border-white/10 px-3 py-1.5 transition hover:border-[#e9c349]/60 hover:text-white">사업운</a>
+            <a href="#section-career" class="shrink-0 rounded-full border border-white/10 px-3 py-1.5 transition hover:border-[#e9c349]/60 hover:text-white">직업운</a>
+            <a href="#section-study" class="shrink-0 rounded-full border border-white/10 px-3 py-1.5 transition hover:border-[#e9c349]/60 hover:text-white">학업운</a>
+            <a href="#section-health" class="shrink-0 rounded-full border border-white/10 px-3 py-1.5 transition hover:border-[#e9c349]/60 hover:text-white">건강운</a>
+            <a href="#section-social" class="shrink-0 rounded-full border border-white/10 px-3 py-1.5 transition hover:border-[#e9c349]/60 hover:text-white">대인관계운</a>
+            <a href="#section-benefactor" class="shrink-0 rounded-full border border-white/10 px-3 py-1.5 transition hover:border-[#e9c349]/60 hover:text-white">귀인운</a>
+            <a href="#fortune-grid" class="shrink-0 rounded-full border border-white/10 px-3 py-1.5 transition hover:border-[#e9c349]/60 hover:text-white">오늘-올해</a>
+            <a href="#life-stage-grid" class="shrink-0 rounded-full border border-white/10 px-3 py-1.5 transition hover:border-[#e9c349]/60 hover:text-white">중년-말년</a>
+            <a href="#recommend-grid" class="shrink-0 rounded-full border border-white/10 px-3 py-1.5 transition hover:border-[#e9c349]/60 hover:text-white">추천</a>
+            <a href="#life-graph" class="shrink-0 rounded-full border border-white/10 px-3 py-1.5 transition hover:border-[#e9c349]/60 hover:text-white">인생 그래프</a>
+            <a href="#dosa-detail" class="shrink-0 rounded-full border border-white/10 px-3 py-1.5 transition hover:border-[#e9c349]/60 hover:text-white">AI 도사 상세</a>
+          </div>
+        </nav>
         <section class="px-4 py-8 sm:px-6 lg:px-10 lg:py-12">
-          <div class="grid gap-8 xl:grid-cols-[minmax(0,1.1fr)_360px]">
+          <div class="grid gap-8 2xl:grid-cols-[minmax(0,1.1fr)_360px]">
             <div class="space-y-8">
               <div>
                 <p class="ledger-label text-[11px] uppercase tracking-[0.24em] text-[#59de9b]">기록 해석 · Korean Saju Palja · No. 2026</p>
-                <h1 class="ledger-serif mt-5 max-w-4xl text-4xl font-black leading-[1.08] tracking-tight text-white sm:text-6xl">
+                <h1 class="ledger-serif mt-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-tight text-white sm:text-5xl 2xl:text-6xl">
                   AI 만세력 <span class="text-[#e9c349] italic">사주풀이</span><br />올인원 통합형
                 </h1>
                 <p class="mt-5 max-w-2xl text-base leading-8 text-white/62">
@@ -168,32 +189,28 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
               </div>
             </div>
 
-            <aside class="ledger-panel px-6 py-7 text-sm leading-7 text-white/62 xl:mt-8">
-              <p class="ledger-serif text-lg font-bold text-[#e9c349]">기록된 경험</p>
-              <div class="mt-6 space-y-7">
-                <article>
-                  <div class="text-[#e9c349]">★★★★★</div>
-                  <p class="mt-2 italic">“사주풀이처럼 단정적으로 말하지 않고, 구조와 흐름을 읽는 보고서처럼 보여줘서 오히려 더 신뢰감이 있었습니다.”</p>
-                  <p class="mt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#e9c349]">Analyst Review</p>
-                </article>
-                <article>
-                  <div class="text-[#e9c349]">★★★★★</div>
-                  <p class="mt-2 italic">“오늘, 이번주, 올해를 나눠서 읽게 해두니 재구매가 아니라도 다시 확인할 이유가 생겼습니다.”</p>
-                  <p class="mt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#e9c349]">Premium User</p>
-                </article>
-              </div>
+            <aside class="ledger-panel px-6 py-7 text-sm leading-7 text-white/62 2xl:mt-8">
+              <p class="ledger-serif text-lg font-bold text-[#e9c349]">리포트에 담기는 내용</p>
+              <ul class="mt-5 space-y-3">
+                <li class="flex gap-3"><span class="text-[#e9c349]">◆</span><span><strong class="text-white">만세력 4주 · 오행 분포</strong><br />연·월·일·시주와 일간, 다섯 기운의 균형 점수</span></li>
+                <li class="flex gap-3"><span class="text-[#e9c349]">◆</span><span><strong class="text-white">9가지 기본 운세</strong><br />연애·결혼·재물·사업·직업·학업·건강·대인·귀인</span></li>
+                <li class="flex gap-3"><span class="text-[#59de9b]">◆</span><span><strong class="text-white">기간별 흐름</strong><br />오늘·이번주·이번달·상반기·하반기·올해</span></li>
+                <li class="flex gap-3"><span class="text-[#59de9b]">◆</span><span><strong class="text-white">중년·말년과 인생 그래프</strong><br />AI 도사의 타이밍·방향·행운 아이템 조언</span></li>
+              </ul>
+              <button id="saju-sample-btn" type="button" class="mt-6 w-full border border-[#e9c349]/60 px-4 py-3 text-xs font-black uppercase tracking-[0.2em] text-[#e9c349] transition hover:bg-[#e9c349]/10">샘플 리포트 미리보기</button>
+              <p class="mt-3 text-[11px] leading-5 text-white/40">가상 인물(1994년생)로 만든 실제 결과 화면이에요. 결제 없이 확인할 수 있어요.</p>
             </aside>
           </div>
         </section>
         <AdsterraBanner placement="top" />
 
         <section id="saju-form-section" class="px-4 pb-6 sm:px-6 lg:px-10">
-          <div class="grid gap-8 xl:grid-cols-[minmax(0,1fr)_340px]">
+          <div class="grid gap-8 2xl:grid-cols-[minmax(0,1fr)_340px]">
             <div class="ledger-panel px-5 py-6 sm:px-8 sm:py-8">
               <div class="flex flex-wrap items-end justify-between gap-4">
                 <div>
                   <p class="ledger-label text-[11px] uppercase tracking-[0.24em] text-[#e9c349]">1 단계 · 기록 입력</p>
-                  <h2 class="ledger-serif mt-3 text-3xl font-black tracking-tight text-white sm:text-5xl">당신의 <span class="text-[#e9c349] italic">운명 좌표</span>를 입력하세요</h2>
+                  <h2 class="ledger-serif mt-3 text-3xl font-black tracking-tight text-white sm:text-4xl 2xl:text-5xl">당신의 <span class="text-[#e9c349] italic">운명 좌표</span>를 입력하세요</h2>
                 </div>
                 <div class="min-w-[180px]">
                   <div class="flex justify-between text-[11px] uppercase tracking-[0.18em] text-white/40"><span>입력 준비</span><span>65% 가독성</span></div>
@@ -274,7 +291,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
                 </label>
               </div>
 
-              <div class="mt-10 grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+              <div class="mt-10 grid gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
                 <div class="ledger-subpanel px-5 py-5 text-sm leading-7 text-white/60">
                   <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#59de9b]">결제 전 안내</p>
                   <ul class="mt-3 space-y-2">
@@ -337,12 +354,15 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           </div>
 
           <div id="saju-result" class="hidden space-y-8">
-            <section class="grid gap-6 xl:grid-cols-[minmax(0,1.08fr)_360px]">
+            <div id="saju-sample-banner" class="hidden border border-[#e9c349]/50 bg-[#e9c349]/10 px-5 py-4 text-sm leading-6 text-[#f3dc8b]">
+              <strong class="text-[#e9c349]">샘플 리포트</strong> · 가상 인물 김하늘(1994.05.17 14:30, 양력)로 만든 실제 결과 화면이에요. 내 사주는 위 입력란에 생년월일시를 넣고 정밀 분석을 시작하면 받아볼 수 있어요.
+            </div>
+            <section class="grid gap-6 2xl:grid-cols-[minmax(0,1.08fr)_360px]">
               <article class="ledger-panel px-6 py-7 sm:px-8">
                 <div class="flex flex-wrap items-start justify-between gap-4">
                   <div>
                     <p class="ledger-label text-[11px] uppercase tracking-[0.2em] text-[#59de9b]">핵심 해석</p>
-                    <h2 id="saju-headline" class="ledger-serif mt-3 text-3xl font-black tracking-tight text-white sm:text-5xl"></h2>
+                    <h2 id="saju-headline" class="ledger-serif mt-3 text-3xl font-black tracking-tight text-white sm:text-4xl 2xl:text-5xl"></h2>
                   </div>
                   <div class="space-y-3 text-right">
                     <div id="saju-name-badge" class="hidden bg-white/5 px-3 py-2 text-xs font-semibold text-[#e9c349]"></div>
@@ -388,7 +408,9 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
               </aside>
             </section>
 
-            <section class="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
+            <ManseryeokShareCard client:load />
+
+            <section class="grid gap-6 2xl:grid-cols-[340px_minmax(0,1fr)]">
               <article class="ledger-panel px-6 py-6">
                 <div class="flex items-center justify-between gap-4">
                   <div>
@@ -445,7 +467,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
               </div>
             </section>
 
-            <section id="fortune-grid" class="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_340px]">
+            <section id="fortune-grid" class="grid gap-6 2xl:grid-cols-[minmax(0,1.05fr)_340px]">
               <article class="ledger-panel px-6 py-6">
                 <div class="flex flex-wrap items-center justify-between gap-4">
                   <div>
@@ -526,7 +548,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
               </article>
             </section>
 
-            <section class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+            <section class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
               <article class="ledger-panel px-6 py-6">
                 <div class="grid gap-6 lg:grid-cols-2">
                   <div>
@@ -589,7 +611,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
               </div>
             </section>
 
-            <section id="dosa-detail" class="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_340px]">
+            <section id="dosa-detail" class="grid gap-6 2xl:grid-cols-[minmax(0,1.05fr)_340px]">
               <article class="ledger-panel px-6 py-6">
                 <div class="flex flex-wrap items-center justify-between gap-4">
                   <div>
@@ -880,7 +902,9 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           setStatus(error instanceof Error ? error.message : 'PDF 저장을 완료하지 못했습니다.', '오류');
         }
       };
-      const renderResult = (job) => {
+      // options.sample renders the bundled demo report without touching the order or URL state.
+      const renderResult = (job, options = {}) => {
+        const isSample = Boolean(options.sample);
         const analysis = job?.analysis;
         const profile = analysis?.profile;
         const report = analysis?.report;
@@ -890,7 +914,8 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           const nextUrl = `${window.location.pathname}?jobId=${encodeURIComponent(job.id)}`;
           window.history.replaceState({}, '', nextUrl);
         }
-        window.localStorage.removeItem(ORDER_STORAGE_KEY);
+        if (!isSample) window.localStorage.removeItem(ORDER_STORAGE_KEY);
+        qs('saju-sample-banner')?.classList.toggle('hidden', !isSample);
         setLoading(false);
         elements.empty?.classList.add('hidden');
         elements.result?.classList.remove('hidden');
@@ -986,6 +1011,11 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         renderList('advice-list', report.advice);
         renderList('rule-hints', profile.ruleHints);
         renderLifeGraph(report, profile);
+        window.dispatchEvent(new CustomEvent('manytool:ai-manseryeok-result', { detail: { analysis, sample: isSample } }));
+        if (isSample) {
+          setStatus('샘플 리포트를 보여드리고 있어요. 내 사주는 입력 후 정밀 분석을 시작해 주세요.', '입력 대기');
+          return;
+        }
         setStatus('분석이 완료되었습니다. 결과를 아래에서 확인하세요.', '분석 완료');
       };
       const verifyOrder = async (orderId) => {
@@ -1034,6 +1064,17 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       elements.timeBranch?.addEventListener('change', syncTimeFromBranch);
       qs('saju-share-btn')?.addEventListener('click', shareResult);
       qs('saju-pdf-btn')?.addEventListener('click', exportPdf);
+      qs('saju-sample-btn')?.addEventListener('click', async () => {
+        try {
+          const response = await fetch('/samples/ai-manseryeok-sample.json');
+          if (!response.ok) throw new Error('샘플 리포트를 불러오지 못했습니다.');
+          const payload = await response.json();
+          renderResult({ analysis: payload.analysis }, { sample: true });
+          qs('saju-result-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } catch (error) {
+          setStatus(error instanceof Error ? error.message : '샘플 리포트를 불러오지 못했습니다.', '오류');
+        }
+      });
       elements.submit?.addEventListener('click', async () => {
         if (!(elements.submit instanceof HTMLButtonElement)) return;
         try {

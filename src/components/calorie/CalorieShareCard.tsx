@@ -39,7 +39,7 @@ export function CalorieShareCard({ report, photoUrl, onClose }: Props) {
       </div>
 
       <div className="mt-4 flex flex-col items-center gap-4 md:flex-row md:items-start">
-        <div className="max-w-full overflow-auto rounded-[20px] shadow-xl">
+        <div className="max-w-full overflow-auto rounded-[20px] shadow-xl max-[419px]:[zoom:0.8]">
           <div ref={cardRef} className="relative flex h-[640px] w-[360px] flex-col overflow-hidden bg-[linear-gradient(180deg,#ecfdf5_0%,#ffffff_45%)] p-6">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-black tracking-[0.25em] text-emerald-800">MY MEAL REPORT</span>
