@@ -102,7 +102,8 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       const CALORIE_ORDER_STORAGE_KEY = 'manytool.calorieOrder.v1';
       const CALORIE_PRICE_CENTS = 99;
       const CALORIE_CURRENCY = 'USD';
-      const pageLocale = typeof window !== 'undefined' && window.location.pathname.startsWith('/en/') ? 'en' : 'ko';
+      // The report UI is Korean on every locale (/en reuses this page), so ask the AI for Korean text too.
+      const pageLocale = 'ko';
 
       const fileInput = document.getElementById('calorie-image-input');
       const preview = document.getElementById('calorie-preview');
