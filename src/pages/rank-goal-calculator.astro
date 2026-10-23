@@ -1,0 +1,18 @@
+---
+import GameToolPage from '../components/game-tools/GameToolPage.astro';
+import RankGoalCalculator from '../components/game-tools/RankGoalCalculator';
+---
+
+<GameToolPage
+  title="랭크 목표 계산기 | 목표 티어까지 몇 판? 롤·발로란트·오버워치 | ManyTool"
+  description="현재 티어와 LP/RR, 승률, 판당 증감을 넣으면 목표 티어까지 필요한 판수와 기간, 필요한 승률을 계산해주는 무료 랭크 계산기입니다."
+  keywords="랭크 계산기, 롤 승급 계산, 발로란트 랭크 계산, 오버워치 랭크 계산, 목표 티어 판수"
+  eyebrow="Rank Goal Calculator"
+  heading="랭크 목표 계산기"
+  intro="지금 티어에서 목표 티어까지 몇 판이 필요한지, 정해진 판수 안에 가려면 승률이 얼마나 필요한지 바로 계산해 보세요."
+  accent="#22C55E"
+  howTo="게임과 현재 티어, 포인트, 목표 티어를 고르고 예상 승률과 판당 평균 증감을 넣으면 필요한 판수와 예상 기간이 나와요. 승률별 표로 목표 승률도 정해 보세요."
+  related={[{ href: '/game-team-balancer', label: '⚖️ 팀 나누기' }, { href: '/rank-goal-calculator', label: '🏁 랭크 목표 계산기' }, { href: '/mbti-game-character', label: '🧠 MBTI 캐릭터 궁합' }, { href: '/valorant-agent-picker', label: '🎲 캐릭터 랜덤 추천' }]}
+>
+  <RankGoalCalculator client:load />
+</GameToolPage>

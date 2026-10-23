@@ -1,0 +1,18 @@
+---
+import GameToolPage from '../components/game-tools/GameToolPage.astro';
+import LuckyColorToday from '../components/game-tools/LuckyColorToday';
+---
+
+<GameToolPage
+  title="오늘의 행운 컬러 | 날짜·생일·퍼스널컬러로 보는 행운의 색 | ManyTool"
+  description="날짜와 생일, 내 퍼스널컬러 톤으로 오늘의 행운 컬러와 행운 아이템, 숫자, 시간대를 알려주는 무료 재미 콘텐츠입니다."
+  keywords="오늘의 행운 컬러, 행운의 색, 오늘의 색깔 운세, 퍼스널컬러 행운, 럭키 컬러"
+  eyebrow="Lucky Color"
+  heading="오늘의 행운 컬러"
+  intro="매일 바뀌는 나만의 행운 컬러를 확인하고 옷이나 소품에 한 가지씩 더해 보세요. 퍼스널컬러 톤을 넣으면 내게 어울리는 색 안에서 골라드려요."
+  accent="#EC4899"
+  howTo="날짜를 고르고 생일과 퍼스널컬러 톤을 넣으면 오늘의 행운 컬러와 기운, 행운 아이템이 나와요. 행운 카드를 저장해 공유할 수 있어요. 재미로 보는 콘텐츠예요."
+  related={[{ href: '/lip-color-simulator', label: '💄 립 컬러 시뮬레이터' }, { href: '/ai-personal-color', label: '🎨 AI 퍼스널컬러' }, { href: '/today-fortune', label: '🔮 오늘의 운세' }]}
+>
+  <LuckyColorToday client:load />
+</GameToolPage>

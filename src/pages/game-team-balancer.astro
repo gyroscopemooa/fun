@@ -1,0 +1,18 @@
+---
+import GameToolPage from '../components/game-tools/GameToolPage.astro';
+import TeamBalancer from '../components/game-tools/TeamBalancer';
+---
+
+<GameToolPage
+  title="게임 내전 팀 나누기 | 롤·발로란트·오버워치 티어 밸런스 팀 짜기 | ManyTool"
+  description="티어, LP/RR, 최근 승패, 주 포지션을 반영해 롤·발로란트·오버워치 내전 팀을 가장 공정하게 나눠주는 무료 팀 밸런서입니다."
+  keywords="롤 내전 팀 나누기, 발로란트 내전 팀짜기, 오버워치 팀 나누기, 티어 밸런스 팀, 내전 팀 밸런서"
+  eyebrow="Team Balancer"
+  heading="게임 내전 팀 나누기"
+  intro="티어와 포인트, 최근 승패까지 넣으면 모든 조합을 비교해 실력 차이가 가장 적은 두 팀을 찾아드려요. 주 포지션이 겹치지 않게도 맞춰요."
+  accent="#3B82F6"
+  howTo="게임을 고르고 참가자의 티어와 포인트, 최근 승패, 주 포지션을 입력한 뒤 공정하게 팀 나누기를 누르세요. 다시 나누기를 누르면 비슷하게 공정한 다른 조합을 보여드려요. 입력한 명단은 이 기기에 저장돼요."
+  related={[{ href: '/game-team-balancer', label: '⚖️ 팀 나누기' }, { href: '/rank-goal-calculator', label: '🏁 랭크 목표 계산기' }, { href: '/mbti-game-character', label: '🧠 MBTI 캐릭터 궁합' }, { href: '/valorant-agent-picker', label: '🎲 캐릭터 랜덤 추천' }]}
+>
+  <TeamBalancer client:load />
+</GameToolPage>

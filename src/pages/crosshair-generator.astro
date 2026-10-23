@@ -1,4 +1,18 @@
 ---
-import MiniGameTool from '../components/MiniGameTool.astro';
+import GameToolPage from '../components/game-tools/GameToolPage.astro';
+import CrosshairStudio from '../components/game-tools/CrosshairStudio';
 ---
-<MiniGameTool tool="crosshair" />
+
+<GameToolPage
+  title="크로스헤어 생성기 | ManyTool"
+  description="FPS 게임에서 사용할 조준선을 만들고 설정값을 복사합니다."
+  keywords="크로스헤어 생성기, 조준선 만들기, 발로란트 크로스헤어, FPS 조준선, 크로스헤어 공유"
+  eyebrow="ManyTool Game Tools"
+  heading="크로스헤어 생성기"
+  intro="FPS 게임에서 사용할 조준선을 만들고 설정값을 복사합니다. 게임 배경에서 미리 보고 공유 카드로 저장할 수도 있어요."
+  accent="#22D3EE"
+  howTo="프리셋을 고르거나 길이, 두께, 간격, 색상, 외곽선, 중앙점을 조절해 조준선을 만드세요. 배경을 바꿔 잘 보이는지 확인한 뒤 설정값을 복사하거나 공유 카드로 저장할 수 있어요."
+  related={[{ href: '/fps-aim-sensitivity', label: '🖱️ 감도 변환기' }, { href: '/fps-aim-trainer', label: '🎯 에임 연습' }, { href: '/valorant-agent-picker', label: '🎲 요원 랜덤 추천' }]}
+>
+  <CrosshairStudio client:load />
+</GameToolPage>
