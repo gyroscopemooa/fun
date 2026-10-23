@@ -3246,6 +3246,10 @@ app.use((err, req, res, _next) => {
     const maxMb = Math.round((isVideo ? VIDEO_MAX_BYTES : IMAGE_MAX_BYTES) / (1024 * 1024));
     return res.status(413).json({ error: `file too large (max ${maxMb}MB${isVideo ? ' for video uploads' : ''})` });
   }
+  // body-parser/multer mark client mistakes (malformed JSON, bad multipart) as exposable 4xx errors.
+  if (err?.expose && err.status >= 400 && err.status < 500) {
+    return res.status(err.status).json({ error: err.type === 'entity.parse.failed' ? 'invalid JSON body' : err.message });
+  }
   return res.status(500).json({ error: 'internal server error' });
 });
 
