@@ -1,0 +1,68 @@
+---
+import SharedResultLayout from '../../../components/share/SharedResultLayout.astro';
+import { MBTI_INFO, MBTI_TYPES, bestMatchesOf, type MbtiType } from '../../../lib/mbti';
+
+export const getStaticPaths = () => MBTI_TYPES.map((type) => ({ params: { type } }));
+
+const type = Astro.params.type as MbtiType;
+const info = MBTI_INFO[type];
+const letters = [
+  ['E', '외향', 'I', '내향'],
+  ['S', '감각', 'N', '직관'],
+  ['T', '사고', 'F', '감정'],
+  ['J', '판단', 'P', '인식']
+] as const;
+---
+
+<SharedResultLayout
+  title={`${type} ${info.nickname} | MBTI 테스트 결과 | ManyTool`}
+  description={`${info.summary} 나의 MBTI는 무엇일까? 20문항 무료 MBTI 테스트로 확인해 보세요.`}
+  image={`/og/mbti/${type}.jpg`}
+  ctaHref="/mbti-test"
+  ctaLabel="나도 MBTI 테스트 하기 →"
+  testName="MBTI 테스트"
+  accent={info.color}
+>
+  <div slot="card" class="mx-auto max-w-full overflow-auto rounded-[22px] shadow-xl max-[419px]:[zoom:0.8]">
+    <div class="flex h-[480px] w-[360px] flex-col p-6 text-white" style={`background: radial-gradient(circle at 80% 0%, ${info.color}, transparent 60%), #0f172a`}>
+      <div class="flex items-center justify-between text-[11px] font-black tracking-[0.25em]">
+        <span>MY MBTI</span>
+        <span class="text-white/50">ManyTool</span>
+      </div>
+      <p class="mt-8 text-5xl">{info.emoji}</p>
+      <p class="mt-3 text-[52px] font-black leading-none tracking-tight">{type}</p>
+      <p class="mt-2 text-lg font-bold text-white/90">{info.nickname}</p>
+      <div class="mt-6 grid grid-cols-4 gap-2">
+        {letters.map(([a, al, b, bl], i) => {
+          const on = type[i] === a;
+          return (
+            <div class="rounded-2xl bg-white/10 p-2 text-center">
+              <p class="text-2xl font-black">{on ? a : b}</p>
+              <p class="text-[10px] font-bold text-white/60">{on ? al : bl}</p>
+            </div>
+          );
+        })}
+      </div>
+      <div class="mt-4 flex flex-wrap gap-1.5">
+        {info.strengths.map((s) => <span class="rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-bold">#{s}</span>)}
+      </div>
+      <p class="mt-auto text-right text-[10px] font-bold text-white/40">manytool.net/mbti-test</p>
+    </div>
+  </div>
+  <h1 class="text-2xl font-black text-slate-900">{info.emoji} {type} · {info.nickname}</h1>
+  <p class="leading-6">{info.summary}</p>
+  <div class="rounded-2xl bg-rose-50 p-3 text-rose-900">
+    <p class="font-black">💞 연애 스타일</p>
+    <p class="mt-1">{info.love}</p>
+    <p class="mt-2 text-xs font-bold text-rose-700">잘 맞는 유형 · 눌러서 궁합 보기</p>
+    <div class="mt-1 flex flex-wrap gap-1.5">
+      {bestMatchesOf(type).map((t) => (
+        <a href={`/love-compatibility?me=${type}&you=${t}`} class="rounded-full bg-white px-3 py-1 text-xs font-black text-rose-700 hover:bg-rose-100">{MBTI_INFO[t].emoji} {t}</a>
+      ))}
+    </div>
+  </div>
+  <div slot="after" class="grid grid-cols-2 gap-2">
+    <a href={`/mbti-game-character`} class="rounded-xl border border-violet-200 bg-white px-3 py-2.5 text-center text-xs font-bold text-violet-700 hover:bg-violet-50">🎮 MBTI 게임 캐릭터</a>
+    <a href="/tests" class="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-center text-xs font-bold text-slate-700 hover:bg-slate-50">🧪 다른 테스트 보기</a>
+  </div>
+</SharedResultLayout>

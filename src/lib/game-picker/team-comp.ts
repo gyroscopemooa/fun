@@ -60,3 +60,10 @@ export const assignTeamComp = (game: CompGame, roster: GameCharacter[], members:
 
 /** LoL draft forbids the same champion on both teams; Valorant and Overwatch only within a team. */
 export const uniqueAcrossTeams = (game: CompGame) => game === 'lol';
+
+/** Rebuilds a pick from a shared link; unknown characters are dropped. */
+export const restoreCompPick = (game: CompGame, roster: GameCharacter[], roleId: string, characterId: string): CompPick | null => {
+  const character = roster.find((c) => c.id === characterId);
+  if (!character) return null;
+  return { role: GAMES[game].roles.find((r) => r.id === roleId) ?? FLEX, character };
+};

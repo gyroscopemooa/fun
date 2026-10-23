@@ -1,0 +1,57 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import AdsterraBanner from '../ads/AdsterraBanner.astro';
+import Header from '../Header.astro';
+import Footer from '../Footer.astro';
+import Recommend from '../Recommend.astro';
+import TypeTest from './TypeTest';
+import { TYPE_TESTS } from '../../lib/type-tests';
+
+interface Props {
+  slug: string;
+  description: string;
+  keywords: string;
+  faq: { q: string; a: string }[];
+}
+
+const { slug, description, keywords, faq } = Astro.props;
+const test = TYPE_TESTS[slug];
+---
+
+<Layout title={`${test.title} | 12문항 무료 성향 테스트 | ManyTool`} description={description} keywords={keywords} image={`/og/${slug}.jpg`}>
+  <Header />
+  <main class="mx-auto max-w-3xl px-4 py-8">
+    <section class="rounded-[28px] p-6 text-white shadow-sm" style={`background: radial-gradient(circle at 90% 0%, ${test.gradient[0]}, transparent 55%), linear-gradient(135deg, ${test.gradient[1]}, #0f172a)`}>
+      <p class="text-xs font-black tracking-[0.25em] text-white/70">{test.kicker} TEST</p>
+      <h1 class="mt-2 text-3xl font-black tracking-tight">{test.title}</h1>
+      <p class="mt-2 text-sm leading-6 text-white/80">{test.intro} 결과는 카드로 저장하거나 링크로 친구에게 보낼 수 있어요.</p>
+      <div class="mt-4 flex flex-wrap gap-1.5">
+        {test.results.map((r) => <span class="rounded-full bg-white/15 px-2.5 py-1 text-xs font-bold">{r.emoji} {r.name}</span>)}
+      </div>
+    </section>
+    <AdsterraBanner placement="top" />
+    <TypeTest client:load slug={slug} />
+    <section class="mt-6 rounded-[24px] border border-slate-200 bg-white p-6">
+      <h2 class="text-lg font-black text-slate-900">결과 유형 한눈에 보기</h2>
+      <div class="mt-4 grid gap-3 sm:grid-cols-2">
+        {test.results.map((r) => (
+          <a href={`/${slug}/result/${r.id}`} class="flex gap-3 rounded-2xl border border-slate-200 p-3 transition hover:-translate-y-0.5 hover:shadow-md">
+            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-2xl" style={`background:${r.color}1f`}>{r.emoji}</span>
+            <span class="min-w-0">
+              <span class="block font-black text-slate-900">{r.name}</span>
+              <span class="mt-0.5 block text-xs leading-5 text-slate-500">{r.summary}</span>
+            </span>
+          </a>
+        ))}
+      </div>
+      <h2 class="mt-6 text-lg font-black text-slate-900">자주 묻는 질문</h2>
+      <div class="mt-2 space-y-2 text-sm text-slate-700">
+        {faq.map((item) => <p><strong>Q. {item.q}</strong><br />A. {item.a}</p>)}
+      </div>
+      <p class="mt-4 text-sm text-slate-600">다른 테스트도 해 보고 싶다면 <a href="/tests" class="font-bold underline">테스트 모음</a>을 둘러보세요.</p>
+    </section>
+    <AdsterraBanner placement="bottom" />
+    <Recommend />
+  </main>
+  <Footer />
+</Layout>

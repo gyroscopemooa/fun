@@ -17,12 +17,14 @@ interface Props {
   related?: { href: string; label: string }[];
   /** Show the game hub link (off for non-game tools sharing this frame). */
   hub?: boolean;
+  /** Link-preview image, e.g. /og/game-team-balancer.jpg. */
+  image?: string;
 }
 
-const { title, description, keywords, eyebrow, heading, intro, accent, howTo, related = [], hub = true } = Astro.props;
+const { title, description, keywords, eyebrow, heading, intro, accent, howTo, related = [], hub = true, image } = Astro.props;
 ---
 
-<Layout title={title} description={description} keywords={keywords}>
+<Layout title={title} description={description} keywords={keywords} image={image}>
   <Header />
   <main class="mx-auto max-w-5xl px-4 py-8">
     <section class="rounded-[28px] p-6 text-white shadow-sm sm:p-8" style={`background: radial-gradient(circle at 85% 0%, ${accent}66, transparent 50%), #020617`}>

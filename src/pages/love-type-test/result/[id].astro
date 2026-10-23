@@ -1,0 +1,10 @@
+---
+import TypeResultPage from '../../../components/tests/TypeResultPage.astro';
+import { LOVE_TYPE_TEST } from '../../../lib/type-tests/love-type';
+
+export const getStaticPaths = () => LOVE_TYPE_TEST.results.map((r) => ({ params: { id: r.id } }));
+
+const { id } = Astro.params;
+---
+
+<TypeResultPage slug="love-type-test" id={id!} />

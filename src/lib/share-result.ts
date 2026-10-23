@@ -20,3 +20,21 @@ export const shareResult = async ({ url, title, text }: { url: string; title: st
     return 'copied';
   }
 };
+
+/** Packs a small JSON payload into a URL-safe string (UTF-8 safe for Korean names). */
+export const encodeSharePayload = (value: unknown) => {
+  const bytes = new TextEncoder().encode(JSON.stringify(value));
+  let binary = '';
+  bytes.forEach((b) => { binary += String.fromCharCode(b); });
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+};
+
+export const decodeSharePayload = <T>(packed: string): T | null => {
+  try {
+    const binary = atob(packed.replace(/-/g, '+').replace(/_/g, '/'));
+    const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+    return JSON.parse(new TextDecoder().decode(bytes)) as T;
+  } catch {
+    return null;
+  }
+};

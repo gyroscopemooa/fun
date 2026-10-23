@@ -1,0 +1,35 @@
+---
+// Landing page for a shared result link: the friend's result up top, then a clear way to take the test.
+import Layout from '../../layouts/Layout.astro';
+import Header from '../Header.astro';
+import Footer from '../Footer.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  image: string;
+  ctaHref: string;
+  ctaLabel: string;
+  testName: string;
+  accent?: string;
+}
+
+const { title, description, image, ctaHref, ctaLabel, testName, accent = '#0f172a' } = Astro.props;
+---
+
+<!-- Result pages exist for link previews; they stay out of the index so the test page carries the search value. -->
+<Layout title={title} description={description} image={image} noindex>
+  <Header />
+  <main class="mx-auto max-w-3xl px-4 py-8">
+    <p class="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-800">👋 친구가 공유한 {testName} 결과예요</p>
+    <div class="mt-4 grid grid-cols-[minmax(0,1fr)] gap-5 md:grid-cols-[auto_minmax(0,1fr)] md:items-start">
+      <slot name="card" />
+      <div class="space-y-3 text-sm text-slate-700">
+        <slot />
+        <a href={ctaHref} class="flex w-full items-center justify-center rounded-2xl py-4 text-base font-black text-white shadow-lg transition hover:brightness-110" style={`background:${accent}`}>{ctaLabel}</a>
+        <slot name="after" />
+      </div>
+    </div>
+  </main>
+  <Footer />
+</Layout>
