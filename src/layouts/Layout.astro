@@ -4,7 +4,7 @@ import AdSense from '../components/AdSense.astro';
 import EzoicPlacements from '../components/ads/EzoicPlacements.astro';
 import SiteProviders from '../components/providers/SiteProviders';
 import globalCssUrl from '../styles/global.css?url';
-import { createTranslator, detectLocale, hasTranslation, stripLocale, withLocalePath } from '../lib/i18n';
+import { createTranslator, detectLocale, hasTranslation, localeCodes, stripLocale, withLocalePath } from '../lib/i18n';
 
 interface Props {
   title?: string;
@@ -26,12 +26,15 @@ const ogImage = new URL(image, Astro.site ?? Astro.url.origin).toString();
 const siteUrl = Astro.site?.toString() ?? Astro.url.origin;
 const locale = detectLocale(Astro.url.pathname);
 const t = await createTranslator(locale);
-const htmlLang = locale === 'ko' ? 'ko' : locale === 'ja' ? 'ja' : 'en';
-const ogLocale = locale === 'ko' ? 'ko_KR' : locale === 'ja' ? 'ja_JP' : 'en_US';
+const htmlLang = locale;
+const ogLocale = locale === 'ko' ? 'ko_KR' : locale === 'ja' ? 'ja_JP' : locale === 'zh' ? 'zh_CN' : `${locale}_${locale.toUpperCase()}`;
 const pathNoLocale = stripLocale(Astro.url.pathname);
 const koHref = new URL(pathNoLocale, siteUrl).toString();
 const enHref = new URL(pathNoLocale === '/' ? '/en' : `/en${pathNoLocale}`, siteUrl).toString();
 const jaHref = new URL(pathNoLocale === '/' ? '/ja' : `/ja${pathNoLocale}`, siteUrl).toString();
+const localizedHrefs = localeCodes
+  .filter((code) => code !== 'ko' && hasTranslation(code, pathNoLocale))
+  .map((code) => ({ code, href: new URL(pathNoLocale === '/' ? `/${code}` : `/${code}${pathNoLocale}`, siteUrl).toString() }));
 // 번역되지 않은 en/ja 래퍼 페이지는 한국어 원본을 canonical로 지정해 중복 색인을 막는다.
 const canonical = hasTranslation(locale, pathNoLocale)
   ? new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).toString()
@@ -327,6 +330,7 @@ const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.r
     <link rel="alternate" hrefLang="ko-KR" href={koHref} />
     {hasEn && <link rel="alternate" hrefLang="en" href={enHref} />}
     {hasJa && <link rel="alternate" hrefLang="ja" href={jaHref} />}
+    {localizedHrefs.filter(({ code }) => code !== 'en' && code !== 'ja').map(({ code, href }) => <link rel="alternate" hrefLang={code} href={href} />)}
     <link rel="alternate" hrefLang="x-default" href={koHref} />
     {googleSiteVerification && <meta name="google-site-verification" content={googleSiteVerification} />}
     {naverSiteVerification && <meta name="naver-site-verification" content={naverSiteVerification} />}

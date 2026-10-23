@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 
 import { getAiImageSeoPathEntries } from '../lib/ai-image-seo';
-import { hasTranslation } from '../lib/i18n';
+import { hasTranslation, localeCodes } from '../lib/i18n';
 
 const paths = [
   '/',
@@ -71,10 +71,17 @@ const paths = [
   '/rank-goal-calculator',
   '/mbti-game-character',
   '/today-lucky-color'
+  ,'/crosshair-generator'
+  ,'/fps-aim-sensitivity'
+  ,'/fps-aim-trainer'
+  ,'/fps-sensitivity-converter'
+  ,'/dpi-edpi-calculator'
+  ,'/fov-calculator'
+  ,'/game-character-picker'
 ];
 
 // 한국어 페이지를 그대로 감싼 en/ja 래퍼는 canonical이 한국어 URL이라 sitemap에서 제외한다.
-const localePaths = (['en', 'ja'] as const).flatMap((locale) =>
+const localePaths = localeCodes.filter((locale) => locale !== 'ko').flatMap((locale) =>
   paths
     .filter((path) => hasTranslation(locale, path))
     .map((path) => (path === '/' ? `/${locale}` : `/${locale}${path}`))

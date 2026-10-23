@@ -1,6 +1,23 @@
 import i18next from 'i18next';
 
-export type Locale = 'ko' | 'en' | 'ja';
+export type Locale = 'ko' | 'en' | 'ja' | 'zh' | 'es' | 'de' | 'fr' | 'pt' | 'vi' | 'id';
+export const localeCodes = ['ko', 'en', 'ja', 'zh', 'es', 'de', 'fr', 'pt', 'vi', 'id'] as const;
+
+// Translation rollout order. A locale is added here only after its SEO pages
+// and copy have been generated; this prevents language buttons from leading to
+// untranslated or missing routes.
+export const rolloutLocales = [
+  { code: 'ko', name: '한국어', nativeName: '한국어' },
+  { code: 'en', name: 'English', nativeName: 'English' },
+  { code: 'ja', name: 'Japanese', nativeName: '日本語' },
+  { code: 'zh', name: 'Chinese', nativeName: '简体中文' },
+  { code: 'es', name: 'Spanish', nativeName: 'Español' },
+  { code: 'de', name: 'German', nativeName: 'Deutsch' },
+  { code: 'fr', name: 'French', nativeName: 'Français' },
+  { code: 'pt', name: 'Portuguese', nativeName: 'Português' },
+  { code: 'vi', name: 'Vietnamese', nativeName: 'Tiếng Việt' },
+  { code: 'id', name: 'Indonesian', nativeName: 'Bahasa Indonesia' },
+] as const;
 
 const resources = {
   ko: {
@@ -372,26 +389,31 @@ const resources = {
 } as const;
 
 export function detectLocale(pathname: string): Locale {
-  if (pathname.startsWith('/en/') || pathname === '/en') return 'en';
-  if (pathname.startsWith('/ja/') || pathname === '/ja') return 'ja';
+  const prefix = pathname.match(/^\/([a-z]{2})(?:\/|$)/)?.[1];
+  if (prefix && (localeCodes as readonly string[]).includes(prefix)) return prefix as Locale;
   return 'ko';
 }
 
 export function stripLocale(pathname: string) {
-  return pathname.replace(/^\/(en|ja)(?=\/|$)/, '') || '/';
+  return pathname.replace(new RegExp(`^\\/(${localeCodes.filter((code) => code !== 'ko').join('|')})(?=\\/|$)`), '') || '/';
 }
 
 // /en, /ja 페이지 대부분은 한국어 페이지를 그대로 렌더링하는 래퍼라서,
 // 본문까지 실제 번역된 경로만 여기에 등록한다. (locale prefix 제외 경로 기준)
-const translatedPaths: Record<Exclude<Locale, 'ko'>, RegExp[]> = {
+const translatedPaths: Record<string, RegExp[]> = {
   en: [/^\/ai-image-generator(\/[^/]+)?$/, /^\/tools\/product-detail-studio(\/result)?$/],
   ja: [/^\/tools\/product-detail-studio(\/result)?$/],
 };
 
+const rolloutSeoPath = /^\/(ai-image-generator(?:\/[^/]+)?|ai-personal-color|ai-calorie-calculator|ai-manseryeok|ai-id-photo|ai-headshot|ai-pet-translator|valorant-agent-picker|crosshair-generator|fps-aim-sensitivity|fps-aim-trainer|fps-sensitivity-converter|dpi-edpi-calculator|fov-calculator|name-compatibility|nickname-generator|name-meaning|random-picker|chat-random-picker|lol-champion-recommender|game-character-picker)$/;
+for (const code of localeCodes) {
+  if (code !== 'ko' && !translatedPaths[code]) translatedPaths[code] = [rolloutSeoPath];
+}
+
 export function hasTranslation(locale: Locale, path: string) {
   if (locale === 'ko') return true;
   const normalized = path.length > 1 ? path.replace(/\/+$/, '') : path;
-  return translatedPaths[locale].some((pattern) => pattern.test(normalized));
+  return Boolean(translatedPaths[locale]?.some((pattern) => pattern.test(normalized)));
 }
 
 export function getLocalePrefix(locale: Locale) {
