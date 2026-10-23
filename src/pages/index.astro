@@ -210,14 +210,26 @@ const cardTitleI18n: Record<string, { en: string; ja: string }> = {
   '/korean-study-today': { en: 'Daily Korean Study', ja: '今日の韓国語学習' }
 };
 
+const humanizeCardPath = (href: string) => href
+  .split('/').filter(Boolean).pop()!
+  .split('-')
+  .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+  .join(' ');
+
 const cards = cardSeed.map((card) => {
   const i18n = cardTitleI18n[card.href];
-  const title = locale === 'ko' || !i18n ? card.title : i18n[locale];
+  const title = locale === 'ko'
+    ? card.title
+    : locale === 'ja'
+      ? i18n?.ja ?? i18n?.en ?? humanizeCardPath(card.href)
+      : i18n?.en ?? humanizeCardPath(card.href);
   const desc = locale === 'ko'
     ? card.desc
     : locale === 'en'
       ? `${title} tool`
-      : `${title}ツール`;
+      : locale === 'ja'
+        ? `${title}ツール`
+        : `${title} tool`;
   return { ...card, title, desc, href: withLocale(card.href), disabled: card.disabled ?? false };
 });
 
