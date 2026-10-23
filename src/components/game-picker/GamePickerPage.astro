@@ -16,9 +16,23 @@ interface Props {
   heading: string;
   intro: string;
   accent: string;
+  locale?: string;
 }
 
-const { game, title, description, keywords, eyebrow, heading, intro, accent } = Astro.props;
+const { game, title, description, keywords, eyebrow, heading, intro, accent, locale = 'ko' } = Astro.props;
+
+const pageUi = {
+  ko: { hub: '게임 허브', how: '사용 방법', guide: '역할을 고르고 주사위를 굴리면 조건에 맞는 캐릭터를 랜덤으로 추천해요. 5인 팀 조합을 고르면 역할이 겹치지 않게 한 팀을 짜 드려요. 없는 캐릭터는 풀 관리에서 빼 두면 다음에도 제외돼요.', note: '캐릭터 이름과 이미지는 각 게임사의 공개 데이터를 기준으로 하며, 이 도구는 게임사와 관련이 없는 팬 메이드 도구예요.' },
+  en: { hub: 'Game hub', how: 'How to use', guide: 'Choose a role and roll the dice for a matching random character. Pick the team mode to build a five-player team without duplicate roles. Exclude characters from the pool to keep them out next time.', note: 'Character names and images use public game data. This is a fan-made tool and is not affiliated with any game company.' },
+  zh: { hub: '游戏中心', how: '使用方法', guide: '选择定位并掷骰子，随机获得符合条件的角色。选择五人队伍模式即可避免重复定位。可在角色池中排除角色。', note: '角色名称和图片来自游戏公开数据，本工具为非官方粉丝工具。' },
+  es: { hub: 'Centro de juegos', how: 'Cómo usarlo', guide: 'Elige un rol y tira los dados para recibir un personaje al azar. El modo de equipo crea cinco puestos sin repetir roles. Puedes excluir personajes del grupo.', note: 'Los nombres e imágenes usan datos públicos. Esta herramienta es de fans y no está afiliada a ningún estudio.' },
+  de: { hub: 'Spiele-Hub', how: 'So funktioniert es', guide: 'Wähle eine Rolle und würfle für einen passenden Zufallscharakter. Im Teammodus entsteht ein Team aus fünf Rollen ohne Duplikate. Charaktere können ausgeschlossen werden.', note: 'Namen und Bilder stammen aus öffentlichen Spieldaten. Dies ist ein Fan-Tool ohne Verbindung zu einem Spieleunternehmen.' },
+  fr: { hub: 'Hub de jeux', how: 'Mode d’emploi', guide: 'Choisissez un rôle et lancez les dés pour obtenir un personnage aléatoire. Le mode équipe crée cinq rôles sans doublon. Vous pouvez exclure des personnages.', note: 'Les noms et images utilisent des données publiques. Cet outil de fans n’est affilié à aucun éditeur.' },
+  pt: { hub: 'Central de jogos', how: 'Como usar', guide: 'Escolha uma função e role os dados para receber um personagem aleatório. O modo equipe cria cinco funções sem repetição. Você pode excluir personagens da lista.', note: 'Nomes e imagens usam dados públicos. Esta é uma ferramenta de fãs sem vínculo com empresas de jogos.' },
+  vi: { hub: 'Trung tâm game', how: 'Cách sử dụng', guide: 'Chọn vai trò và tung xúc xắc để nhận nhân vật ngẫu nhiên phù hợp. Chế độ đội tạo năm vai trò không trùng nhau. Bạn có thể loại nhân vật khỏi danh sách.', note: 'Tên và hình ảnh dùng dữ liệu công khai. Đây là công cụ fan-made, không liên kết với hãng game.' },
+  id: { hub: 'Hub game', how: 'Cara menggunakan', guide: 'Pilih peran dan lempar dadu untuk mendapat karakter acak yang sesuai. Mode tim membuat lima peran tanpa duplikat. Karakter dapat dikecualikan dari daftar.', note: 'Nama dan gambar menggunakan data publik. Ini adalah alat buatan penggemar dan tidak berafiliasi dengan perusahaan game.' }
+} as const;
+const ui = pageUi[locale as keyof typeof pageUi] ?? pageUi.en;
 
 const pickers = [
   { game: 'valorant', href: '/valorant-agent-picker', label: '발로란트 요원 추천', emoji: '🎯' },
@@ -35,7 +49,7 @@ const pickers = [
       <h1 class="mt-2 text-3xl font-black tracking-tight sm:text-4xl">{heading}</h1>
       <p class="mt-3 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">{intro}</p>
       <div class="mt-5 flex flex-wrap gap-2">
-        <a href="/games" class="rounded-full border border-white/20 px-4 py-2 text-sm font-bold text-white/80 transition hover:border-white/60 hover:text-white">🎮 게임 허브</a>
+        <a href="/games" class="rounded-full border border-white/20 px-4 py-2 text-sm font-bold text-white/80 transition hover:border-white/60 hover:text-white">🎮 {ui.hub}</a>
         {pickers.map((item) => (
           <a
             href={item.href}
@@ -51,12 +65,12 @@ const pickers = [
     </section>
     <AdsterraBanner placement="top" />
     <section class="mt-6">
-      <GameCharacterPicker client:load game={game} />
+      <GameCharacterPicker client:load game={game} locale={locale} />
     </section>
     <section class="mt-6 rounded-[28px] border border-slate-200 bg-white p-6 text-sm leading-7 text-slate-600 shadow-sm">
-      <h2 class="text-lg font-bold text-slate-950">사용 방법</h2>
-      <p class="mt-1">역할을 고르고 주사위를 굴리면 조건에 맞는 캐릭터를 랜덤으로 추천해요. 5인 팀 조합을 고르면 역할이 겹치지 않게 한 팀을 짜 드려요. 없는 캐릭터는 풀 관리에서 빼 두면 다음에도 제외돼요.</p>
-      <p class="mt-2 text-xs text-slate-400">캐릭터 이름과 이미지는 각 게임사의 공개 데이터를 기준으로 하며, 이 도구는 게임사와 관련이 없는 팬 메이드 도구예요.</p>
+      <h2 class="text-lg font-bold text-slate-950">{ui.how}</h2>
+      <p class="mt-1">{ui.guide}</p>
+      <p class="mt-2 text-xs text-slate-400">{ui.note}</p>
     </section>
     <AdsterraBanner placement="bottom" />
     <Recommend />

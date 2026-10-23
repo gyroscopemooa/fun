@@ -1,23 +1,24 @@
 import i18next from 'i18next';
 
-export type Locale = 'ko' | 'en' | 'ja' | 'zh' | 'es' | 'de' | 'fr' | 'pt' | 'vi' | 'id';
-export const localeCodes = ['ko', 'en', 'ja', 'zh', 'es', 'de', 'fr', 'pt', 'vi', 'id'] as const;
+export const localeCodes = ['ko', 'en', 'ja', 'zh', 'es', 'de', 'fr', 'pt', 'vi', 'id', 'it', 'nl', 'ru', 'ar', 'hi', 'tr', 'pl', 'th', 'sv', 'uk', 'ca', 'cs', 'da', 'fi', 'no', 'ro', 'el', 'he', 'hu', 'bn', 'ms', 'sw', 'fil', 'af', 'fa', 'ta', 'te', 'ur', 'mr'] as const;
+export type Locale = typeof localeCodes[number];
+// SEO route catalog. The first ten locales have reviewed UI copy; the wider
+// catalog gives search engines stable language landing pages while content is
+// progressively translated.
+export const seoLocaleCodes = ['ko','en','ja','zh','es','de','fr','pt','vi','id','ar','bn','bg','ca','cs','da','el','et','fa','fi','he','hi','hr','hu','is','it','kk','km','kn','lo','lt','lv','mk','ml','mn','mr','ms','my','ne','nl','no','pa','pl','ro','ru','sk','sl','sr','sv','sw','ta','te','th','tl','tr','uk','ur','uz','am','az','be','bs','cy','eo','gl','gu','hy','ka','la','si','so','sq','af','zu','fil','jv','su','ceb','ha','ig','yo','eu','mt','ga','lb','mi','ht','haw','sn','st','xh','rw','tk','tg','ky','ps','sd','ku','tt','ug'] as const;
 
 // Translation rollout order. A locale is added here only after its SEO pages
 // and copy have been generated; this prevents language buttons from leading to
 // untranslated or missing routes.
-export const rolloutLocales = [
-  { code: 'ko', name: '한국어', nativeName: '한국어' },
-  { code: 'en', name: 'English', nativeName: 'English' },
-  { code: 'ja', name: 'Japanese', nativeName: '日本語' },
-  { code: 'zh', name: 'Chinese', nativeName: '简体中文' },
-  { code: 'es', name: 'Spanish', nativeName: 'Español' },
-  { code: 'de', name: 'German', nativeName: 'Deutsch' },
-  { code: 'fr', name: 'French', nativeName: 'Français' },
-  { code: 'pt', name: 'Portuguese', nativeName: 'Português' },
-  { code: 'vi', name: 'Vietnamese', nativeName: 'Tiếng Việt' },
-  { code: 'id', name: 'Indonesian', nativeName: 'Bahasa Indonesia' },
-] as const;
+const reviewedLanguageNames: Record<string, [string, string]> = {
+  ko:['Korean','한국어'], en:['English','English'], ja:['Japanese','日本語'], zh:['Chinese','简体中文'], es:['Spanish','Español'], de:['German','Deutsch'], fr:['French','Français'], pt:['Portuguese','Português'], vi:['Vietnamese','Tiếng Việt'], id:['Indonesian','Bahasa Indonesia'],
+  it:['Italian','Italiano'], nl:['Dutch','Nederlands'], ru:['Russian','Русский'], ar:['Arabic','العربية'], hi:['Hindi','हिन्दी'], tr:['Turkish','Türkçe'], pl:['Polish','Polski'], th:['Thai','ไทย'], sv:['Swedish','Svenska'], uk:['Ukrainian','Українська'], ca:['Catalan','Català'], cs:['Czech','Čeština'], da:['Danish','Dansk'], fi:['Finnish','Suomi'], no:['Norwegian','Norsk'], ro:['Romanian','Română'], el:['Greek','Ελληνικά'], he:['Hebrew','עברית'], hu:['Hungarian','Magyar'], bn:['Bengali','বাংলা'], ms:['Malay','Bahasa Melayu'], sw:['Swahili','Kiswahili'], fil:['Filipino','Filipino'], af:['Afrikaans','Afrikaans'], fa:['Persian','فارسی'], ta:['Tamil','தமிழ்'], te:['Telugu','తెలుగు'], ur:['Urdu','اردو'], mr:['Marathi','मराठी'],
+};
+const languageDisplayNames = new Intl.DisplayNames(['en'], { type: 'language' });
+export const rolloutLocales = seoLocaleCodes.map((code) => {
+  const displayName = languageDisplayNames.of(code) ?? code.toUpperCase();
+  return { code, name: reviewedLanguageNames[code]?.[0] ?? displayName, nativeName: reviewedLanguageNames[code]?.[1] ?? displayName };
+});
 
 const resources = {
   ko: {
@@ -388,14 +389,139 @@ const resources = {
   },
 } as const;
 
+const additionalTranslations = {
+  bn: { translation: { common: { home: 'হোম', soon: 'শীঘ্রই আসছে' }, header: { fortune: 'ভাগ্য', game: 'গেম', contact: 'যোগাযোগ' }, home: { searchPlaceholder: 'টুল খুঁজুন', heroTitle: 'মজার টুল', noResult: 'কোনো ফলাফল নেই।' } } },
+  ms: { translation: { common: { home: 'Laman utama', soon: 'Akan datang' }, header: { fortune: 'Nasib', game: 'Permainan', contact: 'Hubungi' }, home: { searchPlaceholder: 'Cari alat', heroTitle: 'Alat praktikal', noResult: 'Tiada hasil.' } } },
+  sw: { translation: { common: { home: 'Mwanzo', soon: 'Inakuja hivi karibuni' }, header: { fortune: 'Bahati', game: 'Michezo', contact: 'Wasiliana' }, home: { searchPlaceholder: 'Tafuta zana', heroTitle: 'Zana muhimu', noResult: 'Hakuna matokeo.' } } },
+  fil: { translation: { common: { home: 'Tahanan', soon: 'Malapit na' }, header: { fortune: 'Suwerte', game: 'Laro', contact: 'Makipag-ugnayan' }, home: { searchPlaceholder: 'Maghanap ng tools', heroTitle: 'Mga kapaki-pakinabang na tool', noResult: 'Walang resulta.' } } },
+  af: { translation: { common: { home: 'Tuis', soon: 'Binnekort' }, header: { fortune: 'Fortuin', game: 'Speletjies', contact: 'Kontak' }, home: { searchPlaceholder: 'Soek gereedskap', heroTitle: 'Nuttige gereedskap', noResult: 'Geen resultate nie.' } } },
+  fa: { translation: { common: { home: 'خانه', soon: 'به‌زودی' }, header: { fortune: 'فال', game: 'بازی', contact: 'تماس' }, home: { searchPlaceholder: 'جستجوی ابزارها', heroTitle: 'ابزارهای کاربردی', noResult: 'نتیجه‌ای پیدا نشد.' } } },
+  ta: { translation: { common: { home: 'முகப்பு', soon: 'விரைவில்' }, header: { fortune: 'அதிர்ஷ்டம்', game: 'விளையாட்டுகள்', contact: 'தொடர்பு' }, home: { searchPlaceholder: 'கருவிகளைத் தேடு', heroTitle: 'பயனுள்ள கருவிகள்', noResult: 'முடிவுகள் இல்லை.' } } },
+  te: { translation: { common: { home: 'హోమ్', soon: 'త్వరలో' }, header: { fortune: 'అదృష్టం', game: 'గేమ్స్', contact: 'సంప్రదించండి' }, home: { searchPlaceholder: 'టూల్స్ వెతకండి', heroTitle: 'ఉపయోగకరమైన టూల్స్', noResult: 'ఫలితాలు లేవు.' } } },
+  ur: { translation: { common: { home: 'ہوم', soon: 'جلد آ رہا ہے' }, header: { fortune: 'قسمت', game: 'گیمز', contact: 'رابطہ' }, home: { searchPlaceholder: 'ٹولز تلاش کریں', heroTitle: 'مفید ٹولز', noResult: 'کوئی نتیجہ نہیں۔' } } },
+  mr: { translation: { common: { home: 'मुख्यपृष्ठ', soon: 'लवकरच' }, header: { fortune: 'नशीब', game: 'खेळ', contact: 'संपर्क' }, home: { searchPlaceholder: 'टूल्स शोधा', heroTitle: 'उपयुक्त टूल्स', noResult: 'परिणाम सापडले नाहीत.' } } },
+} as const;
+
+const extendedTranslations = {
+  bg: { translation: { common: { home: 'Начало', soon: 'Очаквайте скоро' }, header: { fortune: 'Късмет', game: 'Игри', contact: 'Контакти' }, home: { searchPlaceholder: 'Търсене на инструменти', heroTitle: 'Полезни инструменти', noResult: 'Няма резултати.' } } },
+  et: { translation: { common: { home: 'Avaleht', soon: 'Varsti' }, header: { fortune: 'Õnn', game: 'Mängud', contact: 'Kontakt' }, home: { searchPlaceholder: 'Otsi tööriistu', heroTitle: 'Kasulikud tööriistad', noResult: 'Tulemusi ei leitud.' } } },
+  hr: { translation: { common: { home: 'Početna', soon: 'Uskoro' }, header: { fortune: 'Sreća', game: 'Igre', contact: 'Kontakt' }, home: { searchPlaceholder: 'Pretraži alate', heroTitle: 'Korisni alati', noResult: 'Nema rezultata.' } } },
+  is: { translation: { common: { home: 'Heim', soon: 'Væntanlegt' }, header: { fortune: 'Lukka', game: 'Leikir', contact: 'Hafa samband' }, home: { searchPlaceholder: 'Leita að verkfærum', heroTitle: 'Gagnleg verkfæri', noResult: 'Engar niðurstöður.' } } },
+  kk: { translation: { common: { home: 'Басты бет', soon: 'Жақында' }, header: { fortune: 'Болжам', game: 'Ойындар', contact: 'Байланыс' }, home: { searchPlaceholder: 'Құралдарды іздеу', heroTitle: 'Пайдалы құралдар', noResult: 'Нәтиже табылмады.' } } },
+  km: { translation: { common: { home: 'ទំព័រដើម', soon: 'នាពេលឆាប់ៗនេះ' }, header: { fortune: 'សំណាង', game: 'ហ្គេម', contact: 'ទំនាក់ទំនង' }, home: { searchPlaceholder: 'ស្វែងរកឧបករណ៍', heroTitle: 'ឧបករណ៍មានប្រយោជន៍', noResult: 'រកមិនឃើញលទ្ធផល។' } } },
+  ne: { translation: { common: { home: 'गृहपृष्ठ', soon: 'चाँडै आउँदैछ' }, header: { fortune: 'भाग्य', game: 'खेल', contact: 'सम्पर्क' }, home: { searchPlaceholder: 'उपकरण खोज्नुहोस्', heroTitle: 'उपयोगी उपकरणहरू', noResult: 'कुनै नतिजा छैन।' } } },
+  sk: { translation: { common: { home: 'Domov', soon: 'Už čoskoro' }, header: { fortune: 'Veštenie', game: 'Hry', contact: 'Kontakt' }, home: { searchPlaceholder: 'Hľadať nástroje', heroTitle: 'Užitočné nástroje', noResult: 'Nenašli sa žiadne výsledky.' } } },
+  sl: { translation: { common: { home: 'Domov', soon: 'Kmalu' }, header: { fortune: 'Sreča', game: 'Igre', contact: 'Stik' }, home: { searchPlaceholder: 'Poišči orodja', heroTitle: 'Uporabna orodja', noResult: 'Ni rezultatov.' } } },
+  sr: { translation: { common: { home: 'Почетна', soon: 'Ускоро' }, header: { fortune: 'Срећа', game: 'Игре', contact: 'Контакт' }, home: { searchPlaceholder: 'Претражи алате', heroTitle: 'Корисни алати', noResult: 'Нема резултата.' } } },
+} as const;
+
+const regionalTranslations = {
+  ka: { translation: { common: { home: 'მთავარი', soon: 'მალე' }, header: { fortune: 'იღბალი', game: 'თამაშები', contact: 'კონტაქტი' }, home: { searchPlaceholder: 'ინსტრუმენტების ძიება', heroTitle: 'სასარგებლო ინსტრუმენტები', noResult: 'შედეგები ვერ მოიძებნა.' } } },
+  hy: { translation: { common: { home: 'Գլխավոր', soon: 'Շուտով' }, header: { fortune: 'Բախտ', game: 'Խաղեր', contact: 'Կապ' }, home: { searchPlaceholder: 'Որոնել գործիքներ', heroTitle: 'Օգտակար գործիքներ', noResult: 'Արդյունք չկա։' } } },
+  lt: { translation: { common: { home: 'Pagrindinis', soon: 'Netrukus' }, header: { fortune: 'Laimė', game: 'Žaidimai', contact: 'Kontaktai' }, home: { searchPlaceholder: 'Ieškoti įrankių', heroTitle: 'Naudingi įrankiai', noResult: 'Rezultatų nėra.' } } },
+  lv: { translation: { common: { home: 'Sākums', soon: 'Drīzumā' }, header: { fortune: 'Veiksme', game: 'Spēles', contact: 'Kontakti' }, home: { searchPlaceholder: 'Meklēt rīkus', heroTitle: 'Noderīgi rīki', noResult: 'Rezultātu nav.' } } },
+  uz: { translation: { common: { home: 'Bosh sahifa', soon: 'Tez orada' }, header: { fortune: 'Fol', game: 'O‘yinlar', contact: 'Aloqa' }, home: { searchPlaceholder: 'Vositalarni qidirish', heroTitle: 'Foydali vositalar', noResult: 'Natija topilmadi.' } } },
+  az: { translation: { common: { home: 'Ana səhifə', soon: 'Tezliklə' }, header: { fortune: 'Bəxt', game: 'Oyunlar', contact: 'Əlaqə' }, home: { searchPlaceholder: 'Alətləri axtar', heroTitle: 'Faydalı alətlər', noResult: 'Nəticə tapılmadı.' } } },
+  be: { translation: { common: { home: 'Галоўная', soon: 'Хутка' }, header: { fortune: 'Удача', game: 'Гульні', contact: 'Кантакты' }, home: { searchPlaceholder: 'Пошук інструментаў', heroTitle: 'Карысныя інструменты', noResult: 'Вынікаў няма.' } } },
+  bs: { translation: { common: { home: 'Početna', soon: 'Uskoro' }, header: { fortune: 'Sreća', game: 'Igre', contact: 'Kontakt' }, home: { searchPlaceholder: 'Pretraži alate', heroTitle: 'Korisni alati', noResult: 'Nema rezultata.' } } },
+  cy: { translation: { common: { home: 'Cartref', soon: 'Cyn bo hir' }, header: { fortune: 'Ffortiwn', game: 'Gemau', contact: 'Cysylltu' }, home: { searchPlaceholder: 'Chwilio offer', heroTitle: 'Offer defnyddiol', noResult: 'Dim canlyniadau.' } } },
+  gl: { translation: { common: { home: 'Inicio', soon: 'En breve' }, header: { fortune: 'Fortuna', game: 'Xogos', contact: 'Contacto' }, home: { searchPlaceholder: 'Buscar ferramentas', heroTitle: 'Ferramentas útiles', noResult: 'Non hai resultados.' } } },
+} as const;
+
+const globalTranslations = {
+  yo: { translation: { common: { home: 'Ile', soon: 'Laipẹ' }, header: { fortune: 'Orire', game: 'Ere', contact: 'Kan si' }, home: { searchPlaceholder: 'Wa awọn irinṣẹ', heroTitle: 'Awọn irinṣẹ to wulo', noResult: 'Ko si abajade.' } } },
+  ha: { translation: { common: { home: 'Gida', soon: 'Nan zuwa' }, header: { fortune: "Sa'a", game: 'Wasanni', contact: 'Tuntuɓa' }, home: { searchPlaceholder: 'Nemo kayan aiki', heroTitle: 'Kayan aiki masu amfani', noResult: 'Ba a sami sakamako ba.' } } },
+  ig: { translation: { common: { home: 'Ụlọ', soon: 'Na-abịa n’oge na-adịghị anya' }, header: { fortune: 'Ọchichọ', game: 'Egwuregwu', contact: 'Kpọtụrụ' }, home: { searchPlaceholder: 'Chọọ ngwaọrụ', heroTitle: 'Ngwaọrụ bara uru', noResult: 'Enweghị nsonaazụ.' } } },
+  zu: { translation: { common: { home: 'Ekhaya', soon: 'Kuyeza maduze' }, header: { fortune: 'Inhlanhla', game: 'Imidlalo', contact: 'Xhumana' }, home: { searchPlaceholder: 'Sesha amathuluzi', heroTitle: 'Amathuluzi awusizo', noResult: 'Ayikho imiphumela.' } } },
+  xh: { translation: { common: { home: 'Ekhaya', soon: 'Iyeza kungekudala' }, header: { fortune: 'Ithamsanqa', game: 'Imidlalo', contact: 'Qhagamshelana' }, home: { searchPlaceholder: 'Khangela izixhobo', heroTitle: 'Izixhobo eziluncedo', noResult: 'Akukho ziphumo.' } } },
+  mi: { translation: { common: { home: 'Kāinga', soon: 'Ākuanei' }, header: { fortune: 'Waimarie', game: 'Ngā kēmu', contact: 'Whakapā' }, home: { searchPlaceholder: 'Rapua ngā taputapu', heroTitle: 'Ngā taputapu whaihua', noResult: 'Kāore he hua.' } } },
+  ht: { translation: { common: { home: 'Akèy', soon: 'Byento' }, header: { fortune: 'Chans', game: 'Jwèt', contact: 'Kontakte' }, home: { searchPlaceholder: 'Chèche zouti', heroTitle: 'Zouti itil', noResult: 'Pa gen rezilta.' } } },
+  si: { translation: { common: { home: 'මුල් පිටුව', soon: 'ළඟදීම' }, header: { fortune: 'වාසනාව', game: 'ක්‍රීඩා', contact: 'සම්බන්ධ වන්න' }, home: { searchPlaceholder: 'මෙවලම් සොයන්න', heroTitle: 'ප්‍රයෝජනවත් මෙවලම්', noResult: 'ප්‍රතිඵල නැත.' } } },
+  pa: { translation: { common: { home: 'ਮੁੱਖ ਪੰਨਾ', soon: 'ਜਲਦੀ ਆ ਰਿਹਾ ਹੈ' }, header: { fortune: 'ਕਿਸਮਤ', game: 'ਖੇਡਾਂ', contact: 'ਸੰਪਰਕ' }, home: { searchPlaceholder: 'ਟੂਲ ਲੱਭੋ', heroTitle: 'ਲਾਭਦਾਇਕ ਟੂਲ', noResult: 'ਕੋਈ ਨਤੀਜਾ ਨਹੀਂ।' } } },
+  gu: { translation: { common: { home: 'હોમ', soon: 'ટૂંક સમયમાં' }, header: { fortune: 'નસીબ', game: 'રમતો', contact: 'સંપર્ક' }, home: { searchPlaceholder: 'ટૂલ્સ શોધો', heroTitle: 'ઉપયોગી ટૂલ્સ', noResult: 'કોઈ પરિણામ નથી.' } } },
+} as const;
+
+const finalRegionalTranslations = {
+  mn: { translation: { common: { home: 'Нүүр', soon: 'Удахгүй' }, header: { fortune: 'Аз', game: 'Тоглоом', contact: 'Холбоо барих' }, home: { searchPlaceholder: 'Хэрэгсэл хайх', heroTitle: 'Хэрэгтэй хэрэгслүүд', noResult: 'Үр дүн олдсонгүй.' } } },
+  lo: { translation: { common: { home: 'ໜ້າຫຼັກ', soon: 'ໃນໄວໆນີ້' }, header: { fortune: 'ໂຊກ', game: 'ເກມ', contact: 'ຕິດຕໍ່' }, home: { searchPlaceholder: 'ຄົ້ນຫາເຄື່ອງມື', heroTitle: 'ເຄື່ອງມືທີ່ເປັນປະໂຫຍດ', noResult: 'ບໍ່ພົບຜົນລັບ.' } } },
+  my: { translation: { common: { home: 'ပင်မ', soon: 'မကြာမီ' }, header: { fortune: 'ကံကြမ္မာ', game: 'ဂိမ်းများ', contact: 'ဆက်သွယ်ရန်' }, home: { searchPlaceholder: 'ကိရိယာများရှာရန်', heroTitle: 'အသုံးဝင်သောကိရိယာများ', noResult: 'ရလဒ်မရှိပါ။' } } },
+  tk: { translation: { common: { home: 'Baş sahypa', soon: 'Ýakynda' }, header: { fortune: 'Bagty', game: 'Oýunlar', contact: 'Habarlaşmak' }, home: { searchPlaceholder: 'Gurallary gözle', heroTitle: 'Peýdaly gurallar', noResult: 'Netije tapylmady.' } } },
+  tg: { translation: { common: { home: 'Асосӣ', soon: 'Ба зудӣ' }, header: { fortune: 'Бахт', game: 'Бозиҳо', contact: 'Тамос' }, home: { searchPlaceholder: 'Ҷустуҷӯи абзорҳо', heroTitle: 'Абзорҳои муфид', noResult: 'Натиҷа ёфт нашуд.' } } },
+  ky: { translation: { common: { home: 'Башкы бет', soon: 'Жакында' }, header: { fortune: 'Бакыт', game: 'Оюндар', contact: 'Байланыш' }, home: { searchPlaceholder: 'Куралдарды издөө', heroTitle: 'Пайдалуу куралдар', noResult: 'Жыйынтык табылган жок.' } } },
+  ps: { translation: { common: { home: 'کور', soon: 'ژر راځي' }, header: { fortune: 'بخت', game: 'لوبې', contact: 'اړیکه' }, home: { searchPlaceholder: 'وسایل ولټوئ', heroTitle: 'ګټور وسایل', noResult: 'پایلې ونه موندل شوې.' } } },
+  sd: { translation: { common: { home: 'گهر', soon: 'جلد اچي رهيو آهي' }, header: { fortune: 'قسمت', game: 'رانديون', contact: 'رابطو' }, home: { searchPlaceholder: 'اوزار ڳوليو', heroTitle: 'مفيد اوزار', noResult: 'ڪا به نتيجا نه مليا.' } } },
+  ku: { translation: { common: { home: 'سەرەکی', soon: 'بەم زووانە' }, header: { fortune: 'بەخت', game: 'یارییەکان', contact: 'پەیوەندی' }, home: { searchPlaceholder: 'گەڕان بەدوای ئامرازەکان', heroTitle: 'ئامرازە بەسوودەکان', noResult: 'هیچ ئەنجامێک نەدۆزرایەوە.' } } },
+  tt: { translation: { common: { home: 'Баш бит', soon: 'Тиздән' }, header: { fortune: 'Бәхет', game: 'Уеннар', contact: 'Элемтә' }, home: { searchPlaceholder: 'Кораллар эзләү', heroTitle: 'Файдалы кораллар', noResult: 'Нәтиҗә табылмады.' } } },
+} as const;
+
+const lastTranslations = {
+  am: { translation: { common: { home: 'መነሻ', soon: 'በቅርቡ' }, header: { fortune: 'ዕድል', game: 'ጨዋታዎች', contact: 'ያግኙን' }, home: { searchPlaceholder: 'መሳሪያዎችን ይፈልጉ', heroTitle: 'ጠቃሚ መሳሪያዎች', noResult: 'ውጤት አልተገኘም።' } } },
+  ml: { translation: { common: { home: 'ഹോം', soon: 'ഉടൻ വരുന്നു' }, header: { fortune: 'ഭാഗ്യം', game: 'ഗെയിമുകൾ', contact: 'ബന്ധപ്പെടുക' }, home: { searchPlaceholder: 'ടൂളുകൾ തിരയുക', heroTitle: 'ഉപയോഗപ്രദമായ ടൂളുകൾ', noResult: 'ഫലങ്ങളില്ല.' } } },
+  kn: { translation: { common: { home: 'ಮುಖಪುಟ', soon: 'ಶೀಘ್ರದಲ್ಲೇ' }, header: { fortune: 'ಅದೃಷ್ಟ', game: 'ಆಟಗಳು', contact: 'ಸಂಪರ್ಕ' }, home: { searchPlaceholder: 'ಪರಿಕರಗಳನ್ನು ಹುಡುಕಿ', heroTitle: 'ಉಪಯುಕ್ತ ಪರಿಕರಗಳು', noResult: 'ಫಲಿತಾಂಶಗಳಿಲ್ಲ.' } } },
+  la: { translation: { common: { home: 'Domus', soon: 'Mox' }, header: { fortune: 'Fortuna', game: 'Ludi', contact: 'Contactus' }, home: { searchPlaceholder: 'Quaere instrumenta', heroTitle: 'Instrumenta utilia', noResult: 'Nulli eventus.' } } },
+  so: { translation: { common: { home: 'Hoyga', soon: 'Dhawaan' }, header: { fortune: 'Nasiib', game: 'Ciyaaro', contact: 'La xiriir' }, home: { searchPlaceholder: 'Raadi qalab', heroTitle: 'Qalab waxtar leh', noResult: 'Natiijo lama helin.' } } },
+  sn: { translation: { common: { home: 'Kumba', soon: 'Munguva pfupi' }, header: { fortune: 'Rombo', game: 'Mitambo', contact: 'Bata nesu' }, home: { searchPlaceholder: 'Tsvaga zvishandiso', heroTitle: 'Zvishandiso zvinobatsira', noResult: 'Hapana zvawanikwa.' } } },
+  st: { translation: { common: { home: 'Lehae', soon: 'Haufinyane' }, header: { fortune: 'Lehlohonolo', game: 'Lipapali', contact: 'Iteanye' }, home: { searchPlaceholder: 'Batla lisebelisoa', heroTitle: 'Lisebelisoa tse molemo', noResult: 'Ha ho liphetho.' } } },
+  jv: { translation: { common: { home: 'Ngarep', soon: 'Sakcepete' }, header: { fortune: 'Bejo', game: 'Game', contact: 'Kontak' }, home: { searchPlaceholder: 'Goleki piranti', heroTitle: 'Piranti migunani', noResult: 'Ora ana asil.' } } },
+  su: { translation: { common: { home: 'Beranda', soon: 'Enggal' }, header: { fortune: 'Kabeneran', game: 'Kaulinan', contact: 'Kontak' }, home: { searchPlaceholder: 'Pilarian alat', heroTitle: 'Alat anu mangpaat', noResult: 'Teu aya hasil.' } } },
+  ceb: { translation: { common: { home: 'Home', soon: 'Sa dili madugay' }, header: { fortune: 'Swerte', game: 'Mga dula', contact: 'Kontak' }, home: { searchPlaceholder: 'Pangitaa ang mga himan', heroTitle: 'Mapuslanong mga himan', noResult: 'Walay resulta.' } } },
+} as const;
+
+const edgeTranslations = {
+  ca: { translation: { common: { home: 'Inici', soon: 'Properament' }, header: { fortune: 'Fortuna', game: 'Jocs', contact: 'Contacte' }, home: { searchPlaceholder: 'Cerca eines', heroTitle: 'Eines útils', noResult: 'No s’han trobat resultats.' } } },
+  mk: { translation: { common: { home: 'Почетна', soon: 'Наскоро' }, header: { fortune: 'Среќа', game: 'Игри', contact: 'Контакт' }, home: { searchPlaceholder: 'Пребарај алатки', heroTitle: 'Корисни алатки', noResult: 'Нема резултати.' } } },
+  tl: { translation: { common: { home: 'Tahanan', soon: 'Malapit na' }, header: { fortune: 'Swerte', game: 'Mga laro', contact: 'Makipag-ugnayan' }, home: { searchPlaceholder: 'Maghanap ng tool', heroTitle: 'Mga kapaki-pakinabang na tool', noResult: 'Walang nahanap na resulta.' } } },
+  sq: { translation: { common: { home: 'Kryefaqja', soon: 'Së shpejti' }, header: { fortune: 'Fati', game: 'Lojëra', contact: 'Kontakt' }, home: { searchPlaceholder: 'Kërko mjete', heroTitle: 'Mjete të dobishme', noResult: 'Nuk u gjetën rezultate.' } } },
+  eu: { translation: { common: { home: 'Hasiera', soon: 'Laster' }, header: { fortune: 'Zoria', game: 'Jokoak', contact: 'Kontaktua' }, home: { searchPlaceholder: 'Bilatu tresnak', heroTitle: 'Tresna erabilgarriak', noResult: 'Ez da emaitzarik aurkitu.' } } },
+  mt: { translation: { common: { home: 'Dar', soon: 'Dalwaqt' }, header: { fortune: 'Fortuna', game: 'Logħob', contact: 'Kuntatt' }, home: { searchPlaceholder: 'Fittex għodod', heroTitle: 'Għodod utli', noResult: 'Ma nstab l-ebda riżultat.' } } },
+  ga: { translation: { common: { home: 'Baile', soon: 'Ag teacht go luath' }, header: { fortune: 'Ádh', game: 'Cluichí', contact: 'Teagmháil' }, home: { searchPlaceholder: 'Cuardaigh uirlisí', heroTitle: 'Uirlisí úsáideacha', noResult: 'Níor aimsíodh torthaí.' } } },
+  lb: { translation: { common: { home: 'Startsäit', soon: 'Geschwënn' }, header: { fortune: 'Gléck', game: 'Spiller', contact: 'Kontakt' }, home: { searchPlaceholder: 'Tools sichen', heroTitle: 'Nëtzlech Tools', noResult: 'Keng Resultater fonnt.' } } },
+  haw: { translation: { common: { home: 'Ka home', soon: 'Koke' }, header: { fortune: 'Laki', game: 'Pāʻani', contact: 'Hoʻokaʻaʻike' }, home: { searchPlaceholder: 'Huli i nā mea hana', heroTitle: 'Nā mea hana pono', noResult: 'ʻAʻohe hopena.' } } },
+  ug: { translation: { common: { home: 'باش بەت', soon: 'پات يېقىندا' }, header: { fortune: 'باخت', game: 'ئويۇنلار', contact: 'ئالاقە' }, home: { searchPlaceholder: 'قوراللارنى ئىزدەش', heroTitle: 'پايدىلىق قوراللار', noResult: 'نەتىجە تېپىلمىدى.' } } },
+  rw: { translation: { common: { home: 'Ahabanza', soon: 'Biteguye kuza' }, header: { fortune: 'Amahirwe', game: 'Imikino', contact: 'Twandikire' }, home: { searchPlaceholder: 'Shakisha ibikoresho', heroTitle: 'Ibikoresho bifasha', noResult: 'Nta bisubizo bibonetse.' } } },
+  eo: { translation: { common: { home: 'Hejmo', soon: 'Baldaŭ' }, header: { fortune: 'Fortuno', game: 'Ludoj', contact: 'Kontakto' }, home: { searchPlaceholder: 'Serĉi ilojn', heroTitle: 'Utilaj iloj', noResult: 'Neniuj rezultoj.' } } },
+  cy: { translation: { common: { home: 'Hafan', soon: 'Yn fuan' }, header: { fortune: 'Ffortiwn', game: 'Gemau', contact: 'Cysylltu' }, home: { searchPlaceholder: 'Chwilio am offer', heroTitle: 'Offer defnyddiol', noResult: 'Dim canlyniadau.' } } },
+} as const;
+
+// Core chrome copy for the first rollout languages. Tool-specific pages can
+// safely fall back to English until their reviewed glossary is added.
+const rolloutTranslations = {
+  zh: { translation: { common: { home: '首页', soon: '即将推出' }, header: { fortune: '运势', game: '游戏', fishbreadMap: '鲷鱼烧地图', contact: '联系' }, footer: { rights: '版权所有。', about: '关于', privacy: '隐私', terms: '条款', refund: '退款', contact: '联系', editorial: '运营原则', disclaimer: '免责声明' }, home: { searchPlaceholder: '搜索工具', heroTitle: '趣味工具集', heroDesc: '从卡片直接开始。', noResult: '没有找到结果。' } } },
+  es: { translation: { common: { home: 'Inicio', soon: 'Próximamente' }, header: { fortune: 'Fortuna', game: 'Juegos', fishbreadMap: 'Mapa de comida', contact: 'Contacto' }, footer: { rights: 'Todos los derechos reservados.', about: 'Acerca de', privacy: 'Privacidad', terms: 'Términos', refund: 'Reembolsos', contact: 'Contacto', editorial: 'Principios editoriales', disclaimer: 'Aviso' }, home: { searchPlaceholder: 'Buscar herramientas', heroTitle: 'Herramientas divertidas', heroDesc: 'Empieza desde una tarjeta.', noResult: 'No se encontraron resultados.' } } },
+  de: { translation: { common: { home: 'Startseite', soon: 'Bald verfügbar' }, header: { fortune: 'Horoskop', game: 'Spiele', fishbreadMap: 'Karte', contact: 'Kontakt' }, footer: { rights: 'Alle Rechte vorbehalten.', about: 'Über uns', privacy: 'Datenschutz', terms: 'Bedingungen', refund: 'Erstattungen', contact: 'Kontakt', editorial: 'Redaktionsgrundsätze', disclaimer: 'Haftungsausschluss' }, home: { searchPlaceholder: 'Tools suchen', heroTitle: 'Praktische Tools', heroDesc: 'Direkt über eine Karte starten.', noResult: 'Keine Ergebnisse gefunden.' } } },
+  fr: { translation: { common: { home: 'Accueil', soon: 'Bientôt' }, header: { fortune: 'Horoscope', game: 'Jeux', fishbreadMap: 'Carte', contact: 'Contact' }, footer: { rights: 'Tous droits réservés.', about: 'À propos', privacy: 'Confidentialité', terms: 'Conditions', refund: 'Remboursements', contact: 'Contact', editorial: 'Règles éditoriales', disclaimer: 'Avertissement' }, home: { searchPlaceholder: 'Rechercher des outils', heroTitle: 'Outils pratiques', heroDesc: 'Commencez depuis une carte.', noResult: 'Aucun résultat.' } } },
+  pt: { translation: { common: { home: 'Início', soon: 'Em breve' }, header: { fortune: 'Fortuna', game: 'Jogos', fishbreadMap: 'Mapa', contact: 'Contato' }, footer: { rights: 'Todos os direitos reservados.', about: 'Sobre', privacy: 'Privacidade', terms: 'Termos', refund: 'Reembolsos', contact: 'Contato', editorial: 'Princípios editoriais', disclaimer: 'Aviso' }, home: { searchPlaceholder: 'Buscar ferramentas', heroTitle: 'Ferramentas práticas', heroDesc: 'Comece por um cartão.', noResult: 'Nenhum resultado.' } } },
+  vi: { translation: { common: { home: 'Trang chủ', soon: 'Sắp ra mắt' }, header: { fortune: 'Vận may', game: 'Trò chơi', fishbreadMap: 'Bản đồ', contact: 'Liên hệ' }, footer: { rights: 'Đã đăng ký bản quyền.', about: 'Giới thiệu', privacy: 'Quyền riêng tư', terms: 'Điều khoản', refund: 'Hoàn tiền', contact: 'Liên hệ', editorial: 'Nguyên tắc biên tập', disclaimer: 'Tuyên bố miễn trừ' }, home: { searchPlaceholder: 'Tìm công cụ', heroTitle: 'Bộ công cụ tiện ích', heroDesc: 'Bắt đầu từ một thẻ.', noResult: 'Không tìm thấy kết quả.' } } },
+  id: { translation: { common: { home: 'Beranda', soon: 'Segera hadir' }, header: { fortune: 'Ramalan', game: 'Game', fishbreadMap: 'Peta', contact: 'Kontak' }, footer: { rights: 'Hak cipta dilindungi.', about: 'Tentang', privacy: 'Privasi', terms: 'Ketentuan', refund: 'Pengembalian dana', contact: 'Kontak', editorial: 'Prinsip editorial', disclaimer: 'Penafian' }, home: { searchPlaceholder: 'Cari alat', heroTitle: 'Kumpulan alat praktis', heroDesc: 'Mulai dari kartu.', noResult: 'Hasil tidak ditemukan.' } } },
+  it: { translation: { common: { home: 'Home', soon: 'Presto disponibile' }, header: { fortune: 'Fortuna', game: 'Giochi', fishbreadMap: 'Mappa', contact: 'Contatti' }, footer: { rights: 'Tutti i diritti riservati.', about: 'Informazioni', privacy: 'Privacy', terms: 'Termini', refund: 'Rimborsi', contact: 'Contatti', editorial: 'Principi editoriali', disclaimer: 'Avvertenza' }, home: { searchPlaceholder: 'Cerca strumenti', heroTitle: 'Strumenti divertenti', heroDesc: 'Inizia da una scheda.', noResult: 'Nessun risultato.' } } },
+  nl: { translation: { common: { home: 'Home', soon: 'Binnenkort' }, header: { fortune: 'Horoscoop', game: 'Spellen', fishbreadMap: 'Kaart', contact: 'Contact' }, footer: { rights: 'Alle rechten voorbehouden.', about: 'Over', privacy: 'Privacy', terms: 'Voorwaarden', refund: 'Terugbetalingen', contact: 'Contact', editorial: 'Redactioneel', disclaimer: 'Disclaimer' }, home: { searchPlaceholder: 'Tools zoeken', heroTitle: 'Handige tools', heroDesc: 'Start vanaf een kaart.', noResult: 'Geen resultaten.' } } },
+  ru: { translation: { common: { home: 'Главная', soon: 'Скоро' }, header: { fortune: 'Гороскоп', game: 'Игры', fishbreadMap: 'Карта', contact: 'Контакты' }, footer: { rights: 'Все права защищены.', about: 'О нас', privacy: 'Конфиденциальность', terms: 'Условия', refund: 'Возвраты', contact: 'Контакты', editorial: 'Принципы', disclaimer: 'Отказ от ответственности' }, home: { searchPlaceholder: 'Поиск инструментов', heroTitle: 'Полезные инструменты', heroDesc: 'Начните с карточки.', noResult: 'Ничего не найдено.' } } },
+  ar: { translation: { common: { home: 'الرئيسية', soon: 'قريباً' }, header: { fortune: 'الحظ', game: 'الألعاب', fishbreadMap: 'الخريطة', contact: 'اتصل بنا' }, footer: { rights: 'جميع الحقوق محفوظة.', about: 'حول', privacy: 'الخصوصية', terms: 'الشروط', refund: 'المبالغ المستردة', contact: 'اتصل بنا', editorial: 'المبادئ التحريرية', disclaimer: 'إخلاء المسؤولية' }, home: { searchPlaceholder: 'ابحث عن الأدوات', heroTitle: 'أدوات ممتعة', heroDesc: 'ابدأ من بطاقة.', noResult: 'لم يتم العثور على نتائج.' } } },
+  hi: { translation: { common: { home: 'होम', soon: 'जल्द आ रहा है' }, header: { fortune: 'भाग्य', game: 'गेम', fishbreadMap: 'मानचित्र', contact: 'संपर्क' }, footer: { rights: 'सर्वाधिकार सुरक्षित।', about: 'परिचय', privacy: 'गोपनीयता', terms: 'शर्तें', refund: 'रिफंड', contact: 'संपर्क', editorial: 'संपादकीय नीति', disclaimer: 'अस्वीकरण' }, home: { searchPlaceholder: 'टूल खोजें', heroTitle: 'मज़ेदार टूल', heroDesc: 'कार्ड से शुरू करें।', noResult: 'कोई परिणाम नहीं।' } } },
+  tr: { translation: { common: { home: 'Ana sayfa', soon: 'Yakında' }, header: { fortune: 'Fal', game: 'Oyun', fishbreadMap: 'Harita', contact: 'İletişim' }, footer: { rights: 'Tüm hakları saklıdır.', about: 'Hakkımızda', privacy: 'Gizlilik', terms: 'Koşullar', refund: 'İadeler', contact: 'İletişim', editorial: 'Yayın ilkeleri', disclaimer: 'Sorumluluk reddi' }, home: { searchPlaceholder: 'Araç ara', heroTitle: 'Eğlenceli araçlar', heroDesc: 'Bir karttan başlayın.', noResult: 'Sonuç bulunamadı.' } } },
+  pl: { translation: { common: { home: 'Start', soon: 'Wkrótce' }, header: { fortune: 'Horoskop', game: 'Gry', fishbreadMap: 'Mapa', contact: 'Kontakt' }, footer: { rights: 'Wszelkie prawa zastrzeżone.', about: 'O nas', privacy: 'Prywatność', terms: 'Warunki', refund: 'Zwroty', contact: 'Kontakt', editorial: 'Zasady redakcyjne', disclaimer: 'Zastrzeżenie' }, home: { searchPlaceholder: 'Szukaj narzędzi', heroTitle: 'Przydatne narzędzia', heroDesc: 'Zacznij od karty.', noResult: 'Brak wyników.' } } },
+  th: { translation: { common: { home: 'หน้าหลัก', soon: 'เร็ว ๆ นี้' }, header: { fortune: 'ดวงชะตา', game: 'เกม', fishbreadMap: 'แผนที่', contact: 'ติดต่อ' }, footer: { rights: 'สงวนลิขสิทธิ์', about: 'เกี่ยวกับ', privacy: 'ความเป็นส่วนตัว', terms: 'เงื่อนไข', refund: 'การคืนเงิน', contact: 'ติดต่อ', editorial: 'หลักบรรณาธิการ', disclaimer: 'ข้อจำกัดความรับผิดชอบ' }, home: { searchPlaceholder: 'ค้นหาเครื่องมือ', heroTitle: 'เครื่องมือสนุก ๆ', heroDesc: 'เริ่มจากการ์ด', noResult: 'ไม่พบผลลัพธ์' } } },
+  sv: { translation: { common: { home: 'Hem', soon: 'Kommer snart' }, header: { fortune: 'Horoskop', game: 'Spel', fishbreadMap: 'Karta', contact: 'Kontakt' }, footer: { rights: 'Med ensamrätt.', about: 'Om oss', privacy: 'Integritet', terms: 'Villkor', refund: 'Återbetalningar', contact: 'Kontakt', editorial: 'Redaktionella principer', disclaimer: 'Ansvarsfriskrivning' }, home: { searchPlaceholder: 'Sök verktyg', heroTitle: 'Praktiska verktyg', heroDesc: 'Börja från ett kort.', noResult: 'Inga resultat.' } } },
+  uk: { translation: { common: { home: 'Головна', soon: 'Незабаром' }, header: { fortune: 'Гороскоп', game: 'Ігри', fishbreadMap: 'Мапа', contact: 'Контакти' }, footer: { rights: 'Усі права захищено.', about: 'Про нас', privacy: 'Конфіденційність', terms: 'Умови', refund: 'Повернення', contact: 'Контакти', editorial: 'Редакційні принципи', disclaimer: 'Відмова від відповідальності' }, home: { searchPlaceholder: 'Пошук інструментів', heroTitle: 'Корисні інструменти', heroDesc: 'Почніть із картки.', noResult: 'Результатів не знайдено.' } } }
+  ,ca: { translation: { common: { home: 'Inici', soon: 'Properament' }, header: { fortune: 'Fortuna', game: 'Jocs', fishbreadMap: 'Mapa', contact: 'Contacte' }, footer: { rights: 'Tots els drets reservats.', about: 'Sobre', privacy: 'Privacitat', terms: 'Condicions', refund: 'Reemborsaments', contact: 'Contacte', editorial: 'Principis editorials', disclaimer: 'Avís' }, home: { searchPlaceholder: 'Cerca eines', heroTitle: 'Eines pràctiques', heroDesc: 'Comença des d’una targeta.', noResult: 'No s’han trobat resultats.' } } },
+  cs: { translation: { common: { home: 'Domů', soon: 'Již brzy' }, header: { fortune: 'Horoskop', game: 'Hry', fishbreadMap: 'Mapa', contact: 'Kontakt' }, footer: { rights: 'Všechna práva vyhrazena.', about: 'O nás', privacy: 'Soukromí', terms: 'Podmínky', refund: 'Vrácení peněz', contact: 'Kontakt', editorial: 'Redakční zásady', disclaimer: 'Upozornění' }, home: { searchPlaceholder: 'Hledat nástroje', heroTitle: 'Praktické nástroje', heroDesc: 'Začněte kartou.', noResult: 'Nebyly nalezeny žádné výsledky.' } } },
+  da: { translation: { common: { home: 'Hjem', soon: 'Kommer snart' }, header: { fortune: 'Horoskop', game: 'Spil', fishbreadMap: 'Kort', contact: 'Kontakt' }, footer: { rights: 'Alle rettigheder forbeholdes.', about: 'Om', privacy: 'Privatliv', terms: 'Vilkår', refund: 'Refusioner', contact: 'Kontakt', editorial: 'Redaktionelle principper', disclaimer: 'Ansvarsfraskrivelse' }, home: { searchPlaceholder: 'Søg værktøjer', heroTitle: 'Praktiske værktøjer', heroDesc: 'Start fra et kort.', noResult: 'Ingen resultater.' } } },
+  fi: { translation: { common: { home: 'Etusivu', soon: 'Tulossa pian' }, header: { fortune: 'Ennustus', game: 'Pelit', fishbreadMap: 'Kartta', contact: 'Yhteystiedot' }, footer: { rights: 'Kaikki oikeudet pidätetään.', about: 'Tietoa', privacy: 'Tietosuoja', terms: 'Ehdot', refund: 'Hyvitykset', contact: 'Yhteystiedot', editorial: 'Toimitusperiaatteet', disclaimer: 'Vastuuvapauslauseke' }, home: { searchPlaceholder: 'Hae työkaluja', heroTitle: 'Käteviä työkaluja', heroDesc: 'Aloita kortista.', noResult: 'Tuloksia ei löytynyt.' } } },
+  no: { translation: { common: { home: 'Hjem', soon: 'Kommer snart' }, header: { fortune: 'Horoskop', game: 'Spill', fishbreadMap: 'Kart', contact: 'Kontakt' }, footer: { rights: 'Alle rettigheter forbeholdt.', about: 'Om', privacy: 'Personvern', terms: 'Vilkår', refund: 'Refusjoner', contact: 'Kontakt', editorial: 'Redaksjonelle prinsipper', disclaimer: 'Ansvarsfraskrivelse' }, home: { searchPlaceholder: 'Søk etter verktøy', heroTitle: 'Praktiske verktøy', heroDesc: 'Start fra et kort.', noResult: 'Ingen resultater.' } } },
+  ro: { translation: { common: { home: 'Acasă', soon: 'În curând' }, header: { fortune: 'Horoscop', game: 'Jocuri', fishbreadMap: 'Hartă', contact: 'Contact' }, footer: { rights: 'Toate drepturile rezervate.', about: 'Despre', privacy: 'Confidențialitate', terms: 'Termeni', refund: 'Rambursări', contact: 'Contact', editorial: 'Principii editoriale', disclaimer: 'Declinarea răspunderii' }, home: { searchPlaceholder: 'Caută instrumente', heroTitle: 'Instrumente utile', heroDesc: 'Începe de pe un card.', noResult: 'Nu s-au găsit rezultate.' } } },
+  el: { translation: { common: { home: 'Αρχική', soon: 'Σύντομα' }, header: { fortune: 'Τύχη', game: 'Παιχνίδια', fishbreadMap: 'Χάρτης', contact: 'Επικοινωνία' }, footer: { rights: 'Με επιφύλαξη παντός δικαιώματος.', about: 'Σχετικά', privacy: 'Απόρρητο', terms: 'Όροι', refund: 'Επιστροφές', contact: 'Επικοινωνία', editorial: 'Συντακτικές αρχές', disclaimer: 'Αποποίηση ευθύνης' }, home: { searchPlaceholder: 'Αναζήτηση εργαλείων', heroTitle: 'Χρήσιμα εργαλεία', heroDesc: 'Ξεκινήστε από μια κάρτα.', noResult: 'Δεν βρέθηκαν αποτελέσματα.' } } },
+  he: { translation: { common: { home: 'בית', soon: 'בקרוב' }, header: { fortune: 'מזל', game: 'משחקים', fishbreadMap: 'מפה', contact: 'צור קשר' }, footer: { rights: 'כל הזכויות שמורות.', about: 'אודות', privacy: 'פרטיות', terms: 'תנאים', refund: 'החזרים', contact: 'צור קשר', editorial: 'עקרונות עריכה', disclaimer: 'כתב ויתור' }, home: { searchPlaceholder: 'חיפוש כלים', heroTitle: 'כלים שימושיים', heroDesc: 'מתחילים מכרטיס.', noResult: 'לא נמצאו תוצאות.' } } },
+  hu: { translation: { common: { home: 'Kezdőlap', soon: 'Hamarosan' }, header: { fortune: 'Horoszkóp', game: 'Játékok', fishbreadMap: 'Térkép', contact: 'Kapcsolat' }, footer: { rights: 'Minden jog fenntartva.', about: 'Rólunk', privacy: 'Adatvédelem', terms: 'Feltételek', refund: 'Visszatérítés', contact: 'Kapcsolat', editorial: 'Szerkesztési elvek', disclaimer: 'Jogi nyilatkozat' }, home: { searchPlaceholder: 'Eszközök keresése', heroTitle: 'Hasznos eszközök', heroDesc: 'Kezdje egy kártyával.', noResult: 'Nincs találat.' } } }
+} as const;
+
 export function detectLocale(pathname: string): Locale {
   const prefix = pathname.match(/^\/([a-z]{2})(?:\/|$)/)?.[1];
-  if (prefix && (localeCodes as readonly string[]).includes(prefix)) return prefix as Locale;
+  if (prefix && (seoLocaleCodes as readonly string[]).includes(prefix)) return prefix as Locale;
   return 'ko';
 }
 
 export function stripLocale(pathname: string) {
-  return pathname.replace(new RegExp(`^\\/(${localeCodes.filter((code) => code !== 'ko').join('|')})(?=\\/|$)`), '') || '/';
+  return pathname.replace(new RegExp(`^\\/(${seoLocaleCodes.filter((code) => code !== 'ko').join('|')})(?=\\/|$)`), '') || '/';
 }
 
 // /en, /ja 페이지 대부분은 한국어 페이지를 그대로 렌더링하는 래퍼라서,
@@ -413,6 +539,7 @@ for (const code of localeCodes) {
 export function hasTranslation(locale: Locale, path: string) {
   if (locale === 'ko') return true;
   const normalized = path.length > 1 ? path.replace(/\/+$/, '') : path;
+  if (normalized === '/' || /^\/(ai-personal-color|ai-calorie-calculator|ai-manseryeok|ai-id-photo|ai-headshot|ai-pet-translator|valorant-agent-picker|crosshair-generator|fps-aim-sensitivity|fps-aim-trainer|fps-sensitivity-converter|dpi-edpi-calculator|fov-calculator|name-compatibility|nickname-generator|name-meaning|random-picker|chat-random-picker|lol-champion-recommender|game-character-picker|image-compressor|image-resizer|image-blur|image-cropper|unit-converter|bmi-calculator|percentage-calculator|color-converter|time-zone-converter|tip-calculator|age-calculator)$/.test(normalized)) return true;
   return Boolean(translatedPaths[locale]?.some((pattern) => pattern.test(normalized)));
 }
 
@@ -431,7 +558,7 @@ export async function createTranslator(locale: Locale) {
   await instance.init({
     lng: locale,
     fallbackLng: 'en',
-    resources,
+    resources: { ...resources, ...rolloutTranslations, ...additionalTranslations, ...extendedTranslations, ...regionalTranslations, ...globalTranslations, ...finalRegionalTranslations, ...lastTranslations, ...edgeTranslations },
     interpolation: { escapeValue: false },
     initImmediate: false,
   });

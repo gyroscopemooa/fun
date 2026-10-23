@@ -1,0 +1,33 @@
+---
+import Footer from '../../components/Footer.astro';
+import Header from '../../components/Header.astro';
+import Layout from '../../layouts/Layout.astro';
+import { seoLocaleCodes } from '../../lib/i18n';
+const copy = {
+  zh: ['聊天随机抽选', '输入用户名列表，随机选择一名参与者或获奖者。', '用户名列表', '每行一个用户名', '随机选择', '请输入至少一个用户名。'],
+  es: ['Selector aleatorio del chat', 'Introduce nombres de usuario y elige un participante o ganador al azar.', 'Lista de usuarios', 'Un usuario por línea', 'Elegir al azar', 'Escribe al menos un usuario.'],
+  de: ['Chat-Zufallsauswahl', 'Gib Benutzernamen ein und wähle einen Teilnehmer oder Gewinner zufällig aus.', 'Benutzerliste', 'Ein Benutzer pro Zeile', 'Zufällig wählen', 'Gib mindestens einen Benutzer ein.'],
+  fr: ['Tirage aléatoire du chat', 'Saisissez des utilisateurs et choisissez un participant ou un gagnant au hasard.', 'Liste des utilisateurs', 'Un utilisateur par ligne', 'Tirer au sort', 'Saisissez au moins un utilisateur.'],
+  pt: ['Sorteador do chat', 'Digite nomes de usuários e escolha um participante ou vencedor aleatoriamente.', 'Lista de usuários', 'Um usuário por linha', 'Sortear', 'Digite pelo menos um usuário.'],
+  vi: ['Chọn ngẫu nhiên trong chat', 'Nhập tên người dùng để chọn một người tham gia hoặc người thắng cuộc.', 'Danh sách người dùng', 'Mỗi dòng một người dùng', 'Chọn ngẫu nhiên', 'Hãy nhập ít nhất một người dùng.'],
+  id: ['Pemilih acak chat', 'Masukkan nama pengguna untuk memilih peserta atau pemenang secara acak.', 'Daftar pengguna', 'Satu pengguna per baris', 'Pilih acak', 'Masukkan setidaknya satu pengguna.'],
+  it: ['Estrazione casuale dalla chat', 'Inserisci gli utenti e scegli casualmente un partecipante o vincitore.', 'Elenco utenti', 'Un utente per riga', 'Scegli a caso', 'Inserisci almeno un utente.'],
+  nl: ['Willekeurige chatkeuze', 'Voer gebruikersnamen in en kies willekeurig een deelnemer of winnaar.', 'Gebruikerslijst', 'Eén gebruiker per regel', 'Willekeurig kiezen', 'Voer minstens één gebruiker in.'],
+  ru: ['Случайный выбор в чате', 'Введите имена пользователей и случайно выберите участника или победителя.', 'Список пользователей', 'Один пользователь в строке', 'Выбрать случайно', 'Введите хотя бы одного пользователя.'],
+  ar: ['اختيار عشوائي من الدردشة', 'أدخل أسماء المستخدمين واختر مشاركاً أو فائزاً عشوائياً.', 'قائمة المستخدمين', 'مستخدم واحد في كل سطر', 'اختيار عشوائي', 'أدخل مستخدماً واحداً على الأقل.'],
+  hi: ['चैट रैंडम पिकर', 'यूज़रनेम लिखें और किसी प्रतिभागी या विजेता को रैंडम चुनें।', 'यूज़र सूची', 'हर पंक्ति में एक यूज़र', 'रैंडम चुनें', 'कम से कम एक यूज़र लिखें।'],
+  tr: ['Sohbet rastgele seçici', 'Kullanıcı adlarını girin ve bir katılımcıyı veya kazananı rastgele seçin.', 'Kullanıcı listesi', 'Her satıra bir kullanıcı', 'Rastgele seç', 'En az bir kullanıcı girin.'],
+  pl: ['Losowanie z czatu', 'Wpisz nazwy użytkowników i wylosuj uczestnika lub zwycięzcę.', 'Lista użytkowników', 'Jeden użytkownik w wierszu', 'Losuj', 'Wpisz co najmniej jednego użytkownika.'],
+  th: ['สุ่มเลือกจากแชต', 'ป้อนชื่อผู้ใช้เพื่อสุ่มเลือกผู้เข้าร่วมหรือผู้ชนะ', 'รายชื่อผู้ใช้', 'หนึ่งผู้ใช้ต่อบรรทัด', 'สุ่มเลือก', 'กรุณาป้อนผู้ใช้อย่างน้อยหนึ่งคน'],
+  sv: ['Slumpväljare för chatt', 'Skriv användarnamn och välj en deltagare eller vinnare slumpmässigt.', 'Användarlista', 'En användare per rad', 'Välj slumpmässigt', 'Skriv minst en användare.'],
+  uk: ['Випадковий вибір у чаті', 'Введіть імена користувачів і випадково оберіть учасника або переможця.', 'Список користувачів', 'Один користувач у рядку', 'Обрати випадково', 'Введіть хоча б одного користувача.'],
+  en: ['Chat random picker', 'Enter usernames to randomly choose a participant or winner.', 'User list', 'One username per line', 'Pick randomly', 'Enter at least one username.']
+};
+export function getStaticPaths() { return seoLocaleCodes.filter((locale) => locale !== 'ko').map((locale) => ({ params: { locale }, props: { locale } })); }
+const { locale } = Astro.props; const text = copy[locale as keyof typeof copy] ?? copy.en;
+---
+<Layout title={`${text[0]} | ManyTool`} description={text[1]} keywords={`${text[0]}, chat random picker, ManyTool`}><Header /><main class="mx-auto max-w-4xl px-4 py-8"><section class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm sm:p-8"><h1 class="text-3xl font-black text-slate-950">{text[0]}</h1><p class="mt-3 text-sm leading-7 text-slate-600">{text[1]}</p><label class="mt-6 block text-sm font-bold text-slate-800">{text[2]}<textarea id="users" rows="8" class="mt-2 w-full rounded-xl border border-slate-300 p-4" placeholder={text[3]}></textarea></label><button id="pick" class="mt-4 rounded-xl bg-slate-950 px-5 py-3 text-sm font-bold text-white">{text[4]}</button><p id="message" class="mt-4 min-h-6 text-sm text-rose-600"></p><div id="result" class="mt-5 hidden rounded-2xl bg-cyan-50 p-8 text-center text-3xl font-black text-cyan-900"></div></section></main><Footer /></Layout>
+<script is:inline define:vars={{ text }}>
+  const users = document.querySelector('#users'); const pick = document.querySelector('#pick'); const result = document.querySelector('#result'); const message = document.querySelector('#message');
+  pick.addEventListener('click', () => { const list = users.value.split('\n').map((item) => item.trim()).filter(Boolean); if (!list.length) { message.textContent = text[5]; result.classList.add('hidden'); return; } message.textContent = ''; result.textContent = list[Math.floor(Math.random() * list.length)]; result.classList.remove('hidden'); });
+</script>

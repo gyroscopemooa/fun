@@ -1,5 +1,5 @@
 ---
-import { createTranslator, detectLocale, rolloutLocales, stripLocale, withLocalePath } from '../lib/i18n';
+import { createTranslator, detectLocale, rolloutLocales, seoLocaleCodes, stripLocale, withLocalePath } from '../lib/i18n';
 import FamilyPromo from './FamilyPromo.astro';
 
 const pathname = Astro.url.pathname;
@@ -56,9 +56,9 @@ const langLinks = [
 </header>
 <FamilyPromo />
 
-<script is:inline define:vars={{ locale, strippedPath }}>
+<script is:inline define:vars={{ locale, strippedPath, supportedLocales: seoLocaleCodes }}>
   const languageStorageKey = 'manytool-locale';
-  const supportedLocales = ['ko', 'en', 'ja'];
+  const localePrefixPattern = new RegExp(`^/(${supportedLocales.filter((code) => code !== 'ko').join('|')})(?:/|$)`);
   const localePath = (nextLocale) => {
     const path = strippedPath === '/' ? '' : strippedPath;
     return nextLocale === 'ko' ? (path || '/') : `/${nextLocale}${path || '/'}`;
@@ -67,7 +67,7 @@ const langLinks = [
   // Manual language selection wins and is remembered for later visits.
   document.querySelectorAll('header a[href]').forEach((link) => {
     const href = link.getAttribute('href') || '';
-    const match = href.match(/^\/(en|ja)(?:\/|$)/);
+    const match = href.match(localePrefixPattern);
     const nextLocale = match ? match[1] : href.startsWith('/') ? 'ko' : null;
     if (nextLocale && supportedLocales.includes(nextLocale)) {
       link.addEventListener('click', () => {
@@ -77,7 +77,7 @@ const langLinks = [
   });
 
   // Only auto-switch the canonical Korean URL. Localized SEO URLs remain stable.
-  const isCanonicalKoreanPath = locale === 'ko' && !location.pathname.match(/^\/(en|ja)(?:\/|$)/);
+  const isCanonicalKoreanPath = locale === 'ko' && !location.pathname.match(localePrefixPattern);
   if (isCanonicalKoreanPath && !localStorage.getItem(languageStorageKey)) {
     const browserLocale = (navigator.languages || [navigator.language || 'ko'])
       .map((value) => value.toLowerCase().split('-')[0])

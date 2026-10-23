@@ -1,0 +1,18 @@
+---
+import GamePickerPage from '../../components/game-picker/GamePickerPage.astro';
+import { seoLocaleCodes } from '../../lib/i18n';
+const copy = {
+  zh: ['Valorant 特工随机推荐', '选择角色并随机获得一名 Valorant 特工，也可以生成五人阵容。', 'Valorant 特工推荐'],
+  es: ['Selector de agentes de Valorant', 'Elige un rol y recibe un agente al azar o crea un equipo de cinco.', 'Selector de agentes'],
+  de: ['Valorant-Agent-Auswahl', 'Wähle eine Rolle und erhalte einen Agenten oder stelle ein Fünferteam zusammen.', 'Agent-Auswahl'],
+  fr: ['Sélecteur d’agents Valorant', 'Choisissez un rôle, obtenez un agent au hasard ou créez une équipe de cinq.', 'Sélecteur d’agents'],
+  pt: ['Sorteador de agentes Valorant', 'Escolha uma função, receba um agente aleatório ou monte uma equipe de cinco.', 'Sorteador de agentes'],
+  vi: ['Trình chọn đặc vụ Valorant', 'Chọn vai trò, nhận đặc vụ ngẫu nhiên hoặc tạo đội hình năm người.', 'Trình chọn đặc vụ'],
+  id: ['Pemilih Agen Valorant', 'Pilih peran, dapatkan agen acak, atau buat tim berisi lima orang.', 'Pemilih agen'],
+  en: ['Valorant agent picker', 'Choose a role, get a random agent, or build a five-player team.', 'Agent picker']
+};
+export function getStaticPaths() { return seoLocaleCodes.filter((locale) => locale !== 'ko').map((locale) => ({ params: { locale }, props: { locale } })); }
+const { locale } = Astro.props;
+const text = copy[locale as keyof typeof copy] ?? copy.en;
+---
+<GamePickerPage game="valorant" locale={locale} title={`${text[0]} | ManyTool`} description={text[1]} keywords={`${text[0]}, Valorant agent picker, ManyTool`} eyebrow="Valorant Agent Picker" heading={text[2]} intro={text[1]} accent="#FF4655" />

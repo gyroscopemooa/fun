@@ -33,6 +33,19 @@ const SCENES = [
   { id: 'snow', label: '설원', background: 'linear-gradient(180deg,#f8fafc 0%,#e2e8f0 55%,#94a3b8 100%)' }
 ];
 
+const SCENE_LABELS = {
+  it: { desert: 'Deserto', night: 'Notte', grass: 'Foresta', snow: 'Neve' },
+  nl: { desert: 'Woestijn', night: 'Nacht', grass: 'Bos', snow: 'Sneeuw' },
+  ru: { desert: 'Пустыня', night: 'Ночь', grass: 'Лес', snow: 'Снег' },
+  ar: { desert: 'الصحراء', night: 'الليل', grass: 'الغابة', snow: 'الثلج' },
+  hi: { desert: 'रेगिस्तान', night: 'रात', grass: 'जंगल', snow: 'बर्फ़' },
+  tr: { desert: 'Çöl', night: 'Gece', grass: 'Orman', snow: 'Kar' },
+  pl: { desert: 'Pustynia', night: 'Noc', grass: 'Las', snow: 'Śnieg' },
+  th: { desert: 'ทะเลทราย', night: 'กลางคืน', grass: 'ป่า', snow: 'หิมะ' },
+  sv: { desert: 'Öken', night: 'Natt', grass: 'Skog', snow: 'Snö' },
+  uk: { desert: 'Пустеля', night: 'Ніч', grass: 'Ліс', snow: 'Сніг' }
+} as const;
+
 function Reticle({ c, scale = 4 }: { c: Crosshair; scale?: number }) {
   const s = c.size * scale;
   const t = Math.max(1, c.thickness * scale * 0.5);
@@ -70,7 +83,47 @@ function Slider({ label, value, min, max, onChange }: { label: string; value: nu
   );
 }
 
-export function CrosshairStudio() {
+type CrosshairLocale = 'ko' | 'en' | 'zh' | 'es' | 'de' | 'fr' | 'pt' | 'vi' | 'id' | 'it' | 'nl' | 'ru' | 'ar' | 'hi' | 'tr' | 'pl' | 'th' | 'sv' | 'uk';
+const UI_COPY = {
+  ko: { preset: '프리셋', copy: '설정값 복사', save: 'PNG로 저장', saving: '이미지 만드는 중…', card: '크로스헤어 공유 카드' },
+  en: { preset: 'Presets', copy: 'Copy settings', save: 'Save PNG', saving: 'Creating image…', card: 'Crosshair share card' },
+  zh: { preset: '预设', copy: '复制设置', save: '保存 PNG', saving: '正在生成图片…', card: '准星分享卡片' },
+  es: { preset: 'Preajustes', copy: 'Copiar ajustes', save: 'Guardar PNG', saving: 'Creando imagen…', card: 'Tarjeta para compartir' },
+  de: { preset: 'Voreinstellungen', copy: 'Einstellungen kopieren', save: 'PNG speichern', saving: 'Bild wird erstellt…', card: 'Fadenkreuz-Karte' },
+  fr: { preset: 'Préréglages', copy: 'Copier les réglages', save: 'Enregistrer PNG', saving: 'Création de l’image…', card: 'Carte de partage' },
+  pt: { preset: 'Predefinições', copy: 'Copiar configurações', save: 'Salvar PNG', saving: 'Criando imagem…', card: 'Cartão para compartilhar' },
+  vi: { preset: 'Mẫu có sẵn', copy: 'Sao chép cài đặt', save: 'Lưu PNG', saving: 'Đang tạo ảnh…', card: 'Thẻ chia sẻ tâm ngắm' },
+  id: { preset: 'Preset', copy: 'Salin pengaturan', save: 'Simpan PNG', saving: 'Membuat gambar…', card: 'Kartu berbagi crosshair' },
+  it: { preset: 'Preimpostazioni', copy: 'Copia impostazioni', save: 'Salva PNG', saving: 'Creazione immagine…', card: 'Scheda mirino da condividere' },
+  nl: { preset: 'Voorinstellingen', copy: 'Instellingen kopiëren', save: 'PNG opslaan', saving: 'Afbeelding maken…', card: 'Deelkaart voor vizier' },
+  ru: { preset: 'Пресеты', copy: 'Копировать настройки', save: 'Сохранить PNG', saving: 'Создание изображения…', card: 'Карточка прицела' },
+  ar: { preset: 'إعدادات مسبقة', copy: 'نسخ الإعدادات', save: 'حفظ PNG', saving: 'جارٍ إنشاء الصورة…', card: 'بطاقة مشاركة التصويب' },
+  hi: { preset: 'प्रीसेट', copy: 'सेटिंग कॉपी करें', save: 'PNG सेव करें', saving: 'इमेज बनाई जा रही है…', card: 'क्रॉसहेयर शेयर कार्ड' },
+  tr: { preset: 'Ön ayarlar', copy: 'Ayarları kopyala', save: 'PNG kaydet', saving: 'Görsel oluşturuluyor…', card: 'Nişangâh paylaşım kartı' },
+  pl: { preset: 'Presety', copy: 'Kopiuj ustawienia', save: 'Zapisz PNG', saving: 'Tworzenie obrazu…', card: 'Karta celownika' },
+  th: { preset: 'ค่าที่ตั้งไว้', copy: 'คัดลอกการตั้งค่า', save: 'บันทึก PNG', saving: 'กำลังสร้างรูปภาพ…', card: 'การ์ดแชร์เป้าเล็ง' },
+  sv: { preset: 'Förinställningar', copy: 'Kopiera inställningar', save: 'Spara PNG', saving: 'Skapar bild…', card: 'Delningskort för sikte' },
+  uk: { preset: 'Пресети', copy: 'Копіювати налаштування', save: 'Зберегти PNG', saving: 'Створення зображення…', card: 'Картка прицілу' }
+} as const;
+
+const STATUS_COPY = {
+  en: { copied: 'Settings copied.', copyFailed: 'Could not copy settings.', saveFailed: 'Could not save the image.' },
+  it: { copied: 'Impostazioni copiate.', copyFailed: 'Impossibile copiare le impostazioni.', saveFailed: 'Impossibile salvare l’immagine.' },
+  nl: { copied: 'Instellingen gekopieerd.', copyFailed: 'Instellingen kopiëren mislukt.', saveFailed: 'Afbeelding opslaan mislukt.' },
+  ru: { copied: 'Настройки скопированы.', copyFailed: 'Не удалось скопировать настройки.', saveFailed: 'Не удалось сохранить изображение.' },
+  ar: { copied: 'تم نسخ الإعدادات.', copyFailed: 'تعذر نسخ الإعدادات.', saveFailed: 'تعذر حفظ الصورة.' },
+  hi: { copied: 'सेटिंग कॉपी हो गई।', copyFailed: 'सेटिंग कॉपी नहीं हो सकी।', saveFailed: 'इमेज सेव नहीं हो सकी।' },
+  tr: { copied: 'Ayarlar kopyalandı.', copyFailed: 'Ayarlar kopyalanamadı.', saveFailed: 'Görsel kaydedilemedi.' },
+  pl: { copied: 'Ustawienia skopiowane.', copyFailed: 'Nie udało się skopiować ustawień.', saveFailed: 'Nie udało się zapisać obrazu.' },
+  th: { copied: 'คัดลอกการตั้งค่าแล้ว', copyFailed: 'คัดลอกการตั้งค่าไม่สำเร็จ', saveFailed: 'บันทึกรูปภาพไม่สำเร็จ' },
+  sv: { copied: 'Inställningarna kopierades.', copyFailed: 'Det gick inte att kopiera inställningarna.', saveFailed: 'Det gick inte att spara bilden.' },
+  uk: { copied: 'Налаштування скопійовано.', copyFailed: 'Не вдалося скопіювати налаштування.', saveFailed: 'Не вдалося зберегти зображення.' }
+} as const;
+
+export function CrosshairStudio({ locale = 'ko' }: { locale?: CrosshairLocale }) {
+  const copyText = UI_COPY[locale] ?? UI_COPY.en;
+  const statusText = STATUS_COPY[locale as keyof typeof STATUS_COPY] ?? { copied: '설정값을 복사했습니다.', copyFailed: '복사하지 못했어요.', saveFailed: '이미지 저장에 실패했어요.' };
+  const sceneLabels = SCENE_LABELS[locale as keyof typeof SCENE_LABELS];
   const [c, setC] = useState<Crosshair>(DEFAULT);
   const [scene, setScene] = useState(SCENES[1]);
   const [status, setStatus] = useState('');
@@ -82,9 +135,9 @@ export function CrosshairStudio() {
     try {
       // Same key=value format as the original generator, followed by the readable summary.
       await navigator.clipboard.writeText(`size=${c.size}; thickness=${c.thickness}; gap=${c.gap}; color=${c.color}; outline=${c.outline ? c.outlineThickness : 0}; dot=${c.dot ? c.dotSize : 0}; opacity=${c.opacity}${c.tShape ? '; t=1' : ''}\n${settingsText(c).join('\n')}`);
-      setStatus('설정값을 복사했습니다.');
+      setStatus(statusText.copied);
     } catch {
-      setStatus('복사하지 못했어요. 아래 설정을 직접 옮겨 적어 주세요.');
+      setStatus(statusText.copyFailed);
     }
   };
 
@@ -94,7 +147,7 @@ export function CrosshairStudio() {
     try {
       await saveNodeAsPng(cardRef.current, 'manytool-crosshair.png');
     } catch {
-      setStatus('이미지 저장에 실패했어요.');
+      setStatus(statusText.saveFailed);
     } finally {
       setSaving(false);
     }
@@ -105,7 +158,7 @@ export function CrosshairStudio() {
       <section className="grid gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="space-y-4 rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
           <div>
-            <p className="text-sm font-bold text-slate-800">프리셋</p>
+            <p className="text-sm font-bold text-slate-800">{copyText.preset}</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {PRESETS.map((p) => (
                 <button key={p.name} type="button" onClick={() => set(p.value)} className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 hover:border-slate-900">{p.name}</button>
@@ -139,7 +192,7 @@ export function CrosshairStudio() {
             </label>
           </div>
           <button type="button" onClick={copy} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3 font-bold text-white">
-            <Copy className="h-4 w-4" /> 설정값 복사
+            <Copy className="h-4 w-4" /> {copyText.copy}
           </button>
           {status ? <p className="text-sm text-slate-500">{status}</p> : null}
         </div>
@@ -148,7 +201,7 @@ export function CrosshairStudio() {
           <div className="flex gap-2">
             {SCENES.map((s) => (
               <button key={s.id} type="button" onClick={() => setScene(s)} className={`flex-1 rounded-xl border-2 py-2 text-xs font-bold ${scene.id === s.id ? 'border-slate-900' : 'border-transparent'}`} style={{ background: s.background, color: s.id === 'night' ? '#fff' : '#0f172a' }}>
-                {s.label}
+                {sceneLabels?.[s.id as keyof typeof sceneLabels] ?? s.label}
               </button>
             ))}
           </div>
@@ -163,7 +216,7 @@ export function CrosshairStudio() {
       </section>
 
       <section className="rounded-[28px] border border-slate-200 bg-slate-50 p-5">
-        <h2 className="text-lg font-black text-slate-900">크로스헤어 공유 카드</h2>
+        <h2 className="text-lg font-black text-slate-900">{copyText.card}</h2>
         <p className="text-xs text-slate-500">친구나 커뮤니티에 공유하기 좋은 1080×1080 이미지로 저장돼요.</p>
         <div className="mt-4 flex flex-col items-center gap-4 md:flex-row md:items-start">
           <div className="max-w-full overflow-auto rounded-[20px] shadow-xl max-[419px]:[zoom:0.8]">
@@ -182,7 +235,7 @@ export function CrosshairStudio() {
             </div>
           </div>
           <button type="button" onClick={save} disabled={saving} className="inline-flex w-full max-w-xs items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white disabled:opacity-60">
-            <Download className="h-4 w-4" /> {saving ? '이미지 만드는 중…' : 'PNG로 저장'}
+            <Download className="h-4 w-4" /> {saving ? copyText.saving : copyText.save}
           </button>
         </div>
       </section>
