@@ -4,6 +4,7 @@ import AdsterraBanner from '../ads/AdsterraBanner.astro';
 import Header from '../Header.astro';
 import Footer from '../Footer.astro';
 import Recommend from '../Recommend.astro';
+import ToolGuide from '../ToolGuide.astro';
 import GameCharacterPicker from './GameCharacterPicker';
 import type { GameId } from '../../lib/game-picker/games';
 
@@ -72,6 +73,7 @@ const pickers = [
       <p class="mt-1">{ui.guide}</p>
       <p class="mt-2 text-xs text-slate-400">{ui.note}</p>
     </section>
+    <ToolGuide />
     <AdsterraBanner placement="bottom" />
     <Recommend />
   </main>
