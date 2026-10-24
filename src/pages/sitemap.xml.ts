@@ -61,8 +61,6 @@ const paths = [
   '/meme-generator',
   '/maps/fishbread',
   '/maps/solo-dining',
-  '/maps/hidden-cafe',
-  '/maps/local-eats',
   '/new-tools',
   '/lol-champion-recommender',
   '/valorant-agent-picker',

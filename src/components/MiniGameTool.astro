@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import AdsterraBanner from './ads/AdsterraBanner.astro';
+import ToolGuide from './ToolGuide.astro';
 import Header from './Header.astro';
 import Footer from './Footer.astro';
 import Recommend from './Recommend.astro';
@@ -39,6 +40,7 @@ const [title, description] = configs[tool] ?? configs.sensitivity;
       {tool === 'keybind' && <div><p class="text-sm text-slate-500">키를 입력하면 아래 키보드에 표시됩니다.</p><input id="keybind-input" placeholder="WASD Q E R Shift Ctrl" class="mt-4 w-full rounded-xl border p-3" /><div id="keybind-board" class="mt-5 grid grid-cols-7 gap-2 text-center text-xs font-bold"></div></div>}
       {tool === 'session' && <div class="grid gap-4 sm:grid-cols-2"><label>게임 이름<input id="session-game" placeholder="예: Valorant" class="mt-2 w-full rounded-xl border p-3" /></label><label>플레이 시간(분)<input id="session-time" type="number" value="30" class="mt-2 w-full rounded-xl border p-3" /></label><label>승리<input id="session-win" type="number" value="1" class="mt-2 w-full rounded-xl border p-3" /></label><label>패배<input id="session-loss" type="number" value="0" class="mt-2 w-full rounded-xl border p-3" /></label><button id="session-add" class="rounded-xl bg-slate-950 px-4 py-3 font-bold text-white sm:col-span-2">세션 기록</button><div id="session-list" class="space-y-2 sm:col-span-2"></div></div>}
     </section>
+    <ToolGuide />
     <AdsterraBanner placement="bottom" />
     <Recommend />
   </main>
