@@ -7,7 +7,8 @@ import Footer from '../components/Footer.astro';
 import HomeFamilyShowcase from '../components/HomeFamilyShowcase.astro';
 import AdsterraBanner from '../components/ads/AdsterraBanner.astro';
 import AdsterraRail from '../components/ads/AdsterraRail.astro';
-import { createTranslator, detectLocale, rolloutLocales, seoLocaleCodes, stripLocale, withLocalePath } from '../lib/i18n';
+import { createTranslator, detectLocale, rolloutLocales, seoLocaleCodes, stripLocale } from '../lib/i18n';
+import { localizedHrefOrOriginal } from '../lib/locale-routes';
 
 const rawApiBase = (import.meta.env.PUBLIC_NODE_API_BASE ?? '').trim();
 // 기부하기: 운영에서는 PG 심사 전까지 숨기고, 로컬 개발 서버나 PUBLIC_SHOW_DONATE=true 일 때만 표시
@@ -17,7 +18,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
 const pathname = Astro.url.pathname;
 const locale = detectLocale(pathname);
 const tRaw = await createTranslator(locale);
-const withLocale = (path: string) => withLocalePath(locale, path);
+const withLocale = (path: string) => localizedHrefOrOriginal(locale, path);
 const strippedPath = stripLocale(pathname);
 const langLinks = rolloutLocales.map((lang) => ({
   code: lang.code,
@@ -236,7 +237,7 @@ const cards = cardSeed.map((card) => {
       : locale === 'ja'
         ? `${title}ツール`
         : `${title} tool`;
-  return { ...card, title, desc, href: withLocale(card.href), disabled: card.disabled ?? false };
+  return { ...card, title, desc, href: localizedHrefOrOriginal(locale, card.href), disabled: card.disabled ?? false };
 });
 
 const rowCount = 5;
