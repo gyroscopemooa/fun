@@ -1,5 +1,6 @@
 ---
-import { createTranslator, detectLocale, withLocalePath } from '../lib/i18n';
+import { createTranslator, detectLocale } from '../lib/i18n';
+import { localizedHrefOrOriginal } from '../lib/locale-routes';
 import AdsterraNative from './ads/AdsterraNative.astro';
 
 const pathname = Astro.url.pathname;
@@ -44,7 +45,7 @@ const items = [
   { href: '/daily-spanish', label: t('recommend.items.dailySpanish') },
   { href: '/daily-japanese', label: t('recommend.items.dailyJapanese') },
   { href: '/korean-study-today', label: t('recommend.items.koreanStudy') }
-].map((item) => ({ href: withLocalePath(locale, item.href), label: item.label }));
+].map((item) => ({ href: localizedHrefOrOriginal(locale, item.href), label: item.label }));
 ---
 
 <AdsterraNative />

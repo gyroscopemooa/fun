@@ -5,6 +5,7 @@ import EzoicPlacements from '../components/ads/EzoicPlacements.astro';
 import SiteProviders from '../components/providers/SiteProviders';
 import globalCssUrl from '../styles/global.css?url';
 import { createTranslator, detectLocale, hasTranslation, localeCodes, seoLocaleCodes, stripLocale, withLocalePath } from '../lib/i18n';
+import { localizedHrefOrOriginal } from '../lib/locale-routes';
 
 interface Props {
   title?: string;
@@ -245,28 +246,28 @@ const sidebarText = {
   open: t('layout.sidebar.open'),
   close: t('layout.sidebar.close'),
   links: [
-    { href: withLocalePath(locale, '/'), label: t('common.home') },
-    { href: withLocalePath(locale, '/ai-image-generator'), label: t('layout.sidebar.aiImage') },
+    { href: localizedHrefOrOriginal(locale, '/'), label: t('common.home') },
+    { href: localizedHrefOrOriginal(locale, '/ai-image-generator'), label: t('layout.sidebar.aiImage') },
     {
-      href: withLocalePath(locale, '/ai-personal-color'),
+      href: localizedHrefOrOriginal(locale, '/ai-personal-color'),
       label: locale === 'ko' ? 'AI 퍼스널컬러 자가진단' : locale === 'ja' ? 'AIパーソナルカラー診断' : 'AI Personal Color Analysis'
     },
     {
-      href: withLocalePath(locale, '/ai-manseryeok'),
+      href: localizedHrefOrOriginal(locale, '/ai-manseryeok'),
       label: locale === 'ko' ? 'AI 사주팔자 정밀분석' : locale === 'ja' ? 'AI四柱推命精密分析' : 'Korean Saju Palja'
     },
     {
-      href: withLocalePath(locale, '/name-premium'),
+      href: localizedHrefOrOriginal(locale, '/name-premium'),
       label: locale === 'ko' ? 'AI 프리미엄 이름분석 개명추천' : locale === 'ja' ? 'AIプレミアム名前分析・改名推薦' : 'AI Premium Name Analysis'
     },
     {
-      href: withLocalePath(locale, '/ai-pet-translator'),
+      href: localizedHrefOrOriginal(locale, '/ai-pet-translator'),
       label: locale === 'ko' ? 'AI 펫 언어 분석기' : locale === 'ja' ? 'AIペット翻訳機' : 'AI Pet Translator'
     },
-    { href: withLocalePath(locale, '/ai-calorie-calculator'), label: t('layout.sidebar.aiCalorie') },
-    { href: withLocalePath(locale, '/ai-id-photo'), label: t('layout.sidebar.aiIdPhoto') },
+    { href: localizedHrefOrOriginal(locale, '/ai-calorie-calculator'), label: t('layout.sidebar.aiCalorie') },
+    { href: localizedHrefOrOriginal(locale, '/ai-id-photo'), label: t('layout.sidebar.aiIdPhoto') },
     {
-      href: withLocalePath(locale, '/tools/product-detail-studio'),
+      href: localizedHrefOrOriginal(locale, '/tools/product-detail-studio'),
       label: locale === 'ko' ? 'AI 상세페이지 생성기' : locale === 'ja' ? 'AI商品詳細ページ生成' : 'AI Product Detail Studio'
     }
   ]

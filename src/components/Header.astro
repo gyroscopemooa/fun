@@ -1,5 +1,6 @@
 ---
-import { createTranslator, detectLocale, rolloutLocales, seoLocaleCodes, stripLocale, withLocalePath } from '../lib/i18n';
+import { createTranslator, detectLocale, rolloutLocales, seoLocaleCodes, stripLocale } from '../lib/i18n';
+import { localizedHrefOrOriginal } from '../lib/locale-routes';
 import FamilyPromo from './FamilyPromo.astro';
 
 const pathname = Astro.url.pathname;
@@ -29,11 +30,11 @@ const langLinks = [
 
 <header class="border-b border-slate-200 bg-white">
   <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-    <a href={withLocalePath(locale, '/')} class="text-xl font-bold tracking-tight">ManyTool</a>
+    <a href={localizedHrefOrOriginal(locale, '/')} class="text-xl font-bold tracking-tight">ManyTool</a>
     <div class="flex items-center gap-2">
       <nav class="hidden items-center gap-2 text-sm md:flex">
         {navItems.map((item) => (
-          <a class="rounded-md px-2 py-1 whitespace-nowrap hover:bg-slate-100" href={withLocalePath(locale, item.href)}>{item.label}</a>
+          <a class="rounded-md px-2 py-1 whitespace-nowrap hover:bg-slate-100" href={localizedHrefOrOriginal(locale, item.href)}>{item.label}</a>
         ))}
       </nav>
       <details class="relative">
