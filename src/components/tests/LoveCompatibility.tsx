@@ -3,6 +3,7 @@ import { Download, Heart } from 'lucide-react';
 
 import { MBTI_INFO, MBTI_TYPES, isMbti, mbtiPairScore, type MbtiType } from '@/lib/mbti';
 import { saveNodeAsPng } from '@/lib/save-node-as-png';
+import { ShareLinkButton } from '@/components/share/ShareLinkButton';
 import { MBTI_STORAGE_KEY } from './MbtiTest';
 
 type Person = { name: string; birthday: string; mbti: MbtiType | '' };
@@ -84,6 +85,7 @@ export function LoveCompatibility() {
   const [me, setMe] = useState<Person>({ name: '', birthday: '', mbti: '' });
   const [you, setYou] = useState<Person>({ name: '', birthday: '', mbti: '' });
   const [shown, setShown] = useState(false);
+  const [fromShare, setFromShare] = useState(false);
   const [saving, setSaving] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -99,7 +101,37 @@ export function LoveCompatibility() {
     const theirs = readQuery('you');
     if (mine) setMe((p) => ({ ...p, mbti: mine }));
     if (theirs) setYou((p) => ({ ...p, mbti: theirs }));
+
+    // A shared result link (?a=민수&b=지은&ab=1999-04-02&am=ENFP...) opens straight on the result.
+    const params = new URLSearchParams(window.location.search);
+    const a = params.get('a')?.slice(0, 12) ?? '';
+    const b = params.get('b')?.slice(0, 12) ?? '';
+    if (a.trim() && b.trim()) {
+      const date = (v: string | null) => (v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : '');
+      const mbti = (v: string | null) => (v && isMbti(v.toUpperCase()) ? (v.toUpperCase() as MbtiType) : '');
+      setMe({ name: a, birthday: date(params.get('ab')), mbti: mbti(params.get('am')) });
+      setYou({ name: b, birthday: date(params.get('bb')), mbti: mbti(params.get('bm')) });
+      setShown(true);
+      setFromShare(true);
+    }
   }, []);
+
+  const shareUrl = useMemo(() => {
+    const params = new URLSearchParams({ a: me.name.trim(), b: you.name.trim() });
+    if (me.birthday) params.set('ab', me.birthday);
+    if (you.birthday) params.set('bb', you.birthday);
+    if (me.mbti) params.set('am', me.mbti);
+    if (you.mbti) params.set('bm', you.mbti);
+    return `/love-compatibility?${params.toString()}`;
+  }, [me, you]);
+
+  const startOwn = () => {
+    setMe({ name: '', birthday: '', mbti: '' });
+    setYou({ name: '', birthday: '', mbti: '' });
+    setShown(false);
+    setFromShare(false);
+    window.history.replaceState(null, '', window.location.pathname);
+  };
 
   const result = useMemo(() => {
     if (!me.name.trim() || !you.name.trim()) return null;
@@ -130,6 +162,12 @@ export function LoveCompatibility() {
 
   return (
     <div className="mt-4 space-y-4">
+      {fromShare ? (
+        <div className="flex flex-col items-center justify-between gap-3 rounded-[24px] border border-amber-200 bg-amber-50 p-4 sm:flex-row">
+          <p className="text-sm font-bold text-amber-900">👋 친구가 공유한 궁합 결과예요. 우리 둘의 궁합도 궁금하다면?</p>
+          <button type="button" onClick={startOwn} className="shrink-0 rounded-full bg-rose-600 px-4 py-2 text-sm font-black text-white hover:bg-rose-700">나도 궁합 보기 →</button>
+        </div>
+      ) : null}
       <section className="grid gap-3 sm:grid-cols-2">
         <PersonForm label="나" person={me} onChange={(p) => { setMe(p); setShown(false); }} accent="#2563EB" />
         <PersonForm label="상대" person={you} onChange={(p) => { setYou(p); setShown(false); }} accent="#E11D48" />
@@ -193,6 +231,7 @@ export function LoveCompatibility() {
             <button type="button" onClick={save} disabled={saving} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 font-bold text-white disabled:opacity-60">
               <Download className="h-4 w-4" /> {saving ? '이미지 만드는 중…' : '궁합 카드 저장'}
             </button>
+            <ShareLinkButton url={shareUrl} title={`${me.name.trim()} ♥ ${you.name.trim()} 궁합 ${result.total}%`} text="우리 궁합도 확인해 보기" label="궁합 결과 링크 공유" />
           </div>
         </section>
       ) : null}

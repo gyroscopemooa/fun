@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Copy, Dices, Plus, RefreshCw, Scale, Trash2, Users } from 'lucide-react';
 
 import { RANK_GAMES, ladderOf, ratingOf, stepOfRating, type RankGame } from '@/lib/game-ranks';
 import { GAMES } from '@/lib/game-picker/games';
-import { assignTeamComp, uniqueAcrossTeams, type CompPick } from '@/lib/game-picker/team-comp';
+import { assignTeamComp, restoreCompPick, uniqueAcrossTeams, type CompPick } from '@/lib/game-picker/team-comp';
 import type { GameCharacter } from '@/lib/game-picker/types';
+import { ShareLinkButton } from '@/components/share/ShareLinkButton';
+import { decodeSharePayload, encodeSharePayload } from '@/lib/share-result';
 
 type Player = { id: number; name: string; step: string; points: number; wins: number; losses: number; position: string };
 type Split = { a: Player[]; b: Player[]; score: number; diff: number; duplicates: number };
@@ -75,6 +77,11 @@ const bestSplits = (game: RankGame, players: Player[]): Split[] => {
 // Elo-style estimate; 400 rating ≈ four divisions.
 const winChance = (ratingA: number, ratingB: number) => 1 / (1 + 10 ** ((ratingB - ratingA) / 400));
 
+// Shared link payload: players as [name, step, points, wins, losses, position], blue team ids, optional comp picks.
+type SharedTeams = { g: RankGame; p: [string, string, number, number, number, string][]; a: number[]; c?: Record<number, [string, string]> };
+
+const sameIds = (team: Player[], ids: number[]) => team.length === ids.length && team.every((p) => ids.includes(p.id));
+
 function TeamCard({ title, color, team, game, chance, comp }: { title: string; color: string; team: Player[]; game: RankGame; chance: number; comp?: Map<number, CompPick> }) {
   const average = avg(game, team);
   const step = stepOfRating(game, average);
@@ -118,10 +125,40 @@ export function TeamBalancer() {
   const [rosters, setRosters] = useState<Partial<Record<RankGame, GameCharacter[]>>>({});
   const [comps, setComps] = useState<{ a: Map<number, CompPick>; b: Map<number, CompPick> } | null>(null);
   const [rollingComp, setRollingComp] = useState(false);
+  const [shared, setShared] = useState(false);
+  // The first save would run with the default roster before a saved or shared one is loaded.
+  const skipFirstSave = useRef(true);
   const meta = RANK_GAMES[game];
   const ladder = useMemo(() => ladderOf(game), [game]);
 
   useEffect(() => {
+    // A shared link (?t=...) shows the friend's teams without touching this browser's saved roster.
+    const packed = new URLSearchParams(window.location.search).get('t');
+    const data = packed ? decodeSharePayload<SharedTeams>(packed) : null;
+    if (data && RANK_GAMES[data.g] && Array.isArray(data.p) && data.p.length >= 2) {
+      const list: Player[] = data.p.slice(0, MAX_PLAYERS).map(([name, step, points, wins, losses, position], i) => ({
+        id: i + 1, name: String(name).slice(0, 12), step, points: Number(points) || 0, wins: Number(wins) || 0, losses: Number(losses) || 0, position
+      }));
+      const splits = bestSplits(data.g, list);
+      const index = splits.findIndex((s) => sameIds(s.a, data.a) || sameIds(s.b, data.a));
+      setShared(true);
+      setGame(data.g);
+      setPlayers(list);
+      setResult({ splits, index: Math.max(0, index) });
+      if (data.c && index >= 0) {
+        const swapped = !sameIds(splits[index].a, data.a);
+        const roster = GAMES[data.g].fallback;
+        const picks = new Map<number, CompPick>();
+        Object.entries(data.c).forEach(([id, [roleId, charId]]) => {
+          const pick = restoreCompPick(data.g, roster, roleId, charId);
+          if (pick) picks.set(Number(id), pick);
+        });
+        const blue = new Map([...picks].filter(([id]) => data.a.includes(id)));
+        const red = new Map([...picks].filter(([id]) => !data.a.includes(id)));
+        setComps(swapped ? { a: red, b: blue } : { a: blue, b: red });
+      }
+      return;
+    }
     try {
       const saved = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || 'null');
       if (saved?.game && Array.isArray(saved.players) && saved.players.length) {
@@ -134,12 +171,17 @@ export function TeamBalancer() {
   }, []);
 
   useEffect(() => {
+    if (skipFirstSave.current) {
+      skipFirstSave.current = false;
+      return;
+    }
+    if (shared) return;
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ game, players }));
     } catch {
       // Saving the roster is only a convenience.
     }
-  }, [game, players]);
+  }, [game, players, shared]);
 
   const switchGame = (next: RankGame) => {
     setGame(next);
@@ -208,6 +250,28 @@ export function TeamBalancer() {
     }, 500);
   };
 
+  const shareUrl = useMemo(() => {
+    if (!split) return '';
+    const payload: SharedTeams = {
+      g: game,
+      p: players.map((p) => [p.name, p.step, p.points, p.wins, p.losses, p.position]),
+      a: split.a.map((p) => players.indexOf(p) + 1)
+    };
+    if (comps) {
+      payload.c = {};
+      [...comps.a, ...comps.b].forEach(([id, pick]) => {
+        const index = players.findIndex((p) => p.id === id);
+        if (index >= 0) payload.c![index + 1] = [pick.role.id, pick.character.id];
+      });
+    }
+    return `/game-team-balancer?t=${encodeSharePayload(payload)}`;
+  }, [split, comps, game, players]);
+
+  const startOwn = () => {
+    setShared(false);
+    window.history.replaceState(null, '', window.location.pathname);
+  };
+
   const copyResult = async () => {
     if (!split) return;
     const line = (team: Player[], comp?: Map<number, CompPick>) => team.map((p) => {
@@ -226,6 +290,12 @@ export function TeamBalancer() {
 
   return (
     <div className="space-y-5">
+      {shared ? (
+        <div className="flex flex-col items-center justify-between gap-3 rounded-[24px] border border-amber-200 bg-amber-50 p-4 sm:flex-row">
+          <p className="text-sm font-bold text-amber-900">👋 친구가 공유한 팀 나누기 결과예요. 아래 결과를 확인하고, 참가자를 바꿔 다시 나눌 수도 있어요.</p>
+          <button type="button" onClick={startOwn} className="shrink-0 rounded-full bg-slate-900 px-4 py-2 text-sm font-black text-white hover:bg-slate-700">우리 팀 직접 나누기 →</button>
+        </div>
+      ) : null}
       <div className="flex flex-wrap gap-2">
         {(Object.keys(RANK_GAMES) as RankGame[]).map((id) => (
           <button key={id} type="button" onClick={() => switchGame(id)} className={`rounded-full border px-4 py-2 text-sm font-bold transition ${game === id ? 'border-slate-950 bg-slate-950 text-white' : 'border-slate-200 bg-white text-slate-700 hover:border-slate-400'}`}>
@@ -292,6 +362,7 @@ export function TeamBalancer() {
                 <button type="button" onClick={reroll} className="inline-flex items-center gap-1.5 rounded-xl bg-white/10 px-3 py-2 text-sm font-bold hover:bg-white/20"><RefreshCw className="h-4 w-4" /> 다시 나누기</button>
                 <button type="button" onClick={rollComps} disabled={rollingComp} className="inline-flex items-center gap-1.5 rounded-xl bg-amber-400 px-3 py-2 text-sm font-black text-slate-950 hover:bg-amber-300 disabled:opacity-60"><Dices className={`h-4 w-4 ${rollingComp ? 'animate-spin' : ''}`} /> {comps ? '조합 다시 굴리기' : '팀별 조합 굴리기'}</button>
                 <button type="button" onClick={copyResult} className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3 py-2 text-sm font-bold text-slate-900"><Copy className="h-4 w-4" /> {copied ? '복사됨' : '결과 복사'}</button>
+                <ShareLinkButton url={shareUrl} title={`[ManyTool 팀 나누기] ${meta.label} 밸런스 ${balanceScore.toFixed(1)}%`} text="우리 팀 나누기 결과" label="링크 공유" className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3 py-2 text-sm font-bold text-slate-900" />
               </div>
             </div>
             <div className="mt-4 flex h-3 overflow-hidden rounded-full">

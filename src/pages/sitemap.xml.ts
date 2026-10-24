@@ -89,6 +89,8 @@ const paths = [
   ,'/time-zone-converter'
   ,'/tip-calculator'
   ,'/age-calculator'
+  ,'/love-type-test'
+  ,'/office-type-test'
   // Working Korean pages that were missing from the sitemap.
   ,'/ai-pet-translator'
   ,'/balance-game'

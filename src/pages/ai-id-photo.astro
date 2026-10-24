@@ -5,6 +5,37 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 
 const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
+
+// Illustrated sample person for the before/after explainer (no real photo needed).
+const portrait = ({ bg, tilt = 0, dx = 0, outfit, frame = false }: { bg: string; tilt?: number; dx?: number; outfit: 'casual' | 'suit'; frame?: boolean }) => `
+  <svg viewBox="0 0 120 160" xmlns="http://www.w3.org/2000/svg" class="block h-full w-full" preserveAspectRatio="xMidYMid slice">
+    ${bg}
+    <g transform="translate(${dx} 0) rotate(${tilt} 60 80)">
+      ${outfit === 'suit'
+        ? '<path d="M14 160 Q16 118 60 112 Q104 118 106 160Z" fill="#1e293b"/><path d="M48 113 L60 140 L72 113 Q60 118 48 113Z" fill="#fff"/><path d="M57 118 L63 118 L62 142 L60 146 L58 142Z" fill="#1d4ed8"/>'
+        : '<path d="M14 160 Q16 118 60 112 Q104 118 106 160Z" fill="#f59e0b"/><path d="M50 113 Q60 124 70 113" fill="none" stroke="#b45309" stroke-width="3"/>'}
+      <rect x="51" y="92" width="18" height="22" rx="7" fill="#e8b48f"/>
+      <ellipse cx="60" cy="70" rx="24" ry="29" fill="#f1c7a5"/>
+      <path d="M35 66 Q34 36 60 36 Q87 36 85 66 Q80 50 60 49 Q42 50 35 66Z" fill="#3f2a1d"/>
+      <circle cx="51" cy="72" r="2.6" fill="#1f2937"/><circle cx="69" cy="72" r="2.6" fill="#1f2937"/>
+      <path d="M53 86 Q60 90 67 86" fill="none" stroke="#b45309" stroke-width="2" stroke-linecap="round"/>
+    </g>
+    ${frame ? '<rect x="30" y="28" width="60" height="78" rx="26" fill="none" stroke="#0ea5e9" stroke-width="2" stroke-dasharray="5 4"/><line x1="60" y1="20" x2="60" y2="112" stroke="#0ea5e9" stroke-width="1" stroke-dasharray="3 3"/>' : ''}
+  </svg>`;
+
+const samples = [
+  { label: 'Before', tone: 'text-slate-500', box: 'bg-slate-50', caption: '일반 셀카', svg: portrait({ bg: '<rect width="120" height="160" fill="#c7d2fe"/><rect x="0" y="96" width="120" height="64" fill="#a5b4fc"/><circle cx="98" cy="26" r="14" fill="#fde68a"/><rect x="6" y="18" width="26" height="34" rx="3" fill="#818cf8"/>', tilt: -8, dx: 10, outfit: 'casual' }) },
+  { label: 'Step', tone: 'text-sky-700', box: 'bg-sky-50', caption: '배경 정리 + 얼굴 정렬', svg: portrait({ bg: '<rect width="120" height="160" fill="#e0f2fe"/>', outfit: 'casual', frame: true }) },
+  { label: 'After', tone: 'text-emerald-700', box: 'bg-emerald-50', caption: '증명사진 규격 결과', svg: portrait({ bg: '<rect width="120" height="160" fill="#ffffff"/>', outfit: 'suit' }) }
+];
+
+// Physical sizes in cm; the download converter in the page script renders them at 300 dpi with the same ids.
+const sizePresets = [
+  { id: 'half', label: '반명함', size: '3×4cm', use: '이력서·학생증·자격증', w: 3, h: 4 },
+  { id: 'id', label: '신분증', size: '3.5×4.5cm', use: '주민등록증·운전면허', w: 3.5, h: 4.5 },
+  { id: 'card', label: '명함판', size: '5×7cm', use: '사원증·액자', w: 5, h: 7 },
+  { id: 'square', label: '정사각', size: '5×5cm', use: '미국 비자 규격 참고', w: 5, h: 5 }
+];
 ---
 
 <Layout
@@ -14,11 +45,26 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
 >
   <Header />
   <main class="mx-auto max-w-5xl px-4 py-8 pb-28 md:pb-8">
-    <section class="rounded-2xl border border-slate-200 bg-white p-6">
-      <p class="inline-flex rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">MVP 데모</p>
-      <h1 class="mt-3 text-3xl font-black tracking-tight text-slate-900">AI 증명사진 생성기</h1>
-      <p class="mt-2 text-slate-600">사진 한 장으로 증명사진 후보를 만들고, 비교해서 원하는 1장을 다운로드할 수 있습니다.</p>
-      <div class="mt-4 grid gap-3 text-sm sm:grid-cols-3">
+    <section class="overflow-hidden rounded-[28px] border border-sky-100 p-6 sm:p-8" style="background: radial-gradient(circle at 92% 0%, rgba(56,189,248,0.28), transparent 45%), radial-gradient(circle at 0% 100%, rgba(16,185,129,0.18), transparent 45%), #ffffff">
+      <div class="grid grid-cols-[minmax(0,1fr)] gap-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+        <div>
+          <p class="inline-flex rounded-full bg-sky-600 px-3 py-1 text-xs font-bold text-white">셀카 → 증명사진</p>
+          <h1 class="mt-3 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">AI 증명사진 생성기</h1>
+          <p class="mt-2 text-slate-600">사진 한 장으로 증명사진 후보를 만들고, 비교해서 원하는 1장을 다운로드할 수 있습니다.</p>
+          <div class="mt-4 flex flex-wrap gap-1.5 text-xs font-bold">
+            <span class="rounded-full bg-white px-3 py-1 text-slate-700 shadow-sm">📸 업로드·카메라</span>
+            <span class="rounded-full bg-white px-3 py-1 text-slate-700 shadow-sm">🧍 얼굴 자동 정렬</span>
+            <span class="rounded-full bg-white px-3 py-1 text-slate-700 shadow-sm">⬜ 흰 배경 정리</span>
+            <span class="rounded-full bg-white px-3 py-1 text-slate-700 shadow-sm">📐 규격·인화 시트</span>
+          </div>
+        </div>
+        <div class="mx-auto flex items-end gap-3" aria-hidden="true">
+          <div class="aspect-[3/4] w-24 -rotate-3 overflow-hidden rounded-2xl border-4 border-white shadow-lg sm:w-28" set:html={samples[0].svg} />
+          <span class="mb-10 text-2xl font-black text-sky-500">→</span>
+          <div class="aspect-[3/4] w-28 rotate-2 overflow-hidden rounded-2xl border-4 border-white shadow-xl ring-2 ring-emerald-300 sm:w-32" set:html={samples[2].svg} />
+        </div>
+      </div>
+      <div class="mt-5 grid gap-3 text-sm sm:grid-cols-3">
         <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
           <p class="font-bold text-slate-900">기본 상품</p>
           <p class="mt-1 text-slate-600">$9.90 / 후보 3장 / 최종 1장 다운로드</p>
@@ -109,7 +155,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           </select>
         </div>
 
-        <div class="mt-4">
+        <div class="mt-4" data-dev-only>
           <label class="text-sm font-semibold text-slate-700" for="provider-select">AI 처리 엔진</label>
           <select id="provider-select" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
             <option value="auto">Auto</option>
@@ -150,23 +196,16 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
 
         <section class="mt-4 rounded-lg border border-slate-200 bg-white p-4">
           <h3 class="text-base font-bold text-slate-900">셀카가 증명사진으로 바뀌는 방식</h3>
-          <p class="mt-1 text-xs text-slate-600">아래 예시는 홍보용 샘플 화면입니다. 실제 결과는 원본 상태에 따라 달라질 수 있습니다.</p>
-          <div class="mt-3 grid gap-3 sm:grid-cols-3">
-            <article class="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <p class="text-[11px] font-semibold text-slate-500">Before</p>
-              <div class="mt-2 h-24 rounded-md bg-gradient-to-b from-slate-200 to-slate-300"></div>
-              <p class="mt-2 text-[11px] text-slate-600">일반 셀카</p>
-            </article>
-            <article class="rounded-lg border border-slate-200 bg-sky-50 p-3">
-              <p class="text-[11px] font-semibold text-sky-700">Step</p>
-              <div class="mt-2 h-24 rounded-md bg-gradient-to-b from-sky-100 to-slate-100"></div>
-              <p class="mt-2 text-[11px] text-slate-600">배경 정리 + 얼굴 정렬</p>
-            </article>
-            <article class="rounded-lg border border-slate-200 bg-emerald-50 p-3">
-              <p class="text-[11px] font-semibold text-emerald-700">After</p>
-              <div class="mt-2 h-24 rounded-md bg-gradient-to-b from-white to-emerald-100"></div>
-              <p class="mt-2 text-[11px] text-slate-600">증명사진 규격 결과</p>
-            </article>
+          <p class="mt-1 text-xs text-slate-600">아래 예시는 홍보용 샘플 일러스트입니다. 실제 결과는 원본 상태에 따라 달라질 수 있습니다.</p>
+          <div class="mt-3 grid grid-cols-3 gap-2 sm:gap-3">
+            {samples.map((sample, i) => (
+              <article class={`relative rounded-lg border border-slate-200 p-2 sm:p-3 ${sample.box}`}>
+                <p class={`text-[11px] font-semibold ${sample.tone}`}>{sample.label}</p>
+                <div class="mt-2 aspect-[3/4] overflow-hidden rounded-md border border-black/5 bg-white shadow-sm" set:html={sample.svg} />
+                <p class="mt-2 text-[11px] text-slate-600">{sample.caption}</p>
+                {i < samples.length - 1 ? <span class="absolute -right-2.5 top-1/2 z-10 hidden h-5 w-5 items-center justify-center rounded-full bg-white text-[11px] font-black text-sky-600 shadow sm:flex">→</span> : null}
+              </article>
+            ))}
           </div>
           <ol class="mt-3 list-decimal space-y-1 pl-5 text-xs text-slate-700">
             <li>정면 얼굴 자동 감지</li>
@@ -180,7 +219,38 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         <h2 class="text-xl font-bold text-slate-900">2) 후보 선택</h2>
         <p class="mt-2 text-sm text-slate-600">후보 중 1장을 선택하면 다운로드가 활성화됩니다. 생성 후 바로 비교해서 고르면 됩니다.</p>
         <div id="candidate-grid" class="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          <p class="text-sm text-slate-500">생성 결과가 여기에 표시됩니다.</p>
+          <div class="col-span-full flex flex-col items-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center">
+            <div class="flex gap-2" aria-hidden="true">
+              {[0, 1, 2].map((n) => <span class={`block aspect-[3/4] w-[3.75rem] overflow-hidden rounded-xl border-2 border-white bg-white shadow-sm ${n === 1 ? '-translate-y-1.5 ring-2 ring-emerald-200' : 'opacity-60'}`} set:html={samples[2].svg} />)}
+            </div>
+            <p class="mt-3 text-sm font-bold text-slate-700">생성 결과가 여기에 표시됩니다.</p>
+            <p class="mt-1 text-xs text-slate-500">후보 3장을 나란히 비교하고 마음에 드는 1장을 골라요.</p>
+          </div>
+        </div>
+        <div class="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+          <div class="flex items-center justify-between gap-2">
+            <p class="text-sm font-black text-slate-900">📐 받을 사진 규격</p>
+            <p id="size-summary" class="text-[11px] font-semibold text-slate-500">반명함 3×4cm · 1장</p>
+          </div>
+          <div class="mt-2 grid grid-cols-2 gap-2" role="radiogroup" aria-label="사진 규격">
+            {sizePresets.map((preset, i) => (
+              <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white p-2 transition has-[:checked]:border-sky-500 has-[:checked]:ring-2 has-[:checked]:ring-sky-200">
+                <input type="radio" name="size-preset" value={preset.id} checked={i === 0} data-label={`${preset.label} ${preset.size}`} class="sr-only" />
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center">
+                  <span class="block rounded-[3px] border-2 border-sky-500 bg-sky-50" style={`width:${preset.w * 6}px;height:${preset.h * 6}px`}></span>
+                </span>
+                <span class="min-w-0">
+                  <span class="block text-xs font-black text-slate-900">{preset.label} <span class="font-semibold text-slate-400">{preset.size}</span></span>
+                  <span class="block truncate text-[10px] text-slate-500">{preset.use}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+          <label class="mt-2 flex items-start gap-2 text-xs text-slate-700">
+            <input id="print-sheet" type="checkbox" class="mt-0.5 h-4 w-4 accent-sky-600" />
+            <span><strong>4×6 인화용 시트로 받기</strong> · 선택한 규격을 여러 장 배치해 사진관·편의점 인화기로 한 번에 뽑을 수 있어요.</span>
+          </label>
+          <p class="mt-1 text-[11px] text-slate-400">여권사진은 얼굴 크기 규정이 엄격하니 <a href="/online-passport-photo" class="underline">여권사진 전용 페이지</a>를 권장해요.</p>
         </div>
         <button id="download-selected" class="mt-4 w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white shadow-[0_10px_30px_rgba(5,150,105,0.28)] transition hover:-translate-y-0.5 hover:bg-emerald-500 active:translate-y-0 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none" disabled>
           선택한 1장 다운로드
@@ -195,11 +265,15 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           <a href="/ai-headshot" class="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-center text-sm font-semibold text-sky-700">같은 사진으로 프로필 버전 만들기</a>
         </div>
         <p id="api-status" class="mt-2 text-xs text-slate-500">API 상태 확인 중...</p>
-        <p id="provider-result-badge" class="mt-2 hidden inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold text-slate-700"></p>
-        <p id="status" class="mt-2 text-xs text-slate-500">Node API 연결 시 서버 기반 생성, 실패 시 로컬 생성으로 자동 전환됩니다.</p>
+        <div data-dev-only>
+          <p id="provider-result-badge" class="mt-2 hidden inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold text-slate-700"></p>
+        </div>
+        <p id="status" class="mt-2 text-xs text-slate-500">사진을 올리고 증명사진 만들기를 누르면 후보가 여기에 표시돼요.</p>
         <div id="quality-feedback" class="mt-3 hidden rounded-xl border border-emerald-100 bg-emerald-50 p-3 text-xs text-emerald-900"></div>
-        <pre id="pipeline-report" class="mt-3 hidden whitespace-pre-wrap rounded-xl border border-slate-200 bg-slate-50 p-3 text-[11px] leading-5 text-slate-600"></pre>
-        <div class="mt-3 flex flex-wrap gap-2">
+        <div data-dev-only>
+          <pre id="pipeline-report" class="mt-3 hidden whitespace-pre-wrap rounded-xl border border-slate-200 bg-slate-50 p-3 text-[11px] leading-5 text-slate-600"></pre>
+        </div>
+        <div class="mt-3 flex flex-wrap gap-2" data-dev-only>
           <a id="job-debug-link" href="/tools/ai-photo-debug" target="_blank" rel="noreferrer" class="hidden inline-flex rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">이번 생성 디버그 보기</a>
           <a id="job-ops-link" href="/tools/ai-photo-ops" target="_blank" rel="noreferrer" class="hidden inline-flex rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">운영 요약 보기</a>
         </div>
@@ -220,6 +294,22 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         </div>
         <input id="compare-slider" type="range" min="0" max="100" value="50" class="mt-3 w-full accent-sky-600" disabled />
         <p id="compare-help" class="mt-2 text-xs text-slate-500">사진 업로드 후 후보 생성 시 비교가 활성화됩니다.</p>
+      </div>
+    </section>
+
+    <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-5">
+      <h2 class="text-xl font-bold text-slate-900">증명사진 규격 한눈에 보기</h2>
+      <p class="mt-1 text-sm text-slate-600">실제 크기 비율로 그렸어요. 다운로드할 때 원하는 규격을 고르면 300dpi 인화 해상도로 맞춰 드려요.</p>
+      <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {sizePresets.map((preset) => (
+          <div class="flex flex-col items-center rounded-2xl bg-slate-50 p-3 text-center">
+            <div class="flex h-32 items-end">
+              <div class="overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm" style={`width:${preset.w * 18}px;height:${preset.h * 18}px`} set:html={samples[2].svg} />
+            </div>
+            <p class="mt-2 text-sm font-black text-slate-900">{preset.label} <span class="text-slate-400">{preset.size}</span></p>
+            <p class="text-xs text-slate-500">{preset.use}</p>
+          </div>
+        ))}
       </div>
     </section>
 
@@ -404,12 +494,26 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         : `${formatProviderLabel(selectedProvider)}가 현재 준비되지 않아 local_sharp로 fallback될 수 있습니다.${missingEnv.length ? ` 필요한 env: ${missingEnv.join(', ')}` : ''}`;
     };
 
+    // Engine/provider diagnostics are for local development; visitors get plain-language status.
+    const isDevHost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+    if (!isDevHost) document.querySelectorAll('[data-dev-only]').forEach((el) => el.classList.add('hidden'));
+
     const setStatus = (text) => {
-      if (statusEl) statusEl.textContent = text;
+      if (!statusEl) return;
+      if (!isDevHost && text.startsWith('Node API 생성 완료')) {
+        statusEl.textContent = `후보 ${candidates.length}장이 준비됐어요. 마음에 드는 1장을 골라 주세요.`;
+        return;
+      }
+      statusEl.textContent = text;
     };
 
     const setApiStatus = (text) => {
-      if (apiStatusEl) apiStatusEl.textContent = text;
+      if (!apiStatusEl) return;
+      if (isDevHost) {
+        apiStatusEl.textContent = text;
+        return;
+      }
+      apiStatusEl.textContent = text.startsWith('API 연결됨') ? '🟢 AI 생성 서버 연결됨' : '🟡 간편 모드로 생성돼요 (AI 서버 점검 중)';
     };
 
     const renderProviderResultBadge = (report = null) => {
@@ -1244,12 +1348,15 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         const card = document.createElement('button');
         card.type = 'button';
         card.className = `overflow-hidden rounded-2xl border bg-white p-2 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${item.selected ? 'border-emerald-500 ring-2 ring-emerald-300' : 'border-slate-200'}`;
+        const isTopPick = candidates.length > 1 && typeof item.score === 'number' && candidates.every((c) => typeof c.score !== 'number' || c.score <= item.score);
         card.innerHTML = `
           <div class="relative">
-            <img src="${item.url}" alt="후보 ${idx + 1}" class="h-56 w-full rounded-xl object-cover sm:h-48" />
+            <img src="${item.url}" alt="후보 ${idx + 1}" class="aspect-[3/4] w-full rounded-xl bg-slate-100 object-cover" />
             <div class="absolute left-3 top-3 flex items-center gap-2">
               <span class="rounded-full bg-white/92 px-2.5 py-1 text-[11px] font-black text-slate-900 shadow-sm">옵션 ${idx + 1}</span>
+              ${isTopPick ? '<span class="rounded-full bg-amber-400 px-2.5 py-1 text-[11px] font-black text-slate-950 shadow-sm">⭐ AI 추천</span>' : ''}
             </div>
+            ${item.selected ? '<span class="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-base font-black text-white shadow-lg">✓</span>' : ''}
           </div>
           <div class="mt-2 flex items-center justify-between px-1">
             <p class="text-sm font-bold text-slate-800">후보 ${idx + 1}</p>
@@ -2063,15 +2170,101 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       });
     }
 
+    // 300 dpi pixel sizes for the size presets rendered above the download button.
+    const SIZE_PRESETS = {
+      half: { w: 354, h: 472 },
+      id: { w: 413, h: 531 },
+      card: { w: 591, h: 827 },
+      square: { w: 591, h: 591 }
+    };
+    const SHEET = { w: 1200, h: 1800, gap: 12 };
+
+    const selectedPreset = () => {
+      const input = document.querySelector('input[name="size-preset"]:checked');
+      return input instanceof HTMLInputElement && SIZE_PRESETS[input.value] ? input.value : 'half';
+    };
+    const wantsSheet = () => document.getElementById('print-sheet')?.checked === true;
+
+    const sheetLayout = (preset) => {
+      const { w, h } = SIZE_PRESETS[preset];
+      const cols = Math.max(1, Math.floor((SHEET.w + SHEET.gap) / (w + SHEET.gap)));
+      const rows = Math.max(1, Math.floor((SHEET.h + SHEET.gap) / (h + SHEET.gap)));
+      return { cols, rows, count: cols * rows };
+    };
+
+    const updateSizeSummary = () => {
+      const el = document.getElementById('size-summary');
+      const input = document.querySelector('input[name="size-preset"]:checked');
+      if (!el || !(input instanceof HTMLInputElement)) return;
+      el.textContent = wantsSheet()
+        ? `${input.dataset.label} · 4×6 시트 ${sheetLayout(selectedPreset()).count}장`
+        : `${input.dataset.label} · 1장`;
+    };
+    document.querySelectorAll('input[name="size-preset"], #print-sheet').forEach((el) => el.addEventListener('change', updateSizeSummary));
+    updateSizeSummary();
+
+    // Crops the 3x4 result to the chosen ratio (keeping the head, trimming more from the bottom)
+    // and optionally tiles it on a 4x6 inch print sheet with light cut lines.
+    async function applySizePreset(blob) {
+      const preset = selectedPreset();
+      const sheet = wantsSheet();
+      if (preset === 'half' && !sheet) return { blob, suffix: '' };
+      const bitmap = await createImageBitmap(blob);
+      const { w, h } = SIZE_PRESETS[preset];
+      const target = w / h;
+      let sw = bitmap.width;
+      let sh = bitmap.height;
+      let sx = 0;
+      let sy = 0;
+      if (sw / sh > target) {
+        sw = sh * target;
+        sx = (bitmap.width - sw) / 2;
+      } else {
+        sh = sw / target;
+        sy = (bitmap.height - sh) * 0.3;
+      }
+      const photo = document.createElement('canvas');
+      photo.width = w;
+      photo.height = h;
+      const pctx = photo.getContext('2d');
+      pctx.imageSmoothingQuality = 'high';
+      pctx.drawImage(bitmap, sx, sy, sw, sh, 0, 0, w, h);
+      bitmap.close?.();
+      let out = photo;
+      if (sheet) {
+        const { cols, rows } = sheetLayout(preset);
+        out = document.createElement('canvas');
+        out.width = SHEET.w;
+        out.height = SHEET.h;
+        const sctx = out.getContext('2d');
+        sctx.fillStyle = '#ffffff';
+        sctx.fillRect(0, 0, SHEET.w, SHEET.h);
+        const offsetX = (SHEET.w - (cols * w + (cols - 1) * SHEET.gap)) / 2;
+        const offsetY = (SHEET.h - (rows * h + (rows - 1) * SHEET.gap)) / 2;
+        sctx.strokeStyle = '#d4d4d8';
+        sctx.lineWidth = 1;
+        for (let r = 0; r < rows; r += 1) {
+          for (let c = 0; c < cols; c += 1) {
+            const x = Math.round(offsetX + c * (w + SHEET.gap));
+            const y = Math.round(offsetY + r * (h + SHEET.gap));
+            sctx.drawImage(photo, x, y);
+            sctx.strokeRect(x - 0.5, y - 0.5, w + 1, h + 1);
+          }
+        }
+      }
+      const converted = await new Promise((resolve, reject) => out.toBlob((b) => (b ? resolve(b) : reject(new Error('convert failed'))), 'image/jpeg', 0.95));
+      return { blob: converted, suffix: `-${preset}${sheet ? '-4x6' : ''}` };
+    }
+
     async function downloadCandidate(item, order, namePrefix) {
       const fileUrl = item.downloadUrl || item.url;
       const res = await fetch(fileUrl);
       if (!res.ok) throw new Error(`download failed: ${res.status}`);
-      const blob = await res.blob();
+      const { blob, suffix } = await applySizePreset(await res.blob());
       const objectUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = objectUrl;
-      link.download = `${namePrefix}-${order}.jpg`;
+      link.download = `${namePrefix}-${order}${suffix}.jpg`;
       document.body.appendChild(link);
       link.click();
       link.remove();

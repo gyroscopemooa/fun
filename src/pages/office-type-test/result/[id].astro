@@ -1,0 +1,10 @@
+---
+import TypeResultPage from '../../../components/tests/TypeResultPage.astro';
+import { OFFICE_TYPE_TEST } from '../../../lib/type-tests/office-type';
+
+export const getStaticPaths = () => OFFICE_TYPE_TEST.results.map((r) => ({ params: { id: r.id } }));
+
+const { id } = Astro.params;
+---
+
+<TypeResultPage slug="office-type-test" id={id!} />

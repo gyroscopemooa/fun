@@ -13,6 +13,7 @@ import {
 } from '@/lib/personal-color-tones';
 import { DrapeStudio } from './DrapeStudio';
 import { PersonalColorShareCard } from './PersonalColorShareCard';
+import { ShareLinkButton } from '@/components/share/ShareLinkButton';
 
 type RawSwatch = { name?: string; hex?: string; use?: string; reason?: string };
 
@@ -286,6 +287,13 @@ export function PersonalColorReport({ analysis, photoUrl, comparePhotoUrl, sampl
             <Download className="h-4 w-4" />
             결과 카드 저장
           </button>
+          <ShareLinkButton
+            url={`/personal-color/result/${tone.id}`}
+            title={`내 퍼스널컬러는 ${tone.label}`}
+            text="나도 퍼스널컬러 진단해 보기"
+            label="결과 링크 공유"
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-800 transition hover:bg-slate-50"
+          />
           {[report.undertone, report.chroma, report.contrast].filter(Boolean).map((term) => (
             <span key={term} className="inline-flex items-center rounded-xl bg-white/90 px-3 py-2 text-xs font-bold text-slate-700">{term}</span>
           ))}

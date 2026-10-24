@@ -3,6 +3,7 @@ import { ArrowLeft, Download, Heart, RotateCcw } from 'lucide-react';
 
 import { MBTI_INFO, bestMatchesOf, type MbtiType } from '@/lib/mbti';
 import { saveNodeAsPng } from '@/lib/save-node-as-png';
+import { ShareLinkButton } from '@/components/share/ShareLinkButton';
 
 type Axis = 'EI' | 'SN' | 'TF' | 'JP';
 // `pole` is the letter an "agree" answer points to.
@@ -181,6 +182,7 @@ export function MbtiTest() {
           <button type="button" onClick={save} disabled={saving} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white disabled:opacity-60">
             <Download className="h-4 w-4" /> {saving ? '이미지 만드는 중…' : '결과 카드 저장'}
           </button>
+          <ShareLinkButton url={`/mbti-test/result/${result.type}`} title={`내 MBTI는 ${result.type} ${info.nickname}`} text="나도 MBTI 테스트 해보기" />
           <div className="grid grid-cols-2 gap-2">
             <a href={`/love-compatibility?me=${result.type}`} className="rounded-xl border border-rose-200 bg-white px-3 py-2.5 text-center text-xs font-bold text-rose-700 hover:bg-rose-50">💞 연애 궁합 보기</a>
             <a href="/mbti-game-character" className="rounded-xl border border-violet-200 bg-white px-3 py-2.5 text-center text-xs font-bold text-violet-700 hover:bg-violet-50">🎮 게임 캐릭터 궁합</a>

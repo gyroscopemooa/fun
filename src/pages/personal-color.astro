@@ -30,6 +30,10 @@ import Recommend from '../components/Recommend.astro';
         </div>
         <p id="color-tagline" class="mt-2 text-sm text-slate-600"></p>
         <div id="color-palette" class="mt-3 grid grid-cols-4 gap-2"></div>
+        <div class="mt-3 grid grid-cols-2 gap-2">
+          <a id="color-detail" href="/personal-color/result/spring-light" class="rounded-xl bg-slate-900 px-3 py-2.5 text-center text-xs font-bold text-white hover:bg-slate-700">내 톤 자세히 보기</a>
+          <button id="color-share" type="button" class="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs font-bold text-slate-800 hover:bg-slate-50">결과 링크 공유</button>
+        </div>
       </div>
       <canvas id="color-canvas" class="hidden"></canvas>
     </section>
@@ -63,6 +67,7 @@ import Recommend from '../components/Recommend.astro';
 
   <script>
     import { TONE_MAP, type ToneId } from '../lib/personal-color-tones';
+    import { shareResult } from '../lib/share-result';
 
     const fileEl = document.getElementById('color-file') as HTMLInputElement | null;
     const previewEl = document.getElementById('color-preview') as HTMLImageElement | null;
@@ -161,7 +166,22 @@ import Recommend from '../components/Recommend.astro';
           return cell;
         }));
       }
+      const detailEl = document.getElementById('color-detail') as HTMLAnchorElement | null;
+      if (detailEl) detailEl.href = `/personal-color/result/${tone.id}`;
+      sharedToneId = tone.id;
       cardEl?.classList.remove('hidden');
+    });
+
+    let sharedToneId = '';
+    const shareEl = document.getElementById('color-share');
+    shareEl?.addEventListener('click', async () => {
+      if (!sharedToneId) return;
+      const tone = TONE_MAP[sharedToneId as ToneId];
+      const outcome = await shareResult({ url: `/personal-color/result/${tone.id}`, title: `내 퍼스널컬러는 ${tone.label}`, text: '나도 퍼스널컬러 진단해 보기' });
+      if (outcome === 'copied') {
+        shareEl.textContent = '링크를 복사했어요';
+        window.setTimeout(() => { shareEl.textContent = '결과 링크 공유'; }, 2000);
+      }
     });
   </script>
 </Layout>
