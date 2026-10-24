@@ -1,4 +1,5 @@
-﻿---
+---
+import ToolGuide from '../../components/ToolGuide.astro';
 import Footer from '../../components/Footer.astro';
 import AdsterraBanner from '../../components/ads/AdsterraBanner.astro';
 import Header from '../../components/Header.astro';
@@ -442,6 +443,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
         }
       })();
     </script>
+    <ToolGuide />
     <AdsterraBanner placement="bottom" />
   </main>
   <Footer />

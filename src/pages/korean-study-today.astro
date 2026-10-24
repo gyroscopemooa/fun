@@ -1,4 +1,5 @@
 ---
+import ToolGuide from '../components/ToolGuide.astro';
 import Layout from '../layouts/Layout.astro';
 import AdsterraBanner from '../components/ads/AdsterraBanner.astro';
 import Header from '../components/Header.astro';
@@ -34,6 +35,7 @@ const t = {
       <p id="example" class="mt-2 rounded-lg bg-slate-100 px-3 py-2 text-slate-700">-</p>
       <button id="copy-btn" class="mt-4 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold">{t.copy}</button>
     </section>
+    <ToolGuide />
     <AdsterraBanner placement="bottom" />
     <section class="mt-5 rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-700">
       <h2 class="text-lg font-bold">FAQ</h2>

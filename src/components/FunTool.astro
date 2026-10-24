@@ -1,9 +1,10 @@
 ---
 import Layout from '../layouts/Layout.astro'; import Header from './Header.astro'; import Footer from './Footer.astro'; import Recommend from './Recommend.astro';
 import AdsterraBanner from './ads/AdsterraBanner.astro';
+import ToolGuide from './ToolGuide.astro';
 const { kind, title, description, keywords } = Astro.props;
 ---
-<Layout title={`${title} | ManyTool`} description={description} keywords={keywords}><Header /><main class="mx-auto max-w-3xl px-4 py-8"><section class="rounded-[28px] bg-slate-950 p-6 text-white sm:p-8"><p class="text-sm font-bold uppercase tracking-[0.2em] text-fuchsia-300">Fun Lab</p><h1 class="mt-2 text-3xl font-black sm:text-4xl">{title}</h1><p class="mt-3 text-sm leading-7 text-slate-300">{description}</p></section><AdsterraBanner placement="top" /><section class="mt-6 rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm sm:p-8"><div id="app"></div></section><AdsterraBanner placement="bottom" /><Recommend /></main><Footer /></Layout>
+<Layout title={`${title} | ManyTool`} description={description} keywords={keywords}><Header /><main class="mx-auto max-w-3xl px-4 py-8"><section class="rounded-[28px] bg-slate-950 p-6 text-white sm:p-8"><p class="text-sm font-bold uppercase tracking-[0.2em] text-fuchsia-300">Fun Lab</p><h1 class="mt-2 text-3xl font-black sm:text-4xl">{title}</h1><p class="mt-3 text-sm leading-7 text-slate-300">{description}</p></section><AdsterraBanner placement="top" /><section class="mt-6 rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm sm:p-8"><div id="app"></div></section><ToolGuide /><AdsterraBanner placement="bottom" /><Recommend /></main><Footer /></Layout>
 <script is:inline define:vars={{ kind }}>
 const app=document.getElementById('app'); let n=0,score=0,items=[],picked=[];
 const quiz={

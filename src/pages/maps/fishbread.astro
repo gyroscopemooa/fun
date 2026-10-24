@@ -1,4 +1,5 @@
-﻿---
+---
+import ToolGuide from '../../components/ToolGuide.astro';
 import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
 import Recommend from '../../components/Recommend.astro';
@@ -129,6 +130,7 @@ const seoKeywords = locale === 'ko'
     <section class="mx-auto max-w-5xl px-4 pb-8 pt-2">
       <Recommend />
     </section>
+  <ToolGuide />
   </main>
   <Footer />
   <button id="admin-dock" class="fixed bottom-4 right-4 z-[999] hidden rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-700 shadow">관리</button>

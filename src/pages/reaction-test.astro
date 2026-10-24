@@ -1,4 +1,5 @@
-﻿---
+---
+import ToolGuide from '../components/ToolGuide.astro';
 import Layout from '../layouts/Layout.astro';
 import AdsterraBanner from '../components/ads/AdsterraBanner.astro';
 import Header from '../components/Header.astro';
@@ -30,6 +31,7 @@ import Recommend from '../components/Recommend.astro';
       <p id="reaction-clock" class="mt-2 text-xs text-slate-500">측정 시각: -</p>
     </section>
 
+    <ToolGuide />
     <AdsterraBanner placement="bottom" />
     <section class="mt-5 rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-700">
       <h2 class="text-lg font-semibold text-slate-900">반응속도 테스트란?</h2>
