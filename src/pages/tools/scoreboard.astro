@@ -84,6 +84,7 @@ const t = {
 <Layout
   title={t.title}
   description={t.desc}
+  noindex={Astro.url.pathname.startsWith('/tools/scoreboard')}
 >
   <Header />
 
