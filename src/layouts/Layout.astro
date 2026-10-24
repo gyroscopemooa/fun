@@ -52,9 +52,10 @@ const naverSiteVerification = import.meta.env.PUBLIC_NAVER_SITE_VERIFICATION ?? 
 const adsenseClient = 'ca-pub-4323462792235659';
 const rawApiBase = (import.meta.env.PUBLIC_NODE_API_BASE ?? '').trim();
 const apiBase = rawApiBase.replace(/\/+$/, '');
-const localeTitlePrefix = locale === 'ko' ? '' : locale === 'en' ? '[EN] ' : '[JA] ';
-const localeDescSuffix = t('layout.descriptionSuffix');
-const normalizedPathLabel = pathNoLocale === '/' ? 'main' : pathNoLocale.replace(/\//g, ' ').trim();
+// Translated pages are kept for visitors but stay out of the index until each locale has real, reviewed copy.
+// Flip this once a locale is ready; it also re-enables the hreflang alternates below.
+const indexLocalePages = false;
+const isIndexable = !noindex && (locale === 'ko' || indexLocalePages);
 const segments = pathNoLocale.split('/').filter(Boolean);
 const topSlug = segments[segments.length - 1] ?? '';
 const freeLabelMap: Record<string, string> = {
@@ -66,11 +67,11 @@ const freeLabelMap: Record<string, string> = {
 const freeBodyLabel = locale === 'ko' ? freeLabelMap[topSlug] : undefined;
 const freeAutoPaths = new Set(['/', '/tools', '/games', '/tests', '/maps', '/online-tools']);
 const shouldAutoFreeLabel = locale === 'ko' && (Boolean(freeBodyLabel) || freeAutoPaths.has(pathNoLocale));
-const baseTitle = `${localeTitlePrefix}${title}`;
+const baseTitle = title;
 const resolvedTitle = shouldAutoFreeLabel && !baseTitle.includes('무료')
   ? `무료 ${baseTitle}`
   : baseTitle;
-const resolvedDescription = `${description}${localeDescSuffix}${locale === 'ko' ? '' : ` (path: ${normalizedPathLabel})`}`;
+const resolvedDescription = description;
 const defaultKeywords = '무료 온라인 도구, 웹툴, 온라인 툴, 무료 테스트, 브라우저 게임, 지도 도구, 쇼핑몰 보조 툴, 스마트스토어 툴';
 const keywordsBase = keywords ?? defaultKeywords;
 const resolvedKeywords = shouldAutoFreeLabel && !keywordsBase.includes('무료')
@@ -312,7 +313,7 @@ const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.r
     <title>{resolvedTitle}</title>
     <meta name="description" content={resolvedDescription} />
     <meta name="keywords" content={resolvedKeywords} />
-    <meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow'} />
+    <meta name="robots" content={isIndexable ? 'index, follow' : noindex ? 'noindex, nofollow' : 'noindex, follow'} />
     <meta name="max-snippet" content="-1" />
     <meta name="max-image-preview" content="large" />
     <meta name="max-video-preview" content="-1" />
@@ -331,9 +332,9 @@ const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.r
     <meta name="author" content="ManyTool" />
     <meta name="google-adsense-account" content={adsenseClient} />
     <link rel="alternate" hrefLang="ko-KR" href={koHref} />
-    {hasEn && <link rel="alternate" hrefLang="en" href={enHref} />}
-    {hasJa && <link rel="alternate" hrefLang="ja" href={jaHref} />}
-    {localizedHrefs.filter(({ code }) => code !== 'en' && code !== 'ja').map(({ code, href }) => <link rel="alternate" hrefLang={code} href={href} />)}
+    {indexLocalePages && hasEn && <link rel="alternate" hrefLang="en" href={enHref} />}
+    {indexLocalePages && hasJa && <link rel="alternate" hrefLang="ja" href={jaHref} />}
+    {indexLocalePages && localizedHrefs.filter(({ code }) => code !== 'en' && code !== 'ja').map(({ code, href }) => <link rel="alternate" hrefLang={code} href={href} />)}
     <link rel="alternate" hrefLang="x-default" href={koHref} />
     {googleSiteVerification && <meta name="google-site-verification" content={googleSiteVerification} />}
     {naverSiteVerification && <meta name="naver-site-verification" content={naverSiteVerification} />}
