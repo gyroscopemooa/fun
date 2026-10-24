@@ -172,43 +172,17 @@ const organizationJsonLd = {
   ]
 };
 
+// FAQ rich results must match visible content, so this mirrors the FAQ shown on the home page
+// and is only emitted there; tool pages get their own FAQPage from ToolGuide.
+const stripQaPrefix = (text: string) => text.replace(/^[QA]\.\s*/, '');
 const faqJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
-  mainEntity: [
-    {
-      '@type': 'Question',
-      name: t('layout.faq.q1'),
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: t('layout.faq.a1')
-      }
-    },
-    {
-      '@type': 'Question',
-      name: t('layout.faq.q2'),
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: t('layout.faq.a2')
-      }
-    },
-    {
-      '@type': 'Question',
-      name: t('layout.faq.q3'),
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: t('layout.faq.a3')
-      }
-    },
-    {
-      '@type': 'Question',
-      name: t('layout.faq.q4'),
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: t('layout.faq.a4')
-      }
-    }
-  ]
+  mainEntity: [1, 2, 3].map((i) => ({
+    '@type': 'Question',
+    name: stripQaPrefix(t(`home.faqQ${i}`)),
+    acceptedAnswer: { '@type': 'Answer', text: stripQaPrefix(t(`home.faqA${i}`)) }
+  }))
 };
 
 const webPageJsonLd = {
@@ -344,7 +318,7 @@ const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.r
     <script type="application/ld+json" set:html={JSON.stringify(organizationJsonLd)}></script>
     <script type="application/ld+json" set:html={JSON.stringify(webPageJsonLd)}></script>
     <script type="application/ld+json" set:html={JSON.stringify(breadcrumbJsonLd)}></script>
-    <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)}></script>
+    {pathNoLocale === '/' && <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)}></script>}
     {gaId && (
       <>
         <script async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}></script>

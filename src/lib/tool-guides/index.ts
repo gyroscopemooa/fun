@@ -1,4 +1,5 @@
 import { dailyGuides } from './daily';
+import { featuredGuides } from './featured';
 import { funGuides } from './fun';
 import { gameGuides } from './game';
 import { hubGuides } from './hubs';
@@ -17,6 +18,6 @@ export type ToolGuide = {
   faq: [string, string][];
 };
 
-const guides: Record<string, ToolGuide> = { ...funGuides, ...partyGuides, ...gameGuides, ...utilityGuides, ...dailyGuides, ...hubGuides };
+const guides: Record<string, ToolGuide> = { ...funGuides, ...partyGuides, ...gameGuides, ...utilityGuides, ...dailyGuides, ...hubGuides, ...featuredGuides };
 
 export const getToolGuide = (path: string): ToolGuide | undefined => guides[path.replace(/\/+$/, '') || '/'];

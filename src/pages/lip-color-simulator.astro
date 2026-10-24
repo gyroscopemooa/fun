@@ -1,4 +1,5 @@
 ---
+import ToolGuide from '../components/ToolGuide.astro';
 import Layout from '../layouts/Layout.astro';
 import AdsterraBanner from '../components/ads/AdsterraBanner.astro';
 import Header from '../components/Header.astro';
@@ -75,6 +76,7 @@ const sampleUrl = (await getImage({ src: sample, width: 900, format: 'webp', qua
       <p class="mt-1">Q. 실제 제품 색과 같나요? A. 조명과 화면에 따라 달라 보일 수 있어요. 색 고르기 참고용으로 써 주세요.</p>
     </section>
 
+    <ToolGuide />
     <AdsterraBanner placement="bottom" />
     <AdSense slotName="본문 하단" />
     <Recommend />

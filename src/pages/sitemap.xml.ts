@@ -50,7 +50,6 @@ const paths = [
   '/streamer-battle',
   '/tools/product-detail-studio',
   '/tools/video-to-mp4',
-  '/tools/scoreboard',
   '/random-picker',
   '/roulette',
   '/team-split',
