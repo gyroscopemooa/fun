@@ -11,6 +11,10 @@ export default defineConfig({
   integrations: [react()],
   vite: {
     plugins: [tailwindcss()],
+    // The AVIF encoder loads its .wasm via import.meta.url, which pre-bundling breaks.
+    optimizeDeps: { exclude: ['@jsquash/avif'] },
+    // Its multithreaded build also ships a worker that needs ES-module output.
+    worker: { format: 'es' },
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url))
