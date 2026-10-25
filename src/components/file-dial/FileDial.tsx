@@ -6,6 +6,7 @@ import { zipBlobs } from '@/lib/file-dial/pdf-ops';
 import { DIAL_COLORS, RadialDial, petalAt } from './RadialDial';
 import { ImageEditor } from './ImageEditor';
 import { HwpPreview } from './HwpPreview';
+import { PdfOrganizer } from './PdfOrganizer';
 
 type Overlay = { x: number; y: number; kind: DialKind; mode: DialMode; hi: number | null };
 type Result = DialOutput & { id: number; url: string };
@@ -33,6 +34,7 @@ export function FileDial() {
   const [message, setMessage] = useState('');
   const [editing, setEditing] = useState<File | null>(null);
   const [previewing, setPreviewing] = useState<File | null>(null);
+  const [organizing, setOrganizing] = useState<File | null>(null);
   const depth = useRef(0);
   const overlayRef = useRef<Overlay | null>(null);
   const nextId = useRef(1);
@@ -51,6 +53,11 @@ export function FileDial() {
     if (action.opensEditor) {
       setEditing(files[0]);
       if (files.length > 1) setMessage('편집은 한 번에 한 장씩 할 수 있어요. 첫 번째 사진을 열었어요.');
+      return;
+    }
+    if (action.opensPages) {
+      setOrganizing(files[0]);
+      if (files.length > 1) setMessage('페이지 정리는 한 번에 한 PDF씩 할 수 있어요. 첫 번째 PDF를 열었어요. 여러 PDF는 "합치기"로 먼저 합쳐 보세요.');
       return;
     }
     if (action.opensPreview) {
@@ -277,6 +284,7 @@ export function FileDial() {
         </div>
       ) : null}
 
+      {organizing ? <PdfOrganizer file={organizing} onClose={() => setOrganizing(null)} onDone={(outputs) => { setOrganizing(null); addResults(outputs); download(URL.createObjectURL(outputs[0].blob), outputs[0].name); }} /> : null}
       {previewing ? <HwpPreview file={previewing} onClose={() => setPreviewing(null)} /> : null}
       {editing ? <ImageEditor file={editing} onClose={() => setEditing(null)} onDone={(outputs) => { setEditing(null); addResults(outputs); download(URL.createObjectURL(outputs[0].blob), outputs[0].name); }} /> : null}
     </div>

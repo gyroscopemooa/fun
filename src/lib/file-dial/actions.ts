@@ -17,6 +17,8 @@ export type DialAction = {
   opensEditor?: boolean;
   /** Opens the document preview instead of running directly. */
   opensPreview?: boolean;
+  /** Opens the PDF page organizer instead of running directly. */
+  opensPages?: boolean;
   run?: (files: File[], ctx: RunContext) => Promise<DialOutput[]>;
 };
 
@@ -142,6 +144,7 @@ export const ACTIONS: Record<DialKind, Record<DialMode, DialAction[]>> = {
       } }
     ],
     tools: [
+      { id: 'pages', label: '페이지 정리', hint: '페이지 정리: 범위로 뽑기·순서 바꾸기·빼기·페이지별 회전', opensPages: true },
       { id: 'merge', label: '합치기', hint: '합치기: 놓은 순서대로 PDF 여러 개를 하나로', run: async (files, ctx) => {
         ctx.progress('PDF 합치는 중…');
         return [{ name: `merged-${files.length}files.pdf`, blob: await mergePdfs(files), from: files.map((f) => f.name).join(', ') }];

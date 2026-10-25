@@ -112,3 +112,36 @@ export const zipBlobs = async (entries: { name: string; blob: Blob }[]) => {
     zip(files, { level: 0 }, (error, data) => (error ? reject(error) : resolve(new Blob([data], { type: 'application/zip' }))));
   });
 };
+
+export type PageSpec = { index: number; rotate: 0 | 90 | 180 | 270 };
+
+/** New PDF from chosen pages in the given order, each with an extra rotation. */
+export const rebuildPdf = async (file: File, pages: PageSpec[]) => {
+  const { PDFDocument, degrees } = await import('pdf-lib');
+  const source = await PDFDocument.load(await file.arrayBuffer(), { ignoreEncryption: true });
+  const out = await PDFDocument.create();
+  const copied = await out.copyPages(source, pages.map((p) => p.index));
+  copied.forEach((page, i) => {
+    page.setRotation(degrees((page.getRotation().angle + pages[i].rotate) % 360));
+    out.addPage(page);
+  });
+  return new Blob([new Uint8Array(await out.save())], { type: 'application/pdf' });
+};
+
+/** Parses "1-3, 5, 8-" into zero-based page indexes (in the order written). */
+export const parsePageRange = (input: string, total: number) => {
+  const picked: number[] = [];
+  for (const part of input.split(/[,\s]+/).filter(Boolean)) {
+    const m = part.match(/^(\d*)-(\d*)$/);
+    if (m) {
+      const from = m[1] ? Number(m[1]) : 1;
+      const to = m[2] ? Number(m[2]) : total;
+      const step = from <= to ? 1 : -1;
+      for (let n = from; step > 0 ? n <= to : n >= to; n += step) if (n >= 1 && n <= total) picked.push(n - 1);
+    } else if (/^\d+$/.test(part)) {
+      const n = Number(part);
+      if (n >= 1 && n <= total) picked.push(n - 1);
+    }
+  }
+  return picked;
+};
