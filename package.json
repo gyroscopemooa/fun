@@ -34,6 +34,7 @@
     "framer-motion": "^12.36.0",
     "heic2any": "^0.0.4",
     "html-to-image": "^1.11.13",
+    "hwp.js": "^0.0.3",
     "i18next": "^25.8.18",
     "jspdf": "^4.2.0",
     "lucide-react": "^0.577.0",

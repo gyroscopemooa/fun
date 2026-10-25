@@ -1,8 +1,9 @@
 // What each wheel offers per file kind. The convert wheel changes the format; the tools wheel edits or bundles.
 import { cropCanvas, decodeToCanvas, encodeCanvas, formatOfFile, hasTransparency, scaleCanvas, transformCanvas, type RasterFormat } from './image-codec';
+import { hwpToText, renderHwpPages } from './hwp-ops';
 import { extractPdfText, imagesToPdf, mergePdfs, renderPdfPages, rotatePdf, splitPdf, zipBlobs } from './pdf-ops';
 
-export type DialKind = 'image' | 'pdf' | 'mixed';
+export type DialKind = 'image' | 'pdf' | 'hwp' | 'mixed';
 export type DialMode = 'convert' | 'tools';
 export type DialOutput = { name: string; blob: Blob; from: string };
 export type RunContext = { progress: (text: string) => void };
@@ -14,14 +15,17 @@ export type DialAction = {
   hint: string;
   /** Opens the crop/rotate/resize editor instead of running directly. */
   opensEditor?: boolean;
+  /** Opens the document preview instead of running directly. */
+  opensPreview?: boolean;
   run?: (files: File[], ctx: RunContext) => Promise<DialOutput[]>;
 };
 
 const baseName = (name: string) => name.replace(/\.[^.]+$/, '') || 'file';
 const EXT: Record<RasterFormat, string> = { jpg: 'jpg', png: 'png', webp: 'webp', avif: 'avif', bmp: 'bmp', ico: 'ico', tiff: 'tif' };
 
-export const kindOfFile = (file: File): 'image' | 'pdf' | 'other' => {
+export const kindOfFile = (file: File): 'image' | 'pdf' | 'hwp' | 'other' => {
   if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) return 'pdf';
+  if (/\.hwpx?$/i.test(file.name) || /hwp/i.test(file.type)) return 'hwp';
   if (file.type.startsWith('image/') || /\.(jpe?g|png|webp|avif|gif|bmp|ico|svg|tiff?|hei[cf])$/i.test(file.name)) return 'image';
   return 'other';
 };
@@ -29,11 +33,14 @@ export const kindOfFile = (file: File): 'image' | 'pdf' | 'other' => {
 export const kindOfFiles = (files: File[]): DialKind | null => {
   const kinds = new Set(files.map(kindOfFile));
   if (kinds.has('other') || kinds.size === 0) return null;
+  // HWP files are handled on their own; images and PDFs can be combined.
+  if (kinds.has('hwp')) return kinds.size === 1 ? 'hwp' : null;
   return kinds.size > 1 ? 'mixed' : (kinds.values().next().value as 'image' | 'pdf');
 };
 
 /** Best guess while a drag is still in progress (only MIME types are visible, not names). */
 export const kindOfDragTypes = (types: string[]): DialKind => {
+  if (types.some((t) => /hwp/i.test(t))) return 'hwp';
   const pdf = types.some((t) => t === 'application/pdf');
   const image = types.some((t) => t.startsWith('image/'));
   if (pdf && image) return 'mixed';
@@ -74,6 +81,17 @@ const pdfToImages = (format: RasterFormat) => async (files: File[], ctx: RunCont
     const pages = await renderPdfPages(file, 2, (done, total) => ctx.progress(`${file.name}: ${done} / ${total} 페이지`));
     for (const [i, page] of pages.entries()) {
       out.push({ name: `${baseName(file.name)}-p${String(i + 1).padStart(2, '0')}.${EXT[format]}`, blob: await encodeCanvas(page, format, 0.9), from: file.name });
+    }
+  }
+  return out;
+};
+
+const hwpToImages = (format: RasterFormat) => async (files: File[], ctx: RunContext) => {
+  const out: DialOutput[] = [];
+  for (const file of files) {
+    const pages = await renderHwpPages(file, (done, total) => ctx.progress(`${file.name}: ${done} / ${total} 페이지`));
+    for (const [i, page] of pages.entries()) {
+      out.push({ name: `${baseName(file.name)}-p${String(i + 1).padStart(2, '0')}.${EXT[format]}`, blob: await encodeCanvas(page, format, 0.92), from: file.name });
     }
   }
   return out;
@@ -141,6 +159,33 @@ export const ACTIONS: Record<DialKind, Record<DialMode, DialAction[]>> = {
       { id: 'pdf-zip', label: 'ZIP', hint: 'ZIP: 선택한 PDF를 압축파일 하나로 묶기', run: zipAll }
     ]
   },
+  hwp: {
+    convert: [
+      { id: 'hwp-pdf', label: 'PDF', hint: 'PDF: 한글 문서를 페이지 그대로 PDF로 (복잡한 서식은 다를 수 있어요)', run: async (files, ctx) => {
+        const out: DialOutput[] = [];
+        for (const file of files) {
+          ctx.progress(`${file.name}: 페이지 그리는 중…`);
+          const pages = await renderHwpPages(file, (done, total) => ctx.progress(`${file.name}: ${done} / ${total} 페이지`));
+          out.push({ name: `${baseName(file.name)}.pdf`, blob: await imagesToPdf(pages), from: file.name });
+        }
+        return out;
+      } },
+      { id: 'hwp-txt', label: 'TXT', hint: 'TXT: 본문과 표 안의 글자만 텍스트 파일로 추출', run: async (files, ctx) => {
+        const out: DialOutput[] = [];
+        for (const file of files) {
+          ctx.progress(`${file.name}: 글자 추출 중…`);
+          out.push({ name: `${baseName(file.name)}.txt`, blob: new Blob([await hwpToText(file)], { type: 'text/plain;charset=utf-8' }), from: file.name });
+        }
+        return out;
+      } },
+      { id: 'hwp-jpg', label: 'JPG', hint: 'JPG: 페이지마다 JPG 이미지로 저장', run: hwpToImages('jpg') },
+      { id: 'hwp-png', label: 'PNG', hint: 'PNG: 페이지마다 선명한 PNG로 저장', run: hwpToImages('png') }
+    ],
+    tools: [
+      { id: 'hwp-preview', label: '미리보기', hint: '미리보기: 한글 프로그램 없이 브라우저에서 문서 열어 보기', opensPreview: true },
+      { id: 'hwp-zip', label: 'ZIP', hint: 'ZIP: 선택한 문서를 압축파일 하나로 묶기', run: zipAll }
+    ]
+  },
   mixed: {
     convert: [
       { id: 'mixed-pdf', label: 'PDF 하나로', hint: 'PDF 하나로: 사진은 페이지로 바꾸고 PDF와 순서대로 합치기', run: async (files, ctx) => {
@@ -155,4 +200,11 @@ export const ACTIONS: Record<DialKind, Record<DialMode, DialAction[]>> = {
     ],
     tools: [{ id: 'mixed-zip', label: 'ZIP', hint: 'ZIP: 선택한 파일을 압축파일 하나로 묶기', run: zipAll }]
   }
+};
+
+/** After a drop the real kind is known; keep the user's choice when the same kind of petal exists there. */
+export const matchAction = (kind: DialKind, mode: DialMode, picked: DialAction | undefined) => {
+  if (!picked) return undefined;
+  const actions = ACTIONS[kind][mode];
+  return actions.find((a) => a.id === picked.id) ?? actions.find((a) => a.label === picked.label);
 };

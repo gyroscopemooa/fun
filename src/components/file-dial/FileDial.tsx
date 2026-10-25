@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Download, FileUp, Loader2, Package, Trash2, X } from 'lucide-react';
 
-import { ACTIONS, kindOfDragTypes, kindOfFiles, type DialAction, type DialKind, type DialMode, type DialOutput } from '@/lib/file-dial/actions';
+import { ACTIONS, kindOfDragTypes, kindOfFiles, matchAction, type DialAction, type DialKind, type DialMode, type DialOutput } from '@/lib/file-dial/actions';
 import { zipBlobs } from '@/lib/file-dial/pdf-ops';
 import { DIAL_COLORS, RadialDial, petalAt } from './RadialDial';
 import { ImageEditor } from './ImageEditor';
+import { HwpPreview } from './HwpPreview';
 
 type Overlay = { x: number; y: number; kind: DialKind; mode: DialMode; hi: number | null };
 type Result = DialOutput & { id: number; url: string };
 
-const KIND_LABEL: Record<DialKind, string> = { image: '이미지', pdf: 'PDF', mixed: '이미지+PDF' };
+const KIND_LABEL: Record<DialKind, string> = { image: '이미지', pdf: 'PDF', hwp: '한글 문서', mixed: '이미지+PDF' };
 
 const formatBytes = (n: number) => (n < 1024 ? `${n} B` : n < 1024 ** 2 ? `${(n / 1024).toFixed(1)} KB` : `${(n / 1024 ** 2).toFixed(1)} MB`);
 
@@ -31,6 +32,7 @@ export function FileDial() {
   const [busy, setBusy] = useState('');
   const [message, setMessage] = useState('');
   const [editing, setEditing] = useState<File | null>(null);
+  const [previewing, setPreviewing] = useState<File | null>(null);
   const depth = useRef(0);
   const overlayRef = useRef<Overlay | null>(null);
   const nextId = useRef(1);
@@ -51,6 +53,11 @@ export function FileDial() {
       if (files.length > 1) setMessage('편집은 한 번에 한 장씩 할 수 있어요. 첫 번째 사진을 열었어요.');
       return;
     }
+    if (action.opensPreview) {
+      setPreviewing(files[0]);
+      if (files.length > 1) setMessage('미리보기는 한 번에 한 문서씩 열 수 있어요. 첫 번째 문서를 열었어요.');
+      return;
+    }
     if (!action.run) return;
     setBusy('준비 중…');
     try {
@@ -68,7 +75,11 @@ export function FileDial() {
 
   const accept = (files: File[]) => {
     const usable = files.filter((f) => kindOfFiles([f]));
-    if (usable.length < files.length) setMessage('지원하지 않는 파일은 빼고 담았어요. 지금은 이미지와 PDF를 지원해요.');
+    if (usable.length && !kindOfFiles(usable)) {
+      setMessage('한글 문서는 이미지·PDF와 섞지 말고 따로 담아 주세요.');
+      return [];
+    }
+    if (usable.length < files.length) setMessage('지원하지 않는 파일은 빼고 담았어요. 지금은 이미지, PDF, 한글(HWP·HWPX)을 지원해요.');
     if (usable.length) setTray(usable);
     return usable;
   };
@@ -119,9 +130,8 @@ export function FileDial() {
       const kind = kindOfFiles(files);
       if (!kind) return;
       const mode = e.ctrlKey || e.altKey || e.metaKey ? 'tools' : current.mode;
-      const action = ACTIONS[current.kind][mode][current.hi];
       // The real file kind is only known after the drop; fall back to the tray if the guess was wrong.
-      const match = ACTIONS[kind][mode].find((a) => a.id === action?.id);
+      const match = matchAction(kind, mode, ACTIONS[current.kind][mode][current.hi]);
       if (match) run(match, files);
       else setMessage('이 파일에는 그 기능을 쓸 수 없어요. 아래 다이얼에서 다시 골라 주세요.');
       setMode(mode);
@@ -169,9 +179,9 @@ export function FileDial() {
             <FileUp className="h-9 w-9 text-indigo-500" />
             <span className="text-base font-black text-slate-900">파일을 이 페이지 아무 곳에나 끌어다 놓으세요</span>
             <span className="text-sm text-slate-500">끄는 순간 다이얼이 열려요 · 또는 눌러서 파일 선택</span>
-            <span className="mt-1 text-xs text-slate-400">JPG · PNG · WEBP · HEIC · AVIF · TIFF · BMP · GIF · SVG · PDF</span>
+            <span className="mt-1 text-xs text-slate-400">JPG · PNG · WEBP · HEIC · AVIF · TIFF · BMP · GIF · SVG · PDF · HWP · HWPX</span>
           </button>
-          <input ref={inputRef} type="file" multiple accept="image/*,.heic,.heif,.tif,.tiff,.pdf,application/pdf" className="hidden" onChange={(e) => { accept(Array.from(e.target.files ?? [])); e.target.value = ''; }} />
+          <input ref={inputRef} type="file" multiple accept="image/*,.heic,.heif,.tif,.tiff,.pdf,application/pdf,.hwp,.hwpx" className="hidden" onChange={(e) => { accept(Array.from(e.target.files ?? [])); e.target.value = ''; }} />
 
           <div className="mt-4 hidden gap-2 text-sm text-slate-600 sm:grid sm:grid-cols-2">
             <p className="rounded-2xl bg-slate-50 px-4 py-3"><b className="text-indigo-700">그냥 놓기</b> → 포맷 변환 다이얼</p>
@@ -267,6 +277,7 @@ export function FileDial() {
         </div>
       ) : null}
 
+      {previewing ? <HwpPreview file={previewing} onClose={() => setPreviewing(null)} /> : null}
       {editing ? <ImageEditor file={editing} onClose={() => setEditing(null)} onDone={(outputs) => { setEditing(null); addResults(outputs); download(URL.createObjectURL(outputs[0].blob), outputs[0].name); }} /> : null}
     </div>
   );

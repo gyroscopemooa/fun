@@ -24,9 +24,9 @@ const categories: { id: string; label: string; icon: string; summary: string; in
     tools: ['합치기', '페이지 나누기', '회전', 'ZIP 묶기']
   },
   {
-    id: 'docs', label: '한글·문서', icon: '📝',
-    summary: '한글(HWP) 문서를 브라우저에서 열어 보고 글자를 추출하거나 PDF로 저장하는 기능을 준비하고 있어요.',
-    inputs: ['HWP', 'HWPX'], outputs: ['PDF', 'TXT'], tools: ['미리보기'], soon: '다음 업데이트'
+    id: 'docs', label: '한글(HWP)', icon: '📝',
+    summary: '한글 프로그램이 없어도 HWP·HWPX 문서를 브라우저에서 열어 보고, PDF나 이미지로 저장하거나 글자만 텍스트로 뽑을 수 있어요. (베타: 글꼴·그림·복잡한 표는 원본과 다르게 보일 수 있어요)',
+    inputs: ['HWP', 'HWPX'], outputs: ['PDF', 'TXT', 'JPG', 'PNG'], tools: ['미리보기', 'ZIP 묶기']
   },
   {
     id: 'video', label: '동영상', icon: '🎬',
@@ -42,9 +42,9 @@ const categories: { id: string; label: string; icon: string; summary: string; in
 ---
 
 <Layout
-  title="파일 변환기 | 드래그 한 번으로 JPG·PNG·WEBP·HEIC·PDF 변환 | ManyTool"
-  description="파일을 끌어다 놓으면 다이얼이 열리고, 원하는 형식 위에 놓기만 하면 변환되는 무료 온라인 파일 변환기. HEIC·WEBP·AVIF·PDF 변환, PDF 합치기·나누기, 사진 자르기·용량 줄이기를 업로드 없이 브라우저에서 처리합니다."
-  keywords="파일 변환기, 이미지 변환, HEIC JPG 변환, WEBP JPG 변환, PNG JPG 변환, PDF 합치기, PDF JPG 변환, 이미지 PDF 변환, 사진 용량 줄이기, 사진 자르기"
+  title="파일 변환기 | 드래그 한 번으로 JPG·PNG·HEIC·PDF·한글(HWP) 변환 | ManyTool"
+  description="파일을 끌어다 놓으면 다이얼이 열리고, 원하는 형식 위에 놓기만 하면 변환되는 무료 온라인 파일 변환기. HEIC·WEBP·AVIF·PDF 변환, 한글(HWP) PDF 변환, PDF 합치기·나누기, 사진 자르기·용량 줄이기를 업로드 없이 브라우저에서 처리합니다."
+  keywords="파일 변환기, 이미지 변환, HWP PDF 변환, 한글 파일 PDF 변환, HWP 뷰어, HEIC JPG 변환, WEBP JPG 변환, PNG JPG 변환, PDF 합치기, PDF JPG 변환, 이미지 PDF 변환, 사진 용량 줄이기, 사진 자르기"
 >
   <Header />
   <main class="mx-auto max-w-6xl px-4 py-8">
@@ -93,7 +93,7 @@ const categories: { id: string; label: string; icon: string; summary: string; in
               <div class="mt-2 flex flex-wrap gap-1">{c.tools.map((f) => <span class="rounded-md bg-white px-2 py-1 text-xs font-bold text-teal-800 shadow-sm">{f}</span>)}</div>
             </div>
           </div>
-          {c.soon ? <p class="mt-3 text-xs font-semibold text-amber-700">이 종류는 {c.soon}에 추가될 예정이에요. 지금은 이미지와 PDF를 변환할 수 있어요.</p> : null}
+          {c.soon ? <p class="mt-3 text-xs font-semibold text-amber-700">이 종류는 {c.soon}이에요. 지금은 이미지, PDF, 한글(HWP) 문서를 변환할 수 있어요.</p> : null}
         </div>
       ))}
     </section>
