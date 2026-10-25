@@ -160,7 +160,7 @@ export const ACTIONS: Record<DialKind, Record<DialMode, DialAction[]>> = {
       } }
     ],
     tools: [
-      { id: 'pages', label: '페이지 정리', hint: '페이지 정리: 범위로 뽑기·순서 바꾸기·빼기·페이지별 회전', opensPages: true },
+      { id: 'pages', label: '페이지 편집', hint: '페이지 편집: 여러 PDF·사진 페이지를 보면서 섞고, 끼워 넣고, 원하는 곳에서 나누기', opensPages: true },
       { id: 'merge', label: '합치기', hint: '합치기: 놓은 순서대로 PDF 여러 개를 하나로', run: async (files, ctx) => {
         ctx.progress('PDF 합치는 중…');
         return [{ name: `merged-${files.length}files.pdf`, blob: await mergePdfs(files), from: files.map((f) => f.name).join(', ') }];
@@ -260,7 +260,10 @@ export const ACTIONS: Record<DialKind, Record<DialMode, DialAction[]>> = {
         return [{ name: `combined-${files.length}files.pdf`, blob: await mergePdfs(parts), from: files.map((f) => f.name).join(', ') }];
       } }
     ],
-    tools: [{ id: 'mixed-zip', label: 'ZIP', hint: 'ZIP: 선택한 파일을 압축파일 하나로 묶기', run: zipAll }]
+    tools: [
+      { id: 'pages', label: '페이지 편집', hint: '페이지 편집: PDF와 사진 페이지를 한 화면에서 섞고, 끼워 넣고, 나누기', opensPages: true },
+      { id: 'mixed-zip', label: 'ZIP', hint: 'ZIP: 선택한 파일을 압축파일 하나로 묶기', run: zipAll }
+    ]
   }
 };
 

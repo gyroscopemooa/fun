@@ -44,7 +44,7 @@ const categories: { id: string; label: string; icon: string; summary: string; in
 <Layout
   title="파일 변환기 | 드래그 한 번으로 JPG·HEIC·PDF·한글(HWP)·MP4·MP3 변환 | ManyTool"
   description="파일을 끌어다 놓으면 다이얼이 열리고, 원하는 형식 위에 놓기만 하면 변환되는 무료 온라인 파일 변환기. HEIC·WEBP·AVIF·PDF 변환, 한글(HWP) PDF 변환, PDF 합치기·나누기, 사진 자르기·용량 줄이기를 업로드 없이 브라우저에서 처리합니다."
-  keywords="파일 변환기, 이미지 변환, 동영상 MP4 변환, MOV MP4 변환, 영상 MP3 추출, GIF 만들기, 오디오 변환, HWP PDF 변환, 한글 파일 PDF 변환, HWP 뷰어, HEIC JPG 변환, WEBP JPG 변환, PNG JPG 변환, PDF 합치기, PDF JPG 변환, 이미지 PDF 변환, 사진 용량 줄이기, 사진 자르기"
+  keywords="파일 변환기, PDF 합치기, PDF 분할, PDF 나누기, PDF 병합, PDF 페이지 삭제, PDF 순서 변경, PDF 페이지 편집, 드래그 앤 드롭 파일 변환, 다이얼 파일 변환기, 이미지 변환, 동영상 MP4 변환, MOV MP4 변환, 영상 MP3 추출, GIF 만들기, 오디오 변환, HWP PDF 변환, 한글 파일 PDF 변환, HWP 뷰어, HEIC JPG 변환, WEBP JPG 변환, PNG JPG 변환, PDF 합치기, PDF JPG 변환, 이미지 PDF 변환, 사진 용량 줄이기, 사진 자르기"
 >
   <Header />
   <main class="mx-auto max-w-6xl px-4 py-8">
@@ -99,6 +99,43 @@ const categories: { id: string; label: string; icon: string; summary: string; in
     </section>
 
     <ToolGuide />
+
+    <section class="mt-8 rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-7" aria-labelledby="pdf-howto-title">
+      <p class="text-xs font-bold uppercase tracking-[0.18em] text-teal-600">How-to</p>
+      <h2 id="pdf-howto-title" class="mt-1 text-xl font-black text-slate-950 sm:text-2xl">PDF 합치기·분할·페이지 편집, 설치 없이 무료로</h2>
+      <p class="mt-3 text-sm leading-7 text-slate-700">
+        ManyTool 파일 변환기는 드래그 앤 드롭 다이얼 방식의 무료 온라인 파일 변환기예요. 파일을 끌어오면 커서 아래에 원형 다이얼이 열리고, 원하는 조각 위에 놓기만 하면 변환과 편집이 끝나요.
+        PDF 합치기, PDF 분할(나누기), 페이지 삭제·순서 바꾸기·회전처럼 자주 찾는 PDF 작업을 프로그램 설치나 회원가입 없이, 파일을 서버에 올리지 않고 브라우저에서 바로 처리할 수 있어요.
+      </p>
+      <div class="mt-5 grid gap-4 md:grid-cols-2">
+        <article class="rounded-2xl bg-slate-50 p-4">
+          <h3 class="text-base font-black text-slate-900">PDF 합치기 (PDF 병합)</h3>
+          <p class="mt-2 text-sm leading-6 text-slate-600">여러 PDF를 한 번에 끌어와 Ctrl(또는 Alt)을 누른 채 도구 다이얼의 <b>합치기</b>에 놓으면 놓은 순서대로 PDF 하나가 돼요. 페이지를 골라 섞고 싶다면 <b>페이지 편집</b>을 열어 여러 PDF의 페이지를 한 화면에서 끌어 배치하면 됩니다. 사진을 같이 넣으면 사진도 A4 페이지로 함께 합쳐져요.</p>
+        </article>
+        <article class="rounded-2xl bg-slate-50 p-4">
+          <h3 class="text-base font-black text-slate-900">PDF 분할 (PDF 나누기)</h3>
+          <p class="mt-2 text-sm leading-6 text-slate-600">모든 페이지를 한 장씩 나누려면 도구 다이얼의 <b>나누기</b>에 놓으세요. 원하는 지점에서 나누고 싶다면 <b>페이지 편집</b>에서 페이지 사이의 ✂ 버튼을 눌러 구분선을 넣고 저장하면 1~3쪽, 4~7쪽처럼 여러 PDF로 나뉘어 나와요.</p>
+        </article>
+        <article class="rounded-2xl bg-slate-50 p-4">
+          <h3 class="text-base font-black text-slate-900">PDF 페이지 삭제·순서 바꾸기·회전</h3>
+          <p class="mt-2 text-sm leading-6 text-slate-600">페이지 편집 보드에서 썸네일을 보며 필요 없는 페이지를 빼고, 카드를 끌어 순서를 바꾸고, 가로로 스캔된 페이지만 골라 회전할 수 있어요. "1-3, 5, 8-"처럼 번호를 적어 남길 페이지만 한 번에 고를 수도 있어요.</p>
+        </article>
+        <article class="rounded-2xl bg-slate-50 p-4">
+          <h3 class="text-base font-black text-slate-900">PDF 중간에 다른 파일 끼워 넣기</h3>
+          <p class="mt-2 text-sm leading-6 text-slate-600">페이지 편집 보드가 열린 상태에서 다른 PDF나 사진을 원하는 페이지 카드 위에 끌어다 놓으면 그 바로 뒤에 끼워 넣어져요. 계약서 중간에 서명 페이지를 넣거나, 보고서 사이에 사진 자료를 넣을 때 편리해요.</p>
+        </article>
+        <article class="rounded-2xl bg-slate-50 p-4">
+          <h3 class="text-base font-black text-slate-900">PDF를 JPG로, 사진을 PDF로</h3>
+          <p class="mt-2 text-sm leading-6 text-slate-600">PDF를 변환 다이얼의 JPG·PNG에 놓으면 페이지마다 이미지가 만들어지고, 글자만 필요하면 TXT로 추출할 수 있어요. 반대로 사진 여러 장을 PDF 조각에 놓으면 A4 PDF 한 개로 묶여 서류 제출용으로 쓰기 좋아요.</p>
+        </article>
+        <article class="rounded-2xl bg-slate-50 p-4">
+          <h3 class="text-base font-black text-slate-900">HWP·HEIC·동영상까지 한곳에서</h3>
+          <p class="mt-2 text-sm leading-6 text-slate-600">한글(HWP·HWPX) 문서를 PDF로 저장하고, 아이폰 HEIC 사진을 JPG로 바꾸고, MOV 영상을 MP4로 바꾸거나 소리만 MP3로 뽑는 것도 같은 다이얼에서 할 수 있어요.</p>
+        </article>
+      </div>
+      <p class="mt-4 text-xs leading-5 text-slate-500">모든 변환은 사용하는 기기의 브라우저 안에서 처리되며 파일이 ManyTool 서버로 전송되지 않습니다. 암호가 걸린 PDF는 열리지 않을 수 있어요.</p>
+    </section>
+
     <AdsterraBanner placement="bottom" />
     <Recommend />
   </main>
