@@ -1,0 +1,165 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import AdsterraBanner from '../../components/ads/AdsterraBanner.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { CATEGORY_LABEL, GUIDES, readMinutes, type Guide } from '../../lib/guides';
+
+export function getStaticPaths() {
+  return GUIDES.map((guide) => ({ params: { slug: guide.slug }, props: { guide } }));
+}
+
+const { guide } = Astro.props as { guide: Guide };
+const site = Astro.site ?? new URL('https://manytool.net');
+const url = new URL(`/guides/${guide.slug}/`, site).toString();
+const related = GUIDES.filter((g) => g.slug !== guide.slug).sort((a, b) => Number(b.category === guide.category) - Number(a.category === guide.category)).slice(0, 3);
+const [mainTool, ...moreTools] = guide.tools;
+const updatedLabel = guide.updated.replace(/^(\d+)-(\d+)-(\d+)$/, (_, y, m, d) => `${y}년 ${Number(m)}월 ${Number(d)}일`);
+
+const articleLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: guide.title,
+  description: guide.description,
+  dateModified: guide.updated,
+  datePublished: guide.updated,
+  inLanguage: 'ko-KR',
+  mainEntityOfPage: url,
+  author: { '@type': 'Organization', name: 'ManyTool', url: site.toString() },
+  publisher: { '@type': 'Organization', name: 'ManyTool', url: site.toString() }
+};
+const faqLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: guide.faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } }))
+};
+---
+
+<Layout title={`${guide.title} | ManyTool 가이드`} description={guide.description} keywords={guide.keywords}>
+  <Header />
+  <main class="mx-auto max-w-3xl px-4 py-8">
+    <nav class="text-xs font-semibold text-slate-500" aria-label="위치">
+      <a href="/guides" class="hover:text-slate-900 hover:underline">가이드</a>
+      <span class="mx-1">/</span>
+      <span>{CATEGORY_LABEL[guide.category]}</span>
+    </nav>
+
+    <article class="mt-3">
+      <header class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+        <p class="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-700">{guide.emoji} {CATEGORY_LABEL[guide.category]}</p>
+        <h1 class="mt-3 text-2xl font-black leading-snug tracking-tight text-slate-950 sm:text-3xl">{guide.title}</h1>
+        <p class="mt-3 text-sm leading-7 text-slate-600">{guide.description}</p>
+        <p class="mt-4 text-xs font-semibold text-slate-400">업데이트 {updatedLabel} · 읽는 데 약 {readMinutes(guide)}분 · ManyTool 편집팀</p>
+      </header>
+
+      <AdsterraBanner placement="top" />
+
+      <div class="mt-6 space-y-4 text-[15px] leading-8 text-slate-800">
+        {guide.intro.map((p) => <p>{p}</p>)}
+      </div>
+
+      <nav class="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4" aria-label="목차">
+        <p class="text-sm font-black text-slate-900">목차</p>
+        <ol class="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-700">
+          {guide.sections.map((s, i) => <li><a href={`#s${i + 1}`} class="hover:text-indigo-700 hover:underline">{s.heading}</a></li>)}
+          <li><a href="#faq" class="hover:text-indigo-700 hover:underline">자주 묻는 질문</a></li>
+        </ol>
+      </nav>
+
+      {guide.sections.map((section, i) => (
+        <section id={`s${i + 1}`} class="mt-10 scroll-mt-20">
+          <h2 class="text-xl font-black text-slate-950 sm:text-2xl">{section.heading}</h2>
+          <div class="mt-3 space-y-4 text-[15px] leading-8 text-slate-800">
+            {section.paragraphs.map((p) => <p>{p}</p>)}
+          </div>
+          {section.list ? (
+            section.list.ordered ? (
+              <ol class="mt-4 space-y-2">
+                {section.list.items.map((item, n) => (
+                  <li class="flex gap-3 text-[15px] leading-7 text-slate-800">
+                    <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-900 text-xs font-black text-white">{n + 1}</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <ul class="mt-4 list-disc space-y-1.5 pl-5 text-[15px] leading-7 text-slate-800">
+                {section.list.items.map((item) => <li>{item}</li>)}
+              </ul>
+            )
+          ) : null}
+          {section.table ? (
+            <div class="mt-4 overflow-x-auto rounded-2xl border border-slate-200">
+              <table class="w-full min-w-[28rem] text-left text-sm">
+                <thead class="bg-slate-50 text-slate-900">
+                  <tr>{section.table[0].map((cell) => <th class="px-3 py-2.5 font-black">{cell}</th>)}</tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 bg-white text-slate-700">
+                  {section.table.slice(1).map((row) => <tr>{row.map((cell, c) => <td class:list={['px-3 py-2.5', c === 0 && 'font-bold text-slate-900']}>{cell}</td>)}</tr>)}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+          {section.tip ? <p class="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900"><b>TIP</b> · {section.tip}</p> : null}
+          {i === 1 && mainTool ? (
+            <a href={mainTool.href} class="mt-6 flex items-center justify-between gap-3 rounded-2xl bg-slate-950 px-5 py-4 text-white transition hover:bg-slate-800">
+              <span>
+                <span class="block text-sm font-black">{mainTool.label}</span>
+                <span class="block text-xs text-slate-300">{mainTool.note}</span>
+              </span>
+              <span class="shrink-0 rounded-full bg-white px-3 py-1.5 text-xs font-black text-slate-950">바로 해보기 →</span>
+            </a>
+          ) : null}
+        </section>
+      ))}
+
+      <section id="faq" class="mt-12 scroll-mt-20">
+        <h2 class="text-xl font-black text-slate-950 sm:text-2xl">자주 묻는 질문</h2>
+        <div class="mt-4 divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white">
+          {guide.faq.map(([q, a]) => (
+            <details class="group px-4 py-3">
+              <summary class="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-bold text-slate-900">
+                <span>Q. {q}</span><span class="text-slate-400 transition group-open:rotate-45">+</span>
+              </summary>
+              <p class="mt-2 text-sm leading-7 text-slate-600">{a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
+      <section class="mt-10 rounded-[28px] border border-indigo-100 bg-indigo-50/60 p-5 sm:p-6">
+        <h2 class="text-lg font-black text-slate-950">이 글에서 소개한 도구</h2>
+        <ul class="mt-3 grid gap-2 sm:grid-cols-2">
+          {[mainTool, ...moreTools].filter(Boolean).map((tool) => (
+            <li>
+              <a href={tool.href} class="block rounded-2xl bg-white px-4 py-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                <span class="block text-sm font-black text-slate-900">{tool.label}</span>
+                <span class="block text-xs text-slate-500">{tool.note}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </article>
+
+    <section class="mt-10">
+      <h2 class="text-lg font-black text-slate-950">함께 읽으면 좋은 가이드</h2>
+      <ul class="mt-3 grid gap-3 sm:grid-cols-3">
+        {related.map((g) => (
+          <li>
+            <a href={`/guides/${g.slug}`} class="block h-full rounded-2xl border border-slate-200 bg-white p-4 transition hover:-translate-y-0.5 hover:shadow-md">
+              <span class="text-2xl">{g.emoji}</span>
+              <span class="mt-2 block text-sm font-black leading-snug text-slate-900">{g.title}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+      <a href="/guides" class="mt-4 inline-flex rounded-full border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">가이드 전체 보기</a>
+    </section>
+
+    <AdsterraBanner placement="bottom" />
+  </main>
+  <Footer />
+  <script type="application/ld+json" set:html={JSON.stringify(articleLd)} />
+  <script type="application/ld+json" set:html={JSON.stringify(faqLd)} />
+</Layout>

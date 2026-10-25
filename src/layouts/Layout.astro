@@ -113,6 +113,7 @@ const labelMap: Record<string, string> = {
   'love-compatibility': '연애 궁합',
   'ladder-game': '사다리타기',
   maps: '지도',
+  guides: '가이드',
   fishbread: '붕어빵 지도',
   'hidden-cafe': '숨은 카페 지도',
   'local-eats': '지역 맛집 지도',
@@ -530,6 +531,9 @@ const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.r
       if (window.wcs) {
         window.wcs_do();
       }
+    </script>
+    <script>
+      import '../scripts/file-input-enhancer';
     </script>
   </body>
 </html>
