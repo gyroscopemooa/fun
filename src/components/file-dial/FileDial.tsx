@@ -7,11 +7,12 @@ import { DIAL_COLORS, RadialDial, petalAt } from './RadialDial';
 import { ImageEditor } from './ImageEditor';
 import { HwpPreview } from './HwpPreview';
 import { PdfOrganizer } from './PdfOrganizer';
+import { MediaTrim } from './MediaTrim';
 
 type Overlay = { x: number; y: number; kind: DialKind; mode: DialMode; hi: number | null };
 type Result = DialOutput & { id: number; url: string };
 
-const KIND_LABEL: Record<DialKind, string> = { image: '이미지', pdf: 'PDF', hwp: '한글 문서', mixed: '이미지+PDF' };
+const KIND_LABEL: Record<DialKind, string> = { image: '이미지', pdf: 'PDF', hwp: '한글 문서', video: '동영상', audio: '오디오', mixed: '이미지+PDF' };
 
 const formatBytes = (n: number) => (n < 1024 ? `${n} B` : n < 1024 ** 2 ? `${(n / 1024).toFixed(1)} KB` : `${(n / 1024 ** 2).toFixed(1)} MB`);
 
@@ -35,6 +36,7 @@ export function FileDial() {
   const [editing, setEditing] = useState<File | null>(null);
   const [previewing, setPreviewing] = useState<File | null>(null);
   const [organizing, setOrganizing] = useState<File | null>(null);
+  const [trimming, setTrimming] = useState<File | null>(null);
   const depth = useRef(0);
   const overlayRef = useRef<Overlay | null>(null);
   const nextId = useRef(1);
@@ -53,6 +55,11 @@ export function FileDial() {
     if (action.opensEditor) {
       setEditing(files[0]);
       if (files.length > 1) setMessage('편집은 한 번에 한 장씩 할 수 있어요. 첫 번째 사진을 열었어요.');
+      return;
+    }
+    if (action.opensTrim) {
+      setTrimming(files[0]);
+      if (files.length > 1) setMessage('구간 자르기는 한 번에 한 파일씩 할 수 있어요. 첫 번째 파일을 열었어요.');
       return;
     }
     if (action.opensPages) {
@@ -83,10 +90,10 @@ export function FileDial() {
   const accept = (files: File[]) => {
     const usable = files.filter((f) => kindOfFiles([f]));
     if (usable.length && !kindOfFiles(usable)) {
-      setMessage('한글 문서는 이미지·PDF와 섞지 말고 따로 담아 주세요.');
+      setMessage('한글 문서, 동영상, 오디오는 다른 종류와 섞지 말고 따로 담아 주세요. (이미지와 PDF는 함께 담을 수 있어요)');
       return [];
     }
-    if (usable.length < files.length) setMessage('지원하지 않는 파일은 빼고 담았어요. 지금은 이미지, PDF, 한글(HWP·HWPX)을 지원해요.');
+    if (usable.length < files.length) setMessage('지원하지 않는 파일은 빼고 담았어요. 이미지, PDF, 한글(HWP·HWPX), 동영상, 오디오를 지원해요.');
     if (usable.length) setTray(usable);
     return usable;
   };
@@ -186,9 +193,9 @@ export function FileDial() {
             <FileUp className="h-9 w-9 text-indigo-500" />
             <span className="text-base font-black text-slate-900">파일을 이 페이지 아무 곳에나 끌어다 놓으세요</span>
             <span className="text-sm text-slate-500">끄는 순간 다이얼이 열려요 · 또는 눌러서 파일 선택</span>
-            <span className="mt-1 text-xs text-slate-400">JPG · PNG · WEBP · HEIC · AVIF · TIFF · BMP · GIF · SVG · PDF · HWP · HWPX</span>
+            <span className="mt-1 text-xs text-slate-400">이미지 · PDF · HWP · MP4 · MOV · MP3 · WAV 등</span>
           </button>
-          <input ref={inputRef} type="file" multiple accept="image/*,.heic,.heif,.tif,.tiff,.pdf,application/pdf,.hwp,.hwpx" className="hidden" onChange={(e) => { accept(Array.from(e.target.files ?? [])); e.target.value = ''; }} />
+          <input ref={inputRef} type="file" multiple accept="image/*,.heic,.heif,.tif,.tiff,.pdf,application/pdf,.hwp,.hwpx,video/*,audio/*,.mkv,.m4a,.flac" className="hidden" onChange={(e) => { accept(Array.from(e.target.files ?? [])); e.target.value = ''; }} />
 
           <div className="mt-4 hidden gap-2 text-sm text-slate-600 sm:grid sm:grid-cols-2">
             <p className="rounded-2xl bg-slate-50 px-4 py-3"><b className="text-indigo-700">그냥 놓기</b> → 포맷 변환 다이얼</p>
@@ -252,7 +259,7 @@ export function FileDial() {
             {results.map((r) => (
               <li key={r.id} className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-2.5">
                 <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white text-[11px] font-black text-slate-400">
-                  {r.blob.type.startsWith('image/') && r.blob.type !== 'image/tiff' ? <img src={r.url} alt="" className="h-full w-full object-cover" /> : r.name.split('.').pop()?.toUpperCase()}
+                  {(r.blob.type.startsWith('image/') && r.blob.type !== 'image/tiff') ? <img src={r.url} alt="" className="h-full w-full object-cover" /> : r.name.split('.').pop()?.toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-bold text-slate-900">{r.name}</p>
@@ -284,6 +291,7 @@ export function FileDial() {
         </div>
       ) : null}
 
+      {trimming ? <MediaTrim file={trimming} onClose={() => setTrimming(null)} onDone={(outputs) => { setTrimming(null); addResults(outputs); download(URL.createObjectURL(outputs[0].blob), outputs[0].name); }} /> : null}
       {organizing ? <PdfOrganizer file={organizing} onClose={() => setOrganizing(null)} onDone={(outputs) => { setOrganizing(null); addResults(outputs); download(URL.createObjectURL(outputs[0].blob), outputs[0].name); }} /> : null}
       {previewing ? <HwpPreview file={previewing} onClose={() => setPreviewing(null)} /> : null}
       {editing ? <ImageEditor file={editing} onClose={() => setEditing(null)} onDone={(outputs) => { setEditing(null); addResults(outputs); download(URL.createObjectURL(outputs[0].blob), outputs[0].name); }} /> : null}

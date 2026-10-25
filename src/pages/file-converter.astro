@@ -30,21 +30,21 @@ const categories: { id: string; label: string; icon: string; summary: string; in
   },
   {
     id: 'video', label: '동영상', icon: '🎬',
-    summary: '짧은 영상을 MP4·GIF로 바꾸고, 영상에서 소리만 MP3로 뽑는 기능을 준비하고 있어요.',
-    inputs: ['MOV', 'WEBM', 'MP4'], outputs: ['MP4', 'GIF', 'MP3'], tools: ['자르기', '소리 추출'], soon: '준비 중'
+    summary: '아이폰 MOV, 녹화한 WEBM·MKV를 어디서나 재생되는 MP4로 바꾸고, 짧은 움짤(GIF)을 만들거나 소리만 MP3로 뽑을 수 있어요. 변환 엔진(약 30MB)은 처음 한 번만 내려받고, 영상은 기기 밖으로 나가지 않아요. 500MB 이하의 짧은 영상을 권장해요.',
+    inputs: ['MP4', 'MOV', 'WEBM', 'MKV', 'AVI', 'M4V'], outputs: ['MP4', 'GIF', 'MP3', 'WAV', 'M4A'], tools: ['구간 자르기', '용량 줄이기', '소리 없애기', 'ZIP 묶기']
   },
   {
     id: 'audio', label: '오디오', icon: '🎧',
-    summary: '녹음 파일을 MP3·WAV로 바꾸는 기능을 준비하고 있어요.',
-    inputs: ['WAV', 'M4A', 'OGG'], outputs: ['MP3', 'WAV'], tools: ['자르기'], soon: '준비 중'
+    summary: '녹음 파일이나 음악을 MP3·WAV·M4A·OGG로 바꾸고, 원하는 구간만 잘라 벨소리를 만들거나 작게 녹음된 소리를 키울 수 있어요.',
+    inputs: ['MP3', 'WAV', 'M4A', 'AAC', 'OGG', 'FLAC'], outputs: ['MP3', 'WAV', 'M4A', 'OGG'], tools: ['구간 자르기', '소리 키우기', 'ZIP 묶기']
   }
 ];
 ---
 
 <Layout
-  title="파일 변환기 | 드래그 한 번으로 JPG·PNG·HEIC·PDF·한글(HWP) 변환 | ManyTool"
+  title="파일 변환기 | 드래그 한 번으로 JPG·HEIC·PDF·한글(HWP)·MP4·MP3 변환 | ManyTool"
   description="파일을 끌어다 놓으면 다이얼이 열리고, 원하는 형식 위에 놓기만 하면 변환되는 무료 온라인 파일 변환기. HEIC·WEBP·AVIF·PDF 변환, 한글(HWP) PDF 변환, PDF 합치기·나누기, 사진 자르기·용량 줄이기를 업로드 없이 브라우저에서 처리합니다."
-  keywords="파일 변환기, 이미지 변환, HWP PDF 변환, 한글 파일 PDF 변환, HWP 뷰어, HEIC JPG 변환, WEBP JPG 변환, PNG JPG 변환, PDF 합치기, PDF JPG 변환, 이미지 PDF 변환, 사진 용량 줄이기, 사진 자르기"
+  keywords="파일 변환기, 이미지 변환, 동영상 MP4 변환, MOV MP4 변환, 영상 MP3 추출, GIF 만들기, 오디오 변환, HWP PDF 변환, 한글 파일 PDF 변환, HWP 뷰어, HEIC JPG 변환, WEBP JPG 변환, PNG JPG 변환, PDF 합치기, PDF JPG 변환, 이미지 PDF 변환, 사진 용량 줄이기, 사진 자르기"
 >
   <Header />
   <main class="mx-auto max-w-6xl px-4 py-8">

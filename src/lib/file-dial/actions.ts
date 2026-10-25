@@ -1,9 +1,10 @@
 // What each wheel offers per file kind. The convert wheel changes the format; the tools wheel edits or bundles.
 import { cropCanvas, decodeToCanvas, encodeCanvas, formatOfFile, hasTransparency, scaleCanvas, transformCanvas, type RasterFormat } from './image-codec';
 import { hwpToText, renderHwpPages } from './hwp-ops';
+import { GIF_MAX_SECONDS, LOUDER, TO_M4A, TO_MP3, TO_OGG, TO_WAV, VIDEO_COMPRESS, VIDEO_MUTE, VIDEO_TO_GIF, VIDEO_TO_MP4, mediaDuration, runFfmpeg } from './media-ops';
 import { extractPdfText, imagesToPdf, mergePdfs, renderPdfPages, rotatePdf, splitPdf, zipBlobs } from './pdf-ops';
 
-export type DialKind = 'image' | 'pdf' | 'hwp' | 'mixed';
+export type DialKind = 'image' | 'pdf' | 'hwp' | 'video' | 'audio' | 'mixed';
 export type DialMode = 'convert' | 'tools';
 export type DialOutput = { name: string; blob: Blob; from: string };
 export type RunContext = { progress: (text: string) => void };
@@ -19,15 +20,19 @@ export type DialAction = {
   opensPreview?: boolean;
   /** Opens the PDF page organizer instead of running directly. */
   opensPages?: boolean;
+  /** Opens the video/audio trimmer instead of running directly. */
+  opensTrim?: boolean;
   run?: (files: File[], ctx: RunContext) => Promise<DialOutput[]>;
 };
 
 const baseName = (name: string) => name.replace(/\.[^.]+$/, '') || 'file';
 const EXT: Record<RasterFormat, string> = { jpg: 'jpg', png: 'png', webp: 'webp', avif: 'avif', bmp: 'bmp', ico: 'ico', tiff: 'tif' };
 
-export const kindOfFile = (file: File): 'image' | 'pdf' | 'hwp' | 'other' => {
+export const kindOfFile = (file: File): 'image' | 'pdf' | 'hwp' | 'video' | 'audio' | 'other' => {
   if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) return 'pdf';
   if (/\.hwpx?$/i.test(file.name) || /hwp/i.test(file.type)) return 'hwp';
+  if (file.type.startsWith('video/') || /\.(mp4|mov|m4v|webm|mkv|avi|3gp)$/i.test(file.name)) return 'video';
+  if (file.type.startsWith('audio/') || /\.(mp3|wav|m4a|aac|ogg|oga|opus|flac|wma)$/i.test(file.name)) return 'audio';
   if (file.type.startsWith('image/') || /\.(jpe?g|png|webp|avif|gif|bmp|ico|svg|tiff?|hei[cf])$/i.test(file.name)) return 'image';
   return 'other';
 };
@@ -35,14 +40,16 @@ export const kindOfFile = (file: File): 'image' | 'pdf' | 'hwp' | 'other' => {
 export const kindOfFiles = (files: File[]): DialKind | null => {
   const kinds = new Set(files.map(kindOfFile));
   if (kinds.has('other') || kinds.size === 0) return null;
-  // HWP files are handled on their own; images and PDFs can be combined.
-  if (kinds.has('hwp')) return kinds.size === 1 ? 'hwp' : null;
+  // HWP, video and audio are handled on their own; only images and PDFs can be combined.
+  for (const solo of ['hwp', 'video', 'audio'] as const) if (kinds.has(solo)) return kinds.size === 1 ? solo : null;
   return kinds.size > 1 ? 'mixed' : (kinds.values().next().value as 'image' | 'pdf');
 };
 
 /** Best guess while a drag is still in progress (only MIME types are visible, not names). */
 export const kindOfDragTypes = (types: string[]): DialKind => {
   if (types.some((t) => /hwp/i.test(t))) return 'hwp';
+  if (types.some((t) => t.startsWith('video/'))) return 'video';
+  if (types.some((t) => t.startsWith('audio/'))) return 'audio';
   const pdf = types.some((t) => t === 'application/pdf');
   const image = types.some((t) => t.startsWith('image/'));
   if (pdf && image) return 'mixed';
@@ -98,6 +105,15 @@ const hwpToImages = (format: RasterFormat) => async (files: File[], ctx: RunCont
   }
   return out;
 };
+
+const media = (ext: string, mime: string, args: string[], suffix = '') => async (files: File[], ctx: RunContext) => {
+  const out: DialOutput[] = [];
+  for (const file of files) out.push({ name: `${baseName(file.name)}${suffix}.${ext}`, blob: await runFfmpeg(file, ext, args, ctx.progress, mime), from: file.name });
+  return out;
+};
+
+/** Same container as the input, for tools that keep the format. */
+const sameExt = (file: File, fallback: string) => file.name.match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase() ?? fallback;
 
 const zipAll = async (files: File[]) => [{ name: files.length === 1 ? `${baseName(files[0].name)}.zip` : `manytool-${files.length}files.zip`, blob: await zipBlobs(files.map((f) => ({ name: f.name, blob: f }))), from: `${files.length}개 파일` }];
 
@@ -187,6 +203,49 @@ export const ACTIONS: Record<DialKind, Record<DialMode, DialAction[]>> = {
     tools: [
       { id: 'hwp-preview', label: '미리보기', hint: '미리보기: 한글 프로그램 없이 브라우저에서 문서 열어 보기', opensPreview: true },
       { id: 'hwp-zip', label: 'ZIP', hint: 'ZIP: 선택한 문서를 압축파일 하나로 묶기', run: zipAll }
+    ]
+  },
+  video: {
+    convert: [
+      { id: 'video-mp4', label: 'MP4', hint: 'MP4: 휴대폰·PC·SNS 어디서나 재생되는 형식 (H.264)', run: media('mp4', 'video/mp4', VIDEO_TO_MP4) },
+      { id: 'video-gif', label: 'GIF', hint: `GIF: 앞부분 ${GIF_MAX_SECONDS}초를 움짤로 (가로 480px)`, run: async (files, ctx) => {
+        const out: DialOutput[] = [];
+        for (const file of files) {
+          const seconds = await mediaDuration(file);
+          if (seconds > GIF_MAX_SECONDS) ctx.progress(`${file.name}: 앞 ${GIF_MAX_SECONDS}초만 GIF로 만들어요`);
+          out.push({ name: `${baseName(file.name)}.gif`, blob: await runFfmpeg(file, 'gif', VIDEO_TO_GIF, ctx.progress, 'image/gif'), from: file.name });
+        }
+        return out;
+      } },
+      { id: 'video-mp3', label: 'MP3', hint: 'MP3: 영상에서 소리만 뽑아 MP3로', run: media('mp3', 'audio/mpeg', TO_MP3) },
+      { id: 'video-wav', label: 'WAV', hint: 'WAV: 영상의 소리를 무손실 WAV로', run: media('wav', 'audio/wav', TO_WAV) },
+      { id: 'video-m4a', label: 'M4A', hint: 'M4A: 영상의 소리를 가벼운 AAC로', run: media('m4a', 'audio/mp4', TO_M4A) }
+    ],
+    tools: [
+      { id: 'video-trim', label: '구간 자르기', hint: '구간 자르기: 원하는 시작~끝 부분만 남기기', opensTrim: true },
+      { id: 'video-compress', label: '용량 줄이기', hint: '용량 줄이기: 최대 1280px, 낮은 비트레이트 MP4로 (시간이 걸려요)', run: media('mp4', 'video/mp4', VIDEO_COMPRESS, '-small') },
+      { id: 'video-mute', label: '소리 없애기', hint: '소리 없애기: 화면은 그대로 두고 소리만 지우기 (빠름)', run: async (files, ctx) => {
+        const out: DialOutput[] = [];
+        for (const file of files) {
+          const ext = sameExt(file, 'mp4');
+          out.push({ name: `${baseName(file.name)}-mute.${ext}`, blob: await runFfmpeg(file, ext, VIDEO_MUTE, ctx.progress, file.type || 'video/mp4'), from: file.name });
+        }
+        return out;
+      } },
+      { id: 'video-zip', label: 'ZIP', hint: 'ZIP: 선택한 영상을 압축파일 하나로 묶기', run: zipAll }
+    ]
+  },
+  audio: {
+    convert: [
+      { id: 'audio-mp3', label: 'MP3', hint: 'MP3: 어디서나 재생되는 가장 보편적인 형식', run: media('mp3', 'audio/mpeg', TO_MP3) },
+      { id: 'audio-wav', label: 'WAV', hint: 'WAV: 편집용 무손실 형식 (용량이 커요)', run: media('wav', 'audio/wav', TO_WAV) },
+      { id: 'audio-m4a', label: 'M4A', hint: 'M4A: 아이폰·맥에서 쓰는 가벼운 AAC', run: media('m4a', 'audio/mp4', TO_M4A) },
+      { id: 'audio-ogg', label: 'OGG', hint: 'OGG: 웹·게임에서 많이 쓰는 오픈 형식', run: media('ogg', 'audio/ogg', TO_OGG) }
+    ],
+    tools: [
+      { id: 'audio-trim', label: '구간 자르기', hint: '구간 자르기: 원하는 시작~끝 부분만 남기기 (벨소리 만들기)', opensTrim: true },
+      { id: 'audio-louder', label: '소리 키우기', hint: '소리 키우기: 작게 녹음된 소리를 1.6배로 키워 MP3로', run: media('mp3', 'audio/mpeg', LOUDER, '-louder') },
+      { id: 'audio-zip', label: 'ZIP', hint: 'ZIP: 선택한 파일을 압축파일 하나로 묶기', run: zipAll }
     ]
   },
   mixed: {
