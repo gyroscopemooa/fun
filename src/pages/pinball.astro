@@ -16,8 +16,14 @@ const locale = pathname.startsWith('/en/') || pathname === '/en'
 
 const copy = {
   ko: {
-    title: '핀볼 추첨기 | ManyTool',
-    description: 'matter.js 기반 핀볼 추첨기에서 구슬이 삼각 핀에 튕기고 마지막 슬롯 위치로 결과를 정합니다.',
+    title: '핀볼 추첨기 | 구슬이 떨어지는 온라인 추첨 | ManyTool',
+    description: '이름을 넣고 구슬을 떨어뜨려 당첨자를 뽑는 핀볼 추첨기. lazygyu 님의 오픈소스 프로젝트를 원작 그대로 불러와 쓰고, 가벼운 매니툴 간단 핀볼도 함께 제공합니다.',
+    tabs: ['원작 핀볼 추첨기', '매니툴 간단 핀볼'],
+    creditTitle: '원작자 안내',
+    credit: '위 추첨기는 lazygyu 님이 만들어 MIT 라이선스로 공개한 오픈소스 프로젝트 "Marble Roulette"를 원작 사이트(lazygyu.github.io/roulette)에서 그대로 불러와 보여 주는 것이에요. ManyTool이 만든 것이 아니며, 화면 안의 기능·업데이트·광고는 모두 원작 사이트의 것입니다. "Marble Roulette"와 "마블 룰렛"은 lazygyu 님의 상표예요.',
+    openOriginal: '원작 사이트에서 크게 열기',
+    github: 'GitHub 소스 보기',
+    simpleNote: '매니툴이 직접 만든 가벼운 버전이에요. 원작보다 기능은 단순하지만 광고 없이 바로 쓸 수 있어요.',
     guideTitle: '사용 방법',
     steps: [
       '이름이나 항목을 쉼표 또는 줄바꿈으로 입력합니다.',
@@ -27,8 +33,14 @@ const copy = {
     ]
   },
   en: {
-    title: 'Marble Roulette | ManyTool',
-    description: 'A matter.js powered marble roulette that drops balls through triangular pins and resolves results by the final slot.',
+    title: 'Pinball Lottery | Drop Marbles to Pick a Winner | ManyTool',
+    description: 'Pick winners by dropping marbles through pins. Loads the open-source project by lazygyu from its original site, plus a lightweight ManyTool version.',
+    tabs: ['Original pinball draw', 'ManyTool simple pinball'],
+    creditTitle: 'Credits',
+    credit: 'The draw above is the open-source "Marble Roulette" project by lazygyu (MIT License), loaded as-is from its original site (lazygyu.github.io/roulette). It is not made by ManyTool; its features, updates and ads belong to the original site. "Marble Roulette" is a trademark of lazygyu.',
+    openOriginal: 'Open the original site',
+    github: 'View source on GitHub',
+    simpleNote: 'A lightweight version made by ManyTool: fewer features, no ads.',
     guideTitle: 'How It Works',
     steps: [
       'Enter names or options with commas or line breaks.',
@@ -38,8 +50,14 @@ const copy = {
     ]
   },
   ja: {
-    title: 'マーブルルーレット | ManyTool',
-    description: 'matter.js ベースのピンボール抽選機で、ビー玉が三角ピンに当たり最後のスロット位置で結果を決めます。',
+    title: 'ピンボール抽選 | ビー玉を落として当選者を決める | ManyTool',
+    description: 'ビー玉を落として当選者を決めるピンボール抽選。lazygyu さんのオープンソースプロジェクトを元のサイトから読み込み、軽量版も用意しています。',
+    tabs: ['オリジナル版', 'ManyTool 簡易版'],
+    creditTitle: 'クレジット',
+    credit: '上の抽選機は lazygyu さんが MIT ライセンスで公開しているオープンソース「Marble Roulette」を、元のサイト(lazygyu.github.io/roulette)からそのまま読み込んで表示しています。ManyTool が作ったものではなく、機能・更新・広告は元のサイトのものです。「Marble Roulette」は lazygyu さんの商標です。',
+    openOriginal: '元のサイトで開く',
+    github: 'GitHub でソースを見る',
+    simpleNote: 'ManyTool が作った軽量版です。機能はシンプルですが広告なしで使えます。',
     guideTitle: '使い方',
     steps: [
       '名前や項目をカンマまたは改行で入力します。',
@@ -56,7 +74,37 @@ const copy = {
 
   <main class="bg-slate-950 pb-14">
     <section class="mx-auto max-w-7xl px-4 py-6 sm:py-8">
-      <MarbleRoulette client:load locale={locale} />
+      <div class="flex flex-wrap gap-2" role="tablist" aria-label={copy.tabs.join(' / ')}>
+        {copy.tabs.map((label, i) => (
+          <button type="button" role="tab" data-pin-tab={i} aria-selected={i === 0 ? 'true' : 'false'} class:list={['pin-tab rounded-full px-4 py-2 text-sm font-black transition', i === 0 ? 'bg-white text-slate-950' : 'bg-white/10 text-white hover:bg-white/20']}>{label}</button>
+        ))}
+      </div>
+
+      <div data-pin-panel="0" class="mt-4">
+        <div class="overflow-hidden rounded-[24px] border border-white/10 bg-black shadow-2xl">
+          <iframe
+            src="https://lazygyu.github.io/roulette/"
+            title={copy.tabs[0]}
+            class="block h-[78vh] min-h-[560px] w-full"
+            loading="lazy"
+            allow="fullscreen; clipboard-write"
+            referrerpolicy="strict-origin-when-cross-origin"
+          ></iframe>
+        </div>
+        <div class="mt-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-xs leading-6 text-slate-300">
+          <p class="font-black text-white">{copy.creditTitle}</p>
+          <p class="mt-1">{copy.credit}</p>
+          <div class="mt-2 flex flex-wrap gap-2">
+            <a href="https://lazygyu.github.io/roulette/" target="_blank" rel="noopener" class="rounded-full bg-white/10 px-3 py-1.5 font-bold text-white hover:bg-white/20">{copy.openOriginal} ↗</a>
+            <a href="https://github.com/lazygyu/roulette" target="_blank" rel="noopener" class="rounded-full bg-white/10 px-3 py-1.5 font-bold text-white hover:bg-white/20">{copy.github} ↗</a>
+          </div>
+        </div>
+      </div>
+
+      <div data-pin-panel="1" class="mt-4" hidden>
+        <p class="mb-3 text-xs text-slate-400">{copy.simpleNote}</p>
+        <MarbleRoulette client:visible locale={locale} />
+      </div>
     </section>
 
     <div class="mx-auto max-w-5xl px-4 pb-6">
@@ -85,3 +133,18 @@ const copy = {
 
   <Footer />
 </Layout>
+
+<script>
+  const tabs = Array.from(document.querySelectorAll<HTMLButtonElement>('.pin-tab'));
+  const panels = Array.from(document.querySelectorAll<HTMLElement>('[data-pin-panel]'));
+  tabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      tabs.forEach((t) => {
+        const on = t === tab;
+        t.setAttribute('aria-selected', String(on));
+        t.className = `pin-tab rounded-full px-4 py-2 text-sm font-black transition ${on ? 'bg-white text-slate-950' : 'bg-white/10 text-white hover:bg-white/20'}`;
+      });
+      panels.forEach((p) => { p.hidden = p.dataset.pinPanel !== tab.dataset.pinTab; });
+    });
+  });
+</script>
