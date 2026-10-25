@@ -49,6 +49,9 @@ input {
   -webkit-tap-highlight-color: transparent;
 }
 
-* {
-  border-color: hsl(var(--border));
+/* Default border colour only: in the base layer so border-* colour utilities can override it. */
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
 }
