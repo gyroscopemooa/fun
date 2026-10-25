@@ -23,5 +23,19 @@ const t = await createTranslator(locale);
       <a href={localizedHrefOrOriginal(locale, '/editorial-policy')} class="hover:underline">{t('footer.editorial')}</a>
       <a href={localizedHrefOrOriginal(locale, '/content-disclaimer')} class="hover:underline">{t('footer.disclaimer')}</a>
     </div>
+    <details class="group md:col-span-2">
+      <summary class="flex w-fit cursor-pointer list-none items-center gap-1.5 text-sm font-bold text-slate-700 hover:text-slate-950">
+        <span class="text-xs transition-transform group-open:rotate-0 -rotate-90" aria-hidden="true">▼</span>
+        Business Information
+      </summary>
+      <dl class="mt-2 space-y-1 text-xs leading-5 text-slate-500">
+        <div class="flex gap-1"><dt>상호:</dt><dd>gyroscope</dd></div>
+        <div class="flex gap-1"><dt>대표:</dt><dd>전민수</dd></div>
+        <div class="flex gap-1"><dt>사업자등록번호:</dt><dd>696-55-00795</dd></div>
+        <div class="flex gap-1"><dt>통신판매업신고번호:</dt><dd>2023-울산남구-0547</dd></div>
+        <div class="flex gap-1"><dt>주소:</dt><dd>울산광역시 남구 번영로 124번길 21 울산비즈니스센터 307호</dd></div>
+        <div class="flex gap-1"><dt>이메일:</dt><dd><a href="mailto:support@manytool.net" class="underline underline-offset-4">support@manytool.net</a></dd></div>
+      </dl>
+    </details>
   </div>
 </footer>

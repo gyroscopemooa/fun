@@ -49,21 +49,54 @@ export const extractPdfText = async (file: File) => {
 const A4 = { width: 595.28, height: 841.89 };
 
 /** One PDF from images: each image on its own A4 page (portrait or landscape to match), centred with a margin. */
+type PdfLibDoc = import('pdf-lib').PDFDocument;
+
+/** Adds one image as an A4 page (portrait or landscape to match), centred with a margin. */
+const addImagePage = async (pdf: PdfLibDoc, canvas: HTMLCanvasElement) => {
+  const image = hasTransparency(canvas) ? await pdf.embedPng(await canvasToPngBytes(canvas)) : await pdf.embedJpg(await canvasToJpegBytes(canvas));
+  const landscape = canvas.width > canvas.height;
+  const pageSize = landscape ? { width: A4.height, height: A4.width } : A4;
+  const margin = 24;
+  const fit = Math.min((pageSize.width - margin * 2) / image.width, (pageSize.height - margin * 2) / image.height, 1);
+  const page = pdf.addPage([pageSize.width, pageSize.height]);
+  const w = image.width * fit;
+  const h = image.height * fit;
+  page.drawImage(image, { x: (pageSize.width - w) / 2, y: (pageSize.height - h) / 2, width: w, height: h });
+  return page;
+};
+
+/** One PDF from images: each image on its own A4 page. */
 export const imagesToPdf = async (canvases: HTMLCanvasElement[]) => {
   const { PDFDocument } = await import('pdf-lib');
   const pdf = await PDFDocument.create();
-  for (const canvas of canvases) {
-    const image = hasTransparency(canvas) ? await pdf.embedPng(await canvasToPngBytes(canvas)) : await pdf.embedJpg(await canvasToJpegBytes(canvas));
-    const landscape = canvas.width > canvas.height;
-    const pageSize = landscape ? { width: A4.height, height: A4.width } : A4;
-    const margin = 24;
-    const fit = Math.min((pageSize.width - margin * 2) / image.width, (pageSize.height - margin * 2) / image.height, 1);
-    const page = pdf.addPage([pageSize.width, pageSize.height]);
-    const w = image.width * fit;
-    const h = image.height * fit;
-    page.drawImage(image, { x: (pageSize.width - w) / 2, y: (pageSize.height - h) / 2, width: w, height: h });
-  }
+  for (const canvas of canvases) await addImagePage(pdf, canvas);
   return new Blob([new Uint8Array(await pdf.save())], { type: 'application/pdf' });
+};
+
+export type BoardPage =
+  | { kind: 'pdf'; file: File; index: number; rotate: 0 | 90 | 180 | 270 }
+  | { kind: 'image'; canvas: HTMLCanvasElement; rotate: 0 | 90 | 180 | 270 };
+
+/** Builds one PDF from pages of several PDFs and images, in the given order. */
+export const buildPdfFromPages = async (pages: BoardPage[], cache = new Map<File, PdfLibDoc>()) => {
+  const { PDFDocument, degrees } = await import('pdf-lib');
+  const out = await PDFDocument.create();
+  for (const part of pages) {
+    let page;
+    if (part.kind === 'pdf') {
+      let source = cache.get(part.file);
+      if (!source) {
+        source = await PDFDocument.load(await part.file.arrayBuffer(), { ignoreEncryption: true });
+        cache.set(part.file, source);
+      }
+      [page] = await out.copyPages(source, [part.index]);
+      out.addPage(page);
+    } else {
+      page = await addImagePage(out, part.canvas);
+    }
+    page.setRotation(degrees((page.getRotation().angle + part.rotate) % 360));
+  }
+  return new Blob([new Uint8Array(await out.save())], { type: 'application/pdf' });
 };
 
 export const mergePdfs = async (files: File[]) => {

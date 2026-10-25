@@ -6,7 +6,7 @@ import { zipBlobs } from '@/lib/file-dial/pdf-ops';
 import { DIAL_COLORS, RadialDial, petalAt } from './RadialDial';
 import { ImageEditor } from './ImageEditor';
 import { HwpPreview } from './HwpPreview';
-import { PdfOrganizer } from './PdfOrganizer';
+import { PdfBoard } from './PdfBoard';
 import { MediaTrim } from './MediaTrim';
 
 type Overlay = { x: number; y: number; kind: DialKind; mode: DialMode; hi: number | null };
@@ -35,7 +35,7 @@ export function FileDial() {
   const [message, setMessage] = useState('');
   const [editing, setEditing] = useState<File | null>(null);
   const [previewing, setPreviewing] = useState<File | null>(null);
-  const [organizing, setOrganizing] = useState<File | null>(null);
+  const [boardFiles, setBoardFiles] = useState<File[] | null>(null);
   const [trimming, setTrimming] = useState<File | null>(null);
   const depth = useRef(0);
   const overlayRef = useRef<Overlay | null>(null);
@@ -63,8 +63,7 @@ export function FileDial() {
       return;
     }
     if (action.opensPages) {
-      setOrganizing(files[0]);
-      if (files.length > 1) setMessage('페이지 정리는 한 번에 한 PDF씩 할 수 있어요. 첫 번째 PDF를 열었어요. 여러 PDF는 "합치기"로 먼저 합쳐 보세요.');
+      setBoardFiles(files);
       return;
     }
     if (action.opensPreview) {
@@ -87,6 +86,9 @@ export function FileDial() {
     }
   }, []);
 
+  const sameFile = (a: File, b: File) => a.name === b.name && a.size === b.size && a.lastModified === b.lastModified;
+
+  /** Adds files to the tray. Files that can't be combined with what is already there start a new tray. */
   const accept = (files: File[]) => {
     const usable = files.filter((f) => kindOfFiles([f]));
     if (usable.length && !kindOfFiles(usable)) {
@@ -94,13 +96,21 @@ export function FileDial() {
       return [];
     }
     if (usable.length < files.length) setMessage('지원하지 않는 파일은 빼고 담았어요. 이미지, PDF, 한글(HWP·HWPX), 동영상, 오디오를 지원해요.');
-    if (usable.length) setTray(usable);
+    if (usable.length) {
+      setTray((current) => {
+        const merged = [...current, ...usable.filter((f) => !current.some((c) => sameFile(c, f)))];
+        if (kindOfFiles(merged)) return merged;
+        setMessage('종류가 달라 새로 담았어요. (이미지와 PDF는 함께, 한글·동영상·오디오는 따로 담을 수 있어요)');
+        return usable;
+      });
+    }
     return usable;
   };
 
   // Drag a file anywhere on the page: the wheel opens where the drag enters; Ctrl/Alt switches to the tools wheel.
   useEffect(() => {
-    const hasFiles = (e: DragEvent) => Array.from(e.dataTransfer?.types ?? []).includes('Files');
+    // Modals (editor, PDF board, …) handle their own drops.
+    const hasFiles = (e: DragEvent) => Array.from(e.dataTransfer?.types ?? []).includes('Files') && !document.querySelector('[role=dialog]');
     const modeOf = (e: DragEvent): DialMode => (e.ctrlKey || e.altKey || e.metaKey ? 'tools' : 'convert');
 
     const onEnter = (e: DragEvent) => {
@@ -205,7 +215,7 @@ export function FileDial() {
           {tray.length ? (
             <div className="mt-4">
               <div className="flex items-center justify-between text-xs font-bold text-slate-500">
-                <span>담은 파일 {tray.length}개 · {trayKind ? KIND_LABEL[trayKind] : ''}</span>
+                <span>담은 파일 {tray.length}개 · {trayKind ? KIND_LABEL[trayKind] : ''} · 더 끌어오면 추가돼요</span>
                 <button type="button" onClick={() => setTray([])} className="inline-flex items-center gap-1 hover:text-slate-900"><X className="h-3.5 w-3.5" /> 비우기</button>
               </div>
               <ul className="mt-2 flex flex-wrap gap-1.5">
@@ -292,7 +302,7 @@ export function FileDial() {
       ) : null}
 
       {trimming ? <MediaTrim file={trimming} onClose={() => setTrimming(null)} onDone={(outputs) => { setTrimming(null); addResults(outputs); download(URL.createObjectURL(outputs[0].blob), outputs[0].name); }} /> : null}
-      {organizing ? <PdfOrganizer file={organizing} onClose={() => setOrganizing(null)} onDone={(outputs) => { setOrganizing(null); addResults(outputs); download(URL.createObjectURL(outputs[0].blob), outputs[0].name); }} /> : null}
+      {boardFiles ? <PdfBoard files={boardFiles} onClose={() => setBoardFiles(null)} onDone={(outputs) => { setBoardFiles(null); addResults(outputs); if (outputs.length === 1) download(URL.createObjectURL(outputs[0].blob), outputs[0].name); else setMessage(`PDF ${outputs.length}개로 나눠 저장했어요. 아래에서 하나씩 받거나 ZIP으로 받을 수 있어요.`); }} /> : null}
       {previewing ? <HwpPreview file={previewing} onClose={() => setPreviewing(null)} /> : null}
       {editing ? <ImageEditor file={editing} onClose={() => setEditing(null)} onDone={(outputs) => { setEditing(null); addResults(outputs); download(URL.createObjectURL(outputs[0].blob), outputs[0].name); }} /> : null}
     </div>
