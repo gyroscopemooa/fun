@@ -4,7 +4,7 @@ import { usePhysics } from '../hooks/usePhysics.js';
 
 const COPY = {
   ko: {
-    badge: 'ManyTool Marble Roulette',
+    badge: 'ManyTool Pinball',
     title: '핀볼 추첨기',
     description: '이름이나 항목을 입력하면 구슬이 핀에 튕기며 떨어지고, 마지막 슬롯 위치로 결과를 정합니다.',
     inputTitle: '항목 입력',
@@ -32,8 +32,8 @@ const COPY = {
     mobileTip: '모바일에서도 바로 터치해서 시작할 수 있습니다.'
   },
   en: {
-    badge: 'ManyTool Marble Roulette',
-    title: 'Marble Roulette',
+    badge: 'ManyTool Pinball',
+    title: 'Pinball Lottery',
     description: 'Drop marbles through a triangular peg board and use the final slot position as the result.',
     inputTitle: 'Items',
     inputHint: 'Split by commas or new lines. Add weights like `apple*2`.',
@@ -60,8 +60,8 @@ const COPY = {
     mobileTip: 'Optimized for touch devices too.'
   },
   ja: {
-    badge: 'ManyTool Marble Roulette',
-    title: 'マーブルルーレット',
+    badge: 'ManyTool Pinball',
+    title: 'ピンボール抽選',
     description: '項目を入力すると、ビー玉が三角ピンに当たりながら落ちて最後のスロットで結果が決まります。',
     inputTitle: '項目入力',
     inputHint: 'カンマか改行で区切り、重みは `apple*2` のように入力します。',
