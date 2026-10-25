@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 
 import { getAiImageSeoPathEntries } from '../lib/ai-image-seo';
+import { GUIDES } from '../lib/guides';
 import { hasTranslation, localeCodes, seoLocaleCodes } from '../lib/i18n';
 
 const paths = [
@@ -162,7 +163,10 @@ const koreanRoutes = new Set(
 const allPaths = [...new Set([
   ...paths.filter((path) => koreanRoutes.has(path)),
   ...(indexLocalePages ? [...localePaths, ...seoLandingPaths] : []),
-  ...aiImageSeoPaths.filter((path) => indexLocalePages || !path.startsWith('/en/'))
+  ...aiImageSeoPaths.filter((path) => indexLocalePages || !path.startsWith('/en/')),
+  // Guide articles are generated from data, so they are listed directly.
+  '/guides',
+  ...GUIDES.map((guide) => `/guides/${guide.slug}`)
 ])];
 // Pages are served from /path/ and /path redirects there, so list the final URL.
 const withSlash = (path: string) => (path === '/' || path.endsWith('/') ? path : `${path}/`);
