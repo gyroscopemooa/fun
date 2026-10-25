@@ -24,7 +24,9 @@ export const renderPdfPages = async (file: File, scale = 2, onPage?: (done: numb
     if (!ctx) throw new Error('PDF를 그릴 수 없어요.');
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    await page.render({ canvasContext: ctx, viewport, canvas }).promise;
+    // The default display intent paces rendering with requestAnimationFrame, which stops in background
+    // tabs; the print intent renders in one go so conversions keep running when the tab is hidden.
+    await page.render({ canvasContext: ctx, viewport, canvas, intent: 'print' }).promise;
     pages.push(canvas);
     onPage?.(n, doc.numPages);
   }
