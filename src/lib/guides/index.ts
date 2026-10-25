@@ -1,11 +1,12 @@
 import { docGuides } from './docs';
 import { gameGuides } from './games';
 import { lifeGuides } from './life';
+import { moreGuides } from './more';
 import type { Guide } from './types';
 
 export * from './types';
 
-export const GUIDES: Guide[] = [...docGuides, ...lifeGuides, ...gameGuides];
+export const GUIDES: Guide[] = [...docGuides, ...lifeGuides, ...gameGuides, ...moreGuides];
 
 export const guideBySlug = (slug: string) => GUIDES.find((g) => g.slug === slug);
 
