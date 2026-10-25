@@ -1,0 +1,123 @@
+---
+import ToolGuide from '../components/ToolGuide.astro';
+import Layout from '../layouts/Layout.astro';
+import AdsterraBanner from '../components/ads/AdsterraBanner.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import Recommend from '../components/Recommend.astro';
+import FileDial from '../components/file-dial/FileDial';
+
+// Format coverage shown in the tabs; `soon` marks categories that are on the roadmap.
+const categories: { id: string; label: string; icon: string; summary: string; inputs: string[]; outputs: string[]; tools: string[]; soon?: string }[] = [
+  {
+    id: 'images', label: '이미지', icon: '🖼️',
+    summary: '사진 형식 변환, 용량 줄이기, 자르기·회전·크기 조절까지. 아이폰 HEIC 사진도 바로 열어요.',
+    inputs: ['JPG', 'PNG', 'WEBP', 'HEIC', 'AVIF', 'TIFF', 'BMP', 'GIF', 'SVG'],
+    outputs: ['JPG', 'PNG', 'WEBP', 'AVIF', 'PDF', 'BMP', 'TIFF', 'ICO'],
+    tools: ['자르기·비율', '용량 줄이기', '50% 축소', '회전', '좌우 반전', '흑백', '위치정보 지우기', 'ZIP 묶기']
+  },
+  {
+    id: 'pdf', label: 'PDF', icon: '📄',
+    summary: 'PDF를 이미지나 텍스트로 꺼내고, 여러 PDF를 합치거나 페이지별로 나눠요. 사진 여러 장을 PDF 하나로 묶을 수도 있어요.',
+    inputs: ['PDF', '이미지 → PDF'],
+    outputs: ['JPG', 'PNG', 'WEBP', 'TXT'],
+    tools: ['합치기', '페이지 나누기', '회전', 'ZIP 묶기']
+  },
+  {
+    id: 'docs', label: '한글(HWP)', icon: '📝',
+    summary: '한글 프로그램이 없어도 HWP·HWPX 문서를 브라우저에서 열어 보고, PDF나 이미지로 저장하거나 글자만 텍스트로 뽑을 수 있어요. (베타: 글꼴·그림·복잡한 표는 원본과 다르게 보일 수 있어요)',
+    inputs: ['HWP', 'HWPX'], outputs: ['PDF', 'TXT', 'JPG', 'PNG'], tools: ['미리보기', 'ZIP 묶기']
+  },
+  {
+    id: 'video', label: '동영상', icon: '🎬',
+    summary: '아이폰 MOV, 녹화한 WEBM·MKV를 어디서나 재생되는 MP4로 바꾸고, 짧은 움짤(GIF)을 만들거나 소리만 MP3로 뽑을 수 있어요. 변환 엔진(약 30MB)은 처음 한 번만 내려받고, 영상은 기기 밖으로 나가지 않아요. 500MB 이하의 짧은 영상을 권장해요.',
+    inputs: ['MP4', 'MOV', 'WEBM', 'MKV', 'AVI', 'M4V'], outputs: ['MP4', 'GIF', 'MP3', 'WAV', 'M4A'], tools: ['구간 자르기', '용량 줄이기', '소리 없애기', 'ZIP 묶기']
+  },
+  {
+    id: 'audio', label: '오디오', icon: '🎧',
+    summary: '녹음 파일이나 음악을 MP3·WAV·M4A·OGG로 바꾸고, 원하는 구간만 잘라 벨소리를 만들거나 작게 녹음된 소리를 키울 수 있어요.',
+    inputs: ['MP3', 'WAV', 'M4A', 'AAC', 'OGG', 'FLAC'], outputs: ['MP3', 'WAV', 'M4A', 'OGG'], tools: ['구간 자르기', '소리 키우기', 'ZIP 묶기']
+  }
+];
+---
+
+<Layout
+  title="파일 변환기 | 드래그 한 번으로 JPG·HEIC·PDF·한글(HWP)·MP4·MP3 변환 | ManyTool"
+  description="파일을 끌어다 놓으면 다이얼이 열리고, 원하는 형식 위에 놓기만 하면 변환되는 무료 온라인 파일 변환기. HEIC·WEBP·AVIF·PDF 변환, 한글(HWP) PDF 변환, PDF 합치기·나누기, 사진 자르기·용량 줄이기를 업로드 없이 브라우저에서 처리합니다."
+  keywords="파일 변환기, 이미지 변환, 동영상 MP4 변환, MOV MP4 변환, 영상 MP3 추출, GIF 만들기, 오디오 변환, HWP PDF 변환, 한글 파일 PDF 변환, HWP 뷰어, HEIC JPG 변환, WEBP JPG 변환, PNG JPG 변환, PDF 합치기, PDF JPG 변환, 이미지 PDF 변환, 사진 용량 줄이기, 사진 자르기"
+>
+  <Header />
+  <main class="mx-auto max-w-6xl px-4 py-8">
+    <section class="overflow-hidden rounded-[28px] p-6 text-white shadow-sm sm:p-8" style="background: radial-gradient(circle at 85% 10%, rgba(99,102,241,0.55), transparent 45%), radial-gradient(circle at 0% 100%, rgba(13,148,136,0.45), transparent 50%), #0f172a">
+      <p class="inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-indigo-100">무료 · 업로드 없음 · 브라우저에서 바로 처리</p>
+      <h1 class="mt-3 text-3xl font-black tracking-tight sm:text-5xl">끌어다 놓고, 돌려서, <span class="text-indigo-300">끝.</span></h1>
+      <p class="mt-4 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
+        파일을 끌어오면 커서 아래에 다이얼이 열려요. 원하는 형식 조각 위에서 놓기만 하면 변환이 끝납니다.
+        <kbd class="rounded border border-white/30 bg-white/10 px-1.5 text-xs">Ctrl</kbd> 또는 <kbd class="rounded border border-white/30 bg-white/10 px-1.5 text-xs">Alt</kbd>를 누르면 자르기·압축·합치기 같은 도구 다이얼로 바뀌어요.
+      </p>
+      <div class="mt-6 grid gap-2 text-sm sm:grid-cols-3">
+        <div class="rounded-2xl border border-white/10 bg-white/5 p-4"><p class="font-black">100% 내 기기에서 처리</p><p class="mt-1 text-xs text-slate-400">사진과 문서가 서버로 전송되지 않아요</p></div>
+        <div class="rounded-2xl border border-white/10 bg-white/5 p-4"><p class="font-black">변환 다이얼 + 도구 다이얼</p><p class="mt-1 text-xs text-slate-400">형식 변환과 편집을 한 번의 드래그로</p></div>
+        <div class="rounded-2xl border border-white/10 bg-white/5 p-4"><p class="font-black">여러 파일 한 번에</p><p class="mt-1 text-xs text-slate-400">결과는 하나씩 또는 ZIP으로 받기</p></div>
+      </div>
+    </section>
+
+    <AdsterraBanner placement="top" />
+
+    <FileDial client:load />
+
+    <section class="mt-8 rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+      <p class="text-xs font-bold uppercase tracking-[0.18em] text-indigo-500">Formats</p>
+      <h2 class="mt-1 text-xl font-black text-slate-950 sm:text-2xl">지원하는 형식</h2>
+      <div class="mt-4 flex flex-wrap gap-1.5" role="tablist" aria-label="파일 종류">
+        {categories.map((c, i) => (
+          <button type="button" role="tab" data-fmt-tab={c.id} aria-selected={i === 0 ? 'true' : 'false'} class:list={['fmt-tab rounded-full border px-3.5 py-2 text-sm font-bold transition', i === 0 ? 'border-slate-950 bg-slate-950 text-white' : 'border-slate-200 bg-white text-slate-700 hover:border-slate-400']}>
+            {c.icon} {c.label}{c.soon ? <span class="ml-1 text-[10px] font-bold opacity-70">· {c.soon}</span> : null}
+          </button>
+        ))}
+      </div>
+      {categories.map((c, i) => (
+        <div data-fmt-panel={c.id} hidden={i !== 0} class="mt-5">
+          <p class="text-sm leading-7 text-slate-700">{c.summary}</p>
+          <div class="mt-4 grid gap-3 md:grid-cols-3">
+            <div class="rounded-2xl bg-slate-50 p-4">
+              <p class="text-xs font-black text-slate-500">열 수 있는 파일</p>
+              <div class="mt-2 flex flex-wrap gap-1">{c.inputs.map((f) => <span class="rounded-md bg-white px-2 py-1 text-xs font-bold text-slate-700 shadow-sm">{f}</span>)}</div>
+            </div>
+            <div class="rounded-2xl bg-indigo-50 p-4">
+              <p class="text-xs font-black text-indigo-700">변환 다이얼</p>
+              <div class="mt-2 flex flex-wrap gap-1">{c.outputs.map((f) => <span class="rounded-md bg-white px-2 py-1 text-xs font-bold text-indigo-800 shadow-sm">{f}</span>)}</div>
+            </div>
+            <div class="rounded-2xl bg-teal-50 p-4">
+              <p class="text-xs font-black text-teal-700">도구 다이얼</p>
+              <div class="mt-2 flex flex-wrap gap-1">{c.tools.map((f) => <span class="rounded-md bg-white px-2 py-1 text-xs font-bold text-teal-800 shadow-sm">{f}</span>)}</div>
+            </div>
+          </div>
+          {c.soon ? <p class="mt-3 text-xs font-semibold text-amber-700">이 종류는 {c.soon}이에요. 지금은 이미지, PDF, 한글(HWP) 문서를 변환할 수 있어요.</p> : null}
+        </div>
+      ))}
+    </section>
+
+    <ToolGuide />
+    <AdsterraBanner placement="bottom" />
+    <Recommend />
+  </main>
+  <Footer />
+</Layout>
+
+<script>
+  const tabs = Array.from(document.querySelectorAll<HTMLButtonElement>('.fmt-tab'));
+  const panels = Array.from(document.querySelectorAll<HTMLElement>('[data-fmt-panel]'));
+  const on = 'border-slate-950 bg-slate-950 text-white';
+  const off = 'border-slate-200 bg-white text-slate-700 hover:border-slate-400';
+  tabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      tabs.forEach((t) => {
+        const active = t === tab;
+        t.setAttribute('aria-selected', String(active));
+        t.className = `fmt-tab rounded-full border px-3.5 py-2 text-sm font-bold transition ${active ? on : off}`;
+      });
+      panels.forEach((p) => { p.hidden = p.dataset.fmtPanel !== tab.dataset.fmtTab; });
+    });
+  });
+</script>
