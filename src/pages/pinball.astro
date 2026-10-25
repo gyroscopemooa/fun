@@ -20,10 +20,10 @@ const copy = {
     description: '이름을 넣고 구슬을 떨어뜨려 당첨자를 뽑는 핀볼 추첨기. lazygyu 님의 오픈소스 프로젝트를 원작 그대로 불러와 쓰고, 가벼운 매니툴 간단 핀볼도 함께 제공합니다.',
     tabs: ['원작 핀볼 추첨기', '매니툴 간단 핀볼'],
     creditTitle: '원작자 안내',
-    credit: '위 추첨기는 lazygyu 님이 만들어 MIT 라이선스로 공개한 오픈소스 프로젝트 "Marble Roulette"를 원작 사이트(lazygyu.github.io/roulette)에서 그대로 불러와 보여 주는 것이에요. ManyTool이 만든 것이 아니며, 화면 안의 기능·업데이트·광고는 모두 원작 사이트의 것입니다. "Marble Roulette"와 "마블 룰렛"은 lazygyu 님의 상표예요.',
+    credit: '위 추첨기는 lazygyu 님이 만들어 MIT 라이선스로 공개한 오픈소스 프로젝트 "Marble Roulette"를 원작 사이트(lazygyu.github.io/roulette)에서 그대로 불러와 보여 주는 것이에요. 추첨기 자체는 ManyTool이 만든 것이 아니며, 추첨기 화면 안의 기능과 업데이트는 원작 사이트에서 제공돼요. "Marble Roulette"와 "마블 룰렛"은 lazygyu 님의 상표예요.',
     openOriginal: '원작 사이트에서 크게 열기',
     github: 'GitHub 소스 보기',
-    simpleNote: '매니툴이 직접 만든 가벼운 버전이에요. 원작보다 기능은 단순하지만 광고 없이 바로 쓸 수 있어요.',
+    simpleNote: '매니툴이 직접 만든 가벼운 버전이에요. 원작보다 기능은 단순하지만 더 가볍고 빠르게 열려요.',
     guideTitle: '사용 방법',
     steps: [
       '이름이나 항목을 쉼표 또는 줄바꿈으로 입력합니다.',
@@ -37,10 +37,10 @@ const copy = {
     description: 'Pick winners by dropping marbles through pins. Loads the open-source project by lazygyu from its original site, plus a lightweight ManyTool version.',
     tabs: ['Original pinball draw', 'ManyTool simple pinball'],
     creditTitle: 'Credits',
-    credit: 'The draw above is the open-source "Marble Roulette" project by lazygyu (MIT License), loaded as-is from its original site (lazygyu.github.io/roulette). It is not made by ManyTool; its features, updates and ads belong to the original site. "Marble Roulette" is a trademark of lazygyu.',
+    credit: 'The draw above is the open-source "Marble Roulette" project by lazygyu (MIT License), loaded as-is from its original site (lazygyu.github.io/roulette). The draw itself is not made by ManyTool; everything inside the draw frame, including features and updates, comes from the original site. "Marble Roulette" is a trademark of lazygyu.',
     openOriginal: 'Open the original site',
     github: 'View source on GitHub',
-    simpleNote: 'A lightweight version made by ManyTool: fewer features, no ads.',
+    simpleNote: 'A lightweight version made by ManyTool: fewer features, faster to load.',
     guideTitle: 'How It Works',
     steps: [
       'Enter names or options with commas or line breaks.',
@@ -54,10 +54,10 @@ const copy = {
     description: 'ビー玉を落として当選者を決めるピンボール抽選。lazygyu さんのオープンソースプロジェクトを元のサイトから読み込み、軽量版も用意しています。',
     tabs: ['オリジナル版', 'ManyTool 簡易版'],
     creditTitle: 'クレジット',
-    credit: '上の抽選機は lazygyu さんが MIT ライセンスで公開しているオープンソース「Marble Roulette」を、元のサイト(lazygyu.github.io/roulette)からそのまま読み込んで表示しています。ManyTool が作ったものではなく、機能・更新・広告は元のサイトのものです。「Marble Roulette」は lazygyu さんの商標です。',
+    credit: '上の抽選機は lazygyu さんが MIT ライセンスで公開しているオープンソース「Marble Roulette」を、元のサイト(lazygyu.github.io/roulette)からそのまま読み込んで表示しています。抽選機自体は ManyTool が作ったものではなく、抽選画面内の機能や更新は元のサイトが提供しています。「Marble Roulette」は lazygyu さんの商標です。',
     openOriginal: '元のサイトで開く',
     github: 'GitHub でソースを見る',
-    simpleNote: 'ManyTool が作った軽量版です。機能はシンプルですが広告なしで使えます。',
+    simpleNote: 'ManyTool が作った軽量版です。機能はシンプルですが、より軽く速く開きます。',
     guideTitle: '使い方',
     steps: [
       '名前や項目をカンマまたは改行で入力します。',
@@ -73,6 +73,10 @@ const copy = {
   <Header />
 
   <main class="bg-slate-950 pb-14">
+    <div class="mx-auto max-w-5xl px-4 pt-6">
+      <AdsterraBanner placement="top" class="" />
+    </div>
+
     <section class="mx-auto max-w-7xl px-4 py-6 sm:py-8">
       <div class="flex flex-wrap gap-2" role="tablist" aria-label={copy.tabs.join(' / ')}>
         {copy.tabs.map((label, i) => (
