@@ -88,6 +88,7 @@ const paths = [
   ,'/tip-calculator'
   ,'/age-calculator'
   ,'/file-converter'
+  ,'/aim-challenge'
   ,'/love-type-test'
   ,'/office-type-test'
   // Working Korean pages that were missing from the sitemap.

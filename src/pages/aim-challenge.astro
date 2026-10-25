@@ -1,0 +1,18 @@
+---
+import GameToolPage from '../components/game-tools/GameToolPage.astro';
+import AimChallenge from '../components/game-tools/AimChallenge';
+---
+
+<GameToolPage
+  title="FPS 에임 챌린지 | 그리드샷·플릭샷·트래킹 30초 에임 테스트 | ManyTool"
+  description="브라우저에서 바로 하는 무료 FPS 에임 테스트. 그리드샷, 플릭샷, 트래킹 3가지 모드로 30초 동안 점수·정확도·평균 반응 시간을 재고 아이언부터 레전드까지 등급과 결과 카드를 받아 보세요."
+  keywords="에임 테스트, 에임 연습, 에임 훈련, 그리드샷, 플릭샷, 트래킹 에임, FPS 에임 게임, 에임랩 웹, 마우스 에임 테스트"
+  eyebrow="Aim Challenge"
+  heading="FPS 에임 챌린지"
+  intro="그리드샷·플릭샷·트래킹 중 하나를 골라 30초 동안 몇 점까지 나오는지 도전해 보세요. 점수와 정확도로 등급이 나오고, 최고 기록은 이 브라우저에 저장돼요."
+  accent="#F43F5E"
+  howTo="모드와 타겟 크기를 고르고 시작을 누르면 3초 뒤 라운드가 시작돼요. 그리드샷과 플릭샷은 타겟을 클릭하고, 트래킹은 움직이는 타겟 위에 조준점을 계속 올려 두면 됩니다. 끝나면 결과 카드를 저장해 친구와 기록을 비교해 보세요."
+  related={[{ href: '/fps-aim-trainer', label: '🎯 FPS 조준 훈련' }, { href: '/reaction-test', label: '⚡ 반응속도 테스트' }, { href: '/fps-sensitivity-converter', label: '🖱️ 감도 변환기' }, { href: '/crosshair-generator', label: '➕ 크로스헤어 생성기' }]}
+>
+  <AimChallenge client:load />
+</GameToolPage>

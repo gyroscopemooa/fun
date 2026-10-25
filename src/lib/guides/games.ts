@@ -142,6 +142,7 @@ export const gameGuides: Guide[] = [
       { href: '/fps-sensitivity-converter', label: 'FPS 감도 변환기', note: '게임별 감도·eDPI·cm/360' },
       { href: '/dpi-edpi-calculator', label: 'DPI·eDPI 계산기', note: '마우스 바꿀 때' },
       { href: '/fps-aim-sensitivity', label: 'FPS 에임 조절기', note: '테스트로 감도 방향 찾기' },
+      { href: '/aim-challenge', label: 'FPS 에임 챌린지', note: '새 감도로 30초 점수 확인' },
       { href: '/crosshair-generator', label: '크로스헤어 생성기', note: '조준선까지 함께 맞추기' }
     ]
   }
