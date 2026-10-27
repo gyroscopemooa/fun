@@ -224,6 +224,10 @@ const sidebarText = {
     { href: localizedHrefOrOriginal(locale, '/'), label: t('common.home') },
     { href: localizedHrefOrOriginal(locale, '/ai-image-generator'), label: t('layout.sidebar.aiImage') },
     {
+      href: localizedHrefOrOriginal(locale, '/ai-image-generator/model-cut'),
+      label: locale === 'ko' ? 'AI 모델컷 생성기' : locale === 'ja' ? 'AIモデルカット生成' : 'AI Model Shot Generator'
+    },
+    {
       href: localizedHrefOrOriginal(locale, '/ai-personal-color'),
       label: locale === 'ko' ? 'AI 퍼스널컬러 자가진단' : locale === 'ja' ? 'AIパーソナルカラー診断' : 'AI Personal Color Analysis'
     },
