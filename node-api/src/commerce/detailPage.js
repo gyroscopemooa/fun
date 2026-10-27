@@ -1,4 +1,4 @@
-﻿import OpenAI from 'openai';
+import OpenAI from 'openai';
 
 const DEFAULT_MODEL = process.env.OPENAI_MODEL?.trim() || 'gpt-5-mini';
 const MAX_DETAIL_PAGE_IMAGES = 30;
@@ -97,14 +97,22 @@ const detailPageSchema = {
             type: 'string',
             enum: ['hero', 'feature', 'usage', 'detail', 'benefit', 'ingredient', 'proof', 'comparison', 'cta']
           },
+          eyebrow: { type: 'string' },
           title: { type: 'string' },
           text: { type: 'string' },
+          bullets: {
+            type: 'array',
+            items: { type: 'string' },
+            minItems: 0,
+            maxItems: 4
+          },
           image_role: {
             type: 'string',
             enum: ['hero', 'detail', 'usage']
-          }
+          },
+          image_index: { type: 'integer', minimum: -1, maximum: MAX_DETAIL_PAGE_IMAGES - 1 }
         },
-        required: ['type', 'title', 'text', 'image_role']
+        required: ['type', 'eyebrow', 'title', 'text', 'bullets', 'image_role', 'image_index']
       },
       minItems: MIN_DETAIL_PAGE_COUNT,
       maxItems: MAX_DETAIL_PAGE_COUNT
@@ -136,9 +144,56 @@ const detailPageSchema = {
           maxItems: 6
         },
         cta: { type: 'string' },
-        seo_title: { type: 'string' }
+        seo_title: { type: 'string' },
+        badge: { type: 'string' },
+        closing_line: { type: 'string' },
+        spec_rows: {
+          type: 'array',
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            properties: { label: { type: 'string' }, value: { type: 'string' } },
+            required: ['label', 'value']
+          },
+          minItems: 0,
+          maxItems: 8
+        },
+        comparison_rows: {
+          type: 'array',
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            properties: { label: { type: 'string' }, ordinary: { type: 'string' }, ours: { type: 'string' } },
+            required: ['label', 'ordinary', 'ours']
+          },
+          minItems: 0,
+          maxItems: 5
+        },
+        faq: {
+          type: 'array',
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            properties: { question: { type: 'string' }, answer: { type: 'string' } },
+            required: ['question', 'answer']
+          },
+          minItems: 0,
+          maxItems: 5
+        },
+        notices: {
+          type: 'array',
+          items: { type: 'string' },
+          minItems: 0,
+          maxItems: 5
+        }
       },
       required: [
+        'badge',
+        'closing_line',
+        'spec_rows',
+        'comparison_rows',
+        'faq',
+        'notices',
         'headline',
         'subheadline',
         'key_selling_points',
@@ -156,37 +211,37 @@ const detailPageSchema = {
 
 const DEFAULT_COPY_BY_PAGE_COUNT = {
   5: {
-    headline: '?듭떖留?鍮좊Ⅴ寃??꾨떖?섎뒗 ?ㅼ냽???곸꽭?섏씠吏',
-    subheadline: '吏㏃? 泥대쪟 ?쒓컙?먮룄 ?곹뭹 ?μ젏??諛붾줈 ?댄빐?섎룄濡?媛꾧껐?섍쾶 援ъ꽦?덉뒿?덈떎.',
-    key_selling_points: ['?듭떖 ?μ젏???쒕늿??蹂댁씠??援ъ꽦', '遺덊븘?뷀븳 諛섎났??以꾩씤 ?붿빟??移댄뵾', '紐⑤컮?쇱뿉??鍮좊Ⅴ寃??쏀엳???먮쫫'],
-    feature_descriptions: ['媛??以묒슂???ъ씤?몃???吏곴??곸쑝濡??꾨떖', '吏㏃?留?援щℓ ?먮떒???꾩슂???뺣낫 ?뺣낫', '?ㅼ냽???곹뭹??留욌뒗 媛꾧껐???ㅻ뱷 援ъ“'],
-    usage_scenario_text: '????ъ슜 ?λ㈃留?怨⑤씪 蹂댁뿬二쇰ŉ 吏㏐퀬 紐낇솗?섍쾶 ?ㅻ뱷?⑸땲??',
-    detail_description: '?꾩닔 ?뺣낫 ?꾩＜濡??뺣━??吏㏃? ?곸꽭 ?ㅻ챸?낅땲??',
-    benefits: ['鍮좊Ⅸ ?댄빐', '吏㏃? 援щℓ 寃곗젙 ?숈꽑'],
-    cta: '?꾩슂???뺣낫留??뺤씤?섍퀬 諛붾줈 援щℓ?대낫?몄슂',
-    seo_title: '?듭떖 ?μ젏????蹂댁씠??媛꾧껐???곹뭹 ?곸꽭?섏씠吏'
+    headline: '핵심만 빠르게 전하는\n실속형 상세페이지',
+    subheadline: '짧은 체류 시간에도 상품의 장점이 바로 이해되도록 간결하게 구성했습니다.',
+    key_selling_points: ['핵심 장점이 한눈에 보이는 구성', '군더더기 없는 요약형 카피', '모바일에서 빠르게 읽히는 흐름'],
+    feature_descriptions: ['가장 중요한 포인트부터 직관적으로 전달', '구매 판단에 필요한 정보만 정리', '실속형 상품에 맞는 간결한 설득 구조'],
+    usage_scenario_text: '대표 사용 장면만 골라 보여주며 짧고 명확하게 설득합니다.',
+    detail_description: '필수 정보 위주로 정리한 짧은 상세 설명입니다.',
+    benefits: ['빠른 이해', '짧은 구매 결정 동선'],
+    cta: '필요한 정보만 확인하고 바로 만나보세요',
+    seo_title: '핵심 장점이 잘 보이는 간결한 상품 상세페이지'
   },
   7: {
-    headline: '媛???쒖??곸씤 ?쒓뎅???쇳븨紐??곸꽭?섏씠吏 援ъ꽦',
-    subheadline: '?ㅻ뱶?쇱씤, ?μ젏, ?ъ슜 ?λ㈃, ?뷀뀒?? proof媛 洹좏삎 ?덇쾶 ?댁뼱吏??湲곕낯??援ъ꽦?낅땲??',
-    key_selling_points: ['媛???쇰컲?곸씤 紐⑤컮???쇳븨紐??먮쫫', '?μ젏怨??ъ슜 ?λ㈃???먯뿰?ㅻ읇寃??곌껐', 'proof ?뱀뀡源뚯? ?ы븿???덉젙?곸씤 ?ㅻ뱷 援ъ“'],
-    feature_descriptions: ['湲곕뒫怨??μ젏??洹좏삎 ?덇쾶 蹂댁뿬二쇰뒗 援ъ꽦', '怨좉컼???ㅽ겕濡ㅽ븯硫??먯뿰?ㅻ읇寃??댄빐?섎뒗 ?먮쫫', '援?궡 留덉폆???듭닕???꾧컻 諛⑹떇'],
-    usage_scenario_text: '?ъ슜 ?λ㈃怨?怨좉컼 留λ씫???곌껐??援щℓ ?대?吏瑜?洹몃━湲??쎄쾶 留뚮벊?덈떎.',
-    detail_description: '?뺣낫?됯낵 媛?낆꽦??洹좏삎??媛????留욌뒗 ?쒖????곸꽭 ?ㅻ챸?낅땲??',
-    benefits: ['??????? ??????????? ????', '????? ??? ?????????????'],
-    cta: '?μ젏遺???뷀뀒?쇨퉴吏 ?뺤씤?섍퀬 諛붾줈 ?좏깮?대낫?몄슂',
-    seo_title: '紐⑤컮???쇳븨紐곗뿉 ??留욌뒗 ?쒖????곹뭹 ?곸꽭?섏씠吏'
+    headline: '매일 손이 가는 이유,\n지금 확인해보세요',
+    subheadline: '장점, 사용 장면, 디테일이 균형 있게 이어지는 기본형 상세페이지 구성입니다.',
+    key_selling_points: ['오픈마켓에 익숙한 흐름', '장점과 사용 장면을 자연스럽게 연결', '신뢰 포인트까지 담은 안정적인 구성'],
+    feature_descriptions: ['기능과 장점을 균형 있게 보여주는 구성', '스크롤하며 자연스럽게 이해되는 흐름', '국내 쇼핑몰에 익숙한 전개 방식'],
+    usage_scenario_text: '실제 사용 장면과 연결해 구매 후 모습을 그리기 쉽게 만듭니다.',
+    detail_description: '정보량과 가독성의 균형을 맞춘 표준형 상세 설명입니다.',
+    benefits: ['정보와 설득의 균형', '대부분의 상품에 어울리는 구성'],
+    cta: '장점부터 디테일까지 확인하고 선택해보세요',
+    seo_title: '모바일 쇼핑몰에 잘 맞는 표준형 상품 상세페이지'
   },
   10: {
-    headline: '?꾨━誘몄뾼 臾대뱶濡??꾩꽦?섎뒗 ??ъ씠利??곸꽭?섏씠吏',
-    subheadline: '湲곕낯 ?뺣낫遺??鍮꾧탳 ?ъ씤?몄? proof源뚯? 珥섏킌?섍쾶 ?댁븘 ???꾩꽦???믪? 援щℓ 寃쏀뿕??留뚮벊?덈떎.',
-    key_selling_points: ['?뱀뀡蹂???븷??遺꾨챸???꾨━誘몄뾼 援ъ꽦', '鍮꾧탳, 踰좊꽕?? ingredient源뚯? ?ы븿???꾩꽦???먮쫫', '諛섎났蹂대떎 ?뺣낫 ?뺤옣??珥덉젏?????뷀뀒???꾧컻'],
-    feature_descriptions: ['Premium information architecture', 'Long-scroll commerce storytelling', 'Comparison and proof sections that stay easy to read'],
-    usage_scenario_text: '?ъ슜 ?λ㈃怨??쇱씠?꾩뒪???留λ씫?????띾??섍쾶 ?쒖떆??紐곗엯?꾨? ?믪엯?덈떎.',
-    detail_description: '?뷀뀒?? benefit, ingredient, comparison, proof媛 遺꾨━?섏뼱 ?꾩꽦???믪? ?λЦ???곸꽭 ?ㅻ챸??援ъ꽦?⑸땲??',
-    benefits: ['?뺣룆??怨좉컼?먭쾶???ㅻ뱷???좎?', '釉뚮옖?쒗삎 ?곹뭹?대굹 怨좉????곹뭹???곹빀'],
-    cta: '?ㅻ뒛 二쇰Ц?섍퀬 ?꾨━誘몄뾼 ?뷀뀒?쇱쓽 李⑥씠瑜?吏곸젒 寃쏀뿕?대낫?몄슂',
-    seo_title: '?꾨━誘몄뾼 臾대뱶????ъ씠利?紐⑤컮???곹뭹 ?곸꽭?섏씠吏'
+    headline: '디테일까지 완성한\n프리미엄 상세페이지',
+    subheadline: '기본 정보부터 비교 포인트와 신뢰 요소까지 촘촘하게 담아 완성도 높은 구매 경험을 만듭니다.',
+    key_selling_points: ['섹션별 역할이 분명한 구성', '비교와 신뢰 요소까지 담은 흐름', '반복 없이 정보를 넓혀가는 전개'],
+    feature_descriptions: ['프리미엄 정보 구조', '긴 스크롤에 맞춘 스토리텔링', '읽기 쉬운 비교·신뢰 섹션'],
+    usage_scenario_text: '다양한 사용 장면과 라이프스타일을 풍부하게 보여주며 몰입도를 높입니다.',
+    detail_description: '디테일, 장점, 비교, 신뢰 요소를 나눠 완성도 높은 상세 설명을 구성합니다.',
+    benefits: ['꼼꼼한 고객에게도 설득력 유지', '브랜드형·고가 상품에 적합'],
+    cta: '오늘 주문하고 디테일의 차이를 직접 경험해보세요',
+    seo_title: '프리미엄 무드의 롱스크롤 상품 상세페이지'
   }
 };
 
@@ -240,10 +295,40 @@ const ensureRoleFallbacks = (mapping, imageCount) => {
   };
 };
 
-const normalizeSections = (value, sectionOrder, generatedCopy) => {
+const SECTION_FALLBACK_TITLES = {
+  hero: '첫인상부터 다른 선택',
+  feature: '이래서 선택합니다',
+  usage: '일상 속 이런 순간에',
+  detail: '가까이 볼수록 느껴지는 디테일',
+  benefit: '써보면 알게 되는 장점',
+  ingredient: '꼼꼼하게 확인하세요',
+  proof: '믿고 고를 수 있는 이유',
+  comparison: '비교해보면 차이가 보입니다',
+  cta: '지금 만나보세요'
+};
+
+const normalizeBulletList = (value) => normalizeStringList(value).slice(0, 4);
+
+const normalizeImageIndex = (value, imageCount) => {
+  const index = Number(value);
+  return Number.isInteger(index) && index >= 0 && index < imageCount ? index : -1;
+};
+
+const normalizeRowList = (value, keys, max) => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => Object.fromEntries(keys.map((key) => [key, normalizeString(item?.[key])])))
+    .filter((item) => keys.every((key) => item[key]))
+    .slice(0, max);
+};
+
+const normalizeSections = (value, sectionOrder, generatedCopy, imageCount = 1) => {
   const fallbackSections = sectionOrder.map((type, index) => ({
     type,
-    title: index === 0 ? generatedCopy.headline : `${type.toUpperCase()} Section`,
+    eyebrow: '',
+    title: index === 0 ? generatedCopy.headline : SECTION_FALLBACK_TITLES[type] ?? SECTION_FALLBACK_TITLES.detail,
+    bullets: [],
+    image_index: -1,
     text:
       type === 'hero'
         ? generatedCopy.subheadline
@@ -259,12 +344,18 @@ const normalizeSections = (value, sectionOrder, generatedCopy) => {
 
   if (!Array.isArray(value)) return fallbackSections;
 
-  const normalized = value.map((item, index) => ({
-    type: normalizeSectionType(item?.type ?? sectionOrder[index] ?? 'detail'),
-    title: normalizeString(item?.title, fallbackSections[index]?.title || 'Section'),
-    text: normalizeString(item?.text, fallbackSections[index]?.text || generatedCopy.detail_description),
-    image_role: normalizeImageRole(item?.image_role ?? fallbackSections[index]?.image_role)
-  }));
+  const normalized = value.map((item, index) => {
+    const type = normalizeSectionType(item?.type ?? sectionOrder[index] ?? 'detail');
+    return {
+      type,
+      eyebrow: normalizeString(item?.eyebrow),
+      title: normalizeString(item?.title) || fallbackSections[index]?.title || SECTION_FALLBACK_TITLES[type],
+      text: normalizeString(item?.text) || fallbackSections[index]?.text || generatedCopy.detail_description,
+      bullets: normalizeBulletList(item?.bullets),
+      image_role: normalizeImageRole(item?.image_role ?? fallbackSections[index]?.image_role),
+      image_index: normalizeImageIndex(item?.image_index, imageCount)
+    };
+  });
 
   return normalized.length ? normalized : fallbackSections;
 };
@@ -283,7 +374,10 @@ const buildFallbackPayload = (pageCount) => {
     },
     sections: sectionOrder.map((type, index) => ({
       type,
-      title: index === 0 ? copy.headline : `${type.toUpperCase()} Section`,
+      eyebrow: '',
+      title: index === 0 ? copy.headline : SECTION_FALLBACK_TITLES[type],
+      bullets: [],
+      image_index: -1,
       text:
         type === 'hero'
           ? copy.subheadline
@@ -321,7 +415,13 @@ const normalizePayload = (payload, imageCount, requestedPageCount) => {
     detail_description: normalizeString(payload?.generated_copy?.detail_description, fallbackPayload.generated_copy.detail_description),
     benefits: normalizeStringList(payload?.generated_copy?.benefits, fallbackPayload.generated_copy.benefits),
     cta: normalizeString(payload?.generated_copy?.cta, fallbackPayload.generated_copy.cta),
-    seo_title: normalizeString(payload?.generated_copy?.seo_title, fallbackPayload.generated_copy.seo_title)
+    seo_title: normalizeString(payload?.generated_copy?.seo_title, fallbackPayload.generated_copy.seo_title),
+    badge: normalizeString(payload?.generated_copy?.badge),
+    closing_line: normalizeString(payload?.generated_copy?.closing_line),
+    spec_rows: normalizeRowList(payload?.generated_copy?.spec_rows, ['label', 'value'], 8),
+    comparison_rows: normalizeRowList(payload?.generated_copy?.comparison_rows, ['label', 'ordinary', 'ours'], 5),
+    faq: normalizeRowList(payload?.generated_copy?.faq, ['question', 'answer'], 5),
+    notices: normalizeStringList(payload?.generated_copy?.notices).slice(0, 5)
   };
 
   const requestedOrder = buildSectionOrder(pageCount);
@@ -339,7 +439,7 @@ const normalizePayload = (payload, imageCount, requestedPageCount) => {
     page_count: pageCount,
     section_order: sectionOrder,
     image_role_mapping: imageRoleMapping,
-    sections: normalizeSections(payload?.sections, sectionOrder, generatedCopy),
+    sections: normalizeSections(payload?.sections, sectionOrder, generatedCopy, imageCount),
     generated_copy: generatedCopy
   };
 
@@ -414,7 +514,21 @@ const buildPrompt = ({
   `Theme: ${theme}`,
   `Extra prompt: ${prompt || 'Create a clean, conversion-focused commerce detail page based on the uploaded product images.'}`,
   `Uploaded image count: ${imageCount}`,
-  'generated_copy.feature_descriptions should be short, punchy, and immediately usable in feature blocks.',
+  'Copy formatting rules (the result is rendered as a real Korean shopping-mall detail page image, so text length matters):',
+  '- generated_copy.headline: 2 short lines separated by \n, each line at most 14 Korean characters. Emotional hook first, benefit second.',
+  '- generated_copy.badge: one tiny label above the headline, at most 12 characters (e.g. "선물하기 좋은", "데일리 필수템"). Never claim rankings or sales numbers.',
+  '- sections[].eyebrow: a short label at most 12 characters such as "POINT 01", "이런 분께 추천", "DETAIL", "HOW TO USE". Number feature sections as POINT 01, POINT 02 in order.',
+  '- sections[].title: at most 2 short lines (use \n between lines), each line at most 16 Korean characters. Must be specific to this product, never generic like "Feature Section".',
+  '- sections[].text: 1 to 3 short sentences, at most 110 Korean characters total. Conversational marketplace tone (해요체 or 합니다체, consistent across the page).',
+  '- sections[].bullets: 0 to 4 short phrases, each at most 18 Korean characters. Use them for feature, benefit, detail, proof sections; leave empty for hero and cta.',
+  '- sections[].image_index: the 0-based index of the uploaded image that best matches this section. Avoid using the same image in two consecutive sections. Use -1 only when no image fits.',
+  '- generated_copy.spec_rows: product information table rows (상품명, 구성, 옵션, 가격, 추천 대상 etc.). Only use facts from the input or clearly visible in images; otherwise omit the row. Return an empty array if nothing is known.',
+  '- generated_copy.comparison_rows: 3 to 4 rows comparing "일반적인 제품" (ordinary) vs this product (ours), each value at most 16 characters. Base "ours" only on input selling points or visible qualities. Never name competitors.',
+  '- generated_copy.faq: 3 to 4 practical buyer questions with short, honest answers. Do not invent shipping, warranty, or refund policies; point to the option/notice area instead when unknown.',
+  '- generated_copy.notices: 2 to 4 neutral 구매 전 확인사항 such as screen color differences or measurement tolerances, without inventing specifics.',
+  '- generated_copy.closing_line: one warm closing sentence for the bottom of the page, at most 40 characters.',
+  'All customer-facing text must be in Korean except eyebrow labels, which may be short English.',
+  'generated_copy.feature_descriptions should be short, punchy, and immediately usable in feature blocks. Use the format "짧은 제목: 한 줄 설명".',
   'generated_copy.seo_title should read naturally for Korean marketplace search and listing contexts.',
   'Avoid repetitive copy between sections, especially for benefit, ingredient, comparison, and proof sections.',
   'Safety rules:',
