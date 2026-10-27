@@ -1,0 +1,12 @@
+import { writeFileSync } from 'node:fs';
+import { correctLesson } from '../src/features/electric-practical/model/fixtures.ts';
+import { publicOne } from '../src/features/electric-practical/public-one/lesson.ts';
+import { grade } from '../src/features/electric-practical/grading/grade.ts';
+const publicMode = process.argv.includes('--public1');
+const doc = publicMode ? publicOne() : correctLesson();
+const result = grade(doc);
+const evidence = { model: publicMode ? '3-phase 220 V RMS phasors, static resistive loads, public problem 1 control sequence' : '24 V virtual DC control circuit', passed: result.passed, steps: result.steps.map(s => ({ name: s.name, input: s.input, expected: 'expected' in s ? s.expected : { MC1: s.on, PL1: s.on }, passed: s.passed, energized: s.result.energized, contactsClosed: s.result.contactsClosed, currentAmps: s.result.supplyCurrent, loadVoltages: s.result.loadVoltages, timers: s.result.timers, stable: s.result.stable, iterations: s.result.iterations, faults: s.result.faults })) };
+writeFileSync(new URL(`../docs/electric-practical/evidence/${publicMode ? 'public-one-scenarios' : 'actual-scenario-output'}.json`, import.meta.url), JSON.stringify(evidence, null, 2) + '\n');
+if (publicMode) writeFileSync(new URL('../docs/electric-practical/public-one-example.json', import.meta.url), JSON.stringify(doc, null, 2) + '\n');
+console.log(JSON.stringify(evidence, null, 2));
+if (!result.passed) process.exitCode = 1;

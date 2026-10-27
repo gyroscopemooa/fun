@@ -1,0 +1,105 @@
+
+> funhub@0.0.1 e2e:electric
+> playwright test --config playwright.electric.config.ts --grep-invert ManyTool
+
+[WebServer] (node:45000) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:6468) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 6 tests using 1 worker
+
+(node:45880) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:45880) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 [desktop] › src\features\electric-practical\tests\ui.spec.ts:48:1 › mouse wire from empty → real START/hold/STOP → nine-step passing grade (45.9s)
+  ok 2 [desktop] › src\features\electric-practical\tests\ui.spec.ts:79:1 › missing hold wire fails after START release; mouse repair passes (4.3s)
+  ok 3 [desktop] › src\features\electric-practical\tests\ui.spec.ts:95:1 › mouse-wired L–N short trips; wire deletion and undo/redo alter diagnosis (1.8s)
+  x  4 [desktop] › src\features\electric-practical\tests\ui.spec.ts:125:1 › local save/reload and JSON roundtrip preserve behavior; corrupt import keeps work (5.7s)
+(node:8868) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:8868) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  5 [desktop] › src\features\electric-practical\tests\ui.spec.ts:167:1 › keyboard connect, snapped move, reroute and contact-property fault are functional (1.5m)
+(node:33492) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:33492) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 6 [desktop] › src\features\electric-practical\tests\ui.spec.ts:200:1 › mobile read mode can operate and inspect a real loaded circuit (1.7s)
+
+
+  1) [desktop] › src\features\electric-practical\tests\ui.spec.ts:125:1 › local save/reload and JSON roundtrip preserve behavior; corrupt import keeps work 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByRole('status')
+    Expected substring: [32m"불러오기 실패"[39m
+    Error: strict mode violation: getByRole('status') resolved to 2 elements:
+        1) <p role="status" class="ep-message">불러오기 실패: schemaVersion 1, 부품 최대 80개, 전선 최대 240개가 …</p> aka getByText('불러오기 실패: schemaVersion 1')
+        2) <output>…</output> aka getByText('%')
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 10000ms[22m
+    [2m  - waiting for getByRole('status')[22m
+
+
+      76 |   await page.getByTestId('grade').click(); await expect(page.getByTestId('grade-result')).toContainText('합격 ·');
+      77 |   await page.getByLabel('회로 JSON 가져오기').setInputFiles({ name: 'bad.json', mimeType: 'application/json', buffer: Buffer.from('{"schemaVersion":999}') });
+    > 78 |   await expect(page.getByRole('status')).toContainText('불러오기 실패'); await expect(page.getByTestId('wire-count')).toHaveText('전선 10개');
+         |                                          ^
+      79 | });
+      80 | test('keyboard connect, snapped move, reroute and contact-property fault are functional', async ({ page }) => {
+      81 |   await open(page);
+        at C:\3.manytool\src\features\electric-practical\tests\ui.spec.ts:78:42
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\electric\ui-local-save-reload-and-J-5bffc-r-corrupt-import-keeps-work-desktop\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\electric\ui-local-save-reload-and-J-5bffc-r-corrupt-import-keeps-work-desktop\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\electric\ui-local-save-reload-and-J-5bffc-r-corrupt-import-keeps-work-desktop\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\electric\ui-local-save-reload-and-J-5bffc-r-corrupt-import-keeps-work-desktop\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [desktop] › src\features\electric-practical\tests\ui.spec.ts:167:1 › keyboard connect, snapped move, reroute and contact-property fault are functional 
+
+    [31mTest timeout of 90000ms exceeded.[39m
+
+    Error: locator.selectOption: Test timeout of 90000ms exceeded.
+    Call log:
+    [2m  - waiting for getByLabel('선 모양', { exact: true })[22m
+
+
+      86 |   await expect(node.locator('..')).toHaveAttribute('transform', 'translate(280,460)');
+      87 |   await page.getByTestId('wire-W1').focus(); await page.keyboard.press('Enter');
+    > 88 |   await page.getByLabel('선 모양', { exact: true }).selectOption('straight');
+         |                                                  ^
+      89 |   await page.getByTestId('grade').click(); await expect(page.getByTestId('grade-result')).toContainText('합격 ·');
+      90 |   await page.getByTestId('node-MC1_NO').click(); await page.getByLabel('접점 형식', { exact: true }).selectOption('AUX_NC');
+      91 |   await page.getByTestId('grade').click(); await expect(page.getByTestId('grade-result')).toContainText('불합격'); await expect(page.getByTestId('grade-report')).toContainText('OSCILLATION');
+        at C:\3.manytool\src\features\electric-practical\tests\ui.spec.ts:88:50
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\electric\ui-keyboard-connect-snappe-2c57c-operty-fault-are-functional-desktop\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\electric\ui-keyboard-connect-snappe-2c57c-operty-fault-are-functional-desktop\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\electric\ui-keyboard-connect-snappe-2c57c-operty-fault-are-functional-desktop\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\electric\ui-keyboard-connect-snappe-2c57c-operty-fault-are-functional-desktop\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [desktop] › src\features\electric-practical\tests\ui.spec.ts:125:1 › local save/reload and JSON roundtrip preserve behavior; corrupt import keeps work 
+    [desktop] › src\features\electric-practical\tests\ui.spec.ts:167:1 › keyboard connect, snapped move, reroute and contact-property fault are functional 
+  4 passed (4.4m)

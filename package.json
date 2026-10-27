@@ -9,7 +9,12 @@
     "astro": "astro",
     "cy:open": "cypress open",
     "cy:run": "cypress run",
-    "cy:smoke": "cypress run --spec cypress/e2e/smoke.cy.js"
+    "cy:smoke": "cypress run --spec cypress/e2e/smoke.cy.js",
+    "test:electric": "node --test src/features/electric-practical/tests/engine.test.ts src/features/electric-practical/tests/editor.test.ts src/features/electric-practical/tests/public-one.test.ts",
+    "typecheck:electric": "tsc -p tsconfig.electric.json",
+    "lint:electric": "eslint --config eslint.electric.config.mjs src/features/electric-practical scripts/create-electric-fixtures.ts scripts/electric-demo.ts playwright.electric.config.ts",
+    "e2e:electric": "playwright test --config playwright.electric.config.ts",
+    "check:electric": "npm run typecheck:electric && npm run lint:electric && npm run test:electric"
   },
   "dependencies": {
     "@astrojs/react": "^5.0.0",
@@ -65,8 +70,13 @@
     "zustand": "^5.0.11"
   },
   "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "@types/node": "24.19.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "cypress": "^15.12.0"
+    "cypress": "^15.12.0",
+    "eslint": "9.39.5",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.72.1"
   }
 }

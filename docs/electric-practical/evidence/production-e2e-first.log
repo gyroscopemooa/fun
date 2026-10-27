@@ -1,0 +1,62 @@
+
+> funhub@0.0.1 e2e:electric
+> playwright test --config playwright.electric.config.ts
+
+[WebServer] (node:40900) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:37440) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 8 tests using 1 worker
+
+(node:47040) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:47040) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 [desktop] › src\features\electric-practical\tests\ui.spec.ts:49:1 › mouse wire from empty → real START/hold/STOP → nine-step passing grade (5.2s)
+  ok 2 [desktop] › src\features\electric-practical\tests\ui.spec.ts:97:1 › missing hold wire fails after START release; mouse repair passes (3.8s)
+  ok 3 [desktop] › src\features\electric-practical\tests\ui.spec.ts:113:1 › mouse-wired L–N short trips; wire deletion and undo/redo alter diagnosis (1.6s)
+  ok 4 [desktop] › src\features\electric-practical\tests\ui.spec.ts:143:1 › local save/reload and JSON roundtrip preserve behavior; corrupt import keeps work (4.3s)
+  ok 5 [desktop] › src\features\electric-practical\tests\ui.spec.ts:187:1 › keyboard connect, snapped move, reroute and contact-property fault are functional (1.7s)
+  ok 6 [desktop] › src\features\electric-practical\tests\ui.spec.ts:266:3 › mobile touch emulation › mobile read mode can operate and inspect a real loaded circuit (1.0s)
+  ok 7 [desktop] › src\features\electric-practical\tests\ui.spec.ts:293:1 › ManyTool entry, return and existing personal-color smoke regression (3.4s)
+  x  8 [desktop] › src\features\electric-practical\tests\ui.spec.ts:319:1 › English browser stays on the available Korean tool route without a 404 redirect (1.1s)
+
+
+  1) [desktop] › src\features\electric-practical\tests\ui.spec.ts:319:1 › English browser stays on the available Korean tool route without a 404 redirect 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32mtrue[39m
+    Received: [31mfalse[39m
+
+      135 |   await expect(page).toHaveURL('http://127.0.0.1:4337/tools/electric-practical');
+      136 |   const links = await page.locator('header details a').evaluateAll(elements => elements.map(e => e.getAttribute('href')));
+    > 137 |   expect(links.length).toBeGreaterThan(0); expect(links.every(href => href === '/tools/electric-practical')).toBe(true);
+          |                                                                                                              ^
+      138 |   await context.close();
+      139 | });
+      140 |
+        at C:\3.manytool\src\features\electric-practical\tests\ui.spec.ts:137:110
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\electric\ui-English-browser-stays-o-422d1-oute-without-a-404-redirect-desktop\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\electric\ui-English-browser-stays-o-422d1-oute-without-a-404-redirect-desktop\test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\electric\ui-English-browser-stays-o-422d1-oute-without-a-404-redirect-desktop\error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\electric\ui-English-browser-stays-o-422d1-oute-without-a-404-redirect-desktop\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\electric\ui-English-browser-stays-o-422d1-oute-without-a-404-redirect-desktop\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [desktop] › src\features\electric-practical\tests\ui.spec.ts:319:1 › English browser stays on the available Korean tool route without a 404 redirect 
+  7 passed (33.0s)

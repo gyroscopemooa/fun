@@ -1,0 +1,258 @@
+{
+  "name": "15-equivalent-layout",
+  "document": {
+    "schemaVersion": 1,
+    "components": [
+      {
+        "id": "PS1",
+        "kind": "SUPPLY",
+        "terminals": [
+          "L",
+          "N"
+        ],
+        "params": {
+          "voltage": 24
+        }
+      },
+      {
+        "id": "F1",
+        "kind": "FUSE",
+        "terminals": [
+          "1",
+          "2"
+        ],
+        "params": {
+          "ratingAmps": 0.5
+        }
+      },
+      {
+        "id": "STOP",
+        "kind": "PUSH_NC",
+        "terminals": [
+          "21",
+          "22"
+        ]
+      },
+      {
+        "id": "START",
+        "kind": "PUSH_NO",
+        "terminals": [
+          "13",
+          "14"
+        ]
+      },
+      {
+        "id": "MC1",
+        "kind": "COIL",
+        "terminals": [
+          "A1",
+          "A2"
+        ],
+        "params": {
+          "resistance": 240,
+          "nominalVoltage": 24
+        }
+      },
+      {
+        "id": "MC1_NO",
+        "kind": "AUX_NO",
+        "terminals": [
+          "13",
+          "14"
+        ],
+        "linkId": "MC1"
+      },
+      {
+        "id": "PL1",
+        "kind": "LAMP",
+        "terminals": [
+          "X1",
+          "X2"
+        ],
+        "params": {
+          "resistance": 480,
+          "nominalVoltage": 24
+        }
+      },
+      {
+        "id": "J1",
+        "kind": "JUNCTION",
+        "terminals": [
+          "J"
+        ]
+      }
+    ],
+    "wires": [
+      {
+        "id": "W10",
+        "from": {
+          "componentId": "PS1",
+          "terminalId": "N"
+        },
+        "to": {
+          "componentId": "PL1",
+          "terminalId": "X2"
+        },
+        "route": "straight",
+        "bend": 50
+      },
+      {
+        "id": "W9",
+        "from": {
+          "componentId": "PS1",
+          "terminalId": "N"
+        },
+        "to": {
+          "componentId": "MC1",
+          "terminalId": "A2"
+        },
+        "route": "straight",
+        "bend": 50
+      },
+      {
+        "id": "W8",
+        "from": {
+          "componentId": "PL1",
+          "terminalId": "X1"
+        },
+        "to": {
+          "componentId": "J1",
+          "terminalId": "J"
+        },
+        "route": "straight",
+        "bend": 50
+      },
+      {
+        "id": "W7",
+        "from": {
+          "componentId": "MC1",
+          "terminalId": "A1"
+        },
+        "to": {
+          "componentId": "J1",
+          "terminalId": "J"
+        },
+        "route": "straight",
+        "bend": 50
+      },
+      {
+        "id": "W6",
+        "from": {
+          "componentId": "J1",
+          "terminalId": "J"
+        },
+        "to": {
+          "componentId": "MC1_NO",
+          "terminalId": "14"
+        },
+        "route": "straight",
+        "bend": 50
+      },
+      {
+        "id": "W5",
+        "from": {
+          "componentId": "J1",
+          "terminalId": "J"
+        },
+        "to": {
+          "componentId": "START",
+          "terminalId": "14"
+        },
+        "route": "straight",
+        "bend": 50
+      },
+      {
+        "id": "W4",
+        "from": {
+          "componentId": "MC1_NO",
+          "terminalId": "13"
+        },
+        "to": {
+          "componentId": "START",
+          "terminalId": "13"
+        },
+        "route": "straight",
+        "bend": 50
+      },
+      {
+        "id": "W3",
+        "from": {
+          "componentId": "START",
+          "terminalId": "13"
+        },
+        "to": {
+          "componentId": "STOP",
+          "terminalId": "22"
+        },
+        "route": "straight",
+        "bend": 50
+      },
+      {
+        "id": "W2",
+        "from": {
+          "componentId": "STOP",
+          "terminalId": "21"
+        },
+        "to": {
+          "componentId": "F1",
+          "terminalId": "2"
+        },
+        "route": "straight",
+        "bend": 50
+      },
+      {
+        "id": "W1",
+        "from": {
+          "componentId": "F1",
+          "terminalId": "1"
+        },
+        "to": {
+          "componentId": "PS1",
+          "terminalId": "L"
+        },
+        "route": "straight",
+        "bend": 50
+      }
+    ],
+    "ui": {
+      "positions": {
+        "PS1": {
+          "x": 170,
+          "y": 130
+        },
+        "F1": {
+          "x": 380,
+          "y": 130
+        },
+        "STOP": {
+          "x": 600,
+          "y": 130
+        },
+        "START": {
+          "x": 600,
+          "y": 310
+        },
+        "MC1_NO": {
+          "x": 830,
+          "y": 310
+        },
+        "J1": {
+          "x": 830,
+          "y": 130
+        },
+        "MC1": {
+          "x": 380,
+          "y": 520
+        },
+        "PL1": {
+          "x": 830,
+          "y": 520
+        }
+      }
+    }
+  },
+  "expected": {
+    "passed": true,
+    "codes": []
+  }
+}

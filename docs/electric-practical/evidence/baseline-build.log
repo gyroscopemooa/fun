@@ -1,0 +1,25 @@
+
+> funhub@0.0.1 build
+> astro build
+
+20:17:48 [vite] Re-optimizing dependencies because vite config has changed
+20:17:49 [content] Syncing content
+20:17:49 [content] Synced content
+20:17:49 [types] Generated 589ms
+20:17:49 [build] output: "static"
+20:17:49 [build] mode: "static"
+20:17:49 [build] directory: C:\3.manytool\dist\
+20:17:49 [build] Collecting build info...
+20:17:49 [build] ✓ Completed in 788ms.
+20:18:02 [build] Building static entrypoints...
+20:18:26 [ERROR] [vite] ✗ Build failed in 23.84s
+[vite]: Rollup failed to resolve import "pdfjs-dist/build/pdf.worker.min.mjs?url" from "C:/3.manytool/src/lib/file-dial/pdf-ops.ts".
+This is most likely unintended because it can break your application at runtime.
+If you do want to externalize this module explicitly add it to
+`build.rollupOptions.external`
+  Stack trace:
+    at viteLog (file:///C:/3.manytool/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:46374:15)
+    at onwarn (file:///C:/3.manytool/node_modules/@vitejs/plugin-react/dist/index.js:76:7)
+    at onRollupLog (file:///C:/3.manytool/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:46422:5)
+    at file:///C:/3.manytool/node_modules/rollup/dist/es/shared/node-entry.js:20981:32
+    at ModuleLoader.handleInvalidResolvedId (file:///C:/3.manytool/node_modules/rollup/dist/es/shared/node-entry.js:21712:26)

@@ -6,6 +6,8 @@ import FamilyPromo from './FamilyPromo.astro';
 const pathname = Astro.url.pathname;
 const locale = detectLocale(pathname);
 const strippedPath = stripLocale(pathname);
+// A Korean-only tool must not redirect visitors to a nonexistent translated route.
+const { preserveCurrentRoute = false } = Astro.props;
 const t = await createTranslator(locale);
 
 const navItems = [
@@ -22,7 +24,7 @@ const langLinks = [
   ...rolloutLocales.map((lang) => ({
     code: lang.code,
     name: lang.nativeName,
-    href: lang.code === 'ko'
+    href: preserveCurrentRoute ? strippedPath : lang.code === 'ko'
       ? `${strippedPath}`.replace(/\/{2,}/g, '/') || '/'
       : `/${lang.code}${strippedPath}`.replace(/\/{2,}/g, '/') || `/${lang.code}`
   }))
@@ -59,7 +61,7 @@ const langLinks = [
 </header>
 <FamilyPromo />
 
-<script is:inline define:vars={{ locale, strippedPath, supportedLocales: seoLocaleCodes }}>
+<script is:inline define:vars={{ locale, strippedPath, supportedLocales: seoLocaleCodes, preserveCurrentRoute }}>
   const languageStorageKey = 'manytool-locale';
   const localePrefixPattern = new RegExp(`^/(${supportedLocales.filter((code) => code !== 'ko').join('|')})(?:/|$)`);
   const localePath = (nextLocale) => {
@@ -81,7 +83,7 @@ const langLinks = [
 
   // Only auto-switch the canonical Korean URL. Localized SEO URLs remain stable.
   const isCanonicalKoreanPath = locale === 'ko' && !location.pathname.match(localePrefixPattern);
-  if (isCanonicalKoreanPath && !localStorage.getItem(languageStorageKey)) {
+  if (!preserveCurrentRoute && isCanonicalKoreanPath && !localStorage.getItem(languageStorageKey)) {
     const browserLocale = (navigator.languages || [navigator.language || 'ko'])
       .map((value) => value.toLowerCase().split('-')[0])
       .find((value) => supportedLocales.includes(value));

@@ -1,0 +1,22 @@
+{
+  "baseline": {
+    "info": 0,
+    "low": 2,
+    "moderate": 4,
+    "high": 27,
+    "critical": 3,
+    "total": 36
+  },
+  "current": {
+    "info": 0,
+    "low": 2,
+    "moderate": 4,
+    "high": 26,
+    "critical": 3,
+    "total": 35
+  },
+  "added": [],
+  "removed": [
+    "js-yaml"
+  ]
+}

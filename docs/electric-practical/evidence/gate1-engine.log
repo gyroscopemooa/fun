@@ -1,0 +1,46 @@
+✔ fixture 01-correct (4.791ms)
+✔ fixture 02-no-hold (1.7534ms)
+✔ fixture 03-stop-missing (1.5742ms)
+✔ fixture 04-wrong-coil-link (0.1916ms)
+✔ fixture 05-nc-instead-of-no (1.6156ms)
+✔ fixture 06-lamp-same-potential (0.9557ms)
+✔ fixture 07-direct-short (0.905ms)
+✔ fixture 08-coil-a1-open (0.8724ms)
+✔ fixture 09-branch-open (0.9148ms)
+✔ fixture 10-crossing-without-junction (1.1167ms)
+✔ fixture 11-stop-bypassed-by-hold (0.9026ms)
+✔ fixture 12-power-loss-reset (1.1143ms)
+✔ fixture 13-rapid-input-order (0.7603ms)
+✔ fixture 14-save-load-roundtrip (0.7932ms)
+✔ fixture 15-equivalent-layout (0.9826ms)
+✔ fixture 16-no-return (0.81ms)
+✔ fixture 17-lamp-always-on (1.0953ms)
+✔ fixture 18-reversed-coil (0.791ms)
+✔ fixture 19-overcurrent (0.6092ms)
+✔ fixture 20-fuse-bypass (1.1083ms)
+✔ fixture 21-invalid-terminal (0.1327ms)
+✔ fixture 22-loads-in-series (0.8194ms)
+✔ fixture 23-equivalent-extra-junction (0.9608ms)
+✔ fixture 24-protected-short (0.6253ms)
+✔ fixture 25-no-instead-of-stop-nc (0.7151ms)
+✔ self hold actual output: off → start → held → stop → off (1.2365ms)
+✔ 100 identical executions of EVERY fixture are deterministic (1162.408ms)
+✔ power loss clears coil memory, contacts and current paths (0.8311ms)
+✔ rapid sequential and simultaneous input respects STOP (18.2315ms)
+✔ serialization roundtrip preserves each correct AND wrong circuit behavior (24.387ms)
+✔ equivalent geometry/order and true rewiring have same electrical outputs (1.9309ms)
+✔ short trips and stays latched; loads never energize on that step (0.244ms)
+✔ series loads are solved, not treated as parallel or ideal wires (0.1922ms)
+✔ an added parallel load changes real supply current and trips fuse (0.4704ms)
+✔ dangling wire receives no fabricated current highlight (0.2651ms)
+✔ duplicate wire is identified without doubling current (0.8478ms)
+✔ malformed/oversized imports fail closed; contact mistakes remain editable (0.8577ms)
+✔ engine never mutates document or previous state (0.7158ms)
+ℹ tests 38
+ℹ suites 0
+ℹ pass 38
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1451.9322

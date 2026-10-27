@@ -1,0 +1,29 @@
+
+> funhub@0.0.1 e2e:electric
+> playwright test --config playwright.electric.config.ts
+
+[WebServer] (node:20352) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:31752) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 12 tests using 1 worker
+
+(node:8680) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:8680) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 [desktop] › src\features\electric-practical\tests\ui.spec.ts:52:1 › mouse wire from empty → real START/hold/STOP → nine-step passing grade (5.2s)
+  ok  2 [desktop] › src\features\electric-practical\tests\ui.spec.ts:100:1 › missing hold wire fails after START release; mouse repair passes (4.0s)
+  ok  3 [desktop] › src\features\electric-practical\tests\ui.spec.ts:116:1 › mouse-wired L–N short trips; wire deletion and undo/redo alter diagnosis (1.7s)
+  ok  4 [desktop] › src\features\electric-practical\tests\ui.spec.ts:146:1 › local save/reload and JSON roundtrip preserve behavior; corrupt import keeps work (4.7s)
+  ok  5 [desktop] › src\features\electric-practical\tests\ui.spec.ts:190:1 › keyboard connect, snapped move, reroute and contact-property fault are functional (1.8s)
+  ok  6 [desktop] › src\features\electric-practical\tests\ui.spec.ts:269:3 › mobile touch emulation › mobile read mode can operate and inspect a real loaded circuit (1.3s)
+  ok  7 [desktop] › src\features\electric-practical\tests\ui.spec.ts:296:1 › ManyTool entry, return and existing personal-color smoke regression (3.7s)
+  ok  8 [desktop] › src\features\electric-practical\tests\ui.spec.ts:322:1 › English browser stays on the available Korean tool route without a 404 redirect (1.2s)
+  ok  9 [desktop] › src\features\electric-practical\tests\ui.spec.ts:342:1 › default panel exposes all 80 screws; click corners, recolor, move bend and save actual wiring (2.3s)
+  ok 10 [desktop] › src\features\electric-practical\tests\ui.spec.ts:421:1 › terminal-block example holds, releases, preserves wire color and detects a bridged short (2.6s)
+  ok 11 [desktop] › src\features\electric-practical\tests\ui.spec.ts:454:1 › public 1 complete example operates manual timer, automatic water and EOCR flicker through actual pins (6.3s)
+  ok 12 [desktop] › src\features\electric-practical\tests\ui.spec.ts:521:1 › public 1 real wire break fails; repair, JSON restore and timing configuration work (4.2s)
+
+  12 passed (48.9s)

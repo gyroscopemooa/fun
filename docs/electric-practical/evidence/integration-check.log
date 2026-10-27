@@ -1,0 +1,98 @@
+
+> funhub@0.0.1 check:electric
+> npm run typecheck:electric && npm run lint:electric && npm run test:electric
+
+
+> funhub@0.0.1 typecheck:electric
+> tsc -p tsconfig.electric.json
+
+
+> funhub@0.0.1 lint:electric
+> eslint --config eslint.electric.config.mjs src/features/electric-practical scripts/create-electric-fixtures.ts scripts/electric-demo.ts playwright.electric.config.ts
+
+
+> funhub@0.0.1 test:electric
+> node --test src/features/electric-practical/tests/engine.test.ts src/features/electric-practical/tests/editor.test.ts src/features/electric-practical/tests/public-one.test.ts
+
+✔ build working circuit from an empty board using only terminal connections (11.5101ms)
+✔ wire removal changes behavior and undo restores actual topology (3.8564ms)
+✔ duplicate and self connections do not mutate topology (0.22ms)
+✔ geometry changes and grid snapping cannot change grading (4.7226ms)
+✔ history is bounded and edits invalidate redo (8.4495ms)
+✔ four 10P strips provide 40 isolated poles, each with two electrically common screws (0.4229ms)
+✔ terminal-block self hold passes all scenarios and repeats deterministically 100 times (252.2932ms)
+✔ moving a supply wire to the adjacent isolated pole opens the actual circuit (2.4674ms)
+✔ terminal-block bridge between L and N detects real short and latches protection (0.6211ms)
+✔ waypoints and wire colors survive undo/redo and JSON without changing circuit calculations (4.5049ms)
+✔ malformed waypoint and color imports are rejected; existing schema-1 files remain valid (3.9733ms)
+✔ fixture 01-correct (6.9266ms)
+✔ fixture 02-no-hold (2.934ms)
+✔ fixture 03-stop-missing (1.8295ms)
+✔ fixture 04-wrong-coil-link (0.2448ms)
+✔ fixture 05-nc-instead-of-no (2.3306ms)
+✔ fixture 06-lamp-same-potential (1.8013ms)
+✔ fixture 07-direct-short (1.5191ms)
+✔ fixture 08-coil-a1-open (1.8473ms)
+✔ fixture 09-branch-open (1.5492ms)
+✔ fixture 10-crossing-without-junction (1.8613ms)
+✔ fixture 11-stop-bypassed-by-hold (1.6647ms)
+✔ fixture 12-power-loss-reset (1.607ms)
+✔ fixture 13-rapid-input-order (1.7091ms)
+✔ fixture 14-save-load-roundtrip (1.5691ms)
+✔ fixture 15-equivalent-layout (1.6038ms)
+✔ fixture 16-no-return (1.6293ms)
+✔ fixture 17-lamp-always-on (2.389ms)
+✔ fixture 18-reversed-coil (2.428ms)
+✔ fixture 19-overcurrent (1.5641ms)
+✔ fixture 20-fuse-bypass (1.7242ms)
+✔ fixture 21-invalid-terminal (0.1881ms)
+✔ fixture 22-loads-in-series (1.5897ms)
+✔ fixture 23-equivalent-extra-junction (1.5278ms)
+✔ fixture 24-protected-short (1.3914ms)
+✔ fixture 25-no-instead-of-stop-nc (1.3843ms)
+✔ fixture 26-stop-on-return-side (1.5816ms)
+✔ fixture 27-fuse-on-return-side (1.6922ms)
+✔ self hold actual output: off → start → held → stop → off (1.4312ms)
+✔ 100 identical executions of EVERY fixture are deterministic (3072.3224ms)
+✔ power loss clears coil memory, contacts and current paths (0.9932ms)
+✔ rapid sequential and simultaneous input respects STOP (57.3965ms)
+✔ serialization roundtrip preserves each correct AND wrong circuit behavior (66.1659ms)
+✔ equivalent geometry/order and true rewiring have same electrical outputs (4.1284ms)
+✔ short trips and stays latched; loads never energize on that step (0.4223ms)
+✔ series loads are solved, not treated as parallel or ideal wires (0.2375ms)
+✔ an added parallel load changes real supply current and trips fuse (0.6272ms)
+✔ dangling wire receives no fabricated current highlight (0.4498ms)
+✔ duplicate wire is identified without doubling current (0.5946ms)
+✔ malformed/oversized imports fail closed; contact mistakes remain editable (1.1326ms)
+✔ engine never mutates document or previous state (0.5415ms)
+✔ wire/component ID collisions cannot mask fuse or current-path edges (0.5501ms)
+✔ public 1 complete wiring passes all 22 scenarios without a layout comparison (51.7976ms)
+✔ 3-phase RMS coil voltage is 220V; timer switches exactly at configured delay (9.1092ms)
+✔ socket visual positions use actual 12P and 8P pin arrangements (0.6648ms)
+✔ public 1 all scenarios repeated 100 times are deterministic; save/load and layout do not change behavior (3360.3138ms)
+✔ public 1 rejects timer coil return open (2323.1943ms)
+✔ public 1 rejects MC2 coil open (2998.1246ms)
+✔ public 1 rejects self-hold instant contact open (2262.3312ms)
+✔ public 1 rejects timed NC used instead of NO (3258.717ms)
+✔ public 1 rejects EOCR normal guard bypass (3585.9338ms)
+✔ public 1 rejects FLS E1 open (2910.2226ms)
+✔ public 1 rejects FLS E2 open (2990.5652ms)
+✔ public 1 rejects PE return removed (2984.0393ms)
+✔ public 1 rejects motor output phase open (2971.8567ms)
+✔ public 1 rejects motor output phase sequence swapped (2945.8182ms)
+✔ public 1 rejects sensor E1 and E2 swapped (3060.0535ms)
+✔ public 1 rejects phase short (1057.7537ms)
+✔ public 1 rejects buzzer open (2940.169ms)
+✔ public 1 rejects yellow lamp open (2913.5833ms)
+✔ public 1 rejects low resistance overload (1130.0878ms)
+✔ external wires cannot bypass panel strips even when electrical behavior works (57.2911ms)
+✔ powered-off and disconnected FLS cannot be driven by water input alone (1.3559ms)
+✔ virtual timer steps and one large elapsed step have the same electrical result (40.8646ms)
+ℹ tests 74
+ℹ suites 0
+ℹ pass 74
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 44070.7252

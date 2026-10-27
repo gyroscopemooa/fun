@@ -37,3 +37,12 @@ node-api/.env.production
 
 # jetbrains setting folder
 .idea/
+
+# Local electric simulator verification caches
+.npm-cache/
+.playwright-browsers/
+test-results/
+playwright-report/
+tmp/pdfs/
+
+.electric-preview/

@@ -1,0 +1,1853 @@
+{
+  "schemaVersion": 1,
+  "components": [
+    {
+      "id": "PS1",
+      "kind": "THREE_PHASE",
+      "terminals": [
+        "L1",
+        "L2",
+        "L3",
+        "PE"
+      ],
+      "params": {
+        "voltage": 220
+      }
+    },
+    {
+      "id": "TB1",
+      "kind": "TERMINAL4",
+      "terminals": [
+        "1A",
+        "1B",
+        "2A",
+        "2B",
+        "3A",
+        "3B",
+        "4A",
+        "4B"
+      ]
+    },
+    {
+      "id": "TB5A",
+      "kind": "TERMINAL_BLOCK",
+      "terminals": [
+        "1A",
+        "1B",
+        "2A",
+        "2B",
+        "3A",
+        "3B",
+        "4A",
+        "4B",
+        "5A",
+        "5B",
+        "6A",
+        "6B",
+        "7A",
+        "7B",
+        "8A",
+        "8B",
+        "9A",
+        "9B",
+        "10A",
+        "10B"
+      ]
+    },
+    {
+      "id": "TB5B",
+      "kind": "TERMINAL_BLOCK",
+      "terminals": [
+        "1A",
+        "1B",
+        "2A",
+        "2B",
+        "3A",
+        "3B",
+        "4A",
+        "4B",
+        "5A",
+        "5B",
+        "6A",
+        "6B",
+        "7A",
+        "7B",
+        "8A",
+        "8B",
+        "9A",
+        "9B",
+        "10A",
+        "10B"
+      ]
+    },
+    {
+      "id": "F",
+      "kind": "FUSE2",
+      "terminals": [
+        "1",
+        "2",
+        "3",
+        "4"
+      ],
+      "params": {
+        "ratingAmps": 10
+      }
+    },
+    {
+      "id": "EOCR",
+      "kind": "EOCR12",
+      "terminals": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12"
+      ],
+      "params": {
+        "resistance": 4840,
+        "nominalVoltage": 220
+      }
+    },
+    {
+      "id": "MCCB",
+      "kind": "BREAKER3",
+      "terminals": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    },
+    {
+      "id": "X",
+      "kind": "RELAY8",
+      "terminals": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8"
+      ],
+      "params": {
+        "resistance": 4840,
+        "nominalVoltage": 220
+      }
+    },
+    {
+      "id": "FR",
+      "kind": "FLICKER8",
+      "terminals": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8"
+      ],
+      "params": {
+        "resistance": 4840,
+        "nominalVoltage": 220,
+        "periodMs": 500
+      }
+    },
+    {
+      "id": "T",
+      "kind": "TIMER8",
+      "terminals": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8"
+      ],
+      "params": {
+        "resistance": 4840,
+        "nominalVoltage": 220,
+        "delayMs": 3000
+      }
+    },
+    {
+      "id": "FLS",
+      "kind": "FLS8",
+      "terminals": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8"
+      ],
+      "params": {
+        "resistance": 4840,
+        "nominalVoltage": 220
+      }
+    },
+    {
+      "id": "MC1",
+      "kind": "MC12",
+      "terminals": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12"
+      ],
+      "params": {
+        "resistance": 4840,
+        "nominalVoltage": 220
+      }
+    },
+    {
+      "id": "MC2",
+      "kind": "MC12",
+      "terminals": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12"
+      ],
+      "params": {
+        "resistance": 4840,
+        "nominalVoltage": 220
+      }
+    },
+    {
+      "id": "TB6A",
+      "kind": "TERMINAL_BLOCK",
+      "terminals": [
+        "1A",
+        "1B",
+        "2A",
+        "2B",
+        "3A",
+        "3B",
+        "4A",
+        "4B",
+        "5A",
+        "5B",
+        "6A",
+        "6B",
+        "7A",
+        "7B",
+        "8A",
+        "8B",
+        "9A",
+        "9B",
+        "10A",
+        "10B"
+      ]
+    },
+    {
+      "id": "TB6B",
+      "kind": "TERMINAL_BLOCK",
+      "terminals": [
+        "1A",
+        "1B",
+        "2A",
+        "2B",
+        "3A",
+        "3B",
+        "4A",
+        "4B",
+        "5A",
+        "5B",
+        "6A",
+        "6B",
+        "7A",
+        "7B",
+        "8A",
+        "8B",
+        "9A",
+        "9B",
+        "10A",
+        "10B"
+      ]
+    },
+    {
+      "id": "TB2",
+      "kind": "TERMINAL4",
+      "terminals": [
+        "1A",
+        "1B",
+        "2A",
+        "2B",
+        "3A",
+        "3B",
+        "4A",
+        "4B"
+      ]
+    },
+    {
+      "id": "TB3",
+      "kind": "TERMINAL4",
+      "terminals": [
+        "1A",
+        "1B",
+        "2A",
+        "2B",
+        "3A",
+        "3B",
+        "4A",
+        "4B"
+      ]
+    },
+    {
+      "id": "TB4",
+      "kind": "TERMINAL4",
+      "terminals": [
+        "1A",
+        "1B",
+        "2A",
+        "2B",
+        "3A",
+        "3B",
+        "4A",
+        "4B"
+      ]
+    },
+    {
+      "id": "WATER",
+      "kind": "WATER_SENSOR",
+      "terminals": [
+        "E1",
+        "E2",
+        "E3"
+      ]
+    },
+    {
+      "id": "PB0",
+      "kind": "BUTTON4",
+      "terminals": [
+        "13",
+        "14",
+        "21",
+        "22"
+      ]
+    },
+    {
+      "id": "PB1",
+      "kind": "BUTTON4",
+      "terminals": [
+        "13",
+        "14",
+        "21",
+        "22"
+      ]
+    },
+    {
+      "id": "SS",
+      "kind": "SELECTOR",
+      "terminals": [
+        "M1",
+        "M2",
+        "A1",
+        "A2"
+      ]
+    },
+    {
+      "id": "RL",
+      "kind": "LAMP",
+      "terminals": [
+        "X1",
+        "X2"
+      ],
+      "params": {
+        "resistance": 9680,
+        "nominalVoltage": 220
+      }
+    },
+    {
+      "id": "GL",
+      "kind": "LAMP",
+      "terminals": [
+        "X1",
+        "X2"
+      ],
+      "params": {
+        "resistance": 9680,
+        "nominalVoltage": 220
+      }
+    },
+    {
+      "id": "YL",
+      "kind": "LAMP",
+      "terminals": [
+        "X1",
+        "X2"
+      ],
+      "params": {
+        "resistance": 9680,
+        "nominalVoltage": 220
+      }
+    },
+    {
+      "id": "BZ",
+      "kind": "BUZZER",
+      "terminals": [
+        "X1",
+        "X2"
+      ],
+      "params": {
+        "resistance": 9680,
+        "nominalVoltage": 220
+      }
+    }
+  ],
+  "wires": [
+    {
+      "id": "W1",
+      "from": {
+        "componentId": "SS",
+        "terminalId": "M1"
+      },
+      "to": {
+        "componentId": "TB5A",
+        "terminalId": "5A"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W2",
+      "from": {
+        "componentId": "SS",
+        "terminalId": "M2"
+      },
+      "to": {
+        "componentId": "TB5A",
+        "terminalId": "6A"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W3",
+      "from": {
+        "componentId": "SS",
+        "terminalId": "A1"
+      },
+      "to": {
+        "componentId": "TB5A",
+        "terminalId": "7A"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W4",
+      "from": {
+        "componentId": "SS",
+        "terminalId": "A2"
+      },
+      "to": {
+        "componentId": "TB5A",
+        "terminalId": "8A"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W5",
+      "from": {
+        "componentId": "PB0",
+        "terminalId": "21"
+      },
+      "to": {
+        "componentId": "TB5B",
+        "terminalId": "1A"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W6",
+      "from": {
+        "componentId": "PB0",
+        "terminalId": "22"
+      },
+      "to": {
+        "componentId": "TB5B",
+        "terminalId": "2A"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W7",
+      "from": {
+        "componentId": "PB1",
+        "terminalId": "13"
+      },
+      "to": {
+        "componentId": "TB5B",
+        "terminalId": "3A"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W8",
+      "from": {
+        "componentId": "PB1",
+        "terminalId": "14"
+      },
+      "to": {
+        "componentId": "TB5B",
+        "terminalId": "4A"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W9",
+      "from": {
+        "componentId": "RL",
+        "terminalId": "X1"
+      },
+      "to": {
+        "componentId": "TB6B",
+        "terminalId": "4A"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W10",
+      "from": {
+        "componentId": "RL",
+        "terminalId": "X2"
+      },
+      "to": {
+        "componentId": "TB6B",
+        "terminalId": "5A"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W11",
+      "from": {
+        "componentId": "GL",
+        "terminalId": "X1"
+      },
+      "to": {
+        "componentId": "TB6B",
+        "terminalId": "6A"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W12",
+      "from": {
+        "componentId": "GL",
+        "terminalId": "X2"
+      },
+      "to": {
+        "componentId": "TB6B",
+        "terminalId": "7A"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W13",
+      "from": {
+        "componentId": "YL",
+        "terminalId": "X1"
+      },
+      "to": {
+        "componentId": "TB5B",
+        "terminalId": "5A"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W14",
+      "from": {
+        "componentId": "YL",
+        "terminalId": "X2"
+      },
+      "to": {
+        "componentId": "TB5B",
+        "terminalId": "6A"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W15",
+      "from": {
+        "componentId": "BZ",
+        "terminalId": "X1"
+      },
+      "to": {
+        "componentId": "TB5B",
+        "terminalId": "7A"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W16",
+      "from": {
+        "componentId": "BZ",
+        "terminalId": "X2"
+      },
+      "to": {
+        "componentId": "TB5B",
+        "terminalId": "8A"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W17",
+      "from": {
+        "componentId": "PS1",
+        "terminalId": "L1"
+      },
+      "to": {
+        "componentId": "TB1",
+        "terminalId": "1A"
+      },
+      "color": "brown",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W18",
+      "from": {
+        "componentId": "TB1",
+        "terminalId": "1B"
+      },
+      "to": {
+        "componentId": "TB5A",
+        "terminalId": "1A"
+      },
+      "color": "brown",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W19",
+      "from": {
+        "componentId": "TB5A",
+        "terminalId": "1B"
+      },
+      "to": {
+        "componentId": "MCCB",
+        "terminalId": "1"
+      },
+      "color": "brown",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W20",
+      "from": {
+        "componentId": "MCCB",
+        "terminalId": "2"
+      },
+      "to": {
+        "componentId": "EOCR",
+        "terminalId": "1"
+      },
+      "color": "brown",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W21",
+      "from": {
+        "componentId": "EOCR",
+        "terminalId": "1"
+      },
+      "to": {
+        "componentId": "F",
+        "terminalId": "1"
+      },
+      "color": "brown",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W22",
+      "from": {
+        "componentId": "EOCR",
+        "terminalId": "7"
+      },
+      "to": {
+        "componentId": "MC1",
+        "terminalId": "1"
+      },
+      "color": "brown",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W23",
+      "from": {
+        "componentId": "MC1",
+        "terminalId": "1"
+      },
+      "to": {
+        "componentId": "MC2",
+        "terminalId": "1"
+      },
+      "color": "brown",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W24",
+      "from": {
+        "componentId": "MC1",
+        "terminalId": "7"
+      },
+      "to": {
+        "componentId": "TB6A",
+        "terminalId": "1B"
+      },
+      "color": "brown",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W25",
+      "from": {
+        "componentId": "TB6A",
+        "terminalId": "1A"
+      },
+      "to": {
+        "componentId": "TB2",
+        "terminalId": "1A"
+      },
+      "color": "brown",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W26",
+      "from": {
+        "componentId": "MC2",
+        "terminalId": "7"
+      },
+      "to": {
+        "componentId": "TB6A",
+        "terminalId": "5B"
+      },
+      "color": "brown",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W27",
+      "from": {
+        "componentId": "TB6A",
+        "terminalId": "5A"
+      },
+      "to": {
+        "componentId": "TB3",
+        "terminalId": "1A"
+      },
+      "color": "brown",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W28",
+      "from": {
+        "componentId": "PS1",
+        "terminalId": "L2"
+      },
+      "to": {
+        "componentId": "TB1",
+        "terminalId": "2A"
+      },
+      "color": "black",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W29",
+      "from": {
+        "componentId": "TB1",
+        "terminalId": "2B"
+      },
+      "to": {
+        "componentId": "TB5A",
+        "terminalId": "2A"
+      },
+      "color": "black",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W30",
+      "from": {
+        "componentId": "TB5A",
+        "terminalId": "2B"
+      },
+      "to": {
+        "componentId": "MCCB",
+        "terminalId": "3"
+      },
+      "color": "black",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W31",
+      "from": {
+        "componentId": "MCCB",
+        "terminalId": "4"
+      },
+      "to": {
+        "componentId": "EOCR",
+        "terminalId": "2"
+      },
+      "color": "black",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W32",
+      "from": {
+        "componentId": "EOCR",
+        "terminalId": "8"
+      },
+      "to": {
+        "componentId": "MC1",
+        "terminalId": "2"
+      },
+      "color": "black",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W33",
+      "from": {
+        "componentId": "MC1",
+        "terminalId": "2"
+      },
+      "to": {
+        "componentId": "MC2",
+        "terminalId": "2"
+      },
+      "color": "black",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W34",
+      "from": {
+        "componentId": "MC1",
+        "terminalId": "8"
+      },
+      "to": {
+        "componentId": "TB6A",
+        "terminalId": "2B"
+      },
+      "color": "black",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W35",
+      "from": {
+        "componentId": "TB6A",
+        "terminalId": "2A"
+      },
+      "to": {
+        "componentId": "TB2",
+        "terminalId": "2A"
+      },
+      "color": "black",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W36",
+      "from": {
+        "componentId": "MC2",
+        "terminalId": "8"
+      },
+      "to": {
+        "componentId": "TB6A",
+        "terminalId": "6B"
+      },
+      "color": "black",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W37",
+      "from": {
+        "componentId": "TB6A",
+        "terminalId": "6A"
+      },
+      "to": {
+        "componentId": "TB3",
+        "terminalId": "2A"
+      },
+      "color": "black",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W38",
+      "from": {
+        "componentId": "PS1",
+        "terminalId": "L3"
+      },
+      "to": {
+        "componentId": "TB1",
+        "terminalId": "3A"
+      },
+      "color": "gray",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W39",
+      "from": {
+        "componentId": "TB1",
+        "terminalId": "3B"
+      },
+      "to": {
+        "componentId": "TB5A",
+        "terminalId": "3A"
+      },
+      "color": "gray",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W40",
+      "from": {
+        "componentId": "TB5A",
+        "terminalId": "3B"
+      },
+      "to": {
+        "componentId": "MCCB",
+        "terminalId": "5"
+      },
+      "color": "gray",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W41",
+      "from": {
+        "componentId": "MCCB",
+        "terminalId": "6"
+      },
+      "to": {
+        "componentId": "EOCR",
+        "terminalId": "3"
+      },
+      "color": "gray",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W42",
+      "from": {
+        "componentId": "EOCR",
+        "terminalId": "3"
+      },
+      "to": {
+        "componentId": "F",
+        "terminalId": "3"
+      },
+      "color": "gray",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W43",
+      "from": {
+        "componentId": "EOCR",
+        "terminalId": "9"
+      },
+      "to": {
+        "componentId": "MC1",
+        "terminalId": "3"
+      },
+      "color": "gray",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W44",
+      "from": {
+        "componentId": "MC1",
+        "terminalId": "3"
+      },
+      "to": {
+        "componentId": "MC2",
+        "terminalId": "3"
+      },
+      "color": "gray",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W45",
+      "from": {
+        "componentId": "MC1",
+        "terminalId": "9"
+      },
+      "to": {
+        "componentId": "TB6A",
+        "terminalId": "3B"
+      },
+      "color": "gray",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W46",
+      "from": {
+        "componentId": "TB6A",
+        "terminalId": "3A"
+      },
+      "to": {
+        "componentId": "TB2",
+        "terminalId": "3A"
+      },
+      "color": "gray",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W47",
+      "from": {
+        "componentId": "MC2",
+        "terminalId": "9"
+      },
+      "to": {
+        "componentId": "TB6A",
+        "terminalId": "7B"
+      },
+      "color": "gray",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W48",
+      "from": {
+        "componentId": "TB6A",
+        "terminalId": "7A"
+      },
+      "to": {
+        "componentId": "TB3",
+        "terminalId": "3A"
+      },
+      "color": "gray",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W49",
+      "from": {
+        "componentId": "PS1",
+        "terminalId": "PE"
+      },
+      "to": {
+        "componentId": "TB1",
+        "terminalId": "4A"
+      },
+      "color": "greenYellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W50",
+      "from": {
+        "componentId": "TB1",
+        "terminalId": "4B"
+      },
+      "to": {
+        "componentId": "TB5A",
+        "terminalId": "4A"
+      },
+      "color": "greenYellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W51",
+      "from": {
+        "componentId": "TB5A",
+        "terminalId": "4B"
+      },
+      "to": {
+        "componentId": "TB6A",
+        "terminalId": "4B"
+      },
+      "color": "greenYellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W52",
+      "from": {
+        "componentId": "TB6A",
+        "terminalId": "4B"
+      },
+      "to": {
+        "componentId": "TB6A",
+        "terminalId": "8B"
+      },
+      "color": "greenYellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W53",
+      "from": {
+        "componentId": "TB6A",
+        "terminalId": "8B"
+      },
+      "to": {
+        "componentId": "FLS",
+        "terminalId": "1"
+      },
+      "color": "greenYellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W54",
+      "from": {
+        "componentId": "TB6A",
+        "terminalId": "4A"
+      },
+      "to": {
+        "componentId": "TB2",
+        "terminalId": "4A"
+      },
+      "color": "greenYellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W55",
+      "from": {
+        "componentId": "TB6A",
+        "terminalId": "8A"
+      },
+      "to": {
+        "componentId": "TB3",
+        "terminalId": "4A"
+      },
+      "color": "greenYellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W56",
+      "from": {
+        "componentId": "F",
+        "terminalId": "2"
+      },
+      "to": {
+        "componentId": "EOCR",
+        "terminalId": "6"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W57",
+      "from": {
+        "componentId": "EOCR",
+        "terminalId": "6"
+      },
+      "to": {
+        "componentId": "EOCR",
+        "terminalId": "10"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W58",
+      "from": {
+        "componentId": "EOCR",
+        "terminalId": "4"
+      },
+      "to": {
+        "componentId": "TB5A",
+        "terminalId": "5B"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W59",
+      "from": {
+        "componentId": "TB5A",
+        "terminalId": "5B"
+      },
+      "to": {
+        "componentId": "TB5A",
+        "terminalId": "7B"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W60",
+      "from": {
+        "componentId": "TB5A",
+        "terminalId": "7B"
+      },
+      "to": {
+        "componentId": "X",
+        "terminalId": "1"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W61",
+      "from": {
+        "componentId": "X",
+        "terminalId": "1"
+      },
+      "to": {
+        "componentId": "MC1",
+        "terminalId": "4"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W62",
+      "from": {
+        "componentId": "MC1",
+        "terminalId": "4"
+      },
+      "to": {
+        "componentId": "MC2",
+        "terminalId": "4"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W63",
+      "from": {
+        "componentId": "TB5A",
+        "terminalId": "8B"
+      },
+      "to": {
+        "componentId": "FLS",
+        "terminalId": "5"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W64",
+      "from": {
+        "componentId": "FLS",
+        "terminalId": "5"
+      },
+      "to": {
+        "componentId": "FLS",
+        "terminalId": "4"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W65",
+      "from": {
+        "componentId": "FLS",
+        "terminalId": "3"
+      },
+      "to": {
+        "componentId": "X",
+        "terminalId": "2"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W66",
+      "from": {
+        "componentId": "TB5A",
+        "terminalId": "6B"
+      },
+      "to": {
+        "componentId": "TB5B",
+        "terminalId": "1B"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W67",
+      "from": {
+        "componentId": "TB5B",
+        "terminalId": "2B"
+      },
+      "to": {
+        "componentId": "TB5B",
+        "terminalId": "3B"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W68",
+      "from": {
+        "componentId": "TB5B",
+        "terminalId": "3B"
+      },
+      "to": {
+        "componentId": "T",
+        "terminalId": "1"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W69",
+      "from": {
+        "componentId": "TB5B",
+        "terminalId": "4B"
+      },
+      "to": {
+        "componentId": "T",
+        "terminalId": "3"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W70",
+      "from": {
+        "componentId": "T",
+        "terminalId": "3"
+      },
+      "to": {
+        "componentId": "X",
+        "terminalId": "8"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W71",
+      "from": {
+        "componentId": "X",
+        "terminalId": "8"
+      },
+      "to": {
+        "componentId": "MC1",
+        "terminalId": "6"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W72",
+      "from": {
+        "componentId": "MC1",
+        "terminalId": "6"
+      },
+      "to": {
+        "componentId": "T",
+        "terminalId": "8"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W73",
+      "from": {
+        "componentId": "T",
+        "terminalId": "8"
+      },
+      "to": {
+        "componentId": "X",
+        "terminalId": "3"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W74",
+      "from": {
+        "componentId": "X",
+        "terminalId": "5"
+      },
+      "to": {
+        "componentId": "T",
+        "terminalId": "2"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W75",
+      "from": {
+        "componentId": "T",
+        "terminalId": "6"
+      },
+      "to": {
+        "componentId": "MC2",
+        "terminalId": "6"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W76",
+      "from": {
+        "componentId": "MC1",
+        "terminalId": "10"
+      },
+      "to": {
+        "componentId": "TB6B",
+        "terminalId": "4B"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W77",
+      "from": {
+        "componentId": "MC2",
+        "terminalId": "10"
+      },
+      "to": {
+        "componentId": "TB6B",
+        "terminalId": "6B"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W78",
+      "from": {
+        "componentId": "EOCR",
+        "terminalId": "5"
+      },
+      "to": {
+        "componentId": "FR",
+        "terminalId": "2"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W79",
+      "from": {
+        "componentId": "FR",
+        "terminalId": "2"
+      },
+      "to": {
+        "componentId": "FR",
+        "terminalId": "8"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W80",
+      "from": {
+        "componentId": "FR",
+        "terminalId": "6"
+      },
+      "to": {
+        "componentId": "TB5B",
+        "terminalId": "5B"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W81",
+      "from": {
+        "componentId": "FR",
+        "terminalId": "5"
+      },
+      "to": {
+        "componentId": "TB5B",
+        "terminalId": "7B"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W82",
+      "from": {
+        "componentId": "F",
+        "terminalId": "4"
+      },
+      "to": {
+        "componentId": "EOCR",
+        "terminalId": "12"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W83",
+      "from": {
+        "componentId": "EOCR",
+        "terminalId": "12"
+      },
+      "to": {
+        "componentId": "FLS",
+        "terminalId": "6"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W84",
+      "from": {
+        "componentId": "FLS",
+        "terminalId": "6"
+      },
+      "to": {
+        "componentId": "X",
+        "terminalId": "7"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W85",
+      "from": {
+        "componentId": "X",
+        "terminalId": "7"
+      },
+      "to": {
+        "componentId": "T",
+        "terminalId": "7"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W86",
+      "from": {
+        "componentId": "T",
+        "terminalId": "7"
+      },
+      "to": {
+        "componentId": "MC1",
+        "terminalId": "12"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W87",
+      "from": {
+        "componentId": "MC1",
+        "terminalId": "12"
+      },
+      "to": {
+        "componentId": "MC2",
+        "terminalId": "12"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W88",
+      "from": {
+        "componentId": "MC2",
+        "terminalId": "12"
+      },
+      "to": {
+        "componentId": "FR",
+        "terminalId": "7"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W89",
+      "from": {
+        "componentId": "FR",
+        "terminalId": "7"
+      },
+      "to": {
+        "componentId": "TB6B",
+        "terminalId": "5B"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W90",
+      "from": {
+        "componentId": "TB6B",
+        "terminalId": "5B"
+      },
+      "to": {
+        "componentId": "TB6B",
+        "terminalId": "7B"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W91",
+      "from": {
+        "componentId": "TB6B",
+        "terminalId": "7B"
+      },
+      "to": {
+        "componentId": "TB5B",
+        "terminalId": "6B"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W92",
+      "from": {
+        "componentId": "TB5B",
+        "terminalId": "6B"
+      },
+      "to": {
+        "componentId": "TB5B",
+        "terminalId": "8B"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W93",
+      "from": {
+        "componentId": "FLS",
+        "terminalId": "7"
+      },
+      "to": {
+        "componentId": "TB6B",
+        "terminalId": "1B"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W94",
+      "from": {
+        "componentId": "TB6B",
+        "terminalId": "1A"
+      },
+      "to": {
+        "componentId": "TB4",
+        "terminalId": "1A"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W95",
+      "from": {
+        "componentId": "TB4",
+        "terminalId": "1B"
+      },
+      "to": {
+        "componentId": "WATER",
+        "terminalId": "E1"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W96",
+      "from": {
+        "componentId": "FLS",
+        "terminalId": "8"
+      },
+      "to": {
+        "componentId": "TB6B",
+        "terminalId": "2B"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W97",
+      "from": {
+        "componentId": "TB6B",
+        "terminalId": "2A"
+      },
+      "to": {
+        "componentId": "TB4",
+        "terminalId": "2A"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W98",
+      "from": {
+        "componentId": "TB4",
+        "terminalId": "2B"
+      },
+      "to": {
+        "componentId": "WATER",
+        "terminalId": "E2"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W99",
+      "from": {
+        "componentId": "FLS",
+        "terminalId": "1"
+      },
+      "to": {
+        "componentId": "TB6B",
+        "terminalId": "3B"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W100",
+      "from": {
+        "componentId": "TB6B",
+        "terminalId": "3A"
+      },
+      "to": {
+        "componentId": "TB4",
+        "terminalId": "3A"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    },
+    {
+      "id": "W101",
+      "from": {
+        "componentId": "TB4",
+        "terminalId": "3B"
+      },
+      "to": {
+        "componentId": "WATER",
+        "terminalId": "E3"
+      },
+      "color": "yellow",
+      "route": "orthogonal"
+    }
+  ],
+  "ui": {
+    "positions": {
+      "PS1": {
+        "x": 40,
+        "y": 30
+      },
+      "TB1": {
+        "x": 300,
+        "y": 30
+      },
+      "TB5A": {
+        "x": 300,
+        "y": 210
+      },
+      "TB5B": {
+        "x": 780,
+        "y": 210
+      },
+      "F": {
+        "x": 280,
+        "y": 420
+      },
+      "EOCR": {
+        "x": 460,
+        "y": 420
+      },
+      "MCCB": {
+        "x": 680,
+        "y": 420
+      },
+      "X": {
+        "x": 900,
+        "y": 420
+      },
+      "FR": {
+        "x": 1120,
+        "y": 420
+      },
+      "T": {
+        "x": 320,
+        "y": 710
+      },
+      "FLS": {
+        "x": 580,
+        "y": 710
+      },
+      "MC1": {
+        "x": 840,
+        "y": 710
+      },
+      "MC2": {
+        "x": 1100,
+        "y": 710
+      },
+      "TB6A": {
+        "x": 300,
+        "y": 1000
+      },
+      "TB6B": {
+        "x": 780,
+        "y": 1000
+      },
+      "TB2": {
+        "x": 300,
+        "y": 1200
+      },
+      "TB3": {
+        "x": 560,
+        "y": 1200
+      },
+      "TB4": {
+        "x": 840,
+        "y": 1200
+      },
+      "WATER": {
+        "x": 1110,
+        "y": 1200
+      },
+      "PB0": {
+        "x": 40,
+        "y": 420
+      },
+      "PB1": {
+        "x": 40,
+        "y": 620
+      },
+      "SS": {
+        "x": 40,
+        "y": 820
+      },
+      "RL": {
+        "x": 300,
+        "y": 1400
+      },
+      "GL": {
+        "x": 560,
+        "y": 1400
+      },
+      "YL": {
+        "x": 840,
+        "y": 1400
+      },
+      "BZ": {
+        "x": 1100,
+        "y": 1400
+      }
+    }
+  }
+}

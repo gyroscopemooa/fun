@@ -1,0 +1,12 @@
+{
+  "browser": "126.0.2592.102",
+  "hydratedAfterNavigationMs": 637,
+  "domContentLoadedMs": 206.59999999962747,
+  "loadMs": 288.30000000074506,
+  "responseEndMs": 23.59999999962747,
+  "viewport": {
+    "width": 1600,
+    "height": 1100
+  },
+  "productionPreview": true
+}

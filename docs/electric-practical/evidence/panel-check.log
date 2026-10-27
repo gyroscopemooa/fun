@@ -1,0 +1,76 @@
+
+> funhub@0.0.1 check:electric
+> npm run typecheck:electric && npm run lint:electric && npm run test:electric
+
+
+> funhub@0.0.1 typecheck:electric
+> tsc -p tsconfig.electric.json
+
+
+> funhub@0.0.1 lint:electric
+> eslint --config eslint.electric.config.mjs src/features/electric-practical scripts/create-electric-fixtures.ts scripts/electric-demo.ts playwright.electric.config.ts
+
+
+> funhub@0.0.1 test:electric
+> node --test src/features/electric-practical/tests/engine.test.ts src/features/electric-practical/tests/editor.test.ts
+
+✔ build working circuit from an empty board using only terminal connections (11.6989ms)
+✔ wire removal changes behavior and undo restores actual topology (3.8902ms)
+✔ duplicate and self connections do not mutate topology (0.1772ms)
+✔ geometry changes and grid snapping cannot change grading (4.9808ms)
+✔ history is bounded and edits invalidate redo (4.067ms)
+✔ four 10P strips provide 40 isolated poles, each with two electrically common screws (0.8645ms)
+✔ terminal-block self hold passes all scenarios and repeats deterministically 100 times (278.4365ms)
+✔ moving a supply wire to the adjacent isolated pole opens the actual circuit (2.6551ms)
+✔ terminal-block bridge between L and N detects real short and latches protection (0.8251ms)
+✔ waypoints and wire colors survive undo/redo and JSON without changing circuit calculations (5.2788ms)
+✔ malformed waypoint and color imports are rejected; existing schema-1 files remain valid (2.2118ms)
+✔ fixture 01-correct (9.0454ms)
+✔ fixture 02-no-hold (1.7734ms)
+✔ fixture 03-stop-missing (3.2204ms)
+✔ fixture 04-wrong-coil-link (0.2207ms)
+✔ fixture 05-nc-instead-of-no (1.7727ms)
+✔ fixture 06-lamp-same-potential (1.5834ms)
+✔ fixture 07-direct-short (1.6533ms)
+✔ fixture 08-coil-a1-open (1.6184ms)
+✔ fixture 09-branch-open (1.1204ms)
+✔ fixture 10-crossing-without-junction (1.4251ms)
+✔ fixture 11-stop-bypassed-by-hold (1.2308ms)
+✔ fixture 12-power-loss-reset (2.5168ms)
+✔ fixture 13-rapid-input-order (2.3292ms)
+✔ fixture 14-save-load-roundtrip (2.139ms)
+✔ fixture 15-equivalent-layout (1.538ms)
+✔ fixture 16-no-return (1.9701ms)
+✔ fixture 17-lamp-always-on (2.1425ms)
+✔ fixture 18-reversed-coil (2.2249ms)
+✔ fixture 19-overcurrent (1.7747ms)
+✔ fixture 20-fuse-bypass (2.7786ms)
+✔ fixture 21-invalid-terminal (0.2645ms)
+✔ fixture 22-loads-in-series (1.6432ms)
+✔ fixture 23-equivalent-extra-junction (1.5081ms)
+✔ fixture 24-protected-short (1.4878ms)
+✔ fixture 25-no-instead-of-stop-nc (1.9036ms)
+✔ fixture 26-stop-on-return-side (1.4386ms)
+✔ fixture 27-fuse-on-return-side (1.5157ms)
+✔ self hold actual output: off → start → held → stop → off (1.8232ms)
+✔ 100 identical executions of EVERY fixture are deterministic (1977.9954ms)
+✔ power loss clears coil memory, contacts and current paths (0.965ms)
+✔ rapid sequential and simultaneous input respects STOP (38.0429ms)
+✔ serialization roundtrip preserves each correct AND wrong circuit behavior (46.1088ms)
+✔ equivalent geometry/order and true rewiring have same electrical outputs (2.8348ms)
+✔ short trips and stays latched; loads never energize on that step (0.2937ms)
+✔ series loads are solved, not treated as parallel or ideal wires (0.1973ms)
+✔ an added parallel load changes real supply current and trips fuse (0.6631ms)
+✔ dangling wire receives no fabricated current highlight (0.389ms)
+✔ duplicate wire is identified without doubling current (0.3965ms)
+✔ malformed/oversized imports fail closed; contact mistakes remain editable (0.8144ms)
+✔ engine never mutates document or previous state (0.4004ms)
+✔ wire/component ID collisions cannot mask fuse or current-path edges (0.3634ms)
+ℹ tests 52
+ℹ suites 0
+ℹ pass 52
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2386.062

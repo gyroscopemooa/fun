@@ -1,0 +1,257 @@
+{
+  "model": "24 V virtual DC control circuit",
+  "passed": true,
+  "steps": [
+    {
+      "name": "초기 정지",
+      "input": {
+        "pressedButtons": [],
+        "elapsedMs": 0
+      },
+      "expectedOn": false,
+      "passed": true,
+      "energized": {
+        "MC1": false,
+        "PL1": false
+      },
+      "contactsClosed": {
+        "F1": true,
+        "STOP": true,
+        "START": false,
+        "MC1_NO": false
+      },
+      "currentAmps": 0,
+      "loadVoltages": {
+        "MC1": 0,
+        "PL1": 0
+      },
+      "stable": true,
+      "iterations": 1,
+      "faults": []
+    },
+    {
+      "name": "START 누름",
+      "input": {
+        "pressedButtons": [
+          "START"
+        ],
+        "elapsedMs": 10
+      },
+      "expectedOn": true,
+      "passed": true,
+      "energized": {
+        "MC1": true,
+        "PL1": true
+      },
+      "contactsClosed": {
+        "F1": true,
+        "STOP": true,
+        "START": true,
+        "MC1_NO": true
+      },
+      "currentAmps": 0.15000000000000002,
+      "loadVoltages": {
+        "MC1": 24,
+        "PL1": 24
+      },
+      "stable": true,
+      "iterations": 2,
+      "faults": []
+    },
+    {
+      "name": "START 해제·자기유지",
+      "input": {
+        "pressedButtons": [],
+        "elapsedMs": 10
+      },
+      "expectedOn": true,
+      "passed": true,
+      "energized": {
+        "MC1": true,
+        "PL1": true
+      },
+      "contactsClosed": {
+        "F1": true,
+        "STOP": true,
+        "START": false,
+        "MC1_NO": true
+      },
+      "currentAmps": 0.15000000000000002,
+      "loadVoltages": {
+        "MC1": 24,
+        "PL1": 24
+      },
+      "stable": true,
+      "iterations": 1,
+      "faults": []
+    },
+    {
+      "name": "STOP 누름",
+      "input": {
+        "pressedButtons": [
+          "STOP"
+        ],
+        "elapsedMs": 10
+      },
+      "expectedOn": false,
+      "passed": true,
+      "energized": {
+        "MC1": false,
+        "PL1": false
+      },
+      "contactsClosed": {
+        "F1": true,
+        "STOP": false,
+        "START": false,
+        "MC1_NO": false
+      },
+      "currentAmps": 0,
+      "loadVoltages": {
+        "MC1": 0,
+        "PL1": 0
+      },
+      "stable": true,
+      "iterations": 2,
+      "faults": []
+    },
+    {
+      "name": "STOP 해제",
+      "input": {
+        "pressedButtons": [],
+        "elapsedMs": 10
+      },
+      "expectedOn": false,
+      "passed": true,
+      "energized": {
+        "MC1": false,
+        "PL1": false
+      },
+      "contactsClosed": {
+        "F1": true,
+        "STOP": true,
+        "START": false,
+        "MC1_NO": false
+      },
+      "currentAmps": 0,
+      "loadVoltages": {
+        "MC1": 0,
+        "PL1": 0
+      },
+      "stable": true,
+      "iterations": 1,
+      "faults": []
+    },
+    {
+      "name": "재시작",
+      "input": {
+        "pressedButtons": [
+          "START"
+        ],
+        "elapsedMs": 10
+      },
+      "expectedOn": true,
+      "passed": true,
+      "energized": {
+        "MC1": true,
+        "PL1": true
+      },
+      "contactsClosed": {
+        "F1": true,
+        "STOP": true,
+        "START": true,
+        "MC1_NO": true
+      },
+      "currentAmps": 0.15000000000000002,
+      "loadVoltages": {
+        "MC1": 24,
+        "PL1": 24
+      },
+      "stable": true,
+      "iterations": 2,
+      "faults": []
+    },
+    {
+      "name": "전원 차단",
+      "input": {
+        "pressedButtons": [],
+        "elapsedMs": 10,
+        "powerOn": false
+      },
+      "expectedOn": false,
+      "passed": true,
+      "energized": {
+        "MC1": false,
+        "PL1": false
+      },
+      "contactsClosed": {
+        "F1": true,
+        "STOP": true,
+        "START": false,
+        "MC1_NO": false
+      },
+      "currentAmps": 0,
+      "loadVoltages": {},
+      "stable": true,
+      "iterations": 0,
+      "faults": []
+    },
+    {
+      "name": "전원 복구",
+      "input": {
+        "pressedButtons": [],
+        "elapsedMs": 10,
+        "powerOn": true
+      },
+      "expectedOn": false,
+      "passed": true,
+      "energized": {
+        "MC1": false,
+        "PL1": false
+      },
+      "contactsClosed": {
+        "F1": true,
+        "STOP": true,
+        "START": false,
+        "MC1_NO": false
+      },
+      "currentAmps": 0,
+      "loadVoltages": {
+        "MC1": 0,
+        "PL1": 0
+      },
+      "stable": true,
+      "iterations": 1,
+      "faults": []
+    },
+    {
+      "name": "START·STOP 동시 누름",
+      "input": {
+        "pressedButtons": [
+          "START",
+          "STOP"
+        ],
+        "elapsedMs": 1
+      },
+      "expectedOn": false,
+      "passed": true,
+      "energized": {
+        "MC1": false,
+        "PL1": false
+      },
+      "contactsClosed": {
+        "F1": true,
+        "STOP": false,
+        "START": true,
+        "MC1_NO": false
+      },
+      "currentAmps": 0,
+      "loadVoltages": {
+        "MC1": 0,
+        "PL1": 0
+      },
+      "stable": true,
+      "iterations": 1,
+      "faults": []
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+
+> funhub@0.0.1 e2e:electric
+> playwright test --config playwright.electric.config.ts
+
+[WebServer] (node:43372) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:42012) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 12 tests using 1 worker
+
+(node:45912) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:45912) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 [desktop] › src\features\electric-practical\tests\ui.spec.ts:52:1 › mouse wire from empty → real START/hold/STOP → nine-step passing grade (7.3s)
+  ok  2 [desktop] › src\features\electric-practical\tests\ui.spec.ts:100:1 › missing hold wire fails after START release; mouse repair passes (5.6s)
+  ok  3 [desktop] › src\features\electric-practical\tests\ui.spec.ts:116:1 › mouse-wired L–N short trips; wire deletion and undo/redo alter diagnosis (2.6s)
+  ok  4 [desktop] › src\features\electric-practical\tests\ui.spec.ts:146:1 › local save/reload and JSON roundtrip preserve behavior; corrupt import keeps work (5.1s)
+  ok  5 [desktop] › src\features\electric-practical\tests\ui.spec.ts:190:1 › keyboard connect, snapped move, reroute and contact-property fault are functional (2.0s)
+  ok  6 [desktop] › src\features\electric-practical\tests\ui.spec.ts:269:3 › mobile touch emulation › mobile read mode can operate and inspect a real loaded circuit (1.4s)
+  x   7 [desktop] › src\features\electric-practical\tests\ui.spec.ts:296:1 › ManyTool entry, return and existing personal-color smoke regression (1.5m)
+(node:30896) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:30896) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  8 [desktop] › src\features\electric-practical\tests\ui.spec.ts:322:1 › English browser stays on the available Korean tool route without a 404 redirect (1.3s)
+  ok  9 [desktop] › src\features\electric-practical\tests\ui.spec.ts:342:1 › default panel exposes all 80 screws; click corners, recolor, move bend and save actual wiring (2.5s)
+  ok 10 [desktop] › src\features\electric-practical\tests\ui.spec.ts:421:1 › terminal-block example holds, releases, preserves wire color and detects a bridged short (2.2s)
+  ok 11 [desktop] › src\features\electric-practical\tests\ui.spec.ts:454:1 › public 1 complete example operates manual timer, automatic water and EOCR flicker through actual pins (6.8s)
+  ok 12 [desktop] › src\features\electric-practical\tests\ui.spec.ts:521:1 › public 1 real wire break fails; repair, JSON restore and timing configuration work (3.1s)
+
+
+  1) [desktop] › src\features\electric-practical\tests\ui.spec.ts:296:1 › ManyTool entry, return and existing personal-color smoke regression 
+
+    [31mTest timeout of 90000ms exceeded.[39m
+
+    Error: locator.fill: Test timeout of 90000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('#tool-search')[22m
+
+
+      120 | });
+      121 | test('ManyTool entry, return and existing personal-color smoke regression', async ({ page }) => {
+    > 122 |   await page.goto('/'); await page.locator('#tool-search').fill('전기기능사');
+          |                                                            ^
+      123 |   await page.locator('[data-card][data-fav-key="/tools/electric-practical"]:visible').first().click();
+      124 |   await expect(page).toHaveURL(/\/tools\/electric-practical/); await expect(page.getByTestId('simulator-ready')).toHaveAttribute('data-hydrated', 'true');
+      125 |   await page.getByRole('link', { name: '← ManyTool 도구 모음', exact: true }).click(); await expect(page).toHaveURL(/\/tools\/?$/);
+        at C:\3.manytool\src\features\electric-practical\tests\ui.spec.ts:122:60
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\electric\ui-ManyTool-entry-return-a-cd885-onal-color-smoke-regression-desktop\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\electric\ui-ManyTool-entry-return-a-cd885-onal-color-smoke-regression-desktop\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\electric\ui-ManyTool-entry-return-a-cd885-onal-color-smoke-regression-desktop\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\electric\ui-ManyTool-entry-return-a-cd885-onal-color-smoke-regression-desktop\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [desktop] › src\features\electric-practical\tests\ui.spec.ts:296:1 › ManyTool entry, return and existing personal-color smoke regression 
+  11 passed (3.5m)
