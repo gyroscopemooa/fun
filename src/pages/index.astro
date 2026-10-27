@@ -245,7 +245,7 @@ const cards = cardSeed.map((card) => {
       : locale === 'ja'
         ? `${title}ツール`
         : `${title} tool`;
-  return { ...card, title, desc, href: localizedHrefOrOriginal(locale, card.href), disabled: card.disabled ?? false };
+  return { ...card, title, desc, href: localizedHrefOrOriginal(locale, card.href), disabled: (card.disabled ?? false) && !import.meta.env.DEV };
 });
 
 const rowCount = 5;

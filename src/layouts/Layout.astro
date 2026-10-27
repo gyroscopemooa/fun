@@ -252,7 +252,20 @@ const sidebarText = {
   ]
 };
 
-const disabledSidebarPaths = new Set(['/ai-id-photo', '/ai-passport-photo', '/ai-headshot']);
+// 증명사진 계열은 운영에서 비활성(준비 중). 로컬 개발 서버에서는 열어서 바로 확인할 수 있게 함
+if (import.meta.env.DEV) {
+  sidebarText.links.push(
+    {
+      href: localizedHrefOrOriginal(locale, '/ai-passport-photo'),
+      label: locale === 'ko' ? 'AI 여권사진 (로컬)' : locale === 'ja' ? 'AIパスポート写真 (ローカル)' : 'AI Passport Photo (local)'
+    },
+    {
+      href: localizedHrefOrOriginal(locale, '/ai-photoshop'),
+      label: locale === 'ko' ? 'AI 프로필사진 (로컬)' : locale === 'ja' ? 'AIプロフィール写真 (ローカル)' : 'AI Profile Photo (local)'
+    }
+  );
+}
+const disabledSidebarPaths = new Set(import.meta.env.DEV ? [] : ['/ai-id-photo', '/ai-passport-photo', '/ai-headshot']);
 // 기부하기: 운영에서는 PG 심사 전까지 숨기고, 로컬 개발 서버나 PUBLIC_SHOW_DONATE=true 일 때만 표시
 const showDonate = import.meta.env.DEV || import.meta.env.PUBLIC_SHOW_DONATE === 'true';
 const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.replace(/^\/(en|ja)(?=\/|$)/, '') || '/'));
