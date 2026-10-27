@@ -1,6 +1,7 @@
 // AI model-cut before/after samples shown on /ai-model-cut.
-// To add one: put the garment photo and the generated result in public/pic/model-cut/ (webp, ~800px wide)
+// To add one: put the garment photo and the generated result in public/pic/model-cut/ (webp, ~1000px wide)
 // and append an entry below. `useCase` picks which promo section it appears under.
+// (public/pic is gitignored, so commit new files with `git add -f`.)
 
 export type ModelCutUseCase = 'shop' | 'tryon';
 
@@ -16,6 +17,13 @@ const pic = (file: string) => `/pic/model-cut/${file}`;
 
 export const MODEL_CUT_SAMPLES: ModelCutSample[] = [
   {
+    garment: pic('sample-02-garment.webp'),
+    model: pic('sample-02-model.webp'),
+    useCase: 'shop',
+    label: '보아 플리스 재킷 · 커플 모델',
+    labelEn: 'Sherpa fleece jacket · couple models'
+  },
+  {
     garment: pic('sample-01-garment.webp'),
     model: pic('sample-01-model.webp'),
     useCase: 'shop',
@@ -23,8 +31,5 @@ export const MODEL_CUT_SAMPLES: ModelCutSample[] = [
     labelEn: 'Printed sweatshirt · male model'
   }
 ];
-
-/** Empty slots are rendered as "sample coming soon" cards until this many samples exist per use case. */
-export const MODEL_CUT_SLOTS_PER_USE_CASE = 3;
 
 export const modelCutSamplesFor = (useCase: ModelCutUseCase) => MODEL_CUT_SAMPLES.filter((sample) => sample.useCase === useCase);
