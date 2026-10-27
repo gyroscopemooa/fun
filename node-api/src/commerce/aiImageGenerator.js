@@ -2,7 +2,7 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import OpenAI, { toFile } from 'openai';
 
-const OPENAI_IMAGE_MODEL = process.env.OPENAI_IMAGE_MODEL?.trim() || 'gpt-image-1';
+const OPENAI_IMAGE_MODEL = process.env.OPENAI_IMAGE_MODEL?.trim() || 'gpt-image-2';
 const XAI_IMAGE_MODEL = process.env.XAI_IMAGE_MODEL?.trim() || 'grok-imagine-image';
 const OUTPUT_SIZE = '1024x1536';
 const MAX_USER_INPUT_LENGTH = 50;
@@ -405,7 +405,8 @@ const editWithOpenAi = async ({ imageBuffer, mimeType, fileName, prompt }) => {
     quality: 'medium',
     output_format: 'png',
     background: 'opaque',
-    input_fidelity: 'high'
+    // Only the gpt-image-1 family accepts input_fidelity; newer models reject it.
+    ...(/^gpt-image-1(\.|$|-)/.test(OPENAI_IMAGE_MODEL) ? { input_fidelity: 'high' } : {})
   });
   return decodeImageResult(response, 'OpenAI image edit');
 };

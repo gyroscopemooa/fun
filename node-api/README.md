@@ -49,6 +49,8 @@ npm run dev
 - `POLAR_WEBHOOK_SECRET=...` (권장, Standard Webhooks 서명 검증)
 - `POLAR_WEBHOOK_INSECURE_TOKEN=...` (임시 토큰 검증 fallback)
 - `FFMPEG_PATH=ffmpeg` (PATH에 없으면 절대경로 지정)
+- `OPENAI_IMAGE_MODEL=gpt-image-2` (AI 이미지 생성기 OpenAI 모델. `gpt-image-1`은 API에서 더 이상 지원되지 않음)
+- `XAI_API_KEY=...` (xAI 이미지 엔진. 사이트 기본 엔진이므로 유효한 키 필요)
 
 ## Example Flow
 1. `POST /upload` -> `photoId` 획득
