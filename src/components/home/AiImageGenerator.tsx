@@ -8,7 +8,7 @@ import 'swiper/css/pagination';
 import { sampleThumb, samplesForMode } from '@/lib/ai-image-samples';
 import { AiSampleGallery } from './AiSampleGallery';
 
-export type AiImageMode = 'figure' | 'body' | 'travel' | 'europe' | 'proofshot' | 'kakao' | 'instagram' | 'hanbok' | 'kimono' | 'outfit' | 'streamer' | 'pethuman' | 'hairstyle' | 'interior' | 'animation' | 'free';
+export type AiImageMode = 'figure' | 'body' | 'travel' | 'europe' | 'proofshot' | 'kakao' | 'instagram' | 'hanbok' | 'kimono' | 'outfit' | 'streamer' | 'pethuman' | 'hairstyle' | 'interior' | 'animation' | 'modelcut' | 'free';
 type Mode = AiImageMode;
 type Provider = 'openai' | 'xai';
 type GenerationPhase = 'idle' | 'payment' | 'generating' | 'done' | 'error';
@@ -89,7 +89,7 @@ type SavedDraft = {
 
 const DEFAULT_PROVIDER: Provider = 'xai';
 const ENGINE_LABEL = 'ManyTool AI';
-const MODE_ORDER: Mode[] = ['figure', 'body', 'travel', 'europe', 'proofshot', 'kakao', 'instagram', 'hanbok', 'kimono', 'outfit', 'streamer', 'pethuman', 'hairstyle', 'interior', 'animation', 'free'];
+const MODE_ORDER: Mode[] = ['figure', 'body', 'travel', 'europe', 'proofshot', 'kakao', 'instagram', 'hanbok', 'kimono', 'outfit', 'modelcut', 'streamer', 'pethuman', 'hairstyle', 'interior', 'animation', 'free'];
 
 const MODE_CONTENT: Record<Mode, ModeContent> = {
   figure: {
@@ -270,6 +270,18 @@ const MODE_CONTENT: Record<Mode, ModeContent> = {
     exampleGradient: 'from-violet-100 via-fuchsia-50 to-white',
     inputLabel: '추가 디테일',
     inputPlaceholder: '예: cinematic anime hero',
+    inputRequired: false
+  },
+  modelcut: {
+    tabLabel: 'AI 모델컷',
+    title: 'AI 모델컷 생성기',
+    buttonLabel: '모델컷 생성',
+    exampleTitle: '모델컷 예시',
+    exampleDescription: '옷 사진(바닥컷·행거컷·마네킹컷)만 올리면 AI 모델이 착용한 쇼핑몰 상세페이지용 모델컷을 만들어 줍니다.',
+    accentClass: 'from-stone-700 via-neutral-500 to-amber-200',
+    exampleGradient: 'from-stone-100 via-neutral-50 to-white',
+    inputLabel: '모델·배경 요청',
+    inputPlaceholder: '예: 20대 여성 모델, 야외 거리 배경',
     inputRequired: false
   },
   free: {
@@ -467,6 +479,18 @@ const EN_MODE_CONTENT: Record<Mode, ModeContent> = {
     inputPlaceholder: 'e.g. cinematic anime hero',
     inputRequired: false
   },
+  modelcut: {
+    tabLabel: 'AI Model Shot',
+    title: 'AI Fashion Model Shot Generator',
+    buttonLabel: 'Generate model shot',
+    exampleTitle: 'Model shot example',
+    exampleDescription: 'Upload a clothing photo (flat lay, hanger, or mannequin) and get a lookbook-style shot of an AI model wearing it.',
+    accentClass: 'from-stone-700 via-neutral-500 to-amber-200',
+    exampleGradient: 'from-stone-100 via-neutral-50 to-white',
+    inputLabel: 'Model & background',
+    inputPlaceholder: 'e.g. male model, outdoor street',
+    inputRequired: false
+  },
   free: {
     tabLabel: 'Free Style',
     title: 'AI Free Style Generator',
@@ -551,6 +575,7 @@ const buildExamplePlaceholder = (mode: Mode) => {
     hairstyle: { start: '#f43f5e', end: '#d946ef', label: 'HAIR SIMULATOR', badge: 'Style Preview' },
     interior: { start: '#0f766e', end: '#84cc16', label: 'INTERIOR DESIGN', badge: 'Room Mood' },
     animation: { start: '#8b5cf6', end: '#ec4899', label: 'ANIMATION STYLE', badge: 'Character Art' },
+    modelcut: { start: '#44403c', end: '#fcd34d', label: 'AI MODEL SHOT', badge: 'Lookbook' },
     free: { start: '#ec4899', end: '#fb923c', label: 'FREE STYLE', badge: 'Custom Style' }
   } as const;
   const palette = paletteMap[mode];
@@ -730,6 +755,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
     hairstyle: '',
     interior: '',
     animation: '',
+    modelcut: '',
     free: ''
   });
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
@@ -1277,7 +1303,9 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
                   </div>
                   <h3 className="text-xl font-bold text-slate-950">{generatorCopy.uploadPrompt}</h3>
                   <p className="mt-3 max-w-md text-sm leading-6 text-slate-500">
-                    얼굴이 잘 보이는 사진일수록 결과가 안정적입니다. 먼저 얼굴 품질을 보정하고 이후 최종 스타일을 적용합니다.
+                    {mode === 'modelcut'
+                      ? '옷 전체가 잘 보이는 바닥컷·행거컷·마네킹컷을 올려주세요. 색상·패턴·로고를 그대로 살려 AI 모델에게 입혀 드립니다.'
+                      : '얼굴이 잘 보이는 사진일수록 결과가 안정적입니다. 먼저 얼굴 품질을 보정하고 이후 최종 스타일을 적용합니다.'}
                   </p>
                   <button
                     type="button"

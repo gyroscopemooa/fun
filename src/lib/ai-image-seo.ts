@@ -459,6 +459,36 @@ const SPECS: ModeSpec[] = [
     }
   },
   {
+    mode: 'modelcut',
+    slug: 'model-cut',
+    ko: {
+      title: 'AI 모델컷 생성기 | 옷 사진으로 쇼핑몰 모델컷 만들기 | ManyTool',
+      desc: '옷 사진 한 장(바닥컷·행거컷·마네킹컷)으로 AI 모델이 착용한 쇼핑몰 상세페이지용 모델컷을 만드는 AI 모델컷 생성기입니다.',
+      keywords: 'AI 모델컷, AI 모델 착용샷, 쇼핑몰 모델컷, 옷 사진 모델 착용, 상세페이지 모델 사진, AI 룩북',
+      heading: 'AI 모델컷 생성기',
+      intro: '모델 섭외나 촬영 없이 옷 사진만으로 쇼핑몰·스마트스토어 상세페이지에 쓸 착용 이미지를 만들 수 있습니다.',
+      faqTitle: 'AI 모델컷 FAQ',
+      faq: [
+        { q: '어떤 옷 사진을 올리면 되나요?', a: '옷 전체가 잘 보이는 바닥컷, 행거컷, 마네킹컷이 가장 안정적입니다. 주름이 적고 밝은 사진일수록 좋습니다.' },
+        { q: '옷의 색상이나 로고가 바뀌지 않나요?', a: '색상·패턴·로고·디테일을 그대로 유지하도록 설계되어 있지만, 작은 글씨나 복잡한 프린트는 일부 달라질 수 있어 확인 후 사용하세요.' },
+        { q: '모델 성별이나 배경을 정할 수 있나요?', a: '네. "남성 모델, 야외 거리 배경"처럼 짧게 입력하면 반영됩니다. 비워두면 화이트 스튜디오 룩북 스타일로 생성됩니다.' }
+      ]
+    },
+    en: {
+      title: 'AI Model Shot Generator | Clothing Photo to Fashion Model | ManyTool',
+      desc: 'Turn a single clothing photo (flat lay, hanger, or mannequin) into an e-commerce lookbook shot of an AI model wearing it.',
+      keywords: 'AI model shot, AI fashion model generator, clothing on model AI, virtual model for e-commerce, AI lookbook, product photo to model',
+      heading: 'AI Model Shot Generator',
+      intro: 'Create on-model product images for your online store without booking a model or a photo shoot.',
+      faqTitle: 'AI Model Shot FAQ',
+      faq: [
+        { q: 'What kind of clothing photo works best?', a: 'A flat lay, hanger, or mannequin shot where the whole garment is clearly visible, well lit, and not heavily wrinkled.' },
+        { q: 'Will the color or logo change?', a: 'The mode is built to keep color, pattern, logos, and details, but small text or complex prints can drift, so review before publishing.' },
+        { q: 'Can I choose the model or background?', a: 'Yes. Add a short request like "male model, outdoor street". Leave it empty for a clean white studio lookbook.' }
+      ]
+    }
+  },
+  {
     mode: 'free',
     slug: 'free-style',
     ko: {

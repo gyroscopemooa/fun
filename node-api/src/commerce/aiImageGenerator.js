@@ -214,6 +214,27 @@ const MODE_PRESETS = {
       userInput ? `additional detail: ${userInput}` : null
     ].filter(Boolean).join(' ')
   },
+  modelcut: {
+    requiresUserInput: false,
+    // The upload is a garment (flat lay, hanger, mannequin, or product shot), not a person.
+    skipPortraitStage: true,
+    stageTwoPrompt: (userInput) => [
+      'Create a photorealistic e-commerce fashion model photo of a professional model wearing the clothing item shown in the uploaded image.',
+      'The uploaded image is a product photo of a garment (flat lay, hanger, mannequin, or product shot). It is NOT a person to preserve.',
+      'GARMENT FIDELITY (highest priority):',
+      'Reproduce the garment exactly: same color and shade, fabric texture, pattern, print, graphics, logos, text, stitching, buttons, zippers, pockets, collar, neckline, sleeve length, hem length, and silhouette.',
+      'Do not redesign, recolor, simplify, or add details to the garment. Do not mirror or move logos or prints.',
+      'Fit the garment naturally on the body with realistic drape, folds, and tension.',
+      'MODEL AND STYLING:',
+      'Use a single attractive, natural-looking adult Korean fashion model whose gender matches the garment unless specified below.',
+      'Style the rest of the outfit with simple neutral pieces that complement the garment without drawing attention away from it.',
+      'Natural confident lookbook pose, full body or three-quarter framing so the entire garment is clearly visible.',
+      'PHOTOGRAPHY:',
+      'Clean online shopping mall lookbook style, seamless light gray or soft white studio background, soft even studio lighting, sharp focus, high detail, true-to-life colors.',
+      'Realistic skin texture and accurate anatomy. No extra limbs, no distorted hands, no text overlays, no watermarks.',
+      userInput ? `additional styling request: ${userInput}` : null
+    ].filter(Boolean).join(' ')
+  },
   free: {
     requiresUserInput: true,
     stageTwoPrompt: (userInput) => [
@@ -455,7 +476,7 @@ const generateStageOnePortrait = async ({ provider, imageBuffer, mimeType, origi
   })
 );
 
-const generateStageTwoImage = async ({ provider, mode, portraitBuffer, userInput, retryCount = 1 }) => {
+const generateStageTwoImage = async ({ provider, mode, portraitBuffer, portraitMimeType = 'image/png', userInput, retryCount = 1 }) => {
   const prompt = buildStageTwoPrompt(mode, userInput, provider);
   const fallbackPrompt = mode === 'body' ? buildBodySafetyFallbackPrompt(userInput) : null;
   let lastError = null;
@@ -473,8 +494,8 @@ const generateStageTwoImage = async ({ provider, mode, portraitBuffer, userInput
       const result = await editImage({
         provider,
         imageBuffer: portraitBuffer,
-        mimeType: 'image/png',
-        fileName: `portrait-${mode}-stage-two.png`,
+        mimeType: portraitMimeType,
+        fileName: `portrait-${mode}-stage-two.${portraitMimeType.split('/')[1] || 'png'}`,
         prompt: activePrompt
       });
       return {
@@ -541,17 +562,20 @@ export const generateAiImage = async ({
     }
   }
 
-  const stageOne = await generateStageOnePortrait({
-    provider: safeProvider,
-    imageBuffer,
-    mimeType,
-    originalFilename
-  });
+  const stageOne = modeConfig.skipPortraitStage
+    ? { buffer: imageBuffer, mimeType, revisedPrompt: null }
+    : await generateStageOnePortrait({
+      provider: safeProvider,
+      imageBuffer,
+      mimeType,
+      originalFilename
+    });
 
   const stageTwo = await generateStageTwoImage({
     provider: safeProvider,
     mode: safeMode,
     portraitBuffer: stageOne.buffer,
+    portraitMimeType: stageOne.mimeType ?? 'image/png',
     userInput: safeUserInput,
     retryCount: 1
   });
@@ -566,7 +590,7 @@ export const generateAiImage = async ({
     userInput: safeUserInput,
     prompt: stageTwo.prompt,
     revisedPrompt: stageTwo.revisedPrompt,
-    stageOnePrompt: buildStageOnePrompt(),
+    stageOnePrompt: modeConfig.skipPortraitStage ? null : buildStageOnePrompt(),
     stageOneRevisedPrompt: stageOne.revisedPrompt,
     retryCount: stageTwo.attempts,
     fileName: outputFileName,
