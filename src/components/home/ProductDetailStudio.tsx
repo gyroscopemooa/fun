@@ -16,14 +16,15 @@ import {
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
+import DetailPageCanvas, { ScaledFrame } from '@/components/home/DetailPageCanvas';
+import { exportCanvasSlices, renderNodeToCanvas } from '@/lib/detail-page-export';
 import {
   DETAIL_PAGE_MAX_COUNT,
   DETAIL_PAGE_MIN_COUNT,
   DETAIL_PAGE_TIER_OPTIONS,
   buildDetailPageHtml,
   buildDetailPagePricing,
-  buildFallbackResult,
-  buildFeatureCards,
+  buildDraftPreviewResult,
   buildPlainCopyText,
   buildRenderSections,
   classifyImages,
@@ -32,9 +33,7 @@ import {
   formatApproxKrw,
   formatDetailPagePrice,
   getDetailPageTier,
-  iconGlyphMap,
   normalizeDetailPageCount,
-  sectionLabelMap,
   starterPrompts,
   themes,
   type ProductDetailFormValues,
@@ -83,7 +82,6 @@ const RAW_API_BASE = import.meta.env.PUBLIC_NODE_API_BASE?.trim() ?? '';
 const DEV_API_BASE = 'http://127.0.0.1:8787';
 const API_BASE = (RAW_API_BASE || (import.meta.env.DEV ? DEV_API_BASE : '')).replace(/\/+$/, '');
 const EXPORT_WIDTH = 860;
-const SLICE_HEIGHT = 3000;
 const SHOW_DEBUG_SCENARIOS = import.meta.env.DEV || import.meta.env.PUBLIC_DETAIL_PAGE_DEBUG === 'true';
 const DETAIL_PAGE_REQUEST_PATH = '/commerce/detail-page/generate';
 const CHECKOUT_REQUEST_PATH = '/checkout';
@@ -437,9 +435,12 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
   const pricingSummary = buildDetailPagePricing(normalizedPageCount);
   const activeTier = getDetailPageTier(normalizedPageCount);
   const activeTheme = useMemo(() => themes.find((item) => item.key === theme) ?? themes[0], [theme]);
-  const renderSections = useMemo(() => (result ? buildRenderSections(result, images) : []), [result, images]);
+  const previewResult = useMemo(
+    () => result ?? buildDraftPreviewResult({ ...values, pageCount: normalizedPageCount }),
+    [result, values.productName, values.price, values.audience, values.sellingPoints, normalizedPageCount]
+  );
+  const previewSections = useMemo(() => buildRenderSections(previewResult, images), [previewResult, images]);
   const classifiedImages = useMemo(() => (result ? classifyImages(result, images) : []), [result, images]);
-  const featureCards = useMemo(() => (result ? buildFeatureCards(result) : []), [result]);
   const hasInvalidProductionApiBase = !import.meta.env.DEV && API_BASE === 'https://manytool.net';
 
   useEffect(() => {
@@ -648,22 +649,7 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
       throw new Error(ui.generateFail);
     }
 
-    const sourceWidth = Math.max(1, exportRef.current.getBoundingClientRect().width);
-    const scale = EXPORT_WIDTH / sourceWidth;
-    const exportHeight = Math.max(1, Math.round(exportRef.current.scrollHeight * scale));
-    const { toCanvas } = await import('html-to-image');
-    return toCanvas(exportRef.current, {
-      cacheBust: true,
-      pixelRatio: 2,
-      height: exportHeight,
-      canvasWidth: EXPORT_WIDTH * 2,
-      canvasHeight: exportHeight * 2,
-      width: EXPORT_WIDTH,
-      style: {
-        width: `${EXPORT_WIDTH}px`,
-        maxWidth: `${EXPORT_WIDTH}px`
-      }
-    });
+    return renderNodeToCanvas(exportRef.current, EXPORT_WIDTH);
   };
 
   const onPageCountChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -832,38 +818,8 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
     setIsExportingSlices(true);
     try {
       const canvas = await renderExportCanvas();
-      const sectionNodes = Array.from(exportRef.current.querySelectorAll<HTMLElement>('[data-export-section="true"]'));
-      const scale = canvas.width / EXPORT_WIDTH;
-      const boundaries = sectionNodes.map((node) => ({
-        top: Math.round(node.offsetTop * scale),
-        bottom: Math.round((node.offsetTop + node.offsetHeight) * scale)
-      }));
-      const sliceRanges: Array<{ top: number; height: number }> = [];
-      let sliceTop = 0;
-      while (sliceTop < canvas.height) {
-        const targetBottom = Math.min(canvas.height, sliceTop + (SLICE_HEIGHT * scale));
-        const safeBoundary = boundaries
-          .map((item) => item.bottom)
-          .filter((bottom) => bottom > sliceTop + 400 && bottom <= targetBottom)
-          .pop();
-        const sliceBottom = safeBoundary ?? targetBottom;
-        sliceRanges.push({ top: sliceTop, height: Math.max(1, sliceBottom - sliceTop) });
-        sliceTop = sliceBottom;
-      }
-
-      for (let index = 0; index < sliceRanges.length; index += 1) {
-        const range = sliceRanges[index];
-        const sliceCanvas = document.createElement('canvas');
-        sliceCanvas.width = canvas.width;
-        sliceCanvas.height = range.height;
-        const context = sliceCanvas.getContext('2d');
-        if (!context) {
-          throw new Error('슬라이스 캔버스를 만들지 못했습니다.');
-        }
-        context.drawImage(canvas, 0, range.top, canvas.width, range.height, 0, 0, canvas.width, range.height);
-        downloadDataUrl(sliceCanvas.toDataURL('image/png'), `page${index + 1}.png`);
-      }
-      toast.success(ui.sliceSaveSuccess(sliceRanges.length));
+      const sliceCount = exportCanvasSlices(canvas, exportRef.current, getExportFileBaseName(values.productName));
+      toast.success(ui.sliceSaveSuccess(sliceCount));
     } catch (error) {
       toast.error(error instanceof Error ? error.message : ui.sliceSaveFail);
     } finally {
@@ -1292,74 +1248,24 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
               )}
             </div>
 
-            <div className="mt-5 overflow-x-auto rounded-[1.6rem] bg-slate-100 p-3">
-              <div ref={exportRef} className="mx-auto w-full max-w-[860px] overflow-hidden rounded-[2rem] bg-white shadow-[0_18px_48px_rgba(15,23,42,0.12)]">
-                <div className={cn('bg-gradient-to-br px-7 pb-7 pt-8', activeTheme.heroSurface)}>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{ui.hero}</p>
-                  <h3 className="mt-3 text-[2rem] font-black leading-[1.08] tracking-tight text-slate-950">
-                    {result?.generated_copy.headline ?? `${values.productName} - ${ui.headlinePlaceholder}`}
-                  </h3>
-                  <p className="mt-4 text-[15px] leading-7 text-slate-600">
-                    {result?.generated_copy.subheadline ?? ui.subheadlinePlaceholder}
-                  </p>
-                  {renderSections[0]?.image ? (
-                    <div className="mt-6 overflow-hidden rounded-[1.75rem] bg-slate-200">
-                      <img data-zoomable src={renderSections[0].image.url} alt={renderSections[0].title} className="block h-auto w-full object-cover" />
-                    </div>
-                  ) : null}
-                </div>
+            {!result ? (
+              <p className="mt-4 rounded-2xl bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-800">
+                입력한 상품명·가격·판매 포인트와 업로드한 사진으로 만든 레이아웃 미리보기입니다. 결제 후 AI가 사진을 분석해 섹션별 카피, 비교표, FAQ, 구매 전 확인사항까지 채워 완성합니다.
+              </p>
+            ) : null}
 
-                <div className="px-6 pb-10 pt-6">
-                  {renderSections.length > 0 ? renderSections.map((section) => (
-                    <section key={section.id} data-export-section="true" className="border-b border-slate-200 py-6 last:border-b-0">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-900 text-sm font-bold text-white">
-                          {iconGlyphMap[section.type]}
-                        </div>
-                        <div>
-                          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{sectionLabelMap[section.type]}</p>
-                          <h4 className="mt-1 text-[1.75rem] font-black leading-[1.15] tracking-tight text-slate-950">{section.title}</h4>
-                        </div>
-                      </div>
-                      <p className="mt-4 text-[15px] leading-7 text-slate-600">{section.text}</p>
-
-                      {section.type === 'feature' && featureCards.length > 0 ? (
-                        <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                          {featureCards.map((item) => (
-                            <div key={`${section.id}-${item.title}`} className="rounded-[1.4rem] bg-slate-50 p-5">
-                              <div className="text-xl font-bold text-slate-900">{item.glyph}</div>
-                              <p className="mt-3 text-lg font-bold text-slate-950">{item.title}</p>
-                              <p className="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
-                            </div>
-                          ))}
-                        </div>
-                      ) : null}
-
-                      <div className="mt-5 overflow-hidden rounded-[1.75rem] bg-slate-200">
-                        <img data-zoomable src={section.image.url} alt={section.title} className={cn('block h-auto w-full', section.cropClass)} />
-                        <div className="border-t border-slate-200 bg-white px-4 py-3 text-xs tracking-[0.12em] text-slate-400">
-                          {section.toneNote} / image #{section.imageIndex + 1}
-                        </div>
-                      </div>
-                    </section>
-                  )) : (
-                    <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50 px-5 py-12 text-center text-sm leading-7 text-slate-500">
-                      {ui.renderedPlaceholder}
-                    </div>
-                  )}
-
-                  <section className="pt-6">
-                    <div className="rounded-[1.8rem] bg-slate-950 px-6 py-7 text-white">
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/40">{ui.seoCta}</p>
-                      <h4 className="mt-2 text-[1.9rem] font-black leading-[1.15] tracking-tight">
-                        {result?.generated_copy.seo_title ?? ui.seoPlaceholder}
-                      </h4>
-                      <p className="mt-4 text-[15px] leading-7 text-white/80">
-                        {result?.generated_copy.cta ?? ui.ctaPlaceholder}
-                      </p>
-                    </div>
-                  </section>
-                </div>
+            <div className="mt-4 rounded-[1.6rem] bg-slate-100 p-3">
+              <div className="mx-auto max-h-[1400px] overflow-y-auto overflow-x-hidden rounded-2xl shadow-[0_18px_48px_rgba(15,23,42,0.12)]">
+                <ScaledFrame ref={exportRef} width={EXPORT_WIDTH}>
+                  <DetailPageCanvas
+                    result={previewResult}
+                    sections={previewSections}
+                    formValues={{ ...values, pageCount: normalizedPageCount }}
+                    theme={theme}
+                    width={EXPORT_WIDTH}
+                    zoomable
+                  />
+                </ScaledFrame>
               </div>
             </div>
           </div>

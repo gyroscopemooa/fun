@@ -1,11 +1,18 @@
 ﻿import { useEffect, useMemo, useRef, useState } from 'react';
-import { Copy, Download, Home, LoaderCircle, Store } from 'lucide-react';
+import { Copy, Download, Eye, FileCode, Home, LoaderCircle, PencilLine, RotateCcw, Store } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
+import DetailPageCanvas, { MARKETPLACE_WIDTHS, ScaledFrame, renderDetailPageHtml, type SectionAction } from '@/components/home/DetailPageCanvas';
 import {
-  buildDetailPageHtml,
-  buildFeatureCards,
+  downloadText,
+  exportCanvasImage,
+  exportCanvasPdf,
+  exportCanvasSlices,
+  getExportFileBaseName,
+  renderNodeToCanvas
+} from '@/lib/detail-page-export';
+import {
   formatApproxKrw,
   formatDetailPagePrice,
   buildPlainCopyText,
@@ -14,8 +21,10 @@ import {
   ensureResultIntegrity,
   normalizeDetailPageCount,
   themes,
+  type GeneratedCopy,
   type ProductDetailFormValues,
   type ProductDetailResult,
+  type ProductSection,
   type ThemeKey,
   type UploadedImage
 } from '@/lib/product-detail-studio';
@@ -52,8 +61,8 @@ type DetailPageOrder = {
 const RAW_API_BASE = import.meta.env.PUBLIC_NODE_API_BASE?.trim() ?? '';
 const DEV_API_BASE = 'http://127.0.0.1:8787';
 const API_BASE = (RAW_API_BASE || (import.meta.env.DEV ? DEV_API_BASE : '')).replace(/\/+$/, '');
-const EXPORT_WIDTH = 860;
 const DETAIL_PAGE_DRAFT_KEY = 'manytool.detailPageDraft';
+const DETAIL_PAGE_EDITS_KEY = 'manytool.detailPageEdits.';
 
 const RESULT_COPY = {
   ko: {
@@ -110,18 +119,6 @@ const buildImagesFromOrder = (images: string[]): UploadedImage[] => images.map((
   dataUrl
 }));
 
-const getExportFileBaseName = (productName: string) => {
-  const normalized = productName.trim().toLowerCase().replace(/[^a-z0-9-]+/gi, '-').replace(/^-+|-+$/g, '');
-  return normalized || 'detail-page';
-};
-
-const downloadDataUrl = (dataUrl: string, filename: string) => {
-  const anchor = document.createElement('a');
-  anchor.href = dataUrl;
-  anchor.download = filename;
-  anchor.click();
-};
-
 const saveDetailPageDraft = ({
   formValues,
   theme,
@@ -148,10 +145,14 @@ export default function ProductDetailStudioResult({ locale = 'ko' }: ProductDeta
   const [orderId, setOrderId] = useState('');
   const [order, setOrder] = useState<DetailPageOrder | null>(null);
   const [result, setResult] = useState<ProductDetailResult | null>(null);
-  const [statusMessage, setStatusMessage] = useState(ui.loading);
+  const [statusMessage, setStatusMessage] = useState<string>(ui.loading);
   const [isLoading, setIsLoading] = useState(true);
-  const [isExportingSlices, setIsExportingSlices] = useState(false);
-  const [isExportingFile, setIsExportingFile] = useState<'png' | 'jpg' | 'pdf' | null>(null);
+  const [originalResult, setOriginalResult] = useState<ProductDetailResult | null>(null);
+  const [themeOverride, setThemeOverride] = useState<ThemeKey | null>(null);
+  const [channelKey, setChannelKey] = useState(MARKETPLACE_WIDTHS[0].key);
+  const exportWidth = MARKETPLACE_WIDTHS.find((item) => item.key === channelKey)?.width ?? 860;
+  const [isEditing, setIsEditing] = useState(false);
+  const [isExporting, setIsExporting] = useState<'png' | 'jpg' | 'pdf' | 'slices' | 'html' | null>(null);
   const exportRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -208,7 +209,15 @@ export default function ProductDetailStudioResult({ locale = 'ko' }: ProductDeta
           payload.result as ProductDetailResult,
           normalizeDetailPageCount(nextOrder.detailPageRequest?.pageCount ?? 7)
         );
-        setResult(normalized);
+        let edited: { result?: ProductDetailResult; theme?: ThemeKey | null } | null = null;
+        try {
+          edited = JSON.parse(localStorage.getItem(`${DETAIL_PAGE_EDITS_KEY}${orderId}`) ?? 'null');
+        } catch {
+          edited = null;
+        }
+        setOriginalResult(normalized);
+        setResult(edited?.result ? ensureResultIntegrity(edited.result, normalized.page_count) : normalized);
+        if (edited?.theme) setThemeOverride(edited.theme);
         setStatusMessage(ui.resultReady);
       } catch (error) {
         if (cancelled) return;
@@ -236,42 +245,68 @@ export default function ProductDetailStudioResult({ locale = 'ko' }: ProductDeta
   }, [order]);
 
   const images = useMemo(() => buildImagesFromOrder(order?.detailPageRequest?.images ?? []), [order]);
-  const theme = order?.detailPageRequest?.theme ?? 'premium';
-  const activeTheme = useMemo(() => themes.find((item) => item.key === theme) ?? themes[0], [theme]);
+  const theme: ThemeKey = themeOverride ?? order?.detailPageRequest?.theme ?? 'premium';
   const classifiedImages = useMemo(() => (result ? classifyImages(result, images) : []), [result, images]);
   const renderSections = useMemo(() => (result ? buildRenderSections(result, images) : []), [result, images]);
-  const featureCards = useMemo(() => (result ? buildFeatureCards(result) : []), [result]);
-  const html = useMemo(() => (
-    formValues && result
-      ? buildDetailPageHtml({ formValues, result, images, theme })
-      : ''
-  ), [formValues, result, images, theme]);
   const copyText = useMemo(() => (
     formValues && result
       ? buildPlainCopyText({ formValues, result })
       : ''
   ), [formValues, result]);
+  const hiddenCount = result?.sections.filter((section) => section.hidden).length ?? 0;
 
-  const renderExportCanvas = async () => {
-    if (!exportRef.current || !result) {
-      throw new Error('아직 저장할 결과가 준비되지 않았습니다.');
+  useEffect(() => {
+    if (!orderId || !result || !originalResult) return;
+    try {
+      localStorage.setItem(`${DETAIL_PAGE_EDITS_KEY}${orderId}`, JSON.stringify({ result, theme: themeOverride }));
+    } catch {
+      // Storage full or blocked: edits still live in memory for this visit.
     }
-    const sourceWidth = Math.max(1, exportRef.current.getBoundingClientRect().width);
-    const scale = EXPORT_WIDTH / sourceWidth;
-    const exportHeight = Math.max(1, Math.round(exportRef.current.scrollHeight * scale));
-    const { toCanvas } = await import('html-to-image');
-    return toCanvas(exportRef.current, {
-      cacheBust: true,
-      pixelRatio: 2,
-      height: exportHeight,
-      canvasWidth: EXPORT_WIDTH * 2,
-      canvasHeight: exportHeight * 2,
-      width: EXPORT_WIDTH,
-      style: {
-        width: `${EXPORT_WIDTH}px`,
-        maxWidth: `${EXPORT_WIDTH}px`
-      }
+  }, [orderId, result, originalResult, themeOverride]);
+
+  const updateCopy = (patch: Partial<GeneratedCopy>) => {
+    setResult((current) => (current ? { ...current, generated_copy: { ...current.generated_copy, ...patch } } : current));
+  };
+
+  const updateSection = (index: number, patch: Partial<ProductSection>) => {
+    setResult((current) => {
+      if (!current) return current;
+      const sections = current.sections.map((section, sectionIndex) => (sectionIndex === index ? { ...section, ...patch } : section));
+      return { ...current, sections };
     });
+  };
+
+  const onSectionAction = (index: number, action: SectionAction) => {
+    if (action === 'image') {
+      const currentImage = renderSections.find((section) => section.sourceIndex === index)?.imageIndex ?? -1;
+      if (images.length) updateSection(index, { image_index: (currentImage + 1) % images.length });
+      return;
+    }
+    if (action === 'hide') {
+      updateSection(index, { hidden: true });
+      return;
+    }
+    setResult((current) => {
+      if (!current) return current;
+      const target = action === 'up' ? index - 1 : index + 1;
+      // Index 0 is the hero; keep it pinned to the top.
+      if (target < 1 || target >= current.sections.length) return current;
+      const sections = [...current.sections];
+      [sections[index], sections[target]] = [sections[target], sections[index]];
+      return { ...current, sections };
+    });
+  };
+
+  const onRestoreHidden = () => {
+    setResult((current) => (current ? { ...current, sections: current.sections.map((section) => ({ ...section, hidden: false })) } : current));
+  };
+
+  const onResetEdits = () => {
+    if (!originalResult) return;
+    setResult(originalResult);
+    setThemeOverride(null);
+    localStorage.removeItem(`${DETAIL_PAGE_EDITS_KEY}${orderId}`);
+    toast.success('처음 생성된 상태로 되돌렸습니다.');
   };
 
   const onCopy = async (value: string, message: string) => {
@@ -280,48 +315,37 @@ export default function ProductDetailStudioResult({ locale = 'ko' }: ProductDeta
     toast.success(message);
   };
 
-  const onExportImage = async (format: 'png' | 'jpg') => {
+  const runExport = async (kind: 'png' | 'jpg' | 'pdf' | 'slices' | 'html') => {
     if (!result || !formValues) return;
-    setIsExportingFile(format);
+    setIsExporting(kind);
+    const wasEditing = isEditing;
+    if (wasEditing) setIsEditing(false);
+    const baseName = `${getExportFileBaseName(formValues.productName)}-${exportWidth}px`;
     try {
-      const canvas = await renderExportCanvas();
-      const mime = format === 'png' ? 'image/png' : 'image/jpeg';
-      const quality = format === 'png' ? undefined : 0.92;
-      downloadDataUrl(
-        canvas.toDataURL(mime, quality),
-        `${getExportFileBaseName(formValues.productName)}.${format === 'png' ? 'png' : 'jpg'}`
-      );
+      if (kind === 'html') {
+        const html = await renderDetailPageHtml({
+          title: result.generated_copy.seo_title,
+          result,
+          sections: renderSections,
+          formValues,
+          theme,
+          width: exportWidth
+        });
+        downloadText(html, `${baseName}.html`);
+        return;
+      }
+      // Let the non-editing render commit before rasterizing.
+      await new Promise((resolve) => window.setTimeout(resolve, 60));
+      if (!exportRef.current) throw new Error('아직 저장할 결과가 준비되지 않았습니다.');
+      const canvas = await renderNodeToCanvas(exportRef.current, exportWidth);
+      if (kind === 'pdf') await exportCanvasPdf(canvas, baseName);
+      else if (kind === 'slices') toast.success(`${exportCanvasSlices(canvas, exportRef.current, baseName)}장으로 나눠 저장했습니다.`);
+      else exportCanvasImage(canvas, kind, baseName);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '저장에 실패했습니다.');
     } finally {
-      setIsExportingFile(null);
-    }
-  };
-
-  const onExportPdf = async () => {
-    if (!result || !formValues) return;
-    setIsExportingFile('pdf');
-    try {
-      const canvas = await renderExportCanvas();
-      const { jsPDF } = await import('jspdf');
-      const pdf = new jsPDF({
-        orientation: canvas.height >= canvas.width ? 'portrait' : 'landscape',
-        unit: 'px',
-        format: [canvas.width, canvas.height]
-      });
-      pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, canvas.width, canvas.height);
-      pdf.save(`${getExportFileBaseName(formValues.productName)}.pdf`);
-    } finally {
-      setIsExportingFile(null);
-    }
-  };
-
-  const onExportSlices = async () => {
-    if (!exportRef.current || !result || !formValues) return;
-    setIsExportingSlices(true);
-    try {
-      const canvas = await renderExportCanvas();
-      downloadDataUrl(canvas.toDataURL('image/png'), `${getExportFileBaseName(formValues.productName)}-full.png`);
-    } finally {
-      setIsExportingSlices(false);
+      setIsExporting(null);
+      if (wasEditing) setIsEditing(true);
     }
   };
 
@@ -379,91 +403,128 @@ export default function ProductDetailStudioResult({ locale = 'ko' }: ProductDeta
       ) : null}
 
       {!isLoading && result && formValues ? (
-        <div className="mt-6 grid gap-6 xl:grid-cols-[0.34fr_1fr]">
-          <div className="rounded-[1.7rem] border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex flex-wrap gap-3">
-              <Button type="button" variant="secondary" onClick={() => void onCopy(html, ui.htmlCopied)}>
-                <Copy className="h-4 w-4" />
-                HTML
-              </Button>
-              <Button type="button" variant="secondary" onClick={() => void onCopy(copyText, ui.copyTextCopied)}>
-                <Copy className="h-4 w-4" />
-                Copy Text
-              </Button>
-              <Button type="button" variant="secondary" onClick={() => void onExportImage('png')} disabled={isExportingFile !== null}>
-                {isExportingFile === 'png' ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                PNG
-              </Button>
-              <Button type="button" variant="secondary" onClick={() => void onExportImage('jpg')} disabled={isExportingFile !== null}>
-                {isExportingFile === 'jpg' ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                JPG
-              </Button>
-              <Button type="button" variant="secondary" onClick={() => void onExportPdf()} disabled={isExportingFile !== null}>
-                {isExportingFile === 'pdf' ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                PDF
-              </Button>
-              <Button type="button" variant="secondary" onClick={() => void onExportSlices()} disabled={isExportingSlices}>
-                {isExportingSlices ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                PNG Full
-              </Button>
+        <div className="mt-6 grid gap-6 xl:grid-cols-[340px_1fr]">
+          <aside className="space-y-4 xl:sticky xl:top-4 xl:self-start">
+            <div className="rounded-[1.7rem] border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Marketplace</p>
+              <h2 className="mt-1 text-lg font-black text-slate-950">판매 채널 규격</h2>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {MARKETPLACE_WIDTHS.map((item) => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => setChannelKey(item.key)}
+                    className={cn(
+                      'rounded-2xl border px-3 py-2 text-left text-sm transition',
+                      channelKey === item.key ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 text-slate-700 hover:border-slate-400'
+                    )}
+                  >
+                    <span className="block font-bold">{item.label}</span>
+                    <span className={cn('text-xs', channelKey === item.key ? 'text-white/70' : 'text-slate-400')}>가로 {item.width}px</span>
+                  </button>
+                ))}
+              </div>
+
+              <p className="mt-5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Theme</p>
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                {themes.map((item) => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => setThemeOverride(item.key)}
+                    className={cn(
+                      'rounded-2xl border px-2 py-2 text-xs font-semibold transition',
+                      theme === item.key ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 text-slate-700 hover:border-slate-400'
+                    )}
+                  >
+                    <div className={cn('mb-1.5 h-1.5 rounded-full bg-gradient-to-r', item.accent)} />
+                    {item.name.split(' ')[0]}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <div className="mt-5 grid gap-3 rounded-[1.4rem] bg-slate-50 p-4 md:grid-cols-3">
-              {classifiedImages.map((item, index) => (
-                <div key={`${item.image.id}-${item.role}`} className="rounded-[1.2rem] bg-white p-3 shadow-sm">
-                  <img src={item.image.url} alt={`classified-${index + 1}`} className="h-28 w-full rounded-xl object-cover" />
-                  <p className="mt-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">{item.role}</p>
+            <div className="rounded-[1.7rem] border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Edit</p>
+                  <h2 className="mt-1 text-lg font-black text-slate-950">직접 수정하기</h2>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-[1.7rem] border border-slate-200 bg-white p-5 shadow-sm">
-            <div ref={exportRef} className="mx-auto w-full max-w-[860px] overflow-hidden rounded-[2rem] bg-white shadow-[0_18px_48px_rgba(15,23,42,0.12)]">
-              <div className={cn('bg-gradient-to-br px-7 pb-7 pt-8', activeTheme.heroSurface)}>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Hero</p>
-                <h2 className="mt-3 text-[2rem] font-black leading-[1.08] tracking-tight text-slate-950">
-                  {result.generated_copy.headline}
-                </h2>
-                <p className="mt-4 text-[15px] leading-7 text-slate-600">{result.generated_copy.subheadline}</p>
-                {renderSections[0]?.image ? (
-                  <div className="mt-6 overflow-hidden rounded-[1.75rem] bg-slate-200">
-                    <img src={renderSections[0].image.url} alt={renderSections[0].title} className="block h-auto w-full object-cover" />
-                  </div>
+                <Button type="button" variant={isEditing ? 'default' : 'secondary'} onClick={() => setIsEditing((value) => !value)}>
+                  {isEditing ? <Eye className="h-4 w-4" /> : <PencilLine className="h-4 w-4" />}
+                  {isEditing ? '미리보기' : '편집 모드'}
+                </Button>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                편집 모드에서 문구를 클릭해 바로 고치고, 섹션별로 사진 변경·순서 이동·숨기기를 할 수 있어요. 수정 내용은 이 브라우저에 자동 저장됩니다.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {hiddenCount > 0 ? (
+                  <Button type="button" variant="outline" onClick={onRestoreHidden}>숨긴 섹션 {hiddenCount}개 복원</Button>
                 ) : null}
-                <div className="mt-5 flex flex-wrap gap-2">
-                  {result.generated_copy.key_selling_points.map((point) => (
-                    <span key={point} className="rounded-full bg-white/75 px-3 py-1 text-xs font-semibold text-slate-700">
-                      {point}
-                    </span>
-                  ))}
-                </div>
+                <Button type="button" variant="ghost" onClick={onResetEdits}>
+                  <RotateCcw className="h-4 w-4" />
+                  처음 상태로
+                </Button>
               </div>
+            </div>
 
-              <div className="bg-white px-6 py-6">
-                <div className="grid gap-3 md:grid-cols-2">
-                  {featureCards.map((card) => (
-                    <article key={`${card.glyph}-${card.title}`} className="rounded-[1.4rem] border border-slate-200 bg-slate-50 p-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{card.glyph}</p>
-                      <h3 className="mt-2 text-lg font-bold text-slate-950">{card.title}</h3>
-                      <p className="mt-2 text-sm leading-6 text-slate-600">{card.body}</p>
-                    </article>
-                  ))}
-                </div>
-
-                <div className="mt-6 space-y-6">
-                  {renderSections.slice(1).map((section) => (
-                    <section key={section.id} className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">{section.type}</p>
-                      <h3 className="mt-2 text-2xl font-black tracking-tight text-slate-950">{section.title}</h3>
-                      <p className="mt-3 whitespace-pre-line text-[15px] leading-7 text-slate-600">{section.text}</p>
-                      <div className="mt-4 overflow-hidden rounded-[1.4rem] bg-slate-200">
-                        <img src={section.image.url} alt={section.title} className={`block h-auto w-full ${section.cropClass}`} />
-                      </div>
-                    </section>
-                  ))}
-                </div>
+            <div className="rounded-[1.7rem] border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Download</p>
+              <h2 className="mt-1 text-lg font-black text-slate-950">{exportWidth}px로 저장</h2>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <Button type="button" onClick={() => void runExport('slices')} disabled={isExporting !== null} className="col-span-2">
+                  {isExporting === 'slices' ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                  업로드용 분할 JPG
+                </Button>
+                {(['jpg', 'png', 'pdf'] as const).map((kind) => (
+                  <Button key={kind} type="button" variant="secondary" onClick={() => void runExport(kind)} disabled={isExporting !== null}>
+                    {isExporting === kind ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                    {kind === 'pdf' ? 'PDF' : `한 장 ${kind.toUpperCase()}`}
+                  </Button>
+                ))}
+                <Button type="button" variant="secondary" onClick={() => void runExport('html')} disabled={isExporting !== null}>
+                  {isExporting === 'html' ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <FileCode className="h-4 w-4" />}
+                  HTML
+                </Button>
+                <Button type="button" variant="outline" onClick={() => void onCopy(copyText, ui.copyTextCopied)} className="col-span-2">
+                  <Copy className="h-4 w-4" />
+                  카피 텍스트 복사
+                </Button>
               </div>
+              <p className="mt-3 text-xs leading-5 text-slate-500">
+                오픈마켓은 아주 긴 이미지 한 장을 거부하는 경우가 많아, 섹션 경계에 맞춰 나눈 분할 JPG 업로드를 추천해요.
+              </p>
+            </div>
+
+            <div className="rounded-[1.7rem] border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Images</p>
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                {classifiedImages.map((item, index) => (
+                  <div key={`${item.image.id}-${item.role}`} className="overflow-hidden rounded-xl bg-slate-100">
+                    <img src={item.image.url} alt={`classified-${index + 1}`} className="h-20 w-full object-cover" />
+                    <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">#{index + 1} {item.role}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </aside>
+
+          <div className="min-w-0 rounded-[1.7rem] border border-slate-200 bg-slate-100 p-3 shadow-sm sm:p-5">
+            <div className="mx-auto overflow-hidden rounded-2xl shadow-[0_18px_48px_rgba(15,23,42,0.12)]" style={{ maxWidth: exportWidth }}>
+              <ScaledFrame ref={exportRef} width={exportWidth}>
+                <DetailPageCanvas
+                  result={result}
+                  sections={renderSections}
+                  formValues={formValues}
+                  theme={theme}
+                  width={exportWidth}
+                  editable={isEditing}
+                  onEditCopy={updateCopy}
+                  onEditSection={updateSection}
+                  onSectionAction={onSectionAction}
+                />
+              </ScaledFrame>
             </div>
           </div>
         </div>

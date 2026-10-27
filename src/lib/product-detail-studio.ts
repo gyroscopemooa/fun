@@ -48,7 +48,15 @@ export type ProductSection = {
   title: string;
   text: string;
   image_role: ImageRoleType;
+  eyebrow?: string;
+  bullets?: string[];
+  image_index?: number;
+  hidden?: boolean;
 };
+
+export type SpecRow = { label: string; value: string };
+export type ComparisonRow = { label: string; ordinary: string; ours: string };
+export type FaqItem = { question: string; answer: string };
 
 export type GeneratedCopy = {
   headline: string;
@@ -60,6 +68,12 @@ export type GeneratedCopy = {
   benefits: string[];
   cta: string;
   seo_title: string;
+  badge?: string;
+  closing_line?: string;
+  spec_rows?: SpecRow[];
+  comparison_rows?: ComparisonRow[];
+  faq?: FaqItem[];
+  notices?: string[];
 };
 
 export type ProductDetailResult = {
@@ -81,7 +95,8 @@ export type ClassifiedImage = {
 
 export type RenderSection = ProductSection & {
   id: string;
-  image: UploadedImage;
+  sourceIndex: number;
+  image: UploadedImage | undefined;
   imageIndex: number;
   emphasis: 'full' | 'detail' | 'soft';
   cropClass: string;
@@ -259,6 +274,18 @@ export const sectionLabelMap: Record<SectionType, string> = {
   cta: 'CTA'
 };
 
+export const sectionFallbackTitleMap: Record<SectionType, string> = {
+  hero: '첫인상부터 다른 선택',
+  feature: '이래서 선택합니다',
+  usage: '일상 속 이런 순간에',
+  detail: '가까이 볼수록 느껴지는 디테일',
+  benefit: '써보면 알게 되는 장점',
+  ingredient: '꼼꼼하게 확인하세요',
+  proof: '믿고 고를 수 있는 이유',
+  comparison: '비교해보면 차이가 보입니다',
+  cta: '지금 만나보세요'
+};
+
 export const themeLabelMap: Record<ThemeKey, string> = {
   premium: 'Premium Commerce',
   minimal: 'Minimal Editorial',
@@ -427,13 +454,17 @@ export const buildRenderSections = (
   let lastImageId = '';
 
   return result.sections.map((section, index) => {
-    let selected = takeFromRole(buckets, counters, section.image_role)
+    const pinned = Number.isInteger(section.image_index) && (section.image_index as number) >= 0 && (section.image_index as number) < images.length
+      ? { image: images[section.image_index as number], index: section.image_index as number }
+      : null;
+    let selected = pinned
+      ?? takeFromRole(buckets, counters, section.image_role)
       ?? takeFromRole(buckets, counters, 'hero')
       ?? takeFromRole(buckets, counters, 'detail')
       ?? takeFromRole(buckets, counters, 'usage')
       ?? { image: images[0], index: 0 };
 
-    if (selected.image?.id === lastImageId) {
+    if (!pinned && selected.image?.id === lastImageId) {
       const alternateRole = section.image_role === 'hero' ? 'detail' : section.image_role === 'detail' ? 'usage' : 'detail';
       const alternate = takeFromRole(buckets, counters, alternateRole);
       if (alternate?.image && alternate.image.id !== lastImageId) {
@@ -450,6 +481,7 @@ export const buildRenderSections = (
     return {
       ...section,
       id: `${section.type}-${index}`,
+      sourceIndex: index,
       image: selected.image,
       imageIndex: selected.index,
       emphasis,
@@ -486,7 +518,7 @@ export const buildFallbackResult = (pageCount: PageCountOption): ProductDetailRe
     },
     sections: sectionOrder.map((type, index) => ({
       type,
-      title: index === 0 ? copy.headline : `${sectionLabelMap[type]} Section`,
+      title: index === 0 ? copy.headline : sectionFallbackTitleMap[type],
       text:
         type === 'hero'
           ? copy.subheadline
@@ -529,6 +561,16 @@ const normalizeImageRole = (value: unknown): ImageRoleType | null => {
   return null;
 };
 
+const normalizeRows = (value: unknown, keys: string[]) => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => Object.fromEntries(keys.map((key) => {
+      const raw = (item as Record<string, unknown> | null)?.[key];
+      return [key, typeof raw === 'string' ? raw.trim() : ''];
+    })))
+    .filter((item) => keys.every((key) => item[key]));
+};
+
 export const ensureResultIntegrity = (
   result: ProductDetailResult | null | undefined,
   pageCount: PageCountOption
@@ -547,7 +589,11 @@ export const ensureResultIntegrity = (
         type: normalizeSectionType(section?.type) ?? fallbackSection.type,
         title: normalizeText(section?.title, fallbackSection.title),
         text: normalizeText(section?.text, fallbackSection.text),
-        image_role: normalizeImageRole(section?.image_role) ?? fallbackSection.image_role
+        image_role: normalizeImageRole(section?.image_role) ?? fallbackSection.image_role,
+        eyebrow: typeof section?.eyebrow === 'string' ? section.eyebrow.trim() : '',
+        bullets: normalizeList(section?.bullets, []).slice(0, 4),
+        image_index: Number.isInteger(section?.image_index) ? section.image_index : -1,
+        hidden: Boolean(section?.hidden)
       };
     }).filter((section) => Boolean(section.title) && Boolean(section.text))
     : [];
@@ -570,7 +616,13 @@ export const ensureResultIntegrity = (
       detail_description: normalizeText(result.generated_copy?.detail_description, fallback.generated_copy.detail_description),
       benefits: normalizeList(result.generated_copy?.benefits, fallback.generated_copy.benefits),
       cta: normalizeText(result.generated_copy?.cta, fallback.generated_copy.cta),
-      seo_title: normalizeText(result.generated_copy?.seo_title, fallback.generated_copy.seo_title)
+      seo_title: normalizeText(result.generated_copy?.seo_title, fallback.generated_copy.seo_title),
+      badge: normalizeText(result.generated_copy?.badge, ''),
+      closing_line: normalizeText(result.generated_copy?.closing_line, ''),
+      spec_rows: normalizeRows(result.generated_copy?.spec_rows, ['label', 'value']) as SpecRow[],
+      comparison_rows: normalizeRows(result.generated_copy?.comparison_rows, ['label', 'ordinary', 'ours']) as ComparisonRow[],
+      faq: normalizeRows(result.generated_copy?.faq, ['question', 'answer']) as FaqItem[],
+      notices: normalizeList(result.generated_copy?.notices, [])
     }
   };
 };
@@ -650,7 +702,7 @@ export const buildDetailPageHtml = ({
         ${cards}
         ${bullets}
         <div class="section-image">
-          <img class="${section.cropClass}" src="${section.image.dataUrl}" alt="${escapeHtml(section.title)}" />
+          ${section.image ? `<img class="${section.cropClass}" src="${section.image.dataUrl}" alt="${escapeHtml(section.title)}" />` : ''}
         </div>
       </section>`;
   }).join('\n');
@@ -709,7 +761,7 @@ export const buildDetailPageHtml = ({
         <p class="eyebrow">${escapeHtml(themeName)}</p>
         <h1>${escapeHtml(result.generated_copy.headline)}</h1>
         <p>${escapeHtml(result.generated_copy.subheadline)}</p>
-        ${sections[0] ? `<div class="hero-image"><img src="${sections[0].image.dataUrl}" alt="${escapeHtml(sections[0].title)}" /></div>` : ''}
+        ${sections[0]?.image ? `<div class="hero-image"><img src="${sections[0].image.dataUrl}" alt="${escapeHtml(sections[0].title)}" /></div>` : ''}
         <div class="hero-meta">
           <div><strong>상품명</strong>${escapeHtml(formValues.productName)}</div>
           <div><strong>가격 / 옵션</strong>${escapeHtml(formValues.price)}</div>
@@ -730,3 +782,83 @@ ${sectionHtml}
 </html>`;
 };
 
+
+const splitSellingPoints = (value: string) => value
+  .split(/[,\n·/]+/)
+  .map((item) => item.trim())
+  .filter(Boolean);
+
+// Client-side sample layout shown before payment, built only from the seller's own input.
+export const buildDraftPreviewResult = (formValues: ProductDetailFormValues): ProductDetailResult => {
+  const pageCount = normalizeDetailPageCount(formValues.pageCount);
+  const sectionOrder = buildDetailPageSectionOrder(pageCount);
+  const productName = formValues.productName.trim() || '우리 상품';
+  const points = splitSellingPoints(formValues.sellingPoints);
+  const safePoints = points.length ? points : ['눈에 띄는 디자인', '매일 쓰기 좋은 실용성', '선물하기 좋은 구성'];
+  const audience = formValues.audience.trim();
+  let featureIndex = 0;
+
+  const sections: ProductSection[] = sectionOrder.map((type) => {
+    if (type === 'hero') {
+      return {
+        type,
+        eyebrow: '',
+        title: `${productName}`,
+        text: audience ? `추천 대상 · ${audience}` : '상품의 매력을 한 페이지에 담았어요.',
+        bullets: [],
+        image_role: 'hero'
+      };
+    }
+    if (type === 'feature') {
+      const point = safePoints[featureIndex % safePoints.length];
+      featureIndex += 1;
+      return {
+        type,
+        eyebrow: `POINT ${String(featureIndex).padStart(2, '0')}`,
+        title: point,
+        text: `${productName}의 ${point}, 결제 후 AI가 사진을 분석해 이 자리에 설득력 있는 설명을 채워드려요.`,
+        bullets: [],
+        image_role: 'detail'
+      };
+    }
+    if (type === 'cta') {
+      return { type, eyebrow: '', title: '지금 만나보세요', text: `${productName}, 오늘 바로 시작해보세요.`, bullets: [], image_role: 'hero' };
+    }
+    return {
+      type,
+      eyebrow: '',
+      title: sectionFallbackTitleMap[type],
+      text: 'AI가 업로드한 사진과 상품 정보를 바탕으로 이 섹션의 카피를 작성합니다.',
+      bullets: type === 'benefit' || type === 'detail' ? safePoints.slice(0, 3) : [],
+      image_role: type === 'usage' ? 'usage' : 'detail'
+    };
+  });
+
+  return {
+    page_count: pageCount,
+    section_order: sectionOrder,
+    image_role_mapping: { hero: [0], detail: [1], usage: [2] },
+    sections,
+    generated_copy: {
+      headline: productName,
+      subheadline: audience ? `추천 대상 · ${audience}` : '사진 한 장으로 시작하는 상세페이지',
+      key_selling_points: safePoints.slice(0, 3),
+      feature_descriptions: safePoints.slice(0, 4),
+      usage_scenario_text: '',
+      detail_description: '',
+      benefits: safePoints.slice(0, 3),
+      cta: `${productName}, 지금 만나보세요`,
+      seo_title: productName,
+      badge: 'PREVIEW',
+      closing_line: '',
+      spec_rows: [
+        { label: '상품명', value: productName },
+        ...(formValues.price.trim() ? [{ label: '가격 / 옵션', value: formValues.price.trim() }] : []),
+        ...(audience ? [{ label: '추천 대상', value: audience }] : [])
+      ],
+      comparison_rows: [],
+      faq: [],
+      notices: []
+    }
+  };
+};
