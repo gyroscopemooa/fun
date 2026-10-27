@@ -20,8 +20,15 @@ export const MODEL_CUT_SAMPLES: ModelCutSample[] = [
     garment: pic('sample-02-garment.webp'),
     model: pic('sample-02-model.webp'),
     useCase: 'shop',
-    label: '보아 플리스 재킷 · 커플 모델',
-    labelEn: 'Sherpa fleece jacket · couple models'
+    label: '보아 플리스 재킷 (베이지) · 커플 모델',
+    labelEn: 'Sherpa fleece jacket (beige) · couple models'
+  },
+  {
+    garment: pic('sample-03-garment.webp'),
+    model: pic('sample-03-model.webp'),
+    useCase: 'shop',
+    label: '보아 플리스 재킷 (네이비) · 커플 모델',
+    labelEn: 'Sherpa fleece jacket (navy) · couple models'
   },
   {
     garment: pic('sample-01-garment.webp'),
