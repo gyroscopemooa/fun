@@ -422,6 +422,13 @@ const getProviderDiagnostics = () => {
       available: externalAiEnabled && photoroomMissing.length === 0,
       externalCapable: externalAiEnabled,
       missingEnv: photoroomMissing
+    },
+    openai_image: {
+      requested: 'openai_image',
+      resolved: resolveImageProvider('openai_image'),
+      available: externalAiEnabled && Boolean(process.env.OPENAI_API_KEY?.trim()),
+      externalCapable: externalAiEnabled,
+      missingEnv: process.env.OPENAI_API_KEY?.trim() ? [] : ['OPENAI_API_KEY']
     }
   };
 };
@@ -453,7 +460,7 @@ app.get('/config', (_req, res) => {
     configuredImageProvider: getImageProvider(),
     externalAiEnabled: isExternalAiEnabled(),
     paymentMode,
-    supportedImageProviders: ['auto', 'local_sharp', 'remove_bg', 'photoroom'],
+    supportedImageProviders: ['auto', 'openai_image', 'local_sharp', 'remove_bg', 'photoroom'],
     paymentProducts: {
       ...Object.fromEntries(
         Object.entries(polarProducts).map(([key, value]) => [key, Boolean(value)])
@@ -482,7 +489,8 @@ app.get('/config', (_req, res) => {
       auto: true,
       local_sharp: true,
       remove_bg: removeBgReady && isExternalAiEnabled(),
-      photoroom: photoroomReady && isExternalAiEnabled()
+      photoroom: photoroomReady && isExternalAiEnabled(),
+      openai_image: openAiReady && isExternalAiEnabled()
     },
     aiImageModes: getModeOptions(),
     aiImageProviders: getProviderOptions(),

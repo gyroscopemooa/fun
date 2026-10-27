@@ -701,9 +701,13 @@ const QUICK_SWITCH_MODES: Mode[] = ['figure', 'body', 'instagram', 'animation', 
 type AiImageGeneratorProps = {
   locale?: Locale;
   initialMode?: Mode;
+  /** Dedicated single-tool pages (e.g. /ai-model-cut): hide the other style tabs, style switches and the mixed sample gallery. */
+  lockMode?: boolean;
+  /** Hero carousel images for pages whose samples are not in the shared SLA gallery. */
+  heroImageUrls?: string[];
 };
 
-export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure' }: AiImageGeneratorProps) {
+export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure', lockMode = false, heroImageUrls }: AiImageGeneratorProps) {
   // Until each locale has a reviewed copy deck, non-Korean locales use the
   // English UI instead of accidentally showing Korean strings. The locale is
   // still preserved so translated dictionaries can be added incrementally.
@@ -842,6 +846,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
           saved.imageLastModified
         );
         if (cancelled) return;
+        if (lockMode && saved.mode !== initialMode) return;
         setMode(saved.mode);
         setUserInputs((current) => ({ ...current, ...saved.userInputs }));
         setUploadedImage(restoredFile);
@@ -1078,7 +1083,10 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
     }
   };
 
-  const heroImages = useMemo(() => samplesForMode(mode)?.map(sampleThumb) ?? SLA_HERO_IMAGES, [mode]);
+  const heroImages = useMemo(
+    () => (heroImageUrls?.length ? heroImageUrls : samplesForMode(mode)?.map(sampleThumb) ?? SLA_HERO_IMAGES),
+    [mode, heroImageUrls]
+  );
 
   useEffect(() => {
     if (generationPhase !== 'generating' && generationPhase !== 'payment') {
@@ -1184,7 +1192,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
   return (
     <div className="relative min-h-screen bg-[radial-gradient(circle_at_top,_rgba(251,191,36,0.14),_transparent_28%),linear-gradient(180deg,_#fffaf5_0%,_#fff_42%,_#f8fafc_100%)] pb-40 text-slate-900">
       <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-8 px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
-        <section className="rounded-[28px] border border-white/70 bg-white/85 p-3 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur">
+        <section className={`${lockMode ? 'hidden' : ''} rounded-[28px] border border-white/70 bg-white/85 p-3 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur`}>
           <div className="mb-3 flex items-center justify-between sm:hidden">
             <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">{uiLabels.mode}</span>
             <span className="text-xs font-medium text-slate-500">{modeContentMap[mode].tabLabel}</span>
@@ -1423,7 +1431,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
           </aside>
         </section>
 
-        <AiSampleGallery title={uiLabels.moreExamples} onUseStyle={useStyleFromGallery} locale={locale} />
+        {lockMode ? null : <AiSampleGallery title={uiLabels.moreExamples} onUseStyle={useStyleFromGallery} locale={locale} />}
       </div>
 
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/80 bg-white/92 px-4 py-4 backdrop-blur">
@@ -1569,7 +1577,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
                 {resultActionMessage ? (
                   <p className="text-center text-xs font-medium text-slate-500">{resultActionMessage}</p>
                 ) : null}
-                <div className="rounded-3xl border border-slate-200 bg-white px-4 py-3">
+                <div className={`${lockMode ? 'hidden' : ''} rounded-3xl border border-slate-200 bg-white px-4 py-3`}>
                   <p className="flex items-center gap-1.5 text-xs font-bold text-slate-500">
                     <RefreshCw className="h-3.5 w-3.5" />
                     같은 사진으로 다른 스타일 만들기

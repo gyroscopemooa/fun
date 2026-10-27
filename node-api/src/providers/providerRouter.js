@@ -1,6 +1,9 @@
 import { generateWithLocalSharp } from './localSharpProvider.js';
 import { generateWithRemoveBg } from './removeBgProvider.js';
 import { generateWithPhotoRoom } from './photoRoomProvider.js';
+import { generateWithOpenAiImage } from './openAiPortraitProvider.js';
+
+const hasOpenAiKey = () => Boolean(process.env.OPENAI_API_KEY?.trim());
 
 export function getImageProvider() {
   return process.env.IMAGE_PROVIDER ?? 'auto';
@@ -14,7 +17,7 @@ export function normalizeRequestedProvider(provider) {
   if (typeof provider !== 'string') return null;
   const normalized = provider.trim().toLowerCase();
   if (!normalized || normalized === 'auto') return 'auto';
-  if (normalized === 'local_sharp' || normalized === 'remove_bg' || normalized === 'photoroom') return normalized;
+  if (normalized === 'local_sharp' || normalized === 'remove_bg' || normalized === 'photoroom' || normalized === 'openai_image') return normalized;
   return null;
 }
 
@@ -23,6 +26,7 @@ export function getResolvedImageProvider() {
 
   const configured = getImageProvider();
   if (configured !== 'auto') return configured;
+  if (hasOpenAiKey()) return 'openai_image';
   if (process.env.REMOVE_BG_API_KEY) return 'remove_bg';
   if (process.env.PHOTOROOM_API_KEY && process.env.PHOTOROOM_REMOVE_BG_URL) return 'photoroom';
   return 'local_sharp';
@@ -33,6 +37,7 @@ export function resolveImageProvider(requestedProvider = null) {
   if (!normalized || normalized === 'auto') return getResolvedImageProvider();
   if (normalized === 'local_sharp') return 'local_sharp';
   if (!isExternalAiEnabled()) return 'local_sharp';
+  if (normalized === 'openai_image') return hasOpenAiKey() ? 'openai_image' : 'local_sharp';
   if (normalized === 'remove_bg') return process.env.REMOVE_BG_API_KEY ? 'remove_bg' : 'local_sharp';
   if (normalized === 'photoroom') {
     return process.env.PHOTOROOM_API_KEY && process.env.PHOTOROOM_REMOVE_BG_URL ? 'photoroom' : 'local_sharp';
@@ -44,6 +49,7 @@ async function runProvider({ provider, inputPath, storageDir, jobId, toolType, o
   if (provider === 'local_sharp') return generateWithLocalSharp({ inputPath, storageDir, jobId, toolType, outfitType, faceHint, cacheKey });
   if (provider === 'remove_bg') return generateWithRemoveBg({ inputPath, storageDir, jobId, toolType, outfitType, faceHint, cacheKey });
   if (provider === 'photoroom') return generateWithPhotoRoom({ inputPath, storageDir, jobId, toolType, outfitType, faceHint, cacheKey });
+  if (provider === 'openai_image') return generateWithOpenAiImage({ inputPath, storageDir, jobId, toolType, outfitType });
   throw new Error(`unsupported IMAGE_PROVIDER: ${provider}`);
 }
 

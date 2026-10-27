@@ -226,7 +226,7 @@ const MODE_PRESETS = {
       'Do not redesign, recolor, simplify, or add details to the garment. Do not mirror or move logos or prints.',
       'Fit the garment naturally on the body with realistic drape, folds, and tension.',
       'MODEL AND STYLING:',
-      'Use a single attractive, natural-looking adult Korean fashion model whose gender matches the garment unless specified below.',
+      'Use a single attractive, natural-looking adult Korean fashion model whose gender matches the garment, unless the request below asks for a different gender or for more people (for example a couple, each wearing the same garment).',
       'Style the rest of the outfit with simple neutral pieces that complement the garment without drawing attention away from it.',
       'Natural confident lookbook pose, full body or three-quarter framing so the entire garment is clearly visible.',
       'PHOTOGRAPHY:',

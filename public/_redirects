@@ -4,3 +4,7 @@
 /rss.xml /rss.xml 200
 /maps/fishbread/admin /maps/fishbread?admin=1 302
 /maps/fishbread/admin/ /maps/fishbread?admin=1 302
+/ai-image-generator/model-cut /ai-model-cut 301
+/ai-image-generator/model-cut/ /ai-model-cut/ 301
+/en/ai-image-generator/model-cut /en/ai-model-cut 301
+/en/ai-image-generator/model-cut/ /en/ai-model-cut/ 301

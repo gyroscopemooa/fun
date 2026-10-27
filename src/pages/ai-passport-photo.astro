@@ -94,11 +94,15 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           <label class="text-sm font-semibold text-slate-700" for="provider-select">AI 처리 엔진</label>
           <select id="provider-select" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
             <option value="auto">Auto</option>
+            <option value="openai_image">ManyTool AI (gpt-image)</option>
             <option value="local_sharp">Local Sharp</option>
             <option value="remove_bg">remove.bg</option>
             <option value="photoroom">PhotoRoom</option>
           </select>
-          <p id="provider-help" class="mt-1 text-xs text-slate-500">기본은 Auto입니다. 외부 키가 없으면 자동으로 local_sharp로 내려갑니다.</p>
+          <p id="provider-help" class="mt-1 text-xs text-slate-500">기본은 Auto입니다. OpenAI 키가 있으면 ManyTool AI(gpt-image)로, 외부 키가 없으면 local_sharp로 생성합니다.</p>
+          <p class="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">
+            AI로 보정·생성한 사진은 여권 발급 기관에서 반려될 수 있습니다. 실제 여권 신청 전에는 발급 기관의 사진 규정을 꼭 확인해 주세요.
+          </p>
         </div>
 
         <button id="generate" class="mt-4 w-full rounded-xl bg-sky-600 px-4 py-3 text-sm font-bold text-white shadow-[0_10px_30px_rgba(2,132,199,0.28)] transition hover:-translate-y-0.5 hover:bg-sky-500 active:translate-y-0 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none" disabled>
@@ -331,7 +335,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     let addonOrders = { add2: null, add3: null, add7: null };
     let latestJobId = null;
     let sourceUploadAssessment = { messages: [], blocking: false, faceHint: null };
-    let providerAvailability = { auto: true, local_sharp: true, remove_bg: false, photoroom: false };
+    let providerAvailability = { auto: true, local_sharp: true, remove_bg: false, photoroom: false, openai_image: false };
     let providerDiagnostics = {};
 
     const getSelectedProvider = () => {
@@ -343,6 +347,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       if (provider === 'local_sharp') return 'local_sharp';
       if (provider === 'remove_bg') return 'remove.bg';
       if (provider === 'photoroom') return 'PhotoRoom';
+      if (provider === 'openai_image') return 'ManyTool AI (gpt-image)';
       return 'auto';
     };
 
@@ -364,7 +369,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       if (!(providerHelpEl instanceof HTMLElement)) return;
       const selectedProvider = getSelectedProvider();
       if (selectedProvider === 'auto') {
-        providerHelpEl.textContent = '기본은 Auto입니다. 외부 키가 없으면 자동으로 local_sharp로 내려갑니다.';
+        providerHelpEl.textContent = '기본은 Auto입니다. OpenAI 키가 있으면 ManyTool AI(gpt-image)로, 외부 키가 없으면 local_sharp로 생성합니다.';
         return;
       }
       const available = Boolean(providerAvailability?.[selectedProvider]);
@@ -1587,7 +1592,8 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
           auto: true,
           local_sharp: true,
           remove_bg: Boolean(config?.providerAvailability?.remove_bg),
-          photoroom: Boolean(config?.providerAvailability?.photoroom)
+          photoroom: Boolean(config?.providerAvailability?.photoroom),
+          openai_image: Boolean(config?.providerAvailability?.openai_image)
         };
         providerDiagnostics = config?.providerDiagnostics ?? {};
         syncProviderOptions();
