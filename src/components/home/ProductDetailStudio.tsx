@@ -1,4 +1,4 @@
-﻿import { Fragment, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
+﻿import { Fragment, useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from 'react';
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
@@ -11,7 +11,8 @@ import {
   RotateCcw,
   ScanSearch,
   Store,
-  Wand2
+  Wand2,
+  X
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -425,6 +426,7 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
   const [isExportingSlices, setIsExportingSlices] = useState(false);
   const [isExportingFile, setIsExportingFile] = useState<'png' | 'jpg' | 'pdf' | null>(null);
   const [isStartingCheckout, setIsStartingCheckout] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [paymentMode, setPaymentMode] = useState<PaymentMode>('mock');
   const [paymentProducts, setPaymentProducts] = useState<PaymentProducts>({ detail_page: false });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -534,8 +536,8 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
     };
   }, [hasInvalidProductionApiBase]);
 
-  const onImagesSelected = async (event: ChangeEvent<HTMLInputElement>) => {
-    const nextFiles = Array.from(event.target.files ?? []).slice(0, MAX_IMAGES);
+  const applyImageFiles = async (files: File[]) => {
+    const nextFiles = files.filter((file) => file.type.startsWith('image/')).slice(0, MAX_IMAGES);
     if (!nextFiles.length) return;
 
     const previous = images;
@@ -551,9 +553,32 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
       previous.forEach((image) => URL.revokeObjectURL(image.url));
       setImages([]);
       toast.error(error instanceof Error ? error.message : ui.uploadFail);
+    }
+  };
+
+  const onImagesSelected = async (event: ChangeEvent<HTMLInputElement>) => {
+    try {
+      await applyImageFiles(Array.from(event.target.files ?? []));
     } finally {
       event.target.value = '';
     }
+  };
+
+  const onImagesDropped = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+    void applyImageFiles(Array.from(event.dataTransfer.files ?? []));
+  };
+
+  const onRemoveImage = (id: string) => {
+    setImages((current) => {
+      const target = current.find((image) => image.id === id);
+      if (target) URL.revokeObjectURL(target.url);
+      return current.filter((image) => image.id !== id);
+    });
+    setResult(null);
+    setHtml('');
+    setCopyText('');
   };
 
   const onGenerate = handleSubmit(async (formValues) => {
@@ -842,7 +867,7 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
   };
 
   return (
-    <section className="px-4 pb-10 pt-8 lg:px-10">
+    <section className="pb-10 pt-8">
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
@@ -852,8 +877,8 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
           activeTheme.shell
         )}
       >
-        <div className="grid gap-8 px-6 py-7 lg:grid-cols-[1.04fr_0.96fr] lg:px-8">
-          <div className="space-y-6">
+        <div className="grid gap-8 px-5 py-7 sm:px-6 lg:grid-cols-[minmax(0,1.04fr)_minmax(0,0.96fr)] lg:px-8">
+          <div className="min-w-0 space-y-6">
             <div className="flex flex-wrap items-center gap-3">
               <span className={cn('rounded-full bg-gradient-to-r px-4 py-1 text-xs font-semibold text-slate-900', activeTheme.accent)}>
                 AI Detail Page Builder
@@ -884,14 +909,20 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
               </p>
             </div>
 
-            <div className="max-w-2xl">
-              <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
-                {ui.heroTitle}
-              </h1>
-              <p className="mt-3 text-sm leading-6 text-white/72 sm:text-base">
-                {ui.subheadlinePlaceholder}
-              </p>
-            </div>
+            <ol className="grid gap-2 sm:grid-cols-3">
+              {[
+                { step: '01', icon: ImagePlus, label: ui.imageUploadTitle },
+                { step: '02', icon: Wand2, label: ui.pageCount },
+                { step: '03', icon: Store, label: ui.payAndGenerate }
+              ].map((item) => (
+                <li key={item.step} className="flex items-center gap-3 rounded-2xl border border-white/12 bg-white/8 px-4 py-3 backdrop-blur">
+                  <span className={cn('grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gradient-to-r text-[11px] font-black text-slate-900', activeTheme.accent)}>
+                    {item.step}
+                  </span>
+                  <span className="min-w-0 text-sm font-semibold text-white/88">{item.label}</span>
+                </li>
+              ))}
+            </ol>
 
             <div className="rounded-[1.8rem] border border-[rgba(255,206,220,0.24)] bg-[linear-gradient(135deg,rgba(255,245,247,0.12),rgba(255,230,238,0.08),rgba(255,255,255,0.04))] p-5 backdrop-blur">
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -986,7 +1017,7 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
             </div>
           </div>
 
-          <div className="rounded-[1.7rem] border border-white/10 bg-white/7 p-4 backdrop-blur">
+          <div className="min-w-0 self-start rounded-[1.7rem] border border-white/10 bg-white/7 p-4 backdrop-blur lg:sticky lg:top-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-white/45">Theme</p>
@@ -1028,13 +1059,13 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
           </div>
         </div>
 
-        <div className="grid gap-6 border-t border-white/10 bg-[rgba(255,255,255,0.03)] px-6 py-7 xl:grid-cols-[0.78fr_1.22fr] lg:px-8">
+        <div className="grid gap-6 border-t border-white/10 bg-[rgba(255,255,255,0.03)] px-4 py-6 sm:px-6 lg:px-8 lg:py-7 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
           <form
             onSubmit={(event) => {
               event.preventDefault();
               void onStartCheckout();
             }}
-            className="rounded-[1.7rem] border border-slate-200 bg-white p-5 text-slate-900 shadow-xl"
+            className="min-w-0 rounded-[1.7rem] border border-slate-200 bg-white p-5 text-slate-900 shadow-xl"
           >
             <div className="flex items-center justify-between gap-4">
               <div>
@@ -1045,22 +1076,22 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
             </div>
 
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <label className="space-y-2 text-sm">
+              <label className="min-w-0 space-y-2 text-sm">
                 <span className="font-semibold">{ui.productName}</span>
                 <input {...register('productName')} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-slate-400" />
               </label>
-              <label className="space-y-2 text-sm">
+              <label className="min-w-0 space-y-2 text-sm">
                 <span className="font-semibold">{ui.price}</span>
                 <input {...register('price')} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-slate-400" />
               </label>
-              <label className="space-y-2 text-sm">
+              <label className="min-w-0 space-y-2 text-sm sm:col-span-2">
                 <span className="font-semibold">{ui.audience}</span>
                 <input {...register('audience')} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-slate-400" />
               </label>
-              <label className="space-y-2 text-sm">
+              <div className="min-w-0 space-y-2 text-sm sm:col-span-2">
                 <span className="font-semibold">{ui.pageCount}</span>
                 <input type="hidden" {...register('pageCount', { valueAsNumber: true })} value={normalizedPageCount} />
-                <div className="flex flex-wrap gap-2">
+                <div className="grid grid-cols-5 gap-1.5 rounded-2xl bg-slate-100 p-1">
                   {DETAIL_PAGE_TIER_OPTIONS.map((option) => {
                     const selected = normalizedPageCount === option.pageCount;
                     return (
@@ -1072,33 +1103,28 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
                           shouldTouch: true,
                           shouldValidate: true
                         })}
+                        aria-pressed={selected}
                         className={cn(
-                          'min-w-[64px] rounded-full border px-3 py-1.5 text-center text-sm transition',
+                          'rounded-xl px-1 py-2 text-center text-sm font-bold transition',
                           selected
-                            ? 'border-slate-900 bg-slate-900 text-white shadow-sm'
-                            : 'border-slate-200 bg-white text-slate-700 hover:border-slate-400'
+                            ? 'bg-slate-900 text-white shadow-sm'
+                            : 'text-slate-600 hover:bg-white hover:text-slate-900'
                         )}
                       >
-                        <p className="font-bold">{option.pageCount}장</p>
+                        {option.pageCount}장
                       </button>
                     );
                   })}
                 </div>
                 <p className="text-xs text-slate-500">{ui.tierHint}</p>
-              </label>
+              </div>
             </div>
 
             <div className="mt-4 rounded-[1.4rem] border border-slate-200 bg-slate-50 p-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Selected Tier</p>
-                  <h3 className="mt-1 text-base font-black text-slate-950">{activeTier.pageCount}장 · {activeTier.name}</h3>
-                </div>
-                <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600">
-                  {ui.selectedTierHint}
-                </span>
-              </div>
-              <p className="mt-3 text-sm leading-6 text-slate-600">{activeTier.summary}</p>
+              <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{ui.selectedTier}</p>
+              <h3 className="mt-1 text-base font-black text-slate-950">{activeTier.pageCount}장 · {activeTier.name}</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{activeTier.summary}</p>
+              <p className="mt-2 text-xs leading-5 text-slate-400">{ui.selectedTierHint}</p>
             </div>
 
             <div className="mt-4">
@@ -1125,27 +1151,54 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
               </label>
             </div>
 
-            <div className="mt-4 rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50 p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold">{ui.imageUploadTitle}</p>
-                  <p className="mt-1 text-xs text-slate-500">{ui.imageUploadBody}</p>
+            <div
+              onDragOver={(event) => {
+                event.preventDefault();
+                setIsDragging(true);
+              }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={onImagesDropped}
+              className={cn(
+                'mt-4 rounded-[1.5rem] border border-dashed p-4 transition',
+                isDragging ? 'border-slate-900 bg-slate-100' : 'border-slate-300 bg-slate-50'
+              )}
+            >
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold">
+                    {ui.imageUploadTitle}
+                    <span className="ml-2 text-xs font-medium text-slate-400">{images.length}/{MAX_IMAGES}</span>
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">{ui.imageUploadBody}</p>
                 </div>
-                <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+                <Button type="button" variant="outline" className="shrink-0" onClick={() => fileInputRef.current?.click()}>
                   <ImagePlus className="h-4 w-4" />
                   {ui.chooseImages}
                 </Button>
               </div>
               <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={(event) => { void onImagesSelected(event); }} />
-              <div className="mt-4 grid grid-cols-5 gap-2">
+              <div className="mt-4 grid grid-cols-4 gap-2 sm:grid-cols-5">
                 {images.length > 0 ? images.map((image, index) => (
-                  <div key={image.id} className="overflow-hidden rounded-2xl bg-slate-200">
-                    <img src={image.url} alt={`업로드 이미지 ${index + 1}`} className="h-24 w-full object-cover" />
+                  <div key={image.id} className="group relative aspect-square overflow-hidden rounded-xl bg-slate-200">
+                    <img src={image.url} alt={`업로드 이미지 ${index + 1}`} className="h-full w-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => onRemoveImage(image.id)}
+                      aria-label={`remove image ${index + 1}`}
+                      className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-slate-900/70 text-white opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
                   </div>
                 )) : (
-                  <div className="col-span-5 rounded-2xl bg-white px-4 py-8 text-center text-sm text-slate-400">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="col-span-4 flex flex-col items-center gap-2 rounded-2xl bg-white px-4 py-8 text-center text-sm text-slate-400 transition hover:text-slate-600 sm:col-span-5"
+                  >
+                    <ImagePlus className="h-6 w-6" />
                     {ui.noImages}
-                  </div>
+                  </button>
                 )}
               </div>
             </div>
@@ -1167,24 +1220,25 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
               </div>
             </div>
 
-            <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-              <div>
+            <div className="mt-5 grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 sm:grid-cols-2">
+              <div className="min-w-0">
                 <p className="font-semibold text-slate-900">{ui.selectedPages}: {pricingSummary.page_count}장</p>
-                <p className="text-xs text-slate-500">장당 {formatDetailPagePrice(pricingSummary.unit_price, pricingSummary.currency)}</p>
-                <p className="text-xs text-slate-400">장당 {formatApproxKrw(pricingSummary.unit_price)} 수준</p>
+                <p className="text-xs text-slate-500">{ui.perPageApprox} {formatDetailPagePrice(pricingSummary.unit_price, pricingSummary.currency)}</p>
+                <p className="text-xs text-slate-400">{ui.perPageApprox} {formatApproxKrw(pricingSummary.unit_price)}</p>
               </div>
-              <div className="text-right">
-                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Estimated</p>
-                <p className="font-semibold text-slate-900">예상 금액: {formatDetailPagePrice(pricingSummary.total_price, pricingSummary.currency)}</p>
-                <p className="text-xs text-slate-400">{formatApproxKrw(pricingSummary.total_price)} / {ui.usdNotice}</p>
+              <div className="min-w-0 sm:text-right">
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{ui.estimated}</p>
+                <p className="text-lg font-black text-slate-900">{formatDetailPagePrice(pricingSummary.total_price, pricingSummary.currency)}</p>
+                <p className="text-xs text-slate-400">{formatApproxKrw(pricingSummary.total_price)} · {ui.usdNotice}</p>
               </div>
             </div>
 
-            <div className="mt-5 flex flex-wrap gap-3">
-              <Button type="submit" disabled={isStartingCheckout}>
-                {isStartingCheckout ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Store className="h-4 w-4" />}
-                {ui.payAndGenerate}
-              </Button>
+            <Button type="submit" disabled={isStartingCheckout} className="mt-5 h-12 w-full rounded-2xl text-base font-bold">
+              {isStartingCheckout ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Store className="h-4 w-4" />}
+              {ui.payAndGenerate}
+            </Button>
+
+            <div className="mt-3 flex flex-wrap gap-2">
               <Button type="button" variant="outline" onClick={onClearInputs}>
                 <RotateCcw className="h-4 w-4" />
                 {ui.clearInputs}
@@ -1224,13 +1278,13 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
             </p>
           </form>
 
-          <div ref={zoomRootRef} className="rounded-[1.7rem] border border-white/10 bg-white p-5 text-slate-900 shadow-xl">
+          <div ref={zoomRootRef} className="min-w-0 self-start rounded-[1.7rem] border border-white/10 bg-white p-4 text-slate-900 shadow-xl sm:p-5 xl:sticky xl:top-4">
             <div className="flex items-center justify-between gap-4">
-              <div>
+              <div className="min-w-0">
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{ui.preview}</p>
                 <h2 className="mt-1 text-xl font-black tracking-tight">{ui.detailPageVertical}</h2>
               </div>
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+              <span className="shrink-0 rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white">
                 {result ? `${result.page_count} ${ui.pages}` : `${normalizedPageCount} ${ui.pages}`}
               </span>
             </div>
@@ -1254,8 +1308,8 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
               </p>
             ) : null}
 
-            <div className="mt-4 rounded-[1.6rem] bg-slate-100 p-3">
-              <div className="mx-auto max-h-[1400px] overflow-y-auto overflow-x-hidden rounded-2xl shadow-[0_18px_48px_rgba(15,23,42,0.12)]">
+            <div className="mt-4 rounded-[1.6rem] bg-slate-100 p-2 sm:p-3">
+              <div className="mx-auto max-h-[70vh] w-full max-w-[640px] overflow-y-auto overflow-x-hidden rounded-2xl bg-white shadow-[0_18px_48px_rgba(15,23,42,0.12)] xl:max-h-[calc(100vh-16rem)]">
                 <ScaledFrame ref={exportRef} width={EXPORT_WIDTH}>
                   <DetailPageCanvas
                     result={previewResult}
