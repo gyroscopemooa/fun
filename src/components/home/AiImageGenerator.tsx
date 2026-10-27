@@ -87,7 +87,7 @@ type SavedDraft = {
   imageDataUrl: string;
 };
 
-const DEFAULT_PROVIDER: Provider = 'xai';
+const DEFAULT_PROVIDER: Provider = 'openai';
 const ENGINE_LABEL = 'ManyTool AI';
 const MODE_ORDER: Mode[] = ['figure', 'body', 'travel', 'europe', 'proofshot', 'kakao', 'instagram', 'hanbok', 'kimono', 'outfit', 'modelcut', 'streamer', 'pethuman', 'hairstyle', 'interior', 'animation', 'free'];
 
