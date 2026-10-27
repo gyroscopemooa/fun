@@ -4,6 +4,11 @@ import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import AdsterraBanner from '../../components/ads/AdsterraBanner.astro';
 import SimulatorPage from '../../features/electric-practical/screens/SimulatorPage';
+
+// 런칭 전까지 운영 빌드에서는 숨김: 로컬 개발 서버에서만 시뮬레이터를 보여 주고, 운영에서는 도구 모음으로 돌려보냄
+if (!import.meta.env.DEV) {
+  return Astro.redirect('/tools/');
+}
 ---
 <Layout title="전기기능사 실기 2D 시뮬레이터 · 자기유지 회로 | ManyTool" description="단자에 직접 결선하고 START·STOP·자기유지 회로를 검증하는 24V 가상 전기제어 학습 도구. 오배선·단선·단락을 검사하고 회로를 저장할 수 있습니다.">
   <Header preserveCurrentRoute />

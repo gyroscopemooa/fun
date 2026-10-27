@@ -247,7 +247,6 @@ const sidebarText = {
     },
     { href: localizedHrefOrOriginal(locale, '/ai-calorie-calculator'), label: t('layout.sidebar.aiCalorie') },
     { href: localizedHrefOrOriginal(locale, '/ai-id-photo'), label: t('layout.sidebar.aiIdPhoto') },
-    { href: '/tools/electric-practical', label: '전기기능사 실기 시뮬레이터' },
     {
       href: localizedHrefOrOriginal(locale, '/tools/product-detail-studio'),
       label: locale === 'ko' ? 'AI 상세페이지 생성기' : locale === 'ja' ? 'AI商品詳細ページ生成' : 'AI Product Detail Studio'
@@ -265,7 +264,9 @@ if (import.meta.env.DEV) {
     {
       href: localizedHrefOrOriginal(locale, '/ai-photoshop'),
       label: locale === 'ko' ? 'AI 프로필사진 (로컬)' : locale === 'ja' ? 'AIプロフィール写真 (ローカル)' : 'AI Profile Photo (local)'
-    }
+    },
+    // 전기기능사 실기 시뮬레이터: 런칭 전까지 운영에서는 숨김
+    { href: '/tools/electric-practical', label: '전기기능사 실기 시뮬레이터 (로컬)' }
   );
 }
 const disabledSidebarPaths = new Set(import.meta.env.DEV ? [] : ['/ai-id-photo', '/ai-passport-photo', '/ai-headshot']);

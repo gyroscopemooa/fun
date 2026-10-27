@@ -51,7 +51,6 @@ const paths = [
   '/ladder-game',
   '/streamer-battle',
   '/tools/product-detail-studio',
-  '/tools/electric-practical',
   '/tools/video-to-mp4',
   '/random-picker',
   '/roulette',
