@@ -267,7 +267,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
   </div>
   <Footer />
 
-  <script define:vars={{ apiBase }} is:inline>
+  <script define:vars={{ apiBase, isDevServer: import.meta.env.DEV }} is:inline>
     const fileInput = document.getElementById('file-input');
     const cameraStartBtn = document.getElementById('camera-start');
     const cameraCaptureBtn = document.getElementById('camera-capture');
@@ -311,7 +311,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
     const mobileDownloadBtn = document.getElementById('mobile-download-selected');
 
     const API_BASE = apiBase;
-    const allowLocalFallback = import.meta.env.DEV;
+    const allowLocalFallback = isDevServer;
     const PAGE_STATE_KEY = 'manytool:ai-passport-photo:v1';
 
     let stream = null;

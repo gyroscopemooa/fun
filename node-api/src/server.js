@@ -97,7 +97,8 @@ const allowedOrigins = new Set([
 
 const corsOptions = {
   origin(origin, callback) {
-    if (!origin || allowedOrigins.has(origin)) {
+    // Any localhost port is allowed so every local Astro dev server (4321, 4331~4338, 3001...) can reach the API.
+    if (!origin || allowedOrigins.has(origin) || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
       callback(null, true);
       return;
     }
