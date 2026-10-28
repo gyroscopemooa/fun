@@ -226,7 +226,7 @@ export function CalorieReport({ analysis, photoUrl, sample = false }: Props) {
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
           <div className="mx-auto w-40 shrink-0 sm:mx-0 sm:w-44">
             {photoUrl ? (
-              <img src={photoUrl} alt="분석한 식사 사진" className="aspect-square w-full rounded-[28px] object-cover shadow-lg" />
+              <img src={photoUrl} alt="분석한 식사 사진" className="aspect-square w-full rounded-[28px] bg-white object-contain shadow-lg" />
             ) : (
               <EmojiPlate items={report.items} className="text-[18px] sm:text-[20px]" />
             )}

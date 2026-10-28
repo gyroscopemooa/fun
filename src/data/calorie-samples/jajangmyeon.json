@@ -1,0 +1,97 @@
+{
+  "id": "jajangmyeon",
+  "label": "짜장면",
+  "emoji": "🍜",
+  "photoUrl": "/images/calorie-samples/jajangmyeon.webp",
+  "generatedAt": "2026-10-28T13:32:56.232Z",
+  "model": "gpt-5",
+  "pipeline": "node-api/src/commerce/calorieAnalyzer.js#analyzeMealCalories",
+  "sourceSha256": "ea6715a986758cf3b06a4f9795dce553658732ff7d436cc70819a9f7e9c3c631",
+  "analysis": {
+    "version": 2,
+    "goal": "maintain",
+    "isFood": true,
+    "mealName": "자장면 한 그릇",
+    "summary": "중화면에 춘장 소스를 얹은 자장면으로 보입니다. 면과 춘장 소스(기름, 전분, 돼지고기·양파 등) 때문에 탄수화물과 나트륨, 지방이 높은 편입니다. 단백질과 채소는 상대적으로 적습니다.",
+    "confidence": "medium",
+    "totalCalories": 800,
+    "calorieRange": {
+      "min": 680,
+      "max": 980
+    },
+    "macros": {
+      "carbsG": 120,
+      "proteinG": 22,
+      "fatG": 24,
+      "fiberG": 6,
+      "sugarG": 12,
+      "sodiumMg": 2200
+    },
+    "foodItems": [
+      {
+        "name": "자장면(중화면+춘장 소스+돼지고기·양파 등)",
+        "emoji": "🍜",
+        "estimatedPortion": "1그릇(면 약 300g 조리 후 + 소스 350-400g)",
+        "grams": 700,
+        "estimatedCalories": 800,
+        "carbsG": 120,
+        "proteinG": 22,
+        "fatG": 24,
+        "confidence": "medium"
+      }
+    ],
+    "mealScore": 48,
+    "scoreBreakdown": {
+      "balance": {
+        "score": 45,
+        "comment": "탄수화물 비중이 높고 채소가 적어 전반적 균형이 아쉬움"
+      },
+      "protein": {
+        "score": 50,
+        "comment": "돼지고기가 조금 들어가지만 단백질이 충분하진 않음"
+      },
+      "fiber": {
+        "score": 35,
+        "comment": "채소 양이 적어 식이섬유가 낮음"
+      },
+      "sodiumSugar": {
+        "score": 30,
+        "comment": "춘장 소스와 간으로 나트륨 높고 약간의 당도 포함"
+      }
+    },
+    "highlights": [
+      "한 그릇 식사로 포만감 있는 에너지 제공",
+      "양파·양배추 등 일부 채소가 포함됨"
+    ],
+    "improvements": [
+      "소스는 절반만 사용하고 면은 조금 남겨 총량을 줄이세요.",
+      "삶은 달걀이나 두부·닭가슴살을 곁들여 단백질을 보강하세요.",
+      "오이채·샐러드 등 생채소를 곁들여 섬유와 포만감을 높이세요."
+    ],
+    "swaps": [
+      {
+        "from": "면 1인분 그대로",
+        "to": "면 2/3인분 + 채소 토핑 추가",
+        "caloriesSaved": 180,
+        "reason": "정제 탄수를 줄이고 채소로 부피와 섬유를 늘려 포만감 유지"
+      },
+      {
+        "from": "기본 자장 소스",
+        "to": "기름 적게(‘덜 기름지게’) 또는 소스 절반",
+        "caloriesSaved": 120,
+        "reason": "소스의 기름·전분이 칼로리와 나트륨의 주원인"
+      },
+      {
+        "from": "일반 중화면",
+        "to": "곤약면/두부면",
+        "caloriesSaved": 300,
+        "reason": "면발의 탄수 칼로리를 크게 줄여 체중 관리에 도움"
+      }
+    ],
+    "notes": [
+      "사진만으로 정확한 중량을 알 수 없어 1그릇(약 700g) 기준으로 추정했습니다.",
+      "조리 시 사용한 기름·전분량, 돼지고기 양과 소스 당도에 따라 칼로리와 나트륨이 크게 달라질 수 있습니다.",
+      "중국집·분식점 자장면은 보통 나트륨이 높아(>2000mg) 국물·소스 양을 조절하는 것이 좋습니다."
+    ]
+  }
+}

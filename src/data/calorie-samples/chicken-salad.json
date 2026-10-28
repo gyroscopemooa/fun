@@ -1,0 +1,197 @@
+{
+  "id": "chicken-salad",
+  "label": "치킨 샐러드",
+  "emoji": "🥗",
+  "photoUrl": "/images/calorie-samples/chicken-salad.webp",
+  "generatedAt": "2026-10-28T13:32:18.470Z",
+  "model": "gpt-5",
+  "pipeline": "node-api/src/commerce/calorieAnalyzer.js#analyzeMealCalories",
+  "sourceSha256": "ffa4b8636048a823526ca4e211045ed67d4c05855ed1ce70e0da51e2b1a3395d",
+  "analysis": {
+    "version": 2,
+    "goal": "maintain",
+    "isFood": true,
+    "mealName": "치킨 아보카도 그리스식 샐러드",
+    "summary": "로메인, 오이·토마토·적양파, 아보카도, 블랙 올리브, 페타치즈와 구운 닭가슴살이 들어간 큰 샐러드에 올리브오일 비네그레트를 뿌린 한 그릇. 물 한 컵이 함께 보입니다.",
+    "confidence": "medium",
+    "totalCalories": 662,
+    "calorieRange": {
+      "min": 580,
+      "max": 780
+    },
+    "macros": {
+      "carbsG": 21.2,
+      "proteinG": 46.8,
+      "fatG": 44.3,
+      "fiberG": 10.1,
+      "sugarG": 7.7,
+      "sodiumMg": 892
+    },
+    "foodItems": [
+      {
+        "name": "로메인 상추",
+        "emoji": "🥬",
+        "estimatedPortion": "잘게 썬 것 2컵",
+        "grams": 100,
+        "estimatedCalories": 17,
+        "carbsG": 3.3,
+        "proteinG": 1.2,
+        "fatG": 0.3,
+        "confidence": "high"
+      },
+      {
+        "name": "오이",
+        "emoji": "🥒",
+        "estimatedPortion": "반 개",
+        "grams": 100,
+        "estimatedCalories": 16,
+        "carbsG": 3.6,
+        "proteinG": 0.7,
+        "fatG": 0.1,
+        "confidence": "high"
+      },
+      {
+        "name": "토마토",
+        "emoji": "🍅",
+        "estimatedPortion": "중간 크기 1개 분량",
+        "grams": 100,
+        "estimatedCalories": 18,
+        "carbsG": 3.9,
+        "proteinG": 0.9,
+        "fatG": 0.2,
+        "confidence": "medium"
+      },
+      {
+        "name": "적양파",
+        "emoji": "🧅",
+        "estimatedPortion": "잘게 썬 것 2큰술",
+        "grams": 20,
+        "estimatedCalories": 8,
+        "carbsG": 1.9,
+        "proteinG": 0.2,
+        "fatG": 0,
+        "confidence": "medium"
+      },
+      {
+        "name": "아보카도",
+        "emoji": "🥑",
+        "estimatedPortion": "1/2개",
+        "grams": 75,
+        "estimatedCalories": 120,
+        "carbsG": 6,
+        "proteinG": 1.5,
+        "fatG": 11,
+        "confidence": "medium"
+      },
+      {
+        "name": "블랙 올리브",
+        "emoji": "🫒",
+        "estimatedPortion": "8알 내외",
+        "grams": 30,
+        "estimatedCalories": 45,
+        "carbsG": 1.2,
+        "proteinG": 0.3,
+        "fatG": 4.7,
+        "confidence": "medium"
+      },
+      {
+        "name": "페타 치즈",
+        "emoji": "🧀",
+        "estimatedPortion": "잘게 부순 것 2큰술",
+        "grams": 30,
+        "estimatedCalories": 80,
+        "carbsG": 1,
+        "proteinG": 4,
+        "fatG": 6,
+        "confidence": "medium"
+      },
+      {
+        "name": "구운 닭가슴살",
+        "emoji": "🍗",
+        "estimatedPortion": "깍둑썰기 1컵 약",
+        "grams": 120,
+        "estimatedCalories": 198,
+        "carbsG": 0,
+        "proteinG": 37,
+        "fatG": 4,
+        "confidence": "medium"
+      },
+      {
+        "name": "올리브오일 비네그레트(주로 올리브오일)",
+        "emoji": "🫒",
+        "estimatedPortion": "약 1.5큰술",
+        "grams": 18,
+        "estimatedCalories": 160,
+        "carbsG": 0.3,
+        "proteinG": 0,
+        "fatG": 18,
+        "confidence": "medium"
+      },
+      {
+        "name": "물",
+        "emoji": "💧",
+        "estimatedPortion": "컵 1잔",
+        "grams": 250,
+        "estimatedCalories": 0,
+        "carbsG": 0,
+        "proteinG": 0,
+        "fatG": 0,
+        "confidence": "low"
+      }
+    ],
+    "mealScore": 83,
+    "scoreBreakdown": {
+      "balance": {
+        "score": 85,
+        "comment": "채소·단백질·건강한 지방이 잘 조합된 한 끼입니다."
+      },
+      "protein": {
+        "score": 90,
+        "comment": "닭가슴살로 단백질이 충분합니다(약 45g 내외)."
+      },
+      "fiber": {
+        "score": 80,
+        "comment": "채소와 아보카도로 식이섬유가 충분합니다."
+      },
+      "sodiumSugar": {
+        "score": 65,
+        "comment": "설탕은 낮지만 페타·올리브·드레싱으로 나트륨이 다소 높습니다."
+      }
+    },
+    "highlights": [
+      "채소 비중이 높아 포만감 대비 열량이 효율적",
+      "닭가슴살로 질 좋은 단백질 공급",
+      "아보카도와 올리브오일의 불포화지방으로 심혈관에 우호적"
+    ],
+    "improvements": [
+      "드레싱 양을 1큰술로 줄이거나 레몬즙을 더해 칼로리와 나트륨을 낮추세요.",
+      "페타치즈와 올리브 양을 절반으로 줄이면 나트륨 과다를 예방할 수 있어요.",
+      "균형을 위해 통곡물(퀴노아 1/2컵 또는 통밀빵 반 장)을 곁들여 에너지를 안정적으로 보충하세요."
+    ],
+    "swaps": [
+      {
+        "from": "올리브오일 비네그레트 1.5큰술",
+        "to": "올리브오일 1큰술 + 레몬즙/식초 추가",
+        "caloriesSaved": 54,
+        "reason": "지방량을 줄이면서 상큼함을 유지"
+      },
+      {
+        "from": "페타치즈 30g",
+        "to": "페타치즈 15g",
+        "caloriesSaved": 40,
+        "reason": "풍미는 유지하면서 칼로리와 나트륨 감소"
+      },
+      {
+        "from": "블랙 올리브 30g",
+        "to": "오이 추가 50g",
+        "caloriesSaved": 45,
+        "reason": "나트륨과 지방을 줄이고 채소 양을 늘림"
+      }
+    ],
+    "notes": [
+      "그릇 크기와 인분이 사진만으로는 불확실해 총량 추정에 오차가 있을 수 있습니다.",
+      "드레싱의 실제 양과 오일 비율, 닭가슴살의 간 여부에 따라 열량·나트륨이 크게 달라질 수 있습니다.",
+      "치즈 종류(페타/리코타 등)와 올리브 개수도 정확하지 않아 나트륨 추정에 변동 범위가 큽니다."
+    ]
+  }
+}

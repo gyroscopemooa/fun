@@ -1,0 +1,120 @@
+{
+  "id": "tuna-sushi",
+  "label": "참치 초밥",
+  "emoji": "🍣",
+  "photoUrl": "/images/calorie-samples/tuna-sushi.webp",
+  "generatedAt": "2026-10-28T13:33:44.145Z",
+  "model": "gpt-5",
+  "pipeline": "node-api/src/commerce/calorieAnalyzer.js#analyzeMealCalories",
+  "sourceSha256": "d61a35a468bfdf54ce7be842c3626d08cceecc29f18de5fb564d0d531af8f245",
+  "analysis": {
+    "version": 2,
+    "goal": "maintain",
+    "isFood": true,
+    "mealName": "참치 니기리 초밥 3피스",
+    "summary": "아카미·주토로·오도로로 보이는 참치 니기리 초밥 3개입니다. 밥은 한입 크기(약 22g/개), 참치 18g 내외로 추정했어요. 간장이나 고추냉이는 보이지 않습니다.",
+    "confidence": "medium",
+    "totalCalories": 230,
+    "calorieRange": {
+      "min": 200,
+      "max": 280
+    },
+    "macros": {
+      "carbsG": 18,
+      "proteinG": 13.5,
+      "fatG": 8.5,
+      "fiberG": 0.3,
+      "sugarG": 3,
+      "sodiumMg": 360
+    },
+    "foodItems": [
+      {
+        "name": "참치 아카미 니기리",
+        "emoji": "🍣",
+        "estimatedPortion": "1피스 (밥 1입, 참치 얇은 조각)",
+        "grams": 40,
+        "estimatedCalories": 58,
+        "carbsG": 6,
+        "proteinG": 4.8,
+        "fatG": 0.2,
+        "confidence": "medium"
+      },
+      {
+        "name": "참치 주토로 니기리",
+        "emoji": "🍣",
+        "estimatedPortion": "1피스 (밥 1입, 중간 지방)",
+        "grams": 40,
+        "estimatedCalories": 76,
+        "carbsG": 6,
+        "proteinG": 4.6,
+        "fatG": 2.8,
+        "confidence": "medium"
+      },
+      {
+        "name": "참치 오도로 니기리",
+        "emoji": "🍣",
+        "estimatedPortion": "1피스 (밥 1입, 지방 많은 부위)",
+        "grams": 40,
+        "estimatedCalories": 96,
+        "carbsG": 6,
+        "proteinG": 4.1,
+        "fatG": 5.5,
+        "confidence": "medium"
+      }
+    ],
+    "mealScore": 70,
+    "scoreBreakdown": {
+      "balance": {
+        "score": 65,
+        "comment": "단백질+탄수화물 위주로 깔끔하지만 채소/과일이 없어 균형이 아쉬워요."
+      },
+      "protein": {
+        "score": 70,
+        "comment": "참치로 적당한 단백질이 확보되지만 양은 많지 않아요."
+      },
+      "fiber": {
+        "score": 30,
+        "comment": "식이섬유가 거의 없어 채소 곁들이기가 필요해요."
+      },
+      "sodiumSugar": {
+        "score": 65,
+        "comment": "사진상 간장은 없지만, 초대리의 당·소금이 약간 있어요."
+      }
+    },
+    "highlights": [
+      "한 입 단위로 양 조절이 쉬움",
+      "참치의 오메가-3와 고품질 단백질 섭취",
+      "밥 양이 과하지 않아 열량이 비교적 낮음"
+    ],
+    "improvements": [
+      "미니 샐러드나 미역/오이무침을 곁들여 채소와 식이섬유 보충",
+      "간장을 쓰면 살짝 찍고, 와사비로 간을 보완해 나트륨을 줄이기",
+      "밥 양을 조금 줄이거나 아카미 비중을 늘려 지방을 조절하기"
+    ],
+    "swaps": [
+      {
+        "from": "오도로 1피스",
+        "to": "아카미 1피스",
+        "caloriesSaved": 38,
+        "reason": "지방이 많은 오도로 대신 아카미로 바꾸면 열량과 포화지방을 낮출 수 있어요."
+      },
+      {
+        "from": "니기리 1피스",
+        "to": "참치 사시미 1조각(+와사비)으로 교체",
+        "caloriesSaved": 33,
+        "reason": "밥(초대리)의 열량과 당을 줄이고 단백질 중심으로 만들어요."
+      },
+      {
+        "from": "니기리 밥 일반량(약 22g/개 ×3)",
+        "to": "밥 반만(약 11g/개 ×3)",
+        "caloriesSaved": 45,
+        "reason": "밥 양을 절반으로 줄이면 총 탄수화물과 열량을 줄일 수 있어요."
+      }
+    ],
+    "notes": [
+      "초밥 밥무게와 참치 부위의 지방도에 따라 열량이 크게 달라질 수 있습니다.",
+      "스시 달인간장(니키리)이나 찍어 먹는 간장은 사진에 없지만, 1작은술만으로도 나트륨 약 300mg이 추가됩니다.",
+      "초대리(식초·설탕·소금)가 들어가 당과 나트륨이 소량 포함됩니다."
+    ]
+  }
+}
