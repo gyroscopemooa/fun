@@ -185,6 +185,7 @@ const promoSlides = await Promise.all(
     let currentOrderId = null;
     let apiReady = false;
     let productReady = false;
+    let checkingConnection = false;
     let stream = null;
     let analyzing = false;
 
@@ -197,9 +198,12 @@ const promoSlides = await Promise.all(
     };
 
     const setStatus = (message, tone = 'neutral') => {
-      if (statusEl) statusEl.textContent = message;
+      if (statusEl) {
+        statusEl.textContent = tone === 'neutral' ? message : '';
+        statusEl.classList.toggle('hidden', tone !== 'neutral');
+      }
       if (!statusBoxEl) return;
-      if (!message) {
+      if (!message || tone === 'neutral') {
         statusBoxEl.className = 'mt-3 hidden rounded-2xl border p-4 text-sm';
         statusBoxEl.textContent = '';
         return;
@@ -210,12 +214,13 @@ const promoSlides = await Promise.all(
           ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
           : 'border-slate-200 bg-slate-50 text-slate-700';
       statusBoxEl.className = `mt-3 rounded-2xl border p-4 text-sm ${toneClass}`;
+      statusBoxEl.setAttribute('role', tone === 'error' ? 'alert' : 'status');
       statusBoxEl.textContent = message;
     };
 
     const setAnalyzeEnabled = () => {
       if (!(analyzeBtn instanceof HTMLButtonElement)) return;
-      analyzeBtn.disabled = !imageDataUrl || !apiReady || !productReady || analyzing;
+      analyzeBtn.disabled = !imageDataUrl || checkingConnection || analyzing;
     };
 
     const stopCamera = () => {
@@ -278,23 +283,25 @@ const promoSlides = await Promise.all(
     };
 
     const fetchConfig = async () => {
+      checkingConnection = true;
+      setAnalyzeEnabled();
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 10000);
       try {
-        const response = await fetch(`${API_BASE}/config`);
+        const response = await fetch(`${API_BASE}/config`, { signal: controller.signal });
         if (!response.ok) throw new Error(`config failed: ${response.status}`);
         const payload = await response.json();
         apiReady = Boolean(payload?.readiness?.aiPersonalColorReady);
         productReady = Boolean(payload?.paymentProducts?.ai_personal_color);
-        if (!apiReady) {
-          setStatus('OpenAI 분석 설정이 아직 준비되지 않았습니다.', 'error');
-        } else if (!productReady) {
-          setStatus('Polar 상품 연결이 아직 준비되지 않았습니다.', 'error');
-        }
       } catch {
         apiReady = false;
         productReady = false;
-        setStatus('Node API 연결을 확인하지 못했습니다.', 'error');
+      } finally {
+        window.clearTimeout(timeout);
+        checkingConnection = false;
+        setAnalyzeEnabled();
       }
-      setAnalyzeEnabled();
+      return apiReady && productReady;
     };
 
     const fetchOrder = async (orderId) => {
@@ -433,13 +440,17 @@ const promoSlides = await Promise.all(
     });
 
     analyzeBtn?.addEventListener('click', async () => {
+      if (checkingConnection || analyzing) return;
       if (!imageDataUrl) {
         setStatus('먼저 사진을 준비해 주세요.', 'error');
         return;
       }
       if (!apiReady || !productReady) {
-        setStatus('분석 기능이 아직 준비되지 않았습니다.', 'error');
-        return;
+        setStatus('분석 서비스 연결을 확인하고 있어요.');
+        if (!(await fetchConfig())) {
+          setStatus('지금은 분석 서비스에 연결할 수 없어요. 사진은 유지되니 잠시 후 분석 시작을 다시 눌러 주세요.', 'error');
+          return;
+        }
       }
 
       if (!currentOrderId) {
