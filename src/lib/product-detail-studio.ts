@@ -1,4 +1,5 @@
-﻿export type ThemeKey = 'premium' | 'minimal' | 'playful';
+﻿export type ThemeKey = 'premium' | 'minimal' | 'playful' | 'forest' | 'blush' | 'lavender' | 'ocean' | 'sand' | 'monochrome' | 'midnight';
+export type SectionLayout = 'stacked' | 'image-first' | 'split' | 'text-focus';
 export type ImageRoleType = 'hero' | 'detail' | 'usage';
 export type PageCountOption = number;
 export type SectionType =
@@ -52,6 +53,7 @@ export type ProductSection = {
   bullets?: string[];
   image_index?: number;
   hidden?: boolean;
+  layout?: SectionLayout;
 };
 
 export type SpecRow = { label: string; value: string };
@@ -219,6 +221,7 @@ export const starterPrompts = [
 export const themes: Array<{
   key: ThemeKey;
   name: string;
+  labelKo: string;
   description: string;
   accent: string;
   shell: string;
@@ -227,6 +230,7 @@ export const themes: Array<{
   {
     key: 'premium',
     name: 'Premium Commerce',
+    labelKo: '프리미엄 골드',
     description: '브랜드형 무드와 프리미엄 정보 흐름에 잘 어울리는 테마입니다.',
     accent: 'from-amber-200 via-orange-200 to-rose-200',
     shell: 'from-stone-950 via-zinc-950 to-slate-950',
@@ -235,6 +239,7 @@ export const themes: Array<{
   {
     key: 'minimal',
     name: 'Minimal Editorial',
+    labelKo: '미니멀 화이트',
     description: '정보 전달 중심의 정돈된 에디토리얼 무드입니다.',
     accent: 'from-cyan-200 via-sky-200 to-emerald-200',
     shell: 'from-slate-950 via-slate-900 to-slate-950',
@@ -243,11 +248,19 @@ export const themes: Array<{
   {
     key: 'playful',
     name: 'Playful Social',
+    labelKo: '플레이풀 코랄',
     description: '짧고 강한 문장과 캐주얼한 판매 분위기에 어울리는 테마입니다.',
     accent: 'from-fuchsia-200 via-pink-200 to-orange-200',
     shell: 'from-rose-950 via-zinc-950 to-orange-950',
     heroSurface: 'from-[#fff1f3] to-[#fff7ed]'
-  }
+  },
+  { key: 'forest', name: 'Natural Forest', labelKo: '내추럴 포레스트', description: '크림과 짙은 녹색으로 자연스러운 분위기. 식품, 식물, 생활용품에 어울립니다.', accent: 'from-lime-200 to-emerald-300', shell: 'from-emerald-950 via-stone-950 to-zinc-950', heroSurface: 'from-[#f7f9f0] to-[#e8efdf]' },
+  { key: 'blush', name: 'Soft Blush', labelKo: '소프트 로즈', description: '은은한 로즈와 버건디 포인트. 패션, 뷰티, 선물 상품을 부드럽게 소개합니다.', accent: 'from-rose-200 to-pink-300', shell: 'from-rose-950 via-stone-950 to-zinc-950', heroSurface: 'from-[#fff7f8] to-[#f8e5eb]' },
+  { key: 'lavender', name: 'Lavender Studio', labelKo: '라벤더 스튜디오', description: '연보라 바탕과 바이올렛 포인트. 향수, 소품, 취향을 담은 상품에 어울립니다.', accent: 'from-violet-200 to-purple-300', shell: 'from-violet-950 via-zinc-950 to-slate-950', heroSurface: 'from-[#faf7ff] to-[#eee7f8]' },
+  { key: 'ocean', name: 'Ocean Fresh', labelKo: '오션 블루', description: '밝은 아이스 블루와 깊은 청록색. 깔끔하고 산뜻한 상품 소개에 어울립니다.', accent: 'from-sky-200 to-cyan-300', shell: 'from-cyan-950 via-slate-950 to-zinc-950', heroSurface: 'from-[#f3fbff] to-[#e0f1f7]' },
+  { key: 'sand', name: 'Warm Sand', labelKo: '웜 샌드', description: '베이지와 테라코타의 따뜻한 조합. 홈 리빙, 도자기, 수공예 상품에 어울립니다.', accent: 'from-orange-200 to-amber-300', shell: 'from-orange-950 via-stone-950 to-zinc-950', heroSurface: 'from-[#fcf6ed] to-[#f0e3d2]' },
+  { key: 'monochrome', name: 'Mono Gallery', labelKo: '모노 갤러리', description: '흑백 대비로 상품 자체에 시선을 모읍니다. 패션, 디자인 소품, 전자기기에 어울립니다.', accent: 'from-white to-zinc-400', shell: 'from-zinc-950 via-neutral-900 to-black', heroSurface: 'from-white to-zinc-100' },
+  { key: 'midnight', name: 'Midnight Luxe', labelKo: '미드나이트 럭스', description: '짙은 네이비 바탕과 샴페인 골드. 주얼리, 시계, 고급 상품을 차분하게 소개합니다.', accent: 'from-amber-100 to-yellow-300', shell: 'from-slate-950 via-indigo-950 to-zinc-950', heroSurface: 'from-[#111827] to-[#1e293b]' }
 ];
 
 export const iconGlyphMap: Record<string, string> = {
@@ -289,7 +302,14 @@ export const sectionFallbackTitleMap: Record<SectionType, string> = {
 export const themeLabelMap: Record<ThemeKey, string> = {
   premium: 'Premium Commerce',
   minimal: 'Minimal Editorial',
-  playful: 'Playful Catalog'
+  playful: 'Playful Social',
+  forest: 'Natural Forest',
+  blush: 'Soft Blush',
+  lavender: 'Lavender Studio',
+  ocean: 'Ocean Fresh',
+  sand: 'Warm Sand',
+  monochrome: 'Mono Gallery',
+  midnight: 'Midnight Luxe'
 };
 
 export const detailPageTestScenarios: DetailPageTestScenario[] = [
@@ -593,7 +613,8 @@ export const ensureResultIntegrity = (
         eyebrow: typeof section?.eyebrow === 'string' ? section.eyebrow.trim() : '',
         bullets: normalizeList(section?.bullets, []).slice(0, 4),
         image_index: Number.isInteger(section?.image_index) ? section.image_index : -1,
-        hidden: Boolean(section?.hidden)
+        hidden: Boolean(section?.hidden),
+        layout: (['stacked', 'image-first', 'split', 'text-focus'].includes(section?.layout ?? '') ? section.layout : 'stacked') as SectionLayout
       };
     }).filter((section) => Boolean(section.title) && Boolean(section.text))
     : [];

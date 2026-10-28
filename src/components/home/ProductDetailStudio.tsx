@@ -1,5 +1,5 @@
-﻿import { Fragment, useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from 'react';
-import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react';
+﻿import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from 'react';
+import DetailPageThemeSelect from './DetailPageThemeSelect';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { create } from 'zustand';
@@ -17,13 +17,13 @@ import {
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
-import DetailPageCanvas, { ScaledFrame } from '@/components/home/DetailPageCanvas';
+import ProductDetailSamples from '@/components/home/ProductDetailSamples';
+import DetailPageCanvas, { ScaledFrame, renderDetailPageHtml } from '@/components/home/DetailPageCanvas';
 import { exportCanvasSlices, renderNodeToCanvas } from '@/lib/detail-page-export';
 import {
   DETAIL_PAGE_MAX_COUNT,
   DETAIL_PAGE_MIN_COUNT,
   DETAIL_PAGE_TIER_OPTIONS,
-  buildDetailPageHtml,
   buildDetailPagePricing,
   buildDraftPreviewResult,
   buildPlainCopyText,
@@ -633,7 +633,7 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
 
       const nextResult = ensureResultIntegrity(payload.result as ProductDetailResult, pageCount);
       setResult(nextResult);
-      setHtml(buildDetailPageHtml({ formValues, result: nextResult, images, theme }));
+      setHtml(await renderDetailPageHtml({ formValues, result: nextResult, sections: buildRenderSections(nextResult, images), theme, width: 860, title: nextResult.generated_copy.seo_title || formValues.productName }));
       setCopyText(buildPlainCopyText({ formValues, result: nextResult }));
       toast.success(ui.generatedSuccess(nextResult.page_count));
     } catch (error) {
@@ -952,7 +952,7 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
             <div className="grid gap-3 sm:grid-cols-3">
               {[
                 { icon: ScanSearch, title: '이미지 분류', body: '히어로컷, 디테일컷, 사용컷을 자동으로 나눕니다.' },
-                { icon: Wand2, title: '섹션 생성', body: '1장부터 20장까지 선택한 분량에 맞춰 섹션을 동적으로 구성합니다.' },
+                { icon: Wand2, title: '섹션 생성', body: '5~20개 섹션을 상품 사진과 요청에 맞춰 구성하고, 사진 중심·분할·텍스트형 배치를 조합합니다.' },
                 { icon: Download, title: '다중 저장', body: 'HTML, PNG, JPG, PDF, 복사 텍스트까지 바로 저장합니다.' }
               ].map((item) => (
                 <div key={item.title} className="rounded-[1.6rem] border border-white/10 bg-white/8 p-4 backdrop-blur">
@@ -1017,45 +1017,18 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
             </div>
           </div>
 
-          <div className="min-w-0 self-start rounded-[1.7rem] border border-white/10 bg-white/7 p-4 backdrop-blur lg:sticky lg:top-4">
+          <div className="min-w-0 self-start rounded-[1.7rem] border border-white/10 bg-white/7 p-4 backdrop-blur ">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-white/45">Theme</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-white/45">Color theme</p>
                 <h2 className="mt-1 text-xl font-bold">{ui.paletteTitle}</h2>
               </div>
               <Store className="h-5 w-5 text-white/72" />
             </div>
-            <TabGroup
-              selectedIndex={themes.findIndex((item) => item.key === theme)}
-              onChange={(index) => setTheme(themes[index]?.key ?? 'premium')}
-            >
-              <TabList className="mt-4 grid grid-cols-3 gap-2">
-                {themes.map((item) => (
-                  <Tab as={Fragment} key={item.key}>
-                    {({ selected }) => (
-                      <button
-                        className={cn(
-                          'rounded-2xl border px-3 py-3 text-left text-xs transition',
-                          selected
-                            ? 'border-white/35 bg-white text-slate-950'
-                            : 'border-white/10 bg-white/5 text-white/78 hover:bg-white/12'
-                        )}
-                      >
-                        <div className="font-semibold">{item.name}</div>
-                        <div className={cn('mt-2 h-1 rounded-full bg-gradient-to-r', item.accent)} />
-                      </button>
-                    )}
-                  </Tab>
-                ))}
-              </TabList>
-              <TabPanels className="mt-4">
-                {themes.map((item) => (
-                  <TabPanel key={item.key} className="rounded-2xl border border-white/10 bg-black/10 p-4 text-sm leading-6 text-white/72">
-                    {item.description}
-                  </TabPanel>
-                ))}
-              </TabPanels>
-            </TabGroup>
+            <DetailPageThemeSelect value={theme} onChange={setTheme} locale={locale} dark />
+            <p className="mt-3 text-xs leading-5 text-white/60">{locale === 'ko' ? '선택한 톤은 하단 미리보기와 내 생성 결과에 적용됩니다. 아래 3종 샘플은 각각의 원래 디자인을 보여줍니다.' : locale === 'ja' ? '選択した配色は下のプレビューと生成結果に反映されます。3つのサンプルは元のデザインを表示します。' : 'Your selection applies to the preview below and your generated page. The three examples retain their original designs.'}</p>
+            <p className="mt-3 text-xs leading-5 text-white/60">{locale === 'ko' ? '테마는 색감을 정합니다. 섹션 순서와 사진·텍스트 배치는 상품 사진, 이미지 수, 요청에 맞춰 생성됩니다.' : locale === 'ja' ? 'テーマは配色を選びます。構成と画像・テキストの配置は商品写真とリクエストに合わせて生成されます。' : 'Themes set the colors. Section order and image/text layouts are generated from your photos, image count and requests.'}</p>
+            <ProductDetailSamples locale={locale} />
           </div>
         </div>
 

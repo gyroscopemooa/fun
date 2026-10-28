@@ -63,7 +63,14 @@ export const DETAIL_PAGE_PALETTES: Record<ThemeKey, Palette> = {
     darkInk: '#ffffff',
     darkSub: '#ffe1e3',
     line: '#f6d3c8'
-  }
+  },
+  forest: { bg: '#f7f9f0', surface: '#e8efdf', ink: '#203626', sub: '#4c624e', accent: '#356346', accentInk: '#ffffff', dark: '#203b2b', darkInk: '#f7f9f0', darkSub: '#cadbc6', line: '#cddbc5' },
+  blush: { bg: '#fff7f8', surface: '#f8e5eb', ink: '#482634', sub: '#785563', accent: '#a33c62', accentInk: '#ffffff', dark: '#62253e', darkInk: '#fff7f8', darkSub: '#efcad8', line: '#e9cbd6' },
+  lavender: { bg: '#faf7ff', surface: '#eee7f8', ink: '#342445', sub: '#6a577e', accent: '#7550a3', accentInk: '#ffffff', dark: '#3f2856', darkInk: '#faf7ff', darkSub: '#ded0ef', line: '#dcd0ec' },
+  ocean: { bg: '#f3fbff', surface: '#e0f1f7', ink: '#173a4a', sub: '#4b6876', accent: '#096b88', accentInk: '#ffffff', dark: '#123d50', darkInk: '#f3fbff', darkSub: '#c3e2ed', line: '#c3e0eb' },
+  sand: { bg: '#fcf6ed', surface: '#f0e3d2', ink: '#443025', sub: '#78614f', accent: '#a64d2d', accentInk: '#ffffff', dark: '#553829', darkInk: '#fff7ed', darkSub: '#e8d2bc', line: '#deccb5' },
+  monochrome: { bg: '#ffffff', surface: '#f0f0f0', ink: '#171717', sub: '#525252', accent: '#171717', accentInk: '#ffffff', dark: '#171717', darkInk: '#ffffff', darkSub: '#d4d4d4', line: '#d4d4d4' },
+  midnight: { bg: '#111827', surface: '#1e293b', ink: '#f8f2e6', sub: '#c3cbd8', accent: '#e7c77d', accentInk: '#1c2433', dark: '#080e1b', darkInk: '#f8f2e6', darkSub: '#d4c9b3', line: '#38465c' }
 };
 
 const FONT_STACK = "'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif";
@@ -109,10 +116,10 @@ function Editable({ as: Tag = 'p', value, style, editable, onCommit }: EditableP
   );
 }
 
-const CheckIcon = ({ color, size }: { color: string; size: number }) => (
+const CheckIcon = ({ color, size, ink = '#ffffff' }: { color: string; size: number; ink?: string }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, display: 'block' }} aria-hidden="true">
     <circle cx="12" cy="12" r="12" fill={color} />
-    <path d="M7 12.5l3.2 3.2L17 9" stroke="#ffffff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M7 12.5l3.2 3.2L17 9" stroke={ink} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
@@ -130,6 +137,7 @@ export default function DetailPageCanvas({
   onSectionAction
 }: DetailPageCanvasProps) {
   const c = DETAIL_PAGE_PALETTES[theme] ?? DETAIL_PAGE_PALETTES.premium;
+  const cardBackground = theme === 'midnight' ? c.bg : '#ffffff';
   const u = width / 860;
   const px = (value: number) => Math.round(value * u);
   const copy = result.generated_copy;
@@ -179,14 +187,15 @@ export default function DetailPageCanvas({
     wordBreak: 'keep-all'
   };
 
-  const renderImage = (section: RenderSection | undefined, options: { bleed?: boolean; radius?: number; ratio?: string } = {}) => {
+  const renderImage = (section: RenderSection | undefined, options: { bleed?: boolean; radius?: number; ratio?: string; flush?: boolean } = {}) => {
+    if (section?.layout === 'text-focus' && section.type !== 'hero') return null;
     const src = srcOf(section);
     const radius = options.bleed ? 0 : px(options.radius ?? 28);
     if (!src) {
       return (
         <div
           style={{
-            margin: options.bleed ? `${px(44)}px 0 0` : `${px(44)}px ${padX}px 0`,
+            margin: options.flush ? 0 : options.bleed ? `${px(44)}px 0 0` : `${px(44)}px ${padX}px 0`,
             aspectRatio: options.ratio ?? '4 / 3',
             borderRadius: radius,
             background: c.surface,
@@ -202,7 +211,7 @@ export default function DetailPageCanvas({
       );
     }
     return (
-      <div style={{ margin: options.bleed ? `${px(44)}px 0 0` : `${px(44)}px ${padX}px 0`, borderRadius: radius, overflow: 'hidden', background: c.surface }}>
+      <div style={{ margin: options.flush ? 0 : options.bleed ? `${px(44)}px 0 0` : `${px(44)}px ${padX}px 0`, borderRadius: radius, overflow: 'hidden', background: c.surface }}>
         <img
           src={src}
           alt={section?.title ?? productName}
@@ -212,7 +221,7 @@ export default function DetailPageCanvas({
             width: '100%',
             height: options.ratio ? '100%' : 'auto',
             aspectRatio: options.ratio,
-            objectFit: 'cover'
+            objectFit: 'contain'
           }}
         />
       </div>
@@ -220,7 +229,7 @@ export default function DetailPageCanvas({
   };
 
   const renderBullets = (section: RenderSection, variant: 'check' | 'grid' | 'numbered', onSurface = false) => {
-    const boxBg = onSurface ? '#ffffff' : c.surface;
+    const boxBg = onSurface ? cardBackground : c.surface;
     const bullets = section.bullets ?? [];
     if (!bullets.length) return null;
     const commit = (bulletIndex: number) => (value: string) => {
@@ -233,7 +242,7 @@ export default function DetailPageCanvas({
       return (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: px(14), margin: `${px(36)}px ${padX}px 0` }}>
           {bullets.map((bullet, bulletIndex) => (
-            <div key={`${section.id}-b-${bulletIndex}`} style={{ background: '#ffffff', border: `1px solid ${c.line}`, borderRadius: px(20), padding: `${px(24)}px ${px(22)}px`, textAlign: 'left' }}>
+            <div key={`${section.id}-b-${bulletIndex}`} style={{ background: cardBackground, border: `1px solid ${c.line}`, borderRadius: px(20), padding: `${px(24)}px ${px(22)}px`, textAlign: 'left' }}>
               <p style={{ margin: 0, fontSize: px(15), fontWeight: 800, letterSpacing: '0.12em', color: c.accent }}>{String(bulletIndex + 1).padStart(2, '0')}</p>
               <Editable
                 value={bullet}
@@ -269,7 +278,7 @@ export default function DetailPageCanvas({
       <div style={{ margin: `${px(36)}px ${padX}px 0`, background: boxBg, borderRadius: px(24), padding: `${px(28)}px ${px(32)}px`, display: 'grid', gap: px(16), textAlign: 'left' }}>
         {bullets.map((bullet, bulletIndex) => (
           <div key={`${section.id}-b-${bulletIndex}`} style={{ display: 'flex', alignItems: 'center', gap: px(14) }}>
-            <CheckIcon color={c.accent} size={px(28)} />
+            <CheckIcon color={c.accent} ink={c.accentInk} size={px(28)} />
             <Editable
               value={bullet}
               editable={editable}
@@ -282,8 +291,8 @@ export default function DetailPageCanvas({
     );
   };
 
-  const renderHeading = (section: RenderSection, eyebrow: string, dark = false) => (
-    <div style={{ padding: `0 ${padX}px`, textAlign: 'center' }}>
+  const renderHeading = (section: RenderSection, eyebrow: string, dark = false, compact = false) => (
+    <div style={{ padding: compact ? 0 : `0 ${padX}px`, textAlign: compact ? 'left' : 'center' }}>
       {eyebrow ? (
         <Editable
           value={eyebrow}
@@ -297,7 +306,7 @@ export default function DetailPageCanvas({
         value={section.title}
         editable={editable}
         onCommit={(value) => onEditSection?.(section.sourceIndex, { title: value })}
-        style={{ ...titleStyle, color: dark ? c.darkInk : c.ink }}
+        style={{ ...titleStyle, fontSize: px(compact ? 36 : 46), color: dark ? c.darkInk : c.ink }}
       />
       <Editable
         value={section.text}
@@ -321,6 +330,36 @@ export default function DetailPageCanvas({
 
   const renderSectionBody = (section: RenderSection, order: number) => {
     const sectionPadding = `${px(110)}px 0 ${px(110)}px`;
+
+    const flexible = ['feature', 'usage', 'detail', 'benefit'].includes(section.type);
+    if (flexible && section.layout === 'split') {
+      return (
+        <div data-section-layout="split" style={{ padding: `${px(72)}px ${px(40)}px`, background: order % 2 ? c.surface : c.bg }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', alignItems: 'center', gap: px(36) }}>
+            <div style={{ order: order % 2 ? 2 : 0, minWidth: 0 }}>{renderImage(section, { flush: true, radius: 16 })}</div>
+            <div style={{ minWidth: 0 }}>{renderHeading(section, section.eyebrow || 'DETAIL', false, true)}</div>
+          </div>
+          {renderBullets(section, 'grid')}
+        </div>
+      );
+    }
+    if (flexible && section.layout === 'image-first') {
+      return (
+        <div data-section-layout="image-first" style={{ paddingBottom: px(80), background: c.surface }}>
+          {renderImage(section, { flush: true, bleed: true })}
+          <div style={{ marginTop: px(54) }}>{renderHeading(section, section.eyebrow || 'LOOK CLOSER')}</div>
+          {renderBullets(section, 'check', true)}
+        </div>
+      );
+    }
+    if (flexible && section.layout === 'text-focus') {
+      return (
+        <div data-section-layout="text-focus" style={{ padding: sectionPadding, background: c.surface, borderTop: `1px solid ${c.line}` }}>
+          {renderHeading(section, section.eyebrow || 'POINT')}
+          {renderBullets(section, 'numbered', true)}
+        </div>
+      );
+    }
 
     switch (section.type) {
       case 'feature': {
@@ -379,9 +418,9 @@ export default function DetailPageCanvas({
                 </div>
                 {comparisonRows.map((row) => (
                   <div key={row.label} style={{ display: 'flex', borderTop: `1px solid ${c.line}`, fontSize: px(19), alignItems: 'stretch' }}>
-                    <div style={{ width: '28%', padding: px(20), fontWeight: 700, color: c.ink, background: '#ffffff' }}>{row.label}</div>
-                    <div style={{ flex: 1, padding: px(20), color: c.sub, textAlign: 'center', background: '#ffffff', wordBreak: 'keep-all' }}>{row.ordinary}</div>
-                    <div style={{ flex: 1, padding: px(20), color: c.ink, fontWeight: 800, textAlign: 'center', background: '#ffffff', wordBreak: 'keep-all' }}>{row.ours}</div>
+                    <div style={{ width: '28%', padding: px(20), fontWeight: 700, color: c.ink, background: cardBackground }}>{row.label}</div>
+                    <div style={{ flex: 1, padding: px(20), color: c.sub, textAlign: 'center', background: cardBackground, wordBreak: 'keep-all' }}>{row.ordinary}</div>
+                    <div style={{ flex: 1, padding: px(20), color: c.ink, fontWeight: 800, textAlign: 'center', background: cardBackground, wordBreak: 'keep-all' }}>{row.ours}</div>
                   </div>
                 ))}
               </div>
@@ -441,6 +480,7 @@ export default function DetailPageCanvas({
   };
 
   const heroImageSource = heroSection ?? sections[0];
+  const heroLayout = heroImageSource?.layout ?? 'stacked';
 
   return (
     <div
@@ -454,8 +494,9 @@ export default function DetailPageCanvas({
         overflow: 'hidden'
       }}
     >
-      <header data-export-section="true" style={{ background: c.bg, padding: `${px(96)}px 0 0` }}>
-        <div style={{ padding: `0 ${padX}px` }}>
+      <header data-export-section="true" data-section-layout={heroLayout} style={{ background: c.bg }}>
+        <div style={{ display: heroLayout === 'split' ? 'grid' : 'flex', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', flexDirection: 'column', alignItems: 'center' }}>
+        <div style={{ minWidth: 0, width: '100%', order: heroLayout === 'image-first' ? 2 : 0, padding: `${px(72)}px ${px(heroLayout === 'split' ? 36 : 64)}px` }}>
           {copy.badge ? (
             <Editable
               as="span"
@@ -473,7 +514,7 @@ export default function DetailPageCanvas({
             value={copy.headline}
             editable={editable}
             onCommit={(value) => onEditCopy?.({ headline: value })}
-            style={{ margin: `${px(16)}px 0 0`, fontSize: px(62), lineHeight: 1.22, fontWeight: 900, letterSpacing: '-0.04em', color: c.ink, whiteSpace: 'pre-line', wordBreak: 'keep-all' }}
+            style={{ margin: `${px(16)}px 0 0`, fontSize: px(heroLayout === 'split' ? 42 : 62), lineHeight: 1.22, fontWeight: 900, letterSpacing: '-0.04em', color: c.ink, whiteSpace: 'pre-line', wordBreak: 'keep-all' }}
           />
           <Editable
             value={copy.subheadline}
@@ -482,7 +523,8 @@ export default function DetailPageCanvas({
             style={{ ...bodyStyle, fontSize: px(23) }}
           />
         </div>
-        {renderImage(heroImageSource, { bleed: true })}
+        <div style={{ minWidth: 0, width: '100%', order: 1 }}>{renderImage(heroImageSource, { bleed: true, flush: true })}</div>
+        </div>
         {copy.key_selling_points.length ? (
           <div style={{ display: 'flex', background: c.dark }}>
             {copy.key_selling_points.slice(0, 3).map((point, pointIndex) => (
@@ -498,7 +540,7 @@ export default function DetailPageCanvas({
                   gap: px(12)
                 }}
               >
-                <CheckIcon color={c.dark === c.accent ? 'rgba(255,255,255,0.28)' : c.accent} size={px(30)} />
+                <CheckIcon color={c.dark === c.accent ? 'rgba(255,255,255,0.28)' : c.accent} ink={c.accentInk} size={px(30)} />
                 <Editable
                   value={point}
                   editable={editable}
@@ -557,7 +599,7 @@ export default function DetailPageCanvas({
           <h2 style={titleStyle}>자주 묻는 질문</h2>
           <div style={{ margin: `${px(40)}px ${padX}px 0`, display: 'grid', gap: px(14), textAlign: 'left' }}>
             {faq.map((item, faqIndex) => (
-              <div key={`${item.question}-${faqIndex}`} style={{ background: '#ffffff', borderRadius: px(20), padding: `${px(26)}px ${px(28)}px` }}>
+              <div key={`${item.question}-${faqIndex}`} style={{ background: cardBackground, borderRadius: px(20), padding: `${px(26)}px ${px(28)}px` }}>
                 <p style={{ margin: 0, fontSize: px(21), fontWeight: 800, color: c.ink, lineHeight: 1.5 }}>
                   <span style={{ color: c.accent, marginRight: px(10) }}>Q.</span>
                   {item.question}

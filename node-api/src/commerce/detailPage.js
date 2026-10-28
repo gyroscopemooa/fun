@@ -110,9 +110,10 @@ const detailPageSchema = {
             type: 'string',
             enum: ['hero', 'detail', 'usage']
           },
-          image_index: { type: 'integer', minimum: -1, maximum: MAX_DETAIL_PAGE_IMAGES - 1 }
+          image_index: { type: 'integer', minimum: -1, maximum: MAX_DETAIL_PAGE_IMAGES - 1 },
+          layout: { type: 'string', enum: ['stacked', 'image-first', 'split', 'text-focus'] }
         },
-        required: ['type', 'eyebrow', 'title', 'text', 'bullets', 'image_role', 'image_index']
+        required: ['type', 'eyebrow', 'title', 'text', 'bullets', 'image_role', 'image_index', 'layout']
       },
       minItems: MIN_DETAIL_PAGE_COUNT,
       maxItems: MAX_DETAIL_PAGE_COUNT
@@ -353,7 +354,8 @@ const normalizeSections = (value, sectionOrder, generatedCopy, imageCount = 1) =
       text: normalizeString(item?.text) || fallbackSections[index]?.text || generatedCopy.detail_description,
       bullets: normalizeBulletList(item?.bullets),
       image_role: normalizeImageRole(item?.image_role ?? fallbackSections[index]?.image_role),
-      image_index: normalizeImageIndex(item?.image_index, imageCount)
+      image_index: normalizeImageIndex(item?.image_index, imageCount),
+      layout: ['stacked', 'image-first', 'split', 'text-focus'].includes(item?.layout) ? item.layout : 'stacked'
     };
   });
 
@@ -399,13 +401,13 @@ const buildFallbackPayload = (pageCount) => {
 export const buildFallbackCommerceDetailPage = (pageCount = 7, imageCount = 1) => {
   const safePageCount = clampPageCount(pageCount);
   const safeImageCount = Math.max(1, Number(imageCount) || 1);
-  return normalizePayload(buildFallbackPayload(safePageCount), safeImageCount, safePageCount);
+  return normalizeCommerceDetailPage(buildFallbackPayload(safePageCount), safeImageCount, safePageCount);
 };
 
-const normalizePayload = (payload, imageCount, requestedPageCount) => {
+export const normalizeCommerceDetailPage = (payload, imageCount, requestedPageCount) => {
   const safeRequestedPageCount = clampPageCount(requestedPageCount);
   const fallbackPayload = buildFallbackPayload(safeRequestedPageCount);
-  const pageCount = clampPageCount(payload?.page_count ?? requestedPageCount);
+  const pageCount = safeRequestedPageCount;
   const generatedCopy = {
     headline: normalizeString(payload?.generated_copy?.headline, fallbackPayload.generated_copy.headline),
     subheadline: normalizeString(payload?.generated_copy?.subheadline, fallbackPayload.generated_copy.subheadline),
@@ -439,13 +441,18 @@ const normalizePayload = (payload, imageCount, requestedPageCount) => {
     page_count: pageCount,
     section_order: sectionOrder,
     image_role_mapping: imageRoleMapping,
-    sections: normalizeSections(payload?.sections, sectionOrder, generatedCopy, imageCount),
+    sections: normalizeSections(payload?.sections, sectionOrder, generatedCopy, imageCount).slice(0, pageCount),
     generated_copy: generatedCopy
   };
 
-  if (!normalized.sections.length) {
-    return fallbackPayload;
+  const fallbackSections = normalizeSections(null, requestedOrder, generatedCopy, imageCount);
+  while (normalized.sections.length < pageCount) normalized.sections.push(fallbackSections[normalized.sections.length]);
+  normalized.sections[0].type = 'hero';
+  normalized.sections[pageCount - 1].type = 'cta';
+  for (let i = 1; i < pageCount - 1; i++) {
+    if (['hero', 'cta'].includes(normalized.sections[i].type)) normalized.sections[i].type = 'detail';
   }
+  normalized.section_order = normalized.sections.map(section => section.type);
   return normalized;
 };
 
@@ -480,7 +487,13 @@ const buildPrompt = ({
   'If information is limited, infer only reasonable lifestyle benefits, not hard specifications.',
   `Target page count: ${pageCount}.`,
   `Page count guidance: ${getPageQualityNote(pageCount)}.`,
-  `Required section order: ${JSON.stringify(buildSectionOrder(pageCount))}.`,
+  `Return exactly ${clampPageCount(pageCount)} sections, including hero and cta.`,
+  'Choose the middle section types and order for THIS product, photos and customer request. Only the first hero and final cta are fixed. Do not reuse a universal feature-feature-usage sequence.',
+  'Set section_order to exactly match sections[].type. Prefer visible product details, styling or use cases; include ingredient, proof or comparison only when supplied facts support them.',
+  'For each section choose layout: stacked (headline then image), image-first (large photo then copy), split (photo beside copy), or text-focus (copy and bullets without a photo).',
+  'Choose the hero layout to match the requested direction: image-first for a visual lookbook, split for an editorial catalog, stacked for a concise product introduction. Hero must have an image, never text-focus.',
+  'Vary layouts purposefully, not randomly. Read the actual image aspect ratios: keep full products visible, use portrait photos for split blocks, landscape photos for wide image-first blocks.',
+  'When photos are scarce, use text-focus sections instead of repeating the same photo. When photos are plentiful, show meaningful different views. Respect explicit customer layout requests.',
   'Return page_count, section_order, image_role_mapping, sections, and generated_copy.',
   'Allowed sections.type values: hero, feature, usage, detail, benefit, ingredient, proof, comparison, cta.',
   'Allowed sections.image_role values: hero, detail, usage.',
@@ -523,7 +536,7 @@ const buildPrompt = ({
   '- sections[].bullets: 0 to 4 short phrases, each at most 18 Korean characters. Use them for feature, benefit, detail, proof sections; leave empty for hero and cta.',
   '- sections[].image_index: the 0-based index of the uploaded image that best matches this section. Avoid using the same image in two consecutive sections. Use -1 only when no image fits.',
   '- generated_copy.spec_rows: product information table rows (상품명, 구성, 옵션, 가격, 추천 대상 etc.). Only use facts from the input or clearly visible in images; otherwise omit the row. Return an empty array if nothing is known.',
-  '- generated_copy.comparison_rows: 3 to 4 rows comparing "일반적인 제품" (ordinary) vs this product (ours), each value at most 16 characters. Base "ours" only on input selling points or visible qualities. Never name competitors.',
+  '- generated_copy.comparison_rows: return [] unless comparative facts were supplied; otherwise up to 4 rows comparing "일반적인 제품" (ordinary) vs this product (ours), each value at most 16 characters. Base "ours" only on input selling points or visible qualities. Never name competitors.',
   '- generated_copy.faq: 3 to 4 practical buyer questions with short, honest answers. Do not invent shipping, warranty, or refund policies; point to the option/notice area instead when unknown.',
   '- generated_copy.notices: 2 to 4 neutral 구매 전 확인사항 such as screen color differences or measurement tolerances, without inventing specifics.',
   '- generated_copy.closing_line: one warm closing sentence for the bottom of the page, at most 40 characters.',
@@ -602,7 +615,7 @@ export const generateCommerceDetailPage = async ({
 
   const content = completion.choices?.[0]?.message?.content;
   const parsed = extractJson(content);
-  return normalizePayload(parsed, safeImages.length, pageCount);
+  return normalizeCommerceDetailPage(parsed, safeImages.length, pageCount);
 };
 
 

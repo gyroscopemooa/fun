@@ -3,6 +3,7 @@ import { Copy, Download, Eye, FileCode, Home, LoaderCircle, PencilLine, RotateCc
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
+import DetailPageThemeSelect from './DetailPageThemeSelect';
 import DetailPageCanvas, { MARKETPLACE_WIDTHS, ScaledFrame, renderDetailPageHtml, type SectionAction } from '@/components/home/DetailPageCanvas';
 import {
   downloadText,
@@ -20,7 +21,6 @@ import {
   classifyImages,
   ensureResultIntegrity,
   normalizeDetailPageCount,
-  themes,
   type GeneratedCopy,
   type ProductDetailFormValues,
   type ProductDetailResult,
@@ -425,23 +425,7 @@ export default function ProductDetailStudioResult({ locale = 'ko' }: ProductDeta
                 ))}
               </div>
 
-              <p className="mt-5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Theme</p>
-              <div className="mt-2 grid grid-cols-3 gap-2">
-                {themes.map((item) => (
-                  <button
-                    key={item.key}
-                    type="button"
-                    onClick={() => setThemeOverride(item.key)}
-                    className={cn(
-                      'rounded-2xl border px-2 py-2 text-xs font-semibold transition',
-                      theme === item.key ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 text-slate-700 hover:border-slate-400'
-                    )}
-                  >
-                    <div className={cn('mb-1.5 h-1.5 rounded-full bg-gradient-to-r', item.accent)} />
-                    {item.name.split(' ')[0]}
-                  </button>
-                ))}
-              </div>
+              <DetailPageThemeSelect value={theme} onChange={setThemeOverride} locale={locale} />
             </div>
 
             <div className="rounded-[1.7rem] border border-slate-200 bg-white p-5 shadow-sm">
