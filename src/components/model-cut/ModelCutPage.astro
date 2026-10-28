@@ -12,56 +12,58 @@ const isKo = locale === 'ko';
 
 const copy = isKo
   ? {
-      title: 'AI 모델컷 생성기 | 옷 사진으로 쇼핑몰 모델컷·착장샷 만들기 | ManyTool',
-      description: '옷 사진 한 장(바닥컷·행거컷·마네킹컷)만 넣으면 AI 모델이 입은 쇼핑몰 모델컷과 착장샷을 만들어 줍니다. 모델 섭외·촬영 없이 상세페이지용 착용 이미지를 만드세요.',
-      keywords: 'AI 모델컷, AI 모델 착용샷, 쇼핑몰 모델컷, 옷 사진 모델 착용, 착장샷, 가상 피팅, 상세페이지 모델 사진, AI 룩북',
-      eyebrow: 'AI MODEL CUT',
-      intro: '옷 사진만 넣으면, 모델이 입은 사진이 나옵니다. 모델 섭외도, 촬영도 필요 없어요.',
-      promoEyebrow: '옷만 넣으세요',
-      promoTitle: '옷 사진 한 장이면 충분해요',
-      promoDesc: '바닥에 펼쳐 찍은 사진, 행거에 건 사진, 마네킹 사진 모두 됩니다. 색상·패턴·로고는 그대로 살려서 AI 모델에게 입혀 드려요.',
+      title: '상품으로 모델 만들기 | 모델 고용 없이 상품 착장샷·온라인으로 입어보기 | ManyTool',
+      description: '모델 고용·섭외 없이 내 상품으로 모델 만들기. 여성 의류 등 옷 사진 한 장으로 AI 모델이 입은 쇼핑몰용 착장샷을 만드세요. 개인도 안 입어보고 착장샷 확인해보기, 온라인으로 입어보기로 코디 분위기를 미리 볼 수 있어요.',
+      keywords: '상품으로 모델 만들기, 내 상품으로 모델 만들기, 모델 고용 없이, AI 모델 착용샷, 여성 의류 착장샷, 쇼핑몰 상품 사진, 안 입어보고 착장샷 확인해보기, 온라인으로 입어보기, 가상 피팅, AI 룩북',
+      eyebrow: '상품으로 모델 만들기',
+      intro: '모델 고용·섭외 없이 내 상품으로 모델 만들기. 판매할 옷도, 내가 입고 싶은 옷도 사진 한 장으로 AI 착장샷을 만들어 보세요.',
+      promoEyebrow: '판매자도, 개인도 옷 사진 한 장으로',
+      promoTitle: '내 상품의 모델 만들기부터 온라인으로 입어보기까지',
+      promoDesc: '바닥에 펼친 옷, 행거에 건 옷, 마네킹 사진을 올려 주세요. 판매자는 상품을 소개할 착용 이미지를 만들고, 개인은 사고 싶은 옷의 코디 분위기를 AI 모델로 미리 확인할 수 있어요.',
       before: '넣은 옷 사진',
       after: 'AI 결과',
       soon: '샘플 준비 중',
       useCases: {
         shop: {
           badge: '셀러용',
-          title: '옷만 넣으면, 쇼핑몰에서 바로 파는 모델컷',
-          desc: '스마트스토어·쿠팡·자사몰 상세페이지에 바로 올릴 수 있는 깔끔한 화이트 스튜디오 룩북컷을 만듭니다. 신상품이 들어올 때마다 촬영할 필요가 없어요.',
-          points: ['모델 섭외·스튜디오 촬영 비용 0원', '화이트 배경 룩북 스타일 기본 제공', '남성·여성 모델, 야외 배경 요청 가능']
+          title: '모델 고용·섭외 없이, 내 상품으로 모델 만들기',
+          desc: '여성 의류 등 판매할 옷 사진만 올리면 AI 모델이 착용한 상품 이미지를 만들어요. 모델을 영입하거나 촬영 일정을 잡지 않아도 스마트스토어·쿠팡·자사몰 상세페이지에 쓸 착장샷을 준비할 수 있어요.',
+          points: ['모델 고용·섭외 없이 상품 착장샷 만들기', '화이트 배경 쇼핑몰 룩북 스타일', '여성·남성 모델, 원하는 배경 요청 가능']
         },
         tryon: {
-          badge: '구매자용',
-          title: '옷만 넣으면, 내가 안 입어봐도 대신 입어주는 착장샷',
-          desc: '사고 싶은 옷, 옷장에 있는 옷을 AI 모델이 대신 입어 봅니다. 입었을 때 핏과 분위기, 코디 느낌을 미리 확인해 보세요.',
-          points: ['입었을 때 핏·기장감 미리보기', '"20대 여성, 캐주얼 코디"처럼 요청 가능', '온라인 쇼핑 전 착용 느낌 확인']
+          badge: '개인·구매자용',
+          title: '안 입어보고 착장샷 확인해보기, 온라인으로 입어보기',
+          desc: '사고 싶은 옷이나 옷장 속 옷을 AI 모델이 대신 입어 봐요. "20대 여성, 캐주얼 코디"처럼 원하는 스타일을 적고 온라인 쇼핑 전에 착장 분위기를 확인해 보세요. AI 모델 기준의 예시 이미지로, 실제 내 몸의 핏이나 사이즈를 측정하는 기능은 아니에요.',
+          points: ['안 입어보고 코디 분위기 확인하기', '여성 의류도 원하는 모델로 입어보기', '온라인으로 입어보고 스타일 비교하기']
         }
       },
       stepsTitle: '이렇게 만들어요',
       steps: [
         { title: '옷 사진 올리기', desc: '옷 전체가 보이는 사진 한 장을 올려요.' },
-        { title: '모델·배경 요청 (선택)', desc: '"남성 모델, 야외 거리"처럼 짧게 적어요. 비워두면 화이트 스튜디오로 만들어요.' },
-        { title: '모델컷 받기', desc: '약 30초 뒤 고해상도 모델컷을 저장하고 바로 써요.' }
+        { title: '모델·배경 요청 (선택)', desc: '"20대 여성 모델, 캐주얼 코디"처럼 짧게 적어요. 비워두면 화이트 스튜디오로 만들어요.' },
+        { title: '상품 착장샷 받기', desc: '생성이 끝나면 착장샷을 저장해 상품 소개나 나만의 코디 확인에 활용해요.' }
       ],
       tipsTitle: '잘 나오는 옷 사진 팁',
       tips: ['옷 전체가 잘리지 않게 찍어 주세요.', '밝은 곳에서, 주름은 최대한 펴서 찍어 주세요.', '한 장에 옷 한 벌만 나오게 해 주세요.', '로고·프린트가 있으면 정면에서 또렷하게 찍어 주세요.'],
-      crossSellTitle: '모델컷으로 상세페이지까지',
-      crossSellDesc: '만든 모델컷을 AI 상세페이지 생성기에 넣으면 쇼핑몰 상세페이지 초안까지 한 번에 만들 수 있어요.',
+      crossSellTitle: '내 상품의 착장샷으로 상세페이지까지',
+      crossSellDesc: '만든 상품 착장샷을 AI 상세페이지 생성기에 넣으면 쇼핑몰 상세페이지 초안까지 한 번에 만들 수 있어요.',
       crossSellCta: 'AI 상세페이지 생성기 열기',
-      faqTitle: 'AI 모델컷 FAQ',
+      faqTitle: '상품으로 모델 만들기 FAQ',
       faq: [
         { q: '어떤 옷 사진을 올리면 되나요?', a: '옷 전체가 잘 보이는 바닥컷, 행거컷, 마네킹컷이 가장 안정적입니다. 주름이 적고 밝은 사진일수록 좋습니다.' },
         { q: '옷의 색상이나 로고가 바뀌지 않나요?', a: '색상·패턴·로고·디테일을 그대로 유지하도록 설계되어 있지만, 작은 글씨나 복잡한 프린트는 일부 달라질 수 있어 확인 후 사용하세요.' },
-        { q: '모델 성별이나 배경을 정할 수 있나요?', a: '네. "남성 모델, 야외 거리 배경"처럼 짧게 입력하면 반영됩니다. 비워두면 화이트 스튜디오 룩북 스타일로 생성됩니다.' },
-        { q: '만든 모델컷을 쇼핑몰에 써도 되나요?', a: '네. 직접 판매하는 상품의 상세페이지·광고 이미지로 활용할 수 있습니다. 실제 상품과 다르게 보이지 않는지 꼭 확인해 주세요.' }
+        { q: '모델 성별이나 배경을 정할 수 있나요?', a: '네. "20대 여성 모델, 야외 거리 배경"처럼 짧게 입력하면 반영됩니다. 비워두면 화이트 스튜디오 룩북 스타일로 생성됩니다.' },
+        { q: '모델 고용 없이 내 상품으로 모델을 만들 수 있나요?', a: '네. 옷 사진을 올리면 AI 모델이 상품을 착용한 이미지를 생성해요. 모델을 고용하거나 섭외하지 않고도 상품 소개용 착장샷을 만들 수 있습니다.' },
+        { q: '개인도 안 입어보고 착장샷을 확인할 수 있나요?', a: '네. 사고 싶은 옷이나 가지고 있는 옷 사진으로 온라인으로 입어보기를 할 수 있어요. AI 모델이 입은 코디 예시를 보여주며, 본인의 실제 체형이나 정확한 사이즈를 재현하는 기능은 아닙니다.' },
+        { q: '만든 상품 착장샷을 쇼핑몰에 써도 되나요?', a: '네. 직접 판매하는 상품의 상세페이지·광고 이미지로 활용할 수 있습니다. 실제 상품과 다르게 보이지 않는지 꼭 확인해 주세요.' }
       ]
     }
   : {
-      title: 'AI Model Shot Generator | Turn Clothing Photos into Model Shots | ManyTool',
-      description: 'Upload one clothing photo (flat lay, hanger or mannequin) and get an e-commerce model shot or a try-on outfit shot of an AI model wearing it. No model booking, no photo shoot.',
+      title: 'Create a Model for Your Product | Try Outfits Online | ManyTool',
+      description: 'Create outfit photos from your products without hiring a model. Upload clothing to make store images or try outfits online on an AI model before buying.',
       keywords: 'AI model shot, AI fashion model generator, clothing on model AI, virtual try-on, AI lookbook, product photo to model',
-      eyebrow: 'AI MODEL SHOT',
-      intro: 'Upload just the clothes and get a photo of a model wearing them. No model, no shoot.',
+      eyebrow: 'PRODUCT TO MODEL',
+      intro: 'Create a model for your product without hiring one. Turn clothes you sell or want to wear into AI outfit photos.',
       promoEyebrow: 'Just the clothes',
       promoTitle: 'One clothing photo is all it takes',
       promoDesc: 'Flat lays, hanger shots and mannequin photos all work. Colors, patterns and logos are kept as they are.',
@@ -71,29 +73,29 @@ const copy = isKo
       useCases: {
         shop: {
           badge: 'For sellers',
-          title: 'Model shots ready to sell in your online store',
+          title: 'Create a model for your product without hiring one',
           desc: 'Clean white-studio lookbook shots you can drop straight into product pages. No shoot for every new arrival.',
-          points: ['No model or studio costs', 'White-background lookbook by default', 'Ask for a male/female model or an outdoor scene']
+          points: ['No model hiring or booking', 'White-background lookbook by default', 'Ask for a male/female model or an outdoor scene']
         },
         tryon: {
           badge: 'For shoppers',
-          title: 'Try-on shots without trying it on',
-          desc: 'Let an AI model wear the clothes you want to buy or already own, and preview the fit, length and overall vibe.',
-          points: ['Preview fit and length', 'Ask for "woman in her 20s, casual styling"', 'Check the look before you buy']
+          title: 'Try outfits online without putting them on',
+          desc: 'Let an adult AI model wear clothes you want to buy or already own. Preview outfit styling online; these examples do not measure your body or predict your exact fit or size.',
+          points: ['Preview outfit styling', 'Ask for "woman in her 20s, casual styling"', 'Check the look before you buy']
         }
       },
       stepsTitle: 'How it works',
       steps: [
         { title: 'Upload a clothing photo', desc: 'One photo where the whole garment is visible.' },
         { title: 'Model & background (optional)', desc: 'Write something short like "male model, outdoor street". Leave it empty for a white studio.' },
-        { title: 'Get your model shot', desc: 'Save the high-resolution result in about 30 seconds.' }
+        { title: 'Get your model shot', desc: 'Save the generated outfit photo for your store or your own styling ideas.' }
       ],
       tipsTitle: 'Tips for a good clothing photo',
       tips: ['Keep the whole garment in frame.', 'Shoot in bright light and smooth out wrinkles.', 'One garment per photo.', 'Photograph logos and prints straight on.'],
       crossSellTitle: 'From model shot to product page',
       crossSellDesc: 'Feed your model shots into the AI Product Detail Studio to draft a full store product page.',
       crossSellCta: 'Open AI Product Detail Studio',
-      faqTitle: 'AI Model Shot FAQ',
+      faqTitle: 'Create a Model for Your Product FAQ',
       faq: [
         { q: 'What kind of clothing photo works best?', a: 'A flat lay, hanger, or mannequin shot where the whole garment is clearly visible, well lit, and not heavily wrinkled.' },
         { q: 'Will the color or logo change?', a: 'The tool is built to keep color, pattern, logos, and details, but small text or complex prints can drift, so review before publishing.' },
@@ -158,7 +160,7 @@ const detailStudioHref = isKo ? '/tools/product-detail-studio' : '/en/tools/prod
                     <div>
                       <p class="mb-2 text-sm font-black text-stone-900">② {copy.after}</p>
                       <div class="overflow-hidden rounded-[1.6rem] border-2 border-stone-900 bg-stone-100 shadow-[0_20px_50px_rgba(28,25,23,0.18)]">
-                        <img src={sample.model} alt={`${label} ${copy.after}`} loading="lazy" class="aspect-[4/5] w-full object-cover object-top" />
+                        <img src={sample.model} alt={`${label} ${copy.after}`} loading="lazy" class="aspect-[4/5] w-full object-contain" />
                       </div>
                     </div>
                   </div>

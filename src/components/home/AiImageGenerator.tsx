@@ -273,11 +273,11 @@ const MODE_CONTENT: Record<Mode, ModeContent> = {
     inputRequired: false
   },
   modelcut: {
-    tabLabel: 'AI 모델컷',
-    title: 'AI 모델컷 생성기',
-    buttonLabel: '모델컷 생성',
-    exampleTitle: '모델컷 예시',
-    exampleDescription: '옷 사진(바닥컷·행거컷·마네킹컷)만 올리면 AI 모델이 착용한 쇼핑몰 상세페이지용 모델컷을 만들어 줍니다.',
+    tabLabel: '상품으로 모델 만들기',
+    title: '상품으로 모델 만들기',
+    buttonLabel: '상품으로 모델 만들기',
+    exampleTitle: '상품 착장샷 예시',
+    exampleDescription: '모델 고용·섭외 없이 내 상품으로 모델 만들기. 옷 사진 한 장으로 쇼핑몰용 착장샷을 만들거나, 안 입어보고 코디를 확인하는 온라인으로 입어보기를 해보세요.',
     accentClass: 'from-stone-700 via-neutral-500 to-amber-200',
     exampleGradient: 'from-stone-100 via-neutral-50 to-white',
     inputLabel: '모델·배경 요청',
@@ -480,11 +480,11 @@ const EN_MODE_CONTENT: Record<Mode, ModeContent> = {
     inputRequired: false
   },
   modelcut: {
-    tabLabel: 'AI Model Shot',
-    title: 'AI Fashion Model Shot Generator',
-    buttonLabel: 'Generate model shot',
-    exampleTitle: 'Model shot example',
-    exampleDescription: 'Upload a clothing photo (flat lay, hanger, or mannequin) and get a lookbook-style shot of an AI model wearing it.',
+    tabLabel: 'Product to Model',
+    title: 'Create a Model for Your Product',
+    buttonLabel: 'Create product model',
+    exampleTitle: 'Product outfit examples',
+    exampleDescription: 'Create outfit photos from your clothing without hiring a model. Make store images or try outfits online on an AI model before you buy.',
     accentClass: 'from-stone-700 via-neutral-500 to-amber-200',
     exampleGradient: 'from-stone-100 via-neutral-50 to-white',
     inputLabel: 'Model & background',

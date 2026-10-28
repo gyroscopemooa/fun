@@ -17,6 +17,34 @@ const pic = (file: string) => `/pic/model-cut/${file}`;
 
 export const MODEL_CUT_SAMPLES: ModelCutSample[] = [
   {
+    garment: '/images/product-model/women-01-garment.webp',
+    model: '/images/product-model/women-01-model.webp',
+    useCase: 'shop',
+    label: '스트라이프 리본 프릴 원피스 · 여성 모델',
+    labelEn: 'Striped bow and ruffle dress · female model'
+  },
+  {
+    garment: '/images/product-model/women-02-garment.webp',
+    model: '/images/product-model/women-02-model.webp',
+    useCase: 'shop',
+    label: '그레이 레이스 숄더 니트 원피스 · 여성 모델',
+    labelEn: 'Gray knit dress with lace straps · female model'
+  },
+  {
+    garment: '/images/product-model/women-03-garment.webp',
+    model: '/images/product-model/women-03-model.webp',
+    useCase: 'tryon',
+    label: '아이보리 리본 원피스 · 여성 데일리 코디',
+    labelEn: 'Ivory bow dress · everyday outfit on a female model'
+  },
+  {
+    garment: '/images/product-model/women-04-garment.webp',
+    model: '/images/product-model/women-04-model.webp',
+    useCase: 'tryon',
+    label: '아이보리 리본 스트랩 니트 · 여성 청바지 코디',
+    labelEn: 'Ivory knit top with bow straps · jeans outfit on a female model'
+  },
+  {
     garment: pic('sample-02-garment.webp'),
     model: pic('sample-02-model.webp'),
     useCase: 'shop',
