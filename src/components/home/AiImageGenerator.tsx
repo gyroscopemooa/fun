@@ -273,11 +273,11 @@ const MODE_CONTENT: Record<Mode, ModeContent> = {
     inputRequired: false
   },
   modelcut: {
-    tabLabel: '상품으로 모델 만들기',
-    title: '상품으로 모델 만들기',
-    buttonLabel: '상품으로 모델 만들기',
+    tabLabel: 'AI 상품으로 모델 만들기',
+    title: 'AI 상품으로 모델 만들기',
+    buttonLabel: 'AI 상품으로 모델 만들기',
     exampleTitle: '상품 착장샷 예시',
-    exampleDescription: '모델 고용·섭외 없이 내 상품으로 모델 만들기. 옷 사진 한 장으로 쇼핑몰용 착장샷을 만들거나, 안 입어보고 코디를 확인하는 온라인으로 입어보기를 해보세요.',
+    exampleDescription: '모델 고용·섭외 없이 내 상품으로 AI 모델 만들기. 옷 사진 한 장으로 쇼핑몰용 착장샷을 만들거나, 안 입어보고 코디를 확인하는 온라인으로 입어보기를 해보세요.',
     accentClass: 'from-stone-700 via-neutral-500 to-amber-200',
     exampleGradient: 'from-stone-100 via-neutral-50 to-white',
     inputLabel: '모델·배경 요청',
@@ -480,8 +480,8 @@ const EN_MODE_CONTENT: Record<Mode, ModeContent> = {
     inputRequired: false
   },
   modelcut: {
-    tabLabel: 'Product to Model',
-    title: 'Create a Model for Your Product',
+    tabLabel: 'AI Product to Model',
+    title: 'Create an AI Model for Your Product',
     buttonLabel: 'Create product model',
     exampleTitle: 'Product outfit examples',
     exampleDescription: 'Create outfit photos from your clothing without hiring a model. Make store images or try outfits online on an AI model before you buy.',

@@ -12,11 +12,11 @@ const isKo = locale === 'ko';
 
 const copy = isKo
   ? {
-      title: '상품으로 모델 만들기 | 모델 고용 없이 상품 착장샷·온라인으로 입어보기 | ManyTool',
-      description: '모델 고용·섭외 없이 내 상품으로 모델 만들기. 여성 의류 등 옷 사진 한 장으로 AI 모델이 입은 쇼핑몰용 착장샷을 만드세요. 개인도 안 입어보고 착장샷 확인해보기, 온라인으로 입어보기로 코디 분위기를 미리 볼 수 있어요.',
-      keywords: '상품으로 모델 만들기, 내 상품으로 모델 만들기, 모델 고용 없이, AI 모델 착용샷, 여성 의류 착장샷, 쇼핑몰 상품 사진, 안 입어보고 착장샷 확인해보기, 온라인으로 입어보기, 가상 피팅, AI 룩북',
-      eyebrow: '상품으로 모델 만들기',
-      intro: '모델 고용·섭외 없이 내 상품으로 모델 만들기. 판매할 옷도, 내가 입고 싶은 옷도 사진 한 장으로 AI 착장샷을 만들어 보세요.',
+      title: 'AI 상품으로 모델 만들기 | 모델 고용 없이 상품 착장샷·온라인으로 입어보기 | ManyTool',
+      description: '모델 고용·섭외 없이 내 상품으로 AI 모델 만들기. 여성 의류 등 옷 사진 한 장으로 AI 모델이 입은 쇼핑몰용 착장샷을 만드세요. 개인도 안 입어보고 착장샷 확인해보기, 온라인으로 입어보기로 코디 분위기를 미리 볼 수 있어요.',
+      keywords: 'AI 상품으로 모델 만들기, 내 상품으로 AI 모델 만들기, 모델 고용 없이, AI 모델 착용샷, 여성 의류 착장샷, 쇼핑몰 상품 사진, 안 입어보고 착장샷 확인해보기, 온라인으로 입어보기, 가상 피팅, AI 룩북',
+      eyebrow: 'AI 상품으로 모델 만들기',
+      intro: '모델 고용·섭외 없이 내 상품으로 AI 모델 만들기. 판매할 옷도, 내가 입고 싶은 옷도 사진 한 장으로 AI 착장샷을 만들어 보세요.',
       promoEyebrow: '판매자도, 개인도 옷 사진 한 장으로',
       promoTitle: '내 상품의 모델 만들기부터 온라인으로 입어보기까지',
       promoDesc: '바닥에 펼친 옷, 행거에 건 옷, 마네킹 사진을 올려 주세요. 판매자는 상품을 소개할 착용 이미지를 만들고, 개인은 사고 싶은 옷의 코디 분위기를 AI 모델로 미리 확인할 수 있어요.',
@@ -26,7 +26,7 @@ const copy = isKo
       useCases: {
         shop: {
           badge: '셀러용',
-          title: '모델 고용·섭외 없이, 내 상품으로 모델 만들기',
+          title: '모델 고용·섭외 없이, 내 상품으로 AI 모델 만들기',
           desc: '여성 의류 등 판매할 옷 사진만 올리면 AI 모델이 착용한 상품 이미지를 만들어요. 모델을 영입하거나 촬영 일정을 잡지 않아도 스마트스토어·쿠팡·자사몰 상세페이지에 쓸 착장샷을 준비할 수 있어요.',
           points: ['모델 고용·섭외 없이 상품 착장샷 만들기', '화이트 배경 쇼핑몰 룩북 스타일', '여성·남성 모델, 원하는 배경 요청 가능']
         },
@@ -48,7 +48,7 @@ const copy = isKo
       crossSellTitle: '내 상품의 착장샷으로 상세페이지까지',
       crossSellDesc: '만든 상품 착장샷을 AI 상세페이지 생성기에 넣으면 쇼핑몰 상세페이지 초안까지 한 번에 만들 수 있어요.',
       crossSellCta: 'AI 상세페이지 생성기 열기',
-      faqTitle: '상품으로 모델 만들기 FAQ',
+      faqTitle: 'AI 상품으로 모델 만들기 FAQ',
       faq: [
         { q: '어떤 옷 사진을 올리면 되나요?', a: '옷 전체가 잘 보이는 바닥컷, 행거컷, 마네킹컷이 가장 안정적입니다. 주름이 적고 밝은 사진일수록 좋습니다.' },
         { q: '옷의 색상이나 로고가 바뀌지 않나요?', a: '색상·패턴·로고·디테일을 그대로 유지하도록 설계되어 있지만, 작은 글씨나 복잡한 프린트는 일부 달라질 수 있어 확인 후 사용하세요.' },
@@ -59,7 +59,7 @@ const copy = isKo
       ]
     }
   : {
-      title: 'Create a Model for Your Product | Try Outfits Online | ManyTool',
+      title: 'Create an AI Model for Your Product | Try Outfits Online | ManyTool',
       description: 'Create outfit photos from your products without hiring a model. Upload clothing to make store images or try outfits online on an AI model before buying.',
       keywords: 'AI model shot, AI fashion model generator, clothing on model AI, virtual try-on, AI lookbook, product photo to model',
       eyebrow: 'PRODUCT TO MODEL',
@@ -95,7 +95,7 @@ const copy = isKo
       crossSellTitle: 'From model shot to product page',
       crossSellDesc: 'Feed your model shots into the AI Product Detail Studio to draft a full store product page.',
       crossSellCta: 'Open AI Product Detail Studio',
-      faqTitle: 'Create a Model for Your Product FAQ',
+      faqTitle: 'Create an AI Model for Your Product FAQ',
       faq: [
         { q: 'What kind of clothing photo works best?', a: 'A flat lay, hanger, or mannequin shot where the whole garment is clearly visible, well lit, and not heavily wrinkled.' },
         { q: 'Will the color or logo change?', a: 'The tool is built to keep color, pattern, logos, and details, but small text or complex prints can drift, so review before publishing.' },
