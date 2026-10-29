@@ -1,5 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import HomeToolCard from '../components/HomeToolCard.astro';
+import { getHomeSearchEntries } from '../lib/home-search';
 import AdSense from '../components/AdSense.astro';
 import SponsorBanner from '../components/SponsorBanner.astro';
 import Recommend from '../components/Recommend.astro';
@@ -139,7 +141,7 @@ const cardSeed = [
   { href: '/name-meaning', title: '이름풀이', desc: '이름으로 성향 키워드 보기', icon: '📝', iconClass: 'bg-blue-100 text-blue-700', category: 'etc' },
   { href: '/name-compatibility', title: '이름궁합', desc: '두 이름 궁합 점수 확인', icon: '💕', iconClass: 'bg-pink-100 text-pink-700', category: 'etc' },
   { href: '/maps/hidden-cafe', title: '숨은 카페 지도', desc: '조용한 카페 탐색', icon: '☕', iconClass: 'bg-orange-100 text-orange-700', disabled: true, category: 'tools' },
-  { href: '/maps/local-eats', title: '지역 맛집 지도', desc: '동네 인기 맛집', icon: '🍜', iconClass: 'bg-red-100 text-red-700', disabled: true, category: 'tools' },
+  { href: '/maps/local-eats', title: '혼밥가능 / 맛집추천', desc: '혼밥 여부 · 방문자 별점과 댓글', icon: '🍜', iconClass: 'bg-red-100 text-red-700', disabled: import.meta.env.PUBLIC_LOCAL_EATS_LAUNCHED !== 'true', category: 'tools' },
   { href: '/love-compatibility', title: '연애 궁합', desc: '두 사람 궁합 테스트', icon: '💜', iconClass: 'bg-violet-100 text-violet-700', category: 'etc' },
   { href: '/random-food', title: '랜덤 음식', desc: '오늘 메뉴 추천', icon: '🎲', iconClass: 'bg-yellow-100 text-yellow-700', category: 'games' },
   { href: '/today-fortune', title: '오늘의 운세', desc: '오늘 운세 랜덤 확인', icon: '🔮', iconClass: 'bg-purple-100 text-purple-700', category: 'etc' },
@@ -247,8 +249,10 @@ const cards = cardSeed.filter((card) => import.meta.env.DEV || !('localOnly' in 
       : locale === 'ja'
         ? `${title}ツール`
         : `${title} tool`;
-  return { ...card, title, desc, href: localizedHrefOrOriginal(locale, card.href), disabled: (card.disabled ?? false) && !import.meta.env.DEV };
+  return { ...card, sourceHref: card.href, title, desc, href: localizedHrefOrOriginal(locale, card.href), disabled: (card.disabled ?? false) && !import.meta.env.DEV };
 });
+
+const searchEntries = getHomeSearchEntries(cards.map((card) => ({ ...card, keywords: `${cardSeed.find(seed => localizedHrefOrOriginal(locale, seed.href) === card.href)?.title ?? ''} ${cardTitleI18n[card.href]?.en ?? ''}` })), locale);
 
 const rowCount = 5;
 const rowSize = Math.ceil(cards.length / rowCount);
@@ -306,6 +310,7 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
         <div class="mx-auto max-w-md">
           <input
             id="tool-search"
+            aria-label={t.searchPlaceholder}
             class="w-full rounded-full border border-sky-100 bg-white px-4 py-3 text-sm outline-none focus:border-sky-400"
             placeholder={t.searchPlaceholder}
             type="text"
@@ -346,58 +351,37 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
       <AdsterraRail side="left" />
       <AdsterraRail side="right" />
       <div class="px-4 pb-4 lg:px-10">
-        <section class="space-y-4">
-          {rows.map((row, idx) => (
-            <div class="flex items-center gap-2" data-slider data-row={idx} data-row-wrap>
-              <button class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-sky-100 bg-white text-lg text-sky-500" data-nav="prev" aria-label={t.prevCard}>‹</button>
-              <div class="flex-1 overflow-hidden">
-                <div class="flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" data-track>
-                  {[0, 1, 2].flatMap((dup) =>
-                    row.map((card) => (
-                    <a
-                      href={card.disabled ? undefined : card.href}
-                      aria-disabled={card.disabled ? 'true' : 'false'}
-                      data-card
-                      data-fav-key={card.href.replace(/^\/(en|ja)(?=\/|$)/, '') || '/'}
-                      data-category={card.category}
-                      data-new={card.isNew ? 'true' : 'false'}
-                      data-dup={dup}
-                      data-disabled={card.disabled ? 'true' : 'false'}
-                      data-search={`${card.title} ${card.desc}`.toLowerCase()}
-                      class:list={[
-                        'min-w-[72vw] snap-start rounded-xl border p-4 transition sm:min-w-[210px] lg:min-w-[230px]',
-                        card.disabled
-                          ? 'cursor-not-allowed border-slate-200 bg-slate-50 opacity-70'
-                          : 'border-sky-100 bg-white hover:shadow-sm'
-                      ]}
-                    >
-                      <div class="flex items-start justify-between gap-3">
-                        <div class:list={['flex h-10 w-10 items-center justify-center rounded-lg text-base', card.iconClass]}>{card.icon}</div>
-                        <div class="flex items-center gap-2">
-                          <button
-                            type="button"
-                            data-favorite-toggle
-                            aria-label={t.favorite}
-                            class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-sm text-slate-400 transition hover:border-amber-300 hover:text-amber-500"
-                          >
-                            ☆
-                          </button>
-                          {card.disabled ? (
-                            <span class="rounded-full border border-slate-200 bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                              {tRaw('common.soon')}
-                            </span>
-                          ) : null}
-                        </div>
-                      </div>
-                      <h2 class="mt-3 text-base font-bold tracking-tight text-slate-900">{card.title}</h2>
-                      <p class="mt-1 text-xs leading-relaxed text-slate-500">{card.desc}</p>
-                    </a>
-                  )))}
+        <div id="home-card-rows">
+          <div class="mb-3 flex justify-end">
+            <button id="home-motion-toggle" type="button" aria-pressed="true" data-play={locale === 'ko' ? '자동 이동 시작' : 'Play cards'} data-pause={locale === 'ko' ? '자동 이동 일시정지' : 'Pause cards'} class="rounded-full border border-sky-100 bg-white px-3 py-2 text-xs text-slate-600">{locale === 'ko' ? '자동 이동 일시정지' : 'Pause cards'}</button>
+          </div>
+          <section class="space-y-4" aria-label={locale === 'ko' ? '도구 카드' : 'Tool cards'}>
+            {rows.map((row, idx) => (
+              <div class="flex items-center gap-2" data-slider data-row={idx}>
+                <button class="home-card-nav" data-nav="prev" aria-label={t.prevCard}>‹</button>
+                <div class="min-w-0 flex-1 overflow-hidden">
+                  <div class="home-card-track" data-track>
+                    {row.map(card => <HomeToolCard card={{ ...card, soon: tRaw('common.soon') }} favoriteLabel={t.favorite} />)}
+                  </div>
                 </div>
+                <button class="home-card-nav" data-nav="next" aria-label={t.nextCard}>›</button>
               </div>
-              <button class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-sky-100 bg-white text-lg text-sky-500" data-nav="next" aria-label={t.nextCard}>›</button>
-            </div>
-          ))}
+            ))}
+          </section>
+        </div>
+        <section id="home-search-results" class="hidden" aria-label={locale === 'ko' ? '전체 도구 검색 결과' : 'All tool search results'}>
+          <p class="mb-3 text-sm text-slate-600" role="status">{locale === 'ko' ? '전체 도구 검색 결과' : 'All tool search results'} <strong id="home-search-count">0</strong></p>
+          <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {searchEntries.map(entry => (
+              <article hidden data-search-result data-search={`${entry.title} ${entry.desc} ${entry.keywords ?? ''} ${entry.href}`} class="rounded-xl border border-sky-100 bg-white p-4">
+                <a href={entry.disabled ? undefined : entry.href} aria-disabled={entry.disabled ? 'true' : undefined} class="block h-full">
+                  <h2 class="font-bold text-slate-900">{entry.title}</h2>
+                  <p class="mt-2 text-sm text-slate-500">{entry.desc}</p>
+                  {entry.disabled && <span class="mt-2 block text-xs text-slate-500">{tRaw('common.soon')}</span>}
+                </a>
+              </article>
+            ))}
+          </div>
         </section>
       </div>
       <p id="search-empty" class="hidden px-4 pb-4 text-sm text-slate-500 lg:px-10">{t.noResult}</p>
@@ -545,242 +529,26 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
 
   </main>
 
+  <script>
+    import '../scripts/home-cards';
+  </script>
+
+  <style is:global>
+    .home-card-track { display:flex; gap:12px; overflow-x:auto; scrollbar-width:none; scroll-behavior:auto; overflow-anchor:none; }
+    .home-card-track::-webkit-scrollbar { display:none; }
+    .home-tool-card { width: min(72vw, 280px); }
+    .home-card-nav { display:flex; align-items:center; justify-content:center; width:32px; height:40px; flex-shrink:0; border:1px solid #e0f2fe; border-radius:999px; background:white; color:#0ea5e9; font-size:22px; }
+    .home-card-nav:disabled { opacity:.35; }
+    [data-search-result][hidden] { display:none; }
+    @media(min-width:640px) { .home-tool-card { width:230px; } .home-card-nav { width:40px; } }
+  </style>
+
   <script is:inline define:vars={{ apiBase, donateButtonLabel: t.guideDonate, donateText: t }}>
-    const sliderRows = document.querySelectorAll('[data-slider]');
-    const searchInput = document.getElementById('tool-search');
-    const emptyEl = document.getElementById('search-empty');
-    const favoriteEmptyEl = document.getElementById('favorite-empty');
-    const favoriteFilterButton = document.getElementById('favorite-filter-button');
-    const favoriteFilterCount = document.getElementById('favorite-filter-count');
-    const tabButtons = document.querySelectorAll('[data-tab]');
     const homeDonateButton = document.getElementById('home-donate-button');
     const homeDonateMessage = document.getElementById('home-donate-message');
     const trendingCardListEl = document.getElementById('trending-card-list');
     const trendingCardStatusEl = document.getElementById('trending-card-status');
     const trendingCardUpdatedEl = document.getElementById('trending-card-updated');
-    const favoriteStorageKey = 'manytool.home.favorites';
-    let activeTab = 'all';
-    let favoriteOnly = false;
-
-    const readFavorites = () => {
-      try {
-        const raw = window.localStorage.getItem(favoriteStorageKey);
-        const parsed = raw ? JSON.parse(raw) : [];
-        return Array.isArray(parsed) ? parsed.filter((item) => typeof item === 'string') : [];
-      } catch {
-        return [];
-      }
-    };
-
-    const writeFavorites = (items) => {
-      window.localStorage.setItem(favoriteStorageKey, JSON.stringify([...new Set(items)]));
-    };
-
-    const updateFavoriteButtons = () => {
-      const favorites = new Set(readFavorites());
-      document.querySelectorAll('[data-card]').forEach((cardEl) => {
-        const key = cardEl.getAttribute('data-fav-key') || '';
-        const button = cardEl.querySelector('[data-favorite-toggle]');
-        if (!(button instanceof HTMLButtonElement)) return;
-        const active = favorites.has(key);
-        button.textContent = active ? '★' : '☆';
-        button.classList.toggle('text-amber-500', active);
-        button.classList.toggle('border-amber-300', active);
-        button.classList.toggle('bg-amber-50', active);
-      });
-      if (favoriteFilterCount) favoriteFilterCount.textContent = String(favorites.size);
-      if (favoriteFilterButton instanceof HTMLButtonElement) {
-        favoriteFilterButton.classList.toggle('bg-amber-100', favoriteOnly);
-        favoriteFilterButton.classList.toggle('border-amber-300', favoriteOnly);
-      }
-    };
-    
-    const dayKey = () => {
-      const now = new Date();
-      return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
-    };
-
-    const hash = (text) => {
-      let h = 2166136261;
-      for (let i = 0; i < text.length; i += 1) {
-        h ^= text.charCodeAt(i);
-        h = Math.imul(h, 16777619);
-      }
-      return h >>> 0;
-    };
-
-    const mulberry32 = (a) => () => {
-      let t = (a += 0x6d2b79f5);
-      t = Math.imul(t ^ (t >>> 15), t | 1);
-      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-
-    const shuffle = (arr, seedText) => {
-      const out = [...arr];
-      const rand = mulberry32(hash(seedText));
-      for (let i = out.length - 1; i > 0; i -= 1) {
-        const j = Math.floor(rand() * (i + 1));
-        const tmp = out[i];
-        out[i] = out[j];
-        out[j] = tmp;
-      }
-      return out;
-    };
-
-    const randomizeRows = () => {
-      const key = dayKey();
-      sliderRows.forEach((rowEl, rowIndex) => {
-        const track = rowEl.querySelector('[data-track]');
-        if (!(track instanceof HTMLElement)) return;
-        const baseCards = [...track.querySelectorAll('[data-card][data-dup="0"]')];
-        if (baseCards.length === 0) return;
-        const shuffled = shuffle(baseCards, `${key}:row:${rowIndex}`);
-        const nextNodes = [];
-        for (let dup = 0; dup < 3; dup += 1) {
-          shuffled.forEach((card) => {
-            const clone = card.cloneNode(true);
-            if (clone instanceof HTMLElement) clone.setAttribute('data-dup', String(dup));
-            nextNodes.push(clone);
-          });
-        }
-        track.replaceChildren(...nextNodes);
-      });
-    };
-
-    randomizeRows();
-
-    sliderRows.forEach((rowEl) => {
-      const track = rowEl.querySelector('[data-track]');
-      const prevBtn = rowEl.querySelector('[data-nav="prev"]');
-      const nextBtn = rowEl.querySelector('[data-nav="next"]');
-
-      if (!track || !prevBtn || !nextBtn) return;
-      const step = () => {
-        const firstCard = track.querySelector('a');
-        if (!firstCard) return 240;
-        const cardWidth = firstCard.getBoundingClientRect().width;
-        return Math.round(cardWidth + 12);
-      };
-      const jump = () => Math.max(Math.round(step() * 2.8), Math.round(track.clientWidth * 0.85));
-
-      const setWidth = () => Math.max(0, Math.floor(track.scrollWidth / 3));
-
-      const normalizeLoop = () => {
-        const loopWidth = setWidth();
-        if (loopWidth <= 0) return;
-        const min = 2;
-        const max = loopWidth * 2 - 2;
-        if (track.scrollLeft >= max) {
-          track.scrollLeft -= loopWidth;
-        } else if (track.scrollLeft < min) {
-          track.scrollLeft += loopWidth;
-        }
-      };
-
-      const slideNext = () => {
-        const amount = jump();
-        track.scrollLeft += amount;
-        normalizeLoop();
-      };
-
-      const slidePrev = () => {
-        const amount = jump();
-        track.scrollLeft -= amount;
-        normalizeLoop();
-      };
-
-      prevBtn.addEventListener('click', slidePrev);
-      nextBtn.addEventListener('click', slideNext);
-      track.addEventListener('scroll', normalizeLoop);
-
-      track.scrollLeft = setWidth();
-    });
-
-    const applySearch = () => {
-      if (!searchInput) return;
-      const keyword = searchInput.value.trim().toLowerCase();
-      const favorites = new Set(readFavorites());
-      let visibleTotal = 0;
-      let favoriteVisibleTotal = 0;
-
-      sliderRows.forEach((rowEl) => {
-        const cards = rowEl.querySelectorAll('[data-card]');
-        let rowVisible = 0;
-
-        cards.forEach((cardEl) => {
-          const haystack = cardEl.getAttribute('data-search') ?? '';
-          const isPrimary = cardEl.getAttribute('data-dup') === '0';
-          const category = cardEl.getAttribute('data-category') ?? 'etc';
-          const isNew = cardEl.getAttribute('data-new') === 'true';
-          const favKey = cardEl.getAttribute('data-fav-key') ?? '';
-          const matchesSearch = keyword === '' || haystack.includes(keyword);
-          const matchesTab = activeTab === 'all' || (activeTab === 'new' ? isNew : category === activeTab);
-          const matchesFavorite = !favoriteOnly || favorites.has(favKey);
-          const primaryOnly = keyword !== '' || activeTab !== 'all' || favoriteOnly;
-          const matched = matchesSearch && matchesTab && matchesFavorite && (!primaryOnly || isPrimary);
-          cardEl.classList.toggle('hidden', !matched);
-          if (matched) rowVisible += 1;
-          if (matched && favorites.has(favKey)) favoriteVisibleTotal += 1;
-        });
-
-        rowEl.classList.toggle('hidden', rowVisible === 0);
-        visibleTotal += rowVisible;
-      });
-
-      if (emptyEl) {
-        emptyEl.classList.toggle('hidden', visibleTotal > 0);
-      }
-      if (favoriteEmptyEl) {
-        favoriteEmptyEl.classList.toggle('hidden', !(favoriteOnly && favoriteVisibleTotal === 0));
-      }
-    };
-
-    document.addEventListener('click', (event) => {
-      const target = event.target;
-      if (!(target instanceof HTMLElement)) return;
-      const favoriteButton = target.closest('[data-favorite-toggle]');
-      if (!(favoriteButton instanceof HTMLButtonElement)) return;
-      const card = favoriteButton.closest('[data-card]');
-      if (!(card instanceof HTMLElement)) return;
-      event.preventDefault();
-      event.stopPropagation();
-      const key = card.getAttribute('data-fav-key');
-      if (!key) return;
-      const favorites = readFavorites();
-      const next = favorites.includes(key)
-        ? favorites.filter((item) => item !== key)
-        : [...favorites, key];
-      writeFavorites(next);
-      updateFavoriteButtons();
-      applySearch();
-    });
-
-    tabButtons.forEach((button) => {
-      button.addEventListener('click', () => {
-        activeTab = button.getAttribute('data-tab') ?? 'all';
-        tabButtons.forEach((item) => {
-          const active = item === button;
-          item.classList.toggle('bg-sky-500', active);
-          item.classList.toggle('text-white', active);
-          item.classList.toggle('border', !active);
-          item.classList.toggle('border-sky-100', !active);
-          item.classList.toggle('bg-white', !active);
-          item.classList.toggle('text-slate-600', !active);
-        });
-        applySearch();
-      });
-    });
-
-    favoriteFilterButton?.addEventListener('click', () => {
-      favoriteOnly = !favoriteOnly;
-      updateFavoriteButtons();
-      applySearch();
-    });
-
-    searchInput?.addEventListener('input', applySearch);
-    updateFavoriteButtons();
-    applySearch();
 
     const renderTrendCards = (items) => {
       if (!(trendingCardListEl instanceof HTMLElement)) return;

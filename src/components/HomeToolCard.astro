@@ -1,0 +1,12 @@
+---
+const { card, dup = 0, favoriteLabel } = Astro.props;
+---
+<article data-card data-fav-key={card.href.replace(/^\/(en|ja)(?=\/|$)/, '') || '/'} data-category={card.category} data-new={card.isNew ? 'true' : 'false'} data-dup={dup} data-disabled={card.disabled ? 'true' : 'false'} class:list={['home-tool-card relative shrink-0 rounded-xl border p-4', card.disabled ? 'border-slate-200 bg-slate-50 opacity-70' : 'border-sky-100 bg-white hover:shadow-sm']}>
+  <a href={card.disabled ? undefined : card.href} aria-disabled={card.disabled ? 'true' : undefined} class="block h-full pr-5">
+    <div class:list={['flex h-10 w-10 items-center justify-center rounded-lg text-base', card.iconClass]}>{card.icon}</div>
+    <h2 class="mt-3 text-base font-bold tracking-tight text-slate-900">{card.title}</h2>
+    <p class="mt-1 text-xs leading-relaxed text-slate-500">{card.desc}</p>
+    {card.disabled && <span class="mt-2 block text-xs text-slate-500">{card.soon}</span>}
+  </a>
+  <button type="button" data-favorite-toggle aria-label={`${card.title} ${favoriteLabel}`} aria-pressed="false" class="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-sm text-slate-400">☆</button>
+</article>

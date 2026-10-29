@@ -44,6 +44,7 @@
     "hwp.js": "^0.0.3",
     "i18next": "^25.8.18",
     "jspdf": "^4.2.0",
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.577.0",
     "matter-js": "^0.20.0",
     "medium-zoom": "^1.1.0",
@@ -71,6 +72,7 @@
   },
   "devDependencies": {
     "@playwright/test": "1.56.1",
+    "@types/leaflet": "^1.9.21",
     "@types/node": "24.19.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",

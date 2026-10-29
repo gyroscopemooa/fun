@@ -2,21 +2,14 @@
 import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
-import AdSense from '../../components/AdSense.astro';
-import Recommend from '../../components/Recommend.astro';
-import AdsterraBanner from '../../components/ads/AdsterraBanner.astro';
+import LocalEats from '../../components/LocalEats';
+const launched = import.meta.env.PUBLIC_LOCAL_EATS_LAUNCHED === 'true';
+const preview = launched || import.meta.env.DEV;
 ---
-
-<Layout title="지역 맛집 지도 | 동네 맛집 찾기 | ManyTool" description="지역별 맛집 위치를 확인하는 지도 랜딩 페이지" noindex>
+<Layout noindex={!launched} title="혼밥가능 / 맛집추천 지도 | 지역 맛집 찾기 | ManyTool" description="혼자 먹기 편한 동네 맛집을 찾아보세요. 혼밥 가능 여부, 1인석과 1인 주문 정보, 방문자 별점과 댓글을 지도에서 함께 확인합니다.">
   <Header />
-  <main class="mx-auto max-w-4xl px-4 py-8">
-    <h1 class="text-2xl font-bold">지역 맛집 지도</h1>
-    <p class="mt-3 text-slate-700">지역별로 인기 있는 맛집 위치를 확인하는 지도 페이지입니다.</p>
-    <AdSense slotName="본문 상단" />
-    <AdsterraBanner placement="top" />
-    <div class="mt-4 rounded-lg border bg-white p-6">Local Eats Map Placeholder</div>
-    <AdsterraBanner placement="bottom" />
-    <Recommend />
+  <main>
+  {preview ? <LocalEats client:load url={import.meta.env.PUBLIC_SUPABASE_URL ?? ''} apiKey={import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? ''} /> : <section class="mx-auto max-w-3xl px-4 py-16"><h1 class="text-3xl font-bold">혼밥가능 / 맛집추천 지도</h1><p class="mt-4 text-slate-600">혼밥 정보와 별점·후기를 나누는 지도를 준비하고 있습니다.</p><a class="mt-6 inline-block underline" href="/">다른 도구 둘러보기</a></section>}
   </main>
   <Footer />
 </Layout>

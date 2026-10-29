@@ -46,3 +46,7 @@ playwright-report/
 tmp/pdfs/
 
 .electric-preview/
+
+# Isolated home release verification output
+tmp/home-cards-dist/
+tmp/release-home-dist/

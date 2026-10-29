@@ -62,6 +62,7 @@ const paths = [
   '/chat-random-picker',
   '/meme-generator',
   '/maps/fishbread',
+  ...(import.meta.env.PUBLIC_LOCAL_EATS_LAUNCHED === 'true' ? ['/maps/local-eats'] : []),
   '/maps/solo-dining',
   '/new-tools',
   '/lol-champion-recommender',
