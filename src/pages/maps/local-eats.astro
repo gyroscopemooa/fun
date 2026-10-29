@@ -3,13 +3,11 @@ import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import LocalEats from '../../components/LocalEats';
-const launched = import.meta.env.PUBLIC_LOCAL_EATS_LAUNCHED === 'true';
-const preview = launched || import.meta.env.DEV;
 ---
-<Layout noindex={!launched} title="혼밥가능 / 맛집추천 지도 | 지역 맛집 찾기 | ManyTool" description="혼자 먹기 편한 동네 맛집을 찾아보세요. 혼밥 가능 여부, 1인석과 1인 주문 정보, 방문자 별점과 댓글을 지도에서 함께 확인합니다.">
+<Layout title="혼밥가능 / 맛집추천 지도 | 지역 맛집 찾기 | ManyTool" description="혼자 먹기 편한 동네 맛집을 찾아보세요. 혼밥 가능 여부, 1인석과 1인 주문 정보, 방문자 별점과 댓글을 지도에서 함께 확인합니다.">
   <Header />
   <main>
-  {preview ? <LocalEats client:load url={import.meta.env.PUBLIC_SUPABASE_URL ?? ''} apiKey={import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? ''} /> : <section class="mx-auto max-w-3xl px-4 py-16"><h1 class="text-3xl font-bold">혼밥가능 / 맛집추천 지도</h1><p class="mt-4 text-slate-600">혼밥 정보와 별점·후기를 나누는 지도를 준비하고 있습니다.</p><a class="mt-6 inline-block underline" href="/">다른 도구 둘러보기</a></section>}
+  <LocalEats client:load url={import.meta.env.PUBLIC_SUPABASE_URL ?? ''} apiKey={import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? ''} />
   </main>
   <Footer />
 </Layout>

@@ -11,18 +11,18 @@
 
 1. 기존 Supabase 프로젝트 `pzqlzomrvondxikyafvy`에서 `supabase/local_eats_schema.sql` 적용.
 2. 비회원에게 새 두 테이블의 조회·등록만 허용. 수정·삭제 정책은 없음. 기존 붕어빵 테이블은 변경하지 않음.
-3. DB 권한 적용 승인 및 저장 검증 후 `PUBLIC_LOCAL_EATS_LAUNCHED=true`를 설정. 기존 `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY`와 함께 빌드. 플래그가 없으면 운영에서는 준비 중 화면만 제공하고 홈 링크·사이트맵 노출은 보류한다. 개발 서버에서는 구현 화면을 미리 볼 수 있다.
+3. 기존 `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY`로 빌드. 2026-10-29 DB 권한 승인 및 저장 검증을 완료하여 런칭 플래그를 제거했으며 홈 링크·검색·사이트맵에 공개한다.
 4. `npm run build` 후 기존 GitHub main → Cloudflare Pages fun 배포 절차 사용.
 5. 운영 페이지에서 빈 목록 정상 표시 및 제보/후기 저장 연결 확인.
 
 ## 검증
 
-- `node scripts/test-local-eats.mjs` (PUBLIC_LOCAL_EATS_LAUNCHED=true로 만든 테스트 빌드 및 로컬 preview 포트 4341 필요): 테스트 서버 응답으로 별점·댓글, HTML 문자열 안전 표시, 혼밥 필터, 검색, 위치 필수, 실패 시 입력 보존, 새로고침, 모바일 폭, 연결 실패 확인.
+- `node scripts/test-local-eats.mjs` (로컬 preview 포트 4341 필요, 다른 포트는 LOCAL_EATS_TEST_URL 지정): 테스트 서버 응답으로 별점·댓글, HTML 문자열 안전 표시, 혼밥 필터, 검색, 위치 필수, 실패 시 입력 보존, 새로고침, 모바일 폭, 연결 실패 확인.
 - `npx tsc --noEmit --jsx react-jsx --module esnext --moduleResolution bundler --target es2022 --lib es2022,dom --types vite/client --esModuleInterop --skipLibCheck src/components/LocalEats.tsx`
 - 테스트는 운영 DB에 데이터를 작성하지 않음.
 
 ## 현재 상태
 
-운영 SQL 실행은 자동 승인 검토에서 차단됨: 새 테이블에 비회원 공개 조회·등록 권한을 추가하는 작업에 명시적 승인이 필요함. SQL은 관리 화면에 준비되었으나 실행되지 않음. 홈 개선 배포에는 준비 중 화면만 포함하며 실제 맛집·후기 등록은 공개하지 않음.
+2026-10-29 사용자가 비회원 조회·등록을 명시적으로 승인했다. 운영 프로젝트에 두 테이블과 SELECT/INSERT RLS 정책을 적용했다. anon 역할로 식당과 별점·댓글을 등록하고 조회하는 트랜잭션 검증을 통과했으며 ROLLBACK으로 검증 데이터를 남기지 않았다. 수정·삭제 RLS 정책은 제공하지 않는다. 준비 중 화면과 공개 플래그를 제거했다.
 
 최종 검증: 5,513개 페이지 전체 빌드 성공, 컴포넌트 TypeScript 검사 성공, 위 Playwright 시나리오 전체 통과. 테스트 환경의 외부 네트워크 제한으로 OSM 배경 타일의 실제 로딩은 확인하지 못함. 지도 라이브러리와 핀·위치 선택은 번들 내장으로 검증 완료.
