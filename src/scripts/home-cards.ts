@@ -35,6 +35,26 @@ const updateFavorites = () => {
   favoriteFilter?.setAttribute('aria-pressed', String(favoriteOnly));
   favoriteFilter?.classList.toggle('bg-amber-100',favoriteOnly);
 };
+const searchTrack = document.querySelector<HTMLElement>('#home-search-track');
+const searchLayout = document.querySelector<HTMLElement>('#home-search-layout');
+const searchPrev = document.querySelector<HTMLButtonElement>('[data-search-nav="prev"]');
+const searchNext = document.querySelector<HTMLButtonElement>('[data-search-nav="next"]');
+const updateSearchNav = () => {
+  if (!searchTrack) return;
+  const end = Math.max(0, searchTrack.scrollWidth - searchTrack.clientWidth);
+  if (searchPrev) searchPrev.disabled = searchTrack.scrollLeft <= 2;
+  if (searchNext) searchNext.disabled = searchTrack.scrollLeft >= end - 2;
+};
+const moveSearch = (direction: number) => {
+  if (!searchTrack) return;
+  const card = searchCards.find(item => !item.hidden);
+  if (!card) return;
+  searchTrack.scrollBy({ left: direction * (card.getBoundingClientRect().width + 12), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+};
+searchPrev?.addEventListener('click', () => moveSearch(-1));
+searchNext?.addEventListener('click', () => moveSearch(1));
+searchTrack?.addEventListener('scroll', updateSearchNav, { passive:true });
+if (searchTrack) new ResizeObserver(updateSearchNav).observe(searchTrack);
 const apply = () => {
   const text = search?.value.trim() ?? '';
   const query = normalize(text);
@@ -50,6 +70,9 @@ const apply = () => {
     card.hidden = !match;
     if (match) found++;
   });
+  if (searchLayout) searchLayout.hidden = found === 0;
+  searchTrack?.scrollTo({ left:0, behavior:'instant' });
+  updateSearchNav();
   const count = document.querySelector('#home-search-count'); if (count) count.textContent = String(found);
   let visible = 0;
   rows.forEach(row => {

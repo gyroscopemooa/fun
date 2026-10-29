@@ -371,7 +371,9 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
         </div>
         <section id="home-search-results" class="hidden" aria-label={locale === 'ko' ? '전체 도구 검색 결과' : 'All tool search results'}>
           <p class="mb-3 text-sm text-slate-600" role="status">{locale === 'ko' ? '전체 도구 검색 결과' : 'All tool search results'} <strong id="home-search-count">0</strong></p>
-          <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div class="home-search-layout" id="home-search-layout">
+            <button type="button" class="home-search-nav" data-search-nav="prev" aria-controls="home-search-track" aria-label={locale === 'ko' ? '이전 검색 결과' : 'Previous search result'}>‹</button>
+            <div id="home-search-track" class="home-search-track">
             {searchEntries.map(entry => (
               <article hidden data-search-result data-search={`${entry.title} ${entry.desc} ${entry.keywords ?? ''} ${entry.href}`} class="rounded-xl border border-sky-100 bg-white p-4">
                 <a href={entry.disabled ? undefined : entry.href} aria-disabled={entry.disabled ? 'true' : undefined} class="block h-full">
@@ -381,6 +383,8 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
                 </a>
               </article>
             ))}
+            </div>
+            <button type="button" class="home-search-nav" data-search-nav="next" aria-controls="home-search-track" aria-label={locale === 'ko' ? '다음 검색 결과' : 'Next search result'}>›</button>
           </div>
         </section>
       </div>
@@ -540,6 +544,16 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
     .home-card-nav { display:flex; align-items:center; justify-content:center; width:32px; height:40px; flex-shrink:0; border:1px solid #e0f2fe; border-radius:999px; background:white; color:#0ea5e9; font-size:22px; }
     .home-card-nav:disabled { opacity:.35; }
     [data-search-result][hidden] { display:none; }
+    .home-search-layout { display:flex; align-items:center; gap:8px; }
+    .home-search-layout[hidden] { display:none; }
+    .home-search-track { display:flex; flex:1; min-width:0; gap:12px; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; }
+    .home-search-track::-webkit-scrollbar { display:none; }
+    .home-search-track > article { flex:0 0 100%; min-width:0; scroll-snap-align:start; overflow-wrap:anywhere; }
+    .home-search-nav { display:flex; flex-shrink:0; width:44px; height:44px; align-items:center; justify-content:center; border:1px solid #bae6fd; border-radius:999px; background:#fff; color:#0284c7; font-size:26px; touch-action:manipulation; }
+    .home-search-nav:disabled { color:#94a3b8; border-color:#e2e8f0; opacity:.55; }
+    .home-search-nav:focus-visible { outline:3px solid #0ea5e9; outline-offset:2px; }
+    @media(min-width:640px) { .home-search-layout { display:block; } .home-search-nav { display:none; } .home-search-track { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); overflow:visible; } }
+    @media(min-width:1024px) { .home-search-track { grid-template-columns:repeat(3,minmax(0,1fr)); } }
     @media(min-width:640px) { .home-tool-card { width:230px; } .home-card-nav { width:40px; } }
   </style>
 

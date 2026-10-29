@@ -71,6 +71,25 @@ await page.screenshot({path:'tmp/home-cards-mobile.png',fullPage:false});
 await page.locator('#home-motion-toggle').click();
 await search.fill('AI');
 expect(await page.locator('[data-search-result]:not([hidden])').count()).toBeGreaterThan(20);
+const searchTrack = page.locator('#home-search-track');
+const nextResult = page.getByRole('button',{name:'다음 검색 결과',exact:true});
+const prevResult = page.getByRole('button',{name:'이전 검색 결과',exact:true});
+await expect(nextResult).toBeVisible(); await expect(nextResult).toBeEnabled();
+await expect(prevResult).toBeVisible(); await expect(prevResult).toBeDisabled();
+await nextResult.click();
+await expect.poll(()=>searchTrack.evaluate(el=>el.scrollLeft)).toBeGreaterThan(100);
+await expect(prevResult).toBeEnabled(); await prevResult.click();
+await expect.poll(()=>searchTrack.evaluate(el=>el.scrollLeft)).toBeLessThan(2);
+await search.fill('헤어 스타일');
+await expect(nextResult).toBeDisabled(); await expect(prevResult).toBeDisabled();
+await search.fill('AI');
+await expect(nextResult).toBeEnabled();
+for (const width of [320,390,430]) {
+  await page.setViewportSize({width,height:844});
+  await expect(nextResult).toBeInViewport();
+  await expect(prevResult).toBeInViewport();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+}
 await page.screenshot({path:'tmp/home-search-mobile.png',fullPage:false});
 expect(errors).toEqual([]);
 console.log('PASS desktop/mobile automatic motion, forward/reverse seam, pause, reduced motion, category/favorites, global search, missing AI tools, whitespace and no-result recovery.');
