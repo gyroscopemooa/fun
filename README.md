@@ -1,4 +1,4 @@
-﻿# funhub (manytool)
+# funhub (manytool)
 
 Astro 기반 SEO 허브 + AI 툴 MVP 프로젝트입니다.
 
@@ -55,3 +55,11 @@ PUBLIC_NODE_API_BASE=http://127.0.0.1:8787
 - Node.js API (`node-api`)
 - Supabase (확장 예정)
 - Polar (결제 연동 예정)
+
+## 커뮤니티
+
+- 게시판: /community/
+- 수동 게시글 폴더: src/content/community/
+- 작성 요청: 지금 커뮤 글 작성해줘
+- 작성·발행 지침: [docs/community-writing.md](docs/community-writing.md)
+- 파일 추가 후 빌드·배포해야 운영 사이트에 반영됩니다.

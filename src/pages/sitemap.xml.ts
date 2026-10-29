@@ -1,3 +1,4 @@
+import { communityPosts } from '../lib/community';
 import type { APIRoute } from 'astro';
 
 import { getAiImageSeoPathEntries } from '../lib/ai-image-seo';
@@ -173,7 +174,8 @@ const allPaths = [...new Set([
 // Pages are served from /path/ and /path redirects there, so list the final URL.
 const withSlash = (path: string) => (path === '/' || path.endsWith('/') ? path : `${path}/`);
 
-export const GET: APIRoute = ({ site }) => {
+export const GET: APIRoute = async ({ site }) => {
+  const communityPaths = (await communityPosts()).map((post) => `/community/${post.id}`);
   const base = site ?? new URL('https://manytool.net');
   const now = new Date().toISOString().split('T')[0];
 
@@ -210,7 +212,7 @@ export const GET: APIRoute = ({ site }) => {
 
   const body = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${allPaths
+${[...allPaths, '/community', ...communityPaths]
   .map((path) => {
     const loc = new URL(withSlash(path), base).toString();
     return `  <url><loc>${loc}</loc><lastmod>${now}</lastmod><changefreq>${changefreqFor(path)}</changefreq><priority>${priorityFor(path)}</priority></url>`;

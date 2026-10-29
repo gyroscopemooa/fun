@@ -1,6 +1,7 @@
 ---
 // Shared "how to use" section for tool pages: what it is, steps, use cases, tips and FAQ (with FAQPage JSON-LD).
 // Copy lives in src/lib/tool-guides; the guide is picked by the page path unless `slug` is passed.
+import CommunityRelated from './CommunityRelated.astro';
 import { getToolGuide } from '../lib/tool-guides';
 import { guidesForTool } from '../lib/guides';
 
@@ -95,3 +96,5 @@ const faqJsonLd = guide
     <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
   </section>
 )}
+
+<CommunityRelated paths={[path]} />

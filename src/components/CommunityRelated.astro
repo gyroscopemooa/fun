@@ -1,0 +1,7 @@
+---
+import { communityPosts } from '../lib/community';
+interface Props { paths: string[] }
+const paths = Astro.props.paths.map((path) => path.replace(/\/+$/, ''));
+const posts = (await communityPosts()).filter((post) => post.data.tools.some((tool) => paths.includes(tool.href))).slice(0, 3);
+---
+{posts.length > 0 && <section class="mt-8 rounded-2xl border border-cyan-100 bg-cyan-50 p-6"><h2 class="text-lg font-bold text-slate-950">커뮤니티에서 더 알아보기</h2><ul class="mt-3 space-y-3">{posts.map((post) => <li><a href={`/community/${post.id}/`} class="text-sm font-semibold text-cyan-800 underline">{post.data.title}</a></li>)}</ul></section>}

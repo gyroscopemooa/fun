@@ -1,4 +1,5 @@
 ---
+import CommunityRelated from '../../components/CommunityRelated.astro';
 import Layout from '../../layouts/Layout.astro';
 import AdsterraBanner from '../../components/ads/AdsterraBanner.astro';
 import Header from '../../components/Header.astro';
@@ -157,6 +158,7 @@ const faqLd = {
       <a href="/guides" class="mt-4 inline-flex rounded-full border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">가이드 전체 보기</a>
     </section>
 
+    <CommunityRelated paths={guide.tools.map((tool) => tool.href)} />
     <AdsterraBanner placement="bottom" />
   </main>
   <Footer />

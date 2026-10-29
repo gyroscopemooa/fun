@@ -1,0 +1,52 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { communityPosts } from '../../lib/community';
+const posts = await communityPosts();
+const categories = [...new Set(posts.map((post) => post.data.category))];
+---
+<Layout title="커뮤니티 | 문제 해결 팁과 도구 활용법 | ManyTool" description="사진 편집부터 생활 도구까지, 하나의 질문에 답하는 매니툴 커뮤니티. 해결 방법과 관련 가이드를 함께 확인하세요.">
+  <Header preserveCurrentRoute />
+  <main class="mx-auto max-w-5xl px-4 py-10">
+    <section class="rounded-[28px] bg-slate-950 p-8 text-white sm:p-12">
+      <p class="text-sm font-bold tracking-widest text-cyan-300">MANYTOOL COMMUNITY</p>
+      <h1 class="mt-3 text-3xl font-black sm:text-4xl">작은 질문, 함께 찾는 해결 방법</h1>
+      <p class="mt-4 max-w-2xl leading-7 text-slate-300">도구를 쓰다가 막힌 순간에 필요한 팁과 안내를 모았습니다. 답을 확인하고, 필요한 도구로 바로 이어가세요.</p>
+      <p class="mt-5 text-sm text-slate-400">운영자가 직접 작성·검토하는 게시판입니다.</p>
+    </section>
+    <section class="my-7 grid gap-4 sm:grid-cols-[1fr_200px]" aria-label="게시글 검색">
+      <label class="text-sm font-bold">검색<input id="community-search" type="search" placeholder="어떤 문제가 궁금하세요?" class="mt-2 w-full rounded-xl border border-slate-300 bg-white p-3" /></label>
+      <label class="text-sm font-bold">분류<select id="community-category" class="mt-2 w-full rounded-xl border border-slate-300 bg-white p-3"><option value="">전체</option>{categories.map((category) => <option>{category}</option>)}</select></label>
+    </section>
+    <p id="community-count" class="mb-3 text-sm text-slate-500" aria-live="polite">전체 {posts.length}개 글</p>
+    <div class="grid gap-4">
+      {posts.map((post) => <article data-post data-category={post.data.category} data-search={[post.data.title, post.data.description, post.data.question, ...post.data.tags].join(' ').toLowerCase()} class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="flex gap-3 text-xs text-slate-500"><span class="font-bold text-cyan-700">{post.data.category}</span><time datetime={post.data.published}>{post.data.published}</time><span>매니툴 운영팀</span></div>
+        <h2 class="mt-3 text-xl font-bold"><a class="hover:text-cyan-700 hover:underline" href={`/community/${post.id}/`}>{post.data.title}</a></h2>
+        <p class="mt-2 text-sm leading-7 text-slate-600">{post.data.description}</p>
+        <p class="mt-3 text-xs text-slate-500">{post.data.tags.map((tag) => `#${tag}`).join(' ')}</p>
+      </article>)}
+    </div>
+    <p id="community-empty" hidden class="rounded-2xl bg-slate-100 p-8 text-center">일치하는 글이 없습니다. 다른 검색어나 분류를 선택해 주세요.</p>
+    <aside class="mt-8 rounded-2xl bg-cyan-50 p-6"><h2 class="font-bold">찾던 답이 없나요?</h2><p class="mt-2 text-sm leading-7">사용한 도구와 막힌 단계를 알려주세요. 다음 안내를 보완하는 데 참고하겠습니다.</p><a href="/contact" class="mt-3 inline-block font-bold text-cyan-800 underline">질문·개선 의견 보내기</a></aside>
+  </main><Footer />
+</Layout>
+<script>
+  const search = document.querySelector<HTMLInputElement>('#community-search')!;
+  const category = document.querySelector<HTMLSelectElement>('#community-category')!;
+  const posts = [...document.querySelectorAll<HTMLElement>('[data-post]')];
+  const filter = () => {
+    const query = search.value.trim().toLowerCase();
+    let count = 0;
+    posts.forEach((post) => {
+      post.hidden = !(post.dataset.search!.includes(query) && (!category.value || post.dataset.category === category.value));
+      if (!post.hidden) count++;
+    });
+    document.querySelector('#community-count')!.textContent = `전체 ${count}개 글`;
+    (document.querySelector('#community-empty') as HTMLElement).hidden = count !== 0;
+  };
+  search.addEventListener('input', filter);
+  category.addEventListener('change', filter);
+  filter();
+</script>
