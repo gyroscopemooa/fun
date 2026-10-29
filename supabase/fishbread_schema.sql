@@ -147,6 +147,14 @@ begin
     raise exception 'invalid vote type';
   end if;
 
+  -- Serialize votes for a report and reject missing/unpublished reports.
+  select * into r from public.fishbread_reports
+  where id = p_report_id and status = 'approved' for update;
+  if not found then
+    return query select false, 0, 0;
+    return;
+  end if;
+
   insert into public.fishbread_votes(report_id, device_hash, vote_type)
   values (p_report_id, p_device_hash, p_vote_type)
   on conflict do nothing;
@@ -161,6 +169,11 @@ begin
     where fr.id = p_report_id
       and fr.status = 'approved'
     returning * into r;
+    -- Remove only when down votes exceed up votes by at least 100.
+    -- Related comments and vote records are removed through ON DELETE CASCADE.
+    if r.down_count - r.up_count >= 100 then
+      delete from public.fishbread_reports where id = p_report_id;
+    end if;
     return query select true, coalesce(r.up_count, 0), coalesce(r.down_count, 0);
   else
     select * into r from public.fishbread_reports where id = p_report_id;

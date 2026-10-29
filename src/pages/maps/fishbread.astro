@@ -16,7 +16,7 @@ const t = {
     title: '붕어빵 지도(붕어빵 맵) | ManyTool',
     desc: '붕어빵 맵: 지도 기반 붕어빵 벤더 탐색/제보 페이지',
     pageTitle: '전국 붕어빵 지도 · 붕어빵 맵',
-    search: '지역/가게명 검색',
+    search: '등록된 제보 검색 (지역·상세 위치·메뉴)',
     list: '제보 목록',
     add: '제보 추가',
     report: '새 제보 등록',
@@ -78,10 +78,10 @@ const seoKeywords = locale === 'ko'
               <button id="region-all" class="text-sm font-semibold text-amber-600">전체</button>
             </div>
             <div class="flex gap-2 overflow-x-auto pb-1 text-xs">
-              <button class="rounded-full bg-amber-500 px-3 py-1.5 font-semibold text-white">All</button>
-              <button class="rounded-full bg-slate-100 px-3 py-1.5">팥</button>
-              <button class="rounded-full bg-slate-100 px-3 py-1.5">슈크림</button>
-              <button class="rounded-full bg-slate-100 px-3 py-1.5">피자</button>
+              <button data-flavor="" aria-pressed="true" class="flavor-filter">전체</button>
+              <button data-flavor="팥" aria-pressed="false" class="flavor-filter">팥</button>
+              <button data-flavor="슈크림" aria-pressed="false" class="flavor-filter">슈크림</button>
+              <button data-flavor="피자" aria-pressed="false" class="flavor-filter">피자</button>
             </div>
           </div>
 
@@ -89,12 +89,18 @@ const seoKeywords = locale === 'ko'
 
           <div class="border-t border-slate-100 bg-slate-50 p-4">
             <h3 class="text-sm font-bold">{t.add}</h3>
-            <input id="spot-name" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="가게명" type="text" />
-            <input id="spot-region" class="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" placeholder="지역(지도/버튼 선택)" type="text" readonly />
+            <p class="mt-2 text-xs text-slate-600">① 지도에서 위치 선택 → ② 위치 설명 → ③ 등록</p>
+            <label class="mt-2 block text-xs" for="spot-region">지역 (자동 추정, 직접 수정 가능)</label>
+            <select id="spot-region" class="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm">
+              <option value="">지역 선택</option>
+              {['서울','경기','인천','강원','충남','충북','세종','대전','전북','광주','전남','경북','대구','경남','울산','부산','제주'].map(region => <option value={region}>{region}</option>)}
+            </select>
+            <input id="spot-name" aria-label="가게명 (선택)" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="가게명 (선택 · 없어도 등록 가능)" type="text" maxlength="80" />
             <input id="spot-flavor" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="대표 메뉴 (예: 팥/슈크림)" type="text" />
-            <input id="spot-detail" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="상세 위치 (예: OO역 2번 출구)" type="text" />
+            <input id="spot-detail" aria-label="상세 위치 (필수)" class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="상세 위치 (필수 · 예: 보람병원 맞은편)" type="text" maxlength="300" />
             <input id="spot-latlng" class="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-xs text-slate-500" placeholder="지도 클릭 시 좌표 자동 입력 (예: 37.5665,126.9780)" type="text" readonly />
-            <p class="mt-2 text-xs text-slate-500">{t.mapHint}</p>
+            <p id="location-status" role="status" class="mt-2 text-sm text-amber-700">{t.mapHint}</p>
+            <button id="clear-location" class="mt-2 text-xs underline" type="button">선택 위치 지우기</button>
             <button id="spot-add" class="mt-3 w-full rounded-xl bg-amber-500 py-2.5 font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300" disabled>{t.report}</button>
             <p class="mt-2 text-xs text-slate-500">비회원 제보/댓글은 등록 즉시 공개됩니다.</p>
             <p class="mt-1 text-xs text-slate-500">비추천이 100개 더 많을 시 자동 삭제됩니다.</p>
@@ -103,6 +109,16 @@ const seoKeywords = locale === 'ko'
         </aside>
 
         <section class="order-1 rounded-2xl border border-slate-200 bg-white p-3 lg:order-2">
+          <div class="mb-3 flex flex-wrap items-center gap-2 text-sm">
+            <button id="my-location" class="rounded-lg border border-slate-300 px-3 py-2">내 위치로 이동</button>
+            <button id="select-center" class="rounded-lg bg-amber-500 px-3 py-2 font-semibold text-white">지도 중심을 제보 위치로 선택</button>
+          </div>
+          <p class="mb-2 text-xs text-slate-600">OpenStreetMap 지도 · 원하는 곳을 누르거나 선택 핀을 끌어 위치를 조정하세요.</p>
+          <form id="place-search" class="mb-3 flex gap-2">
+            <input id="place-query" aria-label="카카오맵에서 장소 찾기" placeholder="장소 확인 (예: 울산 보람병원)" class="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm" required />
+            <button class="rounded-lg border border-slate-300 px-3 py-2 text-sm">카카오맵 검색 ↗</button>
+          </form>
+          <p class="mb-2 text-xs text-slate-500">카카오맵은 새 창으로 열립니다. 장소 확인 후 이 지도에서 제보 위치를 선택해 주세요.</p>
           <div id="fishbread-map" class="h-[340px] w-full rounded-xl border border-slate-200 sm:h-[420px] md:h-[620px]"></div>
 
           <div class="mt-3 flex flex-wrap gap-2">
@@ -262,6 +278,9 @@ const seoKeywords = locale === 'ko'
     let adminGranted = false;
     let votedIds = new Set();
     let selectedRegion = '전체';
+    let selectedFlavor = '';
+    let selectionMarker;
+    let saving = false;
     let selectedLat = null;
     let selectedLng = null;
     let mapUnavailable = false;
@@ -310,9 +329,11 @@ const seoKeywords = locale === 'ko'
       if (!(addBtn instanceof HTMLButtonElement)) return;
       const manual = latlngEl instanceof HTMLInputElement ? parseLatLng(latlngEl.value) : null;
       const hasCoord = (typeof selectedLat === 'number' && typeof selectedLng === 'number') || Boolean(manual);
-      addBtn.disabled = !hasCoord;
+      addBtn.disabled = !hasCoord || !supabasePublic || saving;
+      addBtn.textContent = saving ? '저장 중…' : !supabasePublic ? '저장 연결을 사용할 수 없습니다' : '새 제보 등록';
     };
 
+    const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
     const score = (v) => v.up - v.down;
     const fetchRest = async (path) => {
       if (!supabaseReady) throw new Error('Supabase env missing');
@@ -386,7 +407,8 @@ const seoKeywords = locale === 'ko'
       const q = searchEl instanceof HTMLInputElement ? searchEl.value.trim().toLowerCase() : '';
       return state.vendors
         .filter((v) => selectedRegion === '전체' || v.region === selectedRegion)
-        .filter((v) => q === '' || `${v.name} ${v.region} ${v.flavor}`.toLowerCase().includes(q))
+        .filter((v) => q === '' || `${v.name} ${v.region} ${v.flavor} ${v.detail}`.toLowerCase().includes(q))
+        .filter((v) => !selectedFlavor || v.flavor.includes(selectedFlavor))
         .sort((a, b) => score(b) - score(a));
     };
 
@@ -401,19 +423,20 @@ const seoKeywords = locale === 'ko'
         <article class="rounded-xl border border-slate-200 bg-slate-50 p-3">
           <div class="flex items-start justify-between gap-2">
             <div>
-              <h3 class="font-bold">${v.name}</h3>
-              <p class="text-xs text-slate-500">${v.region} · ${v.flavor}${v.detail ? ` · ${v.detail}` : ''}</p>
+              <h3 class="font-bold">${escapeHtml(v.name)}</h3>
+              <p class="text-xs text-slate-500">${escapeHtml(v.region)} · ${escapeHtml(v.flavor)}${v.detail ? ` · ${escapeHtml(v.detail)}` : ''}</p>
             </div>
             <p class="text-xs font-semibold text-amber-600">신뢰 ${score(v)}</p>
           </div>
           <div class="mt-2 flex gap-2">
+            <button data-act="locate" data-id="${v.id}" class="rounded-md border border-amber-400 px-2 py-1 text-xs">위치 보기</button>
             <button data-act="up" data-id="${v.id}" class="rounded-md border border-slate-300 px-2 py-1 text-xs ${votedIds.has(v.id) ? 'opacity-50' : ''}" ${votedIds.has(v.id) ? 'disabled' : ''}>추천 ${v.up}</button>
             <button data-act="down" data-id="${v.id}" class="rounded-md border border-slate-300 px-2 py-1 text-xs ${votedIds.has(v.id) ? 'opacity-50' : ''}" ${votedIds.has(v.id) ? 'disabled' : ''}>비추천 ${v.down}</button>
             ${isAdmin() ? `<button data-act="delete" data-id="${v.id}" class="rounded-md border border-rose-500 px-2 py-1 text-xs text-rose-700">삭제</button>` : ''}
           </div>
           <div class="mt-2 rounded-md bg-white p-2">
             <ul class="space-y-1 text-xs text-slate-600">
-              ${v.comments.slice(-2).map((c) => `<li>- ${c.body}</li>`).join('') || '<li>- 댓글 없음</li>'}
+              ${v.comments.slice(-2).map((c) => `<li>- ${escapeHtml(c.body)}</li>`).join('') || '<li>- 댓글 없음</li>'}
             </ul>
             <div class="mt-2 flex gap-2">
               <input data-input="comment" data-id="${v.id}" class="flex-1 rounded border border-slate-300 px-2 py-1 text-xs" placeholder="정확/부정확 댓글" />
@@ -439,11 +462,13 @@ const seoKeywords = locale === 'ko'
       latlngEl.placeholder = '지도가 안 보이면 좌표를 직접 입력하세요. 예: 37.5665,126.9780';
       latlngEl.addEventListener('input', () => {
         const parsed = parseLatLng(latlngEl.value);
+        selectedLat = null;
+        selectedLng = null;
         if (parsed) {
           selectedLat = Number(parsed.lat.toFixed(6));
           selectedLng = Number(parsed.lng.toFixed(6));
           const region = nearestRegion(selectedLat, selectedLng);
-          if (regionInputEl instanceof HTMLInputElement && !regionInputEl.value.trim()) {
+          if (regionInputEl instanceof HTMLSelectElement && !regionInputEl.value.trim()) {
             regionInputEl.value = region;
           }
         }
@@ -462,27 +487,11 @@ const seoKeywords = locale === 'ko'
         if (!coord) return;
         window.L
           .marker([coord.lat, coord.lng])
-          .bindPopup(`<strong>${v.name}</strong><br/>${v.region} · ${v.flavor}${v.detail ? `<br/>${v.detail}` : ''}`)
+          .bindPopup(`<strong>${escapeHtml(v.name)}</strong><br/>${escapeHtml(v.region)} · ${escapeHtml(v.flavor)}${v.detail ? `<br/>${escapeHtml(v.detail)}` : ''}`)
           .addTo(markersLayer);
       });
 
-      if (selectedRegion !== '전체' && REGION_COORD[selectedRegion]) {
-        const c = REGION_COORD[selectedRegion];
-        map.setView([c.lat, c.lng], c.zoom);
-      }
 
-      if (typeof selectedLat === 'number' && typeof selectedLng === 'number') {
-        window.L
-          .circleMarker([selectedLat, selectedLng], {
-            radius: 8,
-            color: '#f59e0b',
-            weight: 2,
-            fillColor: '#f59e0b',
-            fillOpacity: 0.35
-          })
-          .bindPopup('선택된 제보 위치')
-          .addTo(markersLayer);
-      }
     };
 
     const render = () => {
@@ -502,7 +511,7 @@ const seoKeywords = locale === 'ko'
       pendingReportListEl.innerHTML = state.pendingReports.length
         ? state.pendingReports.map((v) => `
           <article class="rounded-md border border-slate-200 bg-slate-50 p-2">
-            <p class="text-xs font-semibold">${v.name} (${v.region})</p>
+            <p class="text-xs font-semibold">${escapeHtml(v.name)} (${escapeHtml(v.region)})</p>
             <div class="mt-1 flex gap-1">
               <button data-admin="approve-report" data-id="${v.id}" class="rounded border border-emerald-500 px-2 py-0.5 text-[11px] text-emerald-700">승인</button>
               <button data-admin="delete-report" data-id="${v.id}" class="rounded border border-rose-500 px-2 py-0.5 text-[11px] text-rose-700">삭제</button>
@@ -513,7 +522,7 @@ const seoKeywords = locale === 'ko'
       pendingCommentListEl.innerHTML = state.pendingComments.length
         ? state.pendingComments.map((c) => `
           <article class="rounded-md border border-slate-200 bg-slate-50 p-2">
-            <p class="text-xs">${c.body}</p>
+            <p class="text-xs">${escapeHtml(c.body)}</p>
             <div class="mt-1 flex gap-1">
               <button data-admin="approve-comment" data-id="${c.id}" class="rounded border border-emerald-500 px-2 py-0.5 text-[11px] text-emerald-700">승인</button>
               <button data-admin="delete-comment" data-id="${c.id}" class="rounded border border-rose-500 px-2 py-0.5 text-[11px] text-rose-700">삭제</button>
@@ -629,7 +638,11 @@ const seoKeywords = locale === 'ko'
     const setRegion = (region) => {
       selectedRegion = region;
       if (selectedRegionEl) selectedRegionEl.textContent = region;
-      if (regionInputEl instanceof HTMLInputElement) regionInputEl.value = region === '전체' ? '' : region;
+      document.querySelectorAll('[data-region]').forEach(btn => btn.setAttribute('aria-pressed', String(btn.dataset.region === region)));
+      if (map) {
+        const c = REGION_COORD[region];
+        map.setView(c ? [c.lat, c.lng] : [36.5, 127.8], c ? c.zoom : 7);
+      }
       render();
     };
 
@@ -666,6 +679,14 @@ const seoKeywords = locale === 'ko'
       const item = state.vendors.find((v) => v.id === id);
       if (!item) return;
 
+      if (act === 'locate') {
+        if (map && typeof item.lat === 'number' && typeof item.lng === 'number') {
+          map.setView([item.lat, item.lng], 18);
+          document.getElementById('fishbread-map')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      }
+
       if (act === 'up' || act === 'down') {
         if (votedIds.has(id) || !supabasePublic) return;
         const deviceHash = hashDevice(ensureDeviceId());
@@ -698,7 +719,7 @@ const seoKeywords = locale === 'ko'
         item.down = Number(result.down_count || item.down);
         votedIds.add(id);
         saveVotedIds();
-        render();
+        await reloadAll();
         return;
       }
       if (act === 'delete') {
@@ -749,11 +770,12 @@ const seoKeywords = locale === 'ko'
     });
 
     addBtn?.addEventListener('click', async () => {
-      const name = nameEl instanceof HTMLInputElement ? nameEl.value.trim() : '';
-      const region = regionInputEl instanceof HTMLInputElement ? regionInputEl.value.trim() : '';
+      const name = (nameEl instanceof HTMLInputElement ? nameEl.value.trim() : '') || '붕어빵 노점';
+      const region = regionInputEl instanceof HTMLSelectElement ? regionInputEl.value.trim() : '';
       const flavor = flavorEl instanceof HTMLInputElement ? flavorEl.value.trim() : '';
       const detail = detailEl instanceof HTMLInputElement ? detailEl.value.trim() : '';
-      if (!name || !region) return;
+      if (saving) return;
+      if (!region || !detail) { alert('지역과 상세 위치를 입력해 주세요. 예: 보람병원 맞은편'); return; }
       if (!(typeof selectedLat === 'number' && typeof selectedLng === 'number')) {
         const manual = latlngEl instanceof HTMLInputElement ? parseLatLng(latlngEl.value) : null;
         if (manual) {
@@ -766,6 +788,9 @@ const seoKeywords = locale === 'ko'
         return;
       }
       if (!supabasePublic) return;
+      saving = true;
+      updateAddButtonState();
+      try {
       let { error } = await supabasePublic.from('fishbread_reports').insert({
         name,
         region,
@@ -794,6 +819,7 @@ const seoKeywords = locale === 'ko'
           selectedLat = null;
           selectedLng = null;
           updateAddButtonState();
+          clearLocation();
           alert('제보 등록 완료 (현재 DB 정책상 승인대기).');
           return;
         }
@@ -810,8 +836,12 @@ const seoKeywords = locale === 'ko'
       selectedLat = null;
       selectedLng = null;
       updateAddButtonState();
+      clearLocation();
       alert('제보가 등록되었습니다.');
       await reloadAll();
+      } catch {
+        alert('저장 결과를 확인하지 못했습니다. 목록을 확인한 뒤 다시 시도해 주세요.');
+      } finally { saving = false; updateAddButtonState(); }
     });
 
     searchEl?.addEventListener('input', render);
@@ -917,6 +947,54 @@ const seoKeywords = locale === 'ko'
       await reloadAll();
     });
 
+    const clearLocation = () => {
+      selectedLat = selectedLng = null;
+      selectionMarker?.remove();
+      selectionMarker = null;
+      latlngEl.value = '';
+      regionInputEl.value = '';
+      document.getElementById('location-status').textContent = '지도에서 제보할 위치를 선택해 주세요.';
+      updateAddButtonState();
+    };
+    const selectLocation = (lat, lng) => {
+      selectedLat = Number(lat.toFixed(6));
+      selectedLng = Number(lng.toFixed(6));
+      latlngEl.value = `${selectedLat}, ${selectedLng}`;
+      regionInputEl.value = nearestRegion(lat, lng);
+      if (!selectionMarker) {
+        selectionMarker = window.L.marker([lat, lng], { draggable: true, title: '제보 위치: 끌어서 조정' }).addTo(map);
+        selectionMarker.bindTooltip('제보할 위치 · 끌어서 조정', { permanent: true, direction: 'top' });
+        selectionMarker.on('dragend', () => {
+          const point = selectionMarker.getLatLng();
+          selectLocation(point.lat, point.lng);
+        });
+      } else selectionMarker.setLatLng([lat, lng]);
+      document.getElementById('location-status').textContent = '위치 선택 완료. 핀을 끌어 조정하고 지역과 상세 위치를 확인해 주세요.';
+      updateAddButtonState();
+    };
+    document.getElementById('clear-location')?.addEventListener('click', clearLocation);
+    document.getElementById('select-center')?.addEventListener('click', () => {
+      if (!map) return;
+      const point = map.getCenter();
+      selectLocation(point.lat, point.lng);
+    });
+    document.getElementById('my-location')?.addEventListener('click', () => {
+      if (!map || !navigator.geolocation) { alert('현재 위치를 사용할 수 없습니다. 지도에서 직접 선택해 주세요.'); return; }
+      navigator.geolocation.getCurrentPosition(({ coords }) => {
+        map.setView([coords.latitude, coords.longitude], 17);
+        document.getElementById('location-status').textContent = '현재 위치 주변으로 이동했습니다. 실제 노점 위치를 선택해 주세요.';
+      }, () => alert('위치 권한 또는 GPS를 확인해 주세요. 지도에서 직접 선택할 수도 있습니다.'), { timeout: 10000 });
+    });
+    document.getElementById('place-search')?.addEventListener('submit', event => {
+      event.preventDefault();
+      const query = document.getElementById('place-query').value.trim();
+      if (query) window.open(`https://map.kakao.com/link/search/${encodeURIComponent(query)}`, '_blank', 'noopener,noreferrer');
+    });
+    document.querySelectorAll('[data-flavor]').forEach(button => button.addEventListener('click', () => {
+      selectedFlavor = button.dataset.flavor;
+      document.querySelectorAll('[data-flavor]').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+      render();
+    }));
     const boot = () => {
       initMap();
       mapUnavailable = !map;
@@ -924,15 +1002,7 @@ const seoKeywords = locale === 'ko'
         enableManualLatLngInput();
       }
       votedIds = loadVotedIds();
-      map?.on('click', (e) => {
-        const { lat, lng } = e.latlng;
-        selectedLat = Number(lat.toFixed(6));
-        selectedLng = Number(lng.toFixed(6));
-        const region = nearestRegion(selectedLat, selectedLng);
-        setRegion(region);
-        if (latlngEl instanceof HTMLInputElement) latlngEl.value = `${selectedLat}, ${selectedLng}`;
-        updateAddButtonState();
-      });
+      map?.on('click', (e) => selectLocation(e.latlng.lat, e.latlng.lng));
       setRegion('전체');
       updateAddButtonState();
       const syncAuth = async () => {
@@ -964,6 +1034,8 @@ const seoKeywords = locale === 'ko'
   </script>
 
   <style>
+    .flavor-filter { border-radius: 9999px; background: #f1f5f9; padding: 0.4rem 0.75rem; }
+    .flavor-filter[aria-pressed="true"], .map-region[aria-pressed="true"] { background: #f59e0b; color: #fff; }
     .map-region {
       border: 1px solid #cbd5e1;
       border-radius: 9999px;
