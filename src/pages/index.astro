@@ -552,8 +552,8 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
     .home-search-nav { display:flex; flex-shrink:0; width:44px; height:44px; align-items:center; justify-content:center; border:1px solid #bae6fd; border-radius:999px; background:#fff; color:#0284c7; font-size:26px; touch-action:manipulation; }
     .home-search-nav:disabled { color:#94a3b8; border-color:#e2e8f0; opacity:.55; }
     .home-search-nav:focus-visible { outline:3px solid #0ea5e9; outline-offset:2px; }
-    @media(min-width:640px) { .home-search-layout { display:block; } .home-search-nav { display:none; } .home-search-track { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); overflow:visible; } }
-    @media(min-width:1024px) { .home-search-track { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+    @media(min-width:640px) { .home-search-track > article { flex-basis:calc((100% - 12px) / 2); } }
+    @media(min-width:1024px) { .home-search-track > article { flex-basis:calc((100% - 24px) / 3); } }
     @media(min-width:640px) { .home-tool-card { width:230px; } .home-card-nav { width:40px; } }
   </style>
 

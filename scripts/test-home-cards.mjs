@@ -84,12 +84,19 @@ await search.fill('헤어 스타일');
 await expect(nextResult).toBeDisabled(); await expect(prevResult).toBeDisabled();
 await search.fill('AI');
 await expect(nextResult).toBeEnabled();
-for (const width of [320,390,430]) {
+for (const width of [320,390,430,640,768,1024,1280,1920]) {
   await page.setViewportSize({width,height:844});
+  await search.fill("AI");
   await expect(nextResult).toBeInViewport();
   await expect(prevResult).toBeInViewport();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await nextResult.click();
+  await expect.poll(()=>searchTrack.evaluate(el=>el.scrollLeft)).toBeGreaterThan(100);
+  await prevResult.click();
+  await expect.poll(()=>searchTrack.evaluate(el=>el.scrollLeft)).toBeLessThan(2);
 }
+await page.screenshot({path:'tmp/home-search-desktop.png',fullPage:false});
+await page.setViewportSize({width:390,height:844});
 await page.screenshot({path:'tmp/home-search-mobile.png',fullPage:false});
 expect(errors).toEqual([]);
 console.log('PASS desktop/mobile automatic motion, forward/reverse seam, pause, reduced motion, category/favorites, global search, missing AI tools, whitespace and no-result recovery.');
