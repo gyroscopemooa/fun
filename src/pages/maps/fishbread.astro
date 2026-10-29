@@ -339,8 +339,7 @@ const seoKeywords = locale === 'ko'
       if (!supabaseReady) throw new Error('Supabase env missing');
       const response = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
         headers: {
-          apikey: SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+          apikey: SUPABASE_ANON_KEY
         }
       });
       if (!response.ok) {
@@ -763,6 +762,7 @@ const seoKeywords = locale === 'ko'
               return;
             }
             input.value = '';
+            await reloadAll();
             alert('댓글이 등록되었습니다.');
           }
         }

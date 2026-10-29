@@ -1,3 +1,4 @@
+-- Active project: pzqlzomrvondxikyafvy (manytool organization), migrated 2026-10-29.
 -- Fishbread map schema (anonymous reports/comments + admin moderation)
 -- Run in Supabase SQL editor.
 
@@ -9,11 +10,11 @@ create table if not exists public.fishbread_reports (
   region text not null,
   flavor text not null default '팥',
   detail text not null default '',
-  lat double precision not null,
-  lng double precision not null,
-  status text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
-  up_count integer not null default 0,
-  down_count integer not null default 0,
+  lat double precision not null check (lat between -90 and 90),
+  lng double precision not null check (lng between -180 and 180),
+  status text not null default 'approved' check (status in ('pending', 'approved', 'rejected')),
+  up_count integer not null default 0 check (up_count >= 0),
+  down_count integer not null default 0 check (down_count >= 0),
   created_at timestamptz not null default now(),
   approved_at timestamptz
 );
@@ -22,7 +23,7 @@ create table if not exists public.fishbread_comments (
   id uuid primary key default gen_random_uuid(),
   report_id uuid not null references public.fishbread_reports(id) on delete cascade,
   body text not null,
-  status text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
+  status text not null default 'approved' check (status in ('pending', 'approved', 'rejected')),
   created_at timestamptz not null default now()
 );
 
@@ -44,45 +45,41 @@ alter table public.fishbread_comments enable row level security;
 alter table public.fishbread_votes enable row level security;
 alter table public.fishbread_admins enable row level security;
 
-drop policy if exists "anon can read approved reports" on public.fishbread_reports;
-create policy "anon can read approved reports"
+drop policy if exists reports_read on public.fishbread_reports;
+create policy reports_read
   on public.fishbread_reports
   for select
   to anon, authenticated
   using (status = 'approved');
 
 drop policy if exists "anon can insert pending reports" on public.fishbread_reports;
-drop policy if exists "anon can insert reports" on public.fishbread_reports;
-create policy "anon can insert reports"
+drop policy if exists reports_insert on public.fishbread_reports;
+create policy reports_insert
   on public.fishbread_reports
   for insert
   to anon, authenticated
-  with check (status in ('pending', 'approved'));
+  with check (status in ('pending', 'approved') and length(trim(name)) between 1 and 80 and length(detail)<=1000 and up_count=0 and down_count=0);
 
-drop policy if exists "anon can read approved comments" on public.fishbread_comments;
-create policy "anon can read approved comments"
+drop policy if exists comments_read on public.fishbread_comments;
+create policy comments_read
   on public.fishbread_comments
   for select
   to anon, authenticated
   using (status = 'approved');
 
 drop policy if exists "anon can insert pending comments" on public.fishbread_comments;
-drop policy if exists "anon can insert comments" on public.fishbread_comments;
-create policy "anon can insert comments"
+drop policy if exists comments_insert on public.fishbread_comments;
+create policy comments_insert
   on public.fishbread_comments
   for insert
   to anon, authenticated
-  with check (status in ('pending', 'approved'));
+  with check (status in ('pending', 'approved') and length(trim(body)) between 1 and 2000 and exists(select 1 from public.fishbread_reports r where r.id=report_id and r.status='approved'));
 
 drop policy if exists "anon can insert vote rows" on public.fishbread_votes;
-create policy "anon can insert vote rows"
-  on public.fishbread_votes
-  for insert
-  to anon, authenticated
-  with check (true);
+-- Votes are written only through the atomic RPC below.
 
-drop policy if exists "admins can moderate reports" on public.fishbread_reports;
-create policy "admins can moderate reports"
+drop policy if exists reports_admin on public.fishbread_reports;
+create policy reports_admin
   on public.fishbread_reports
   for all
   to authenticated
@@ -101,8 +98,8 @@ create policy "admins can moderate reports"
     )
   );
 
-drop policy if exists "admins can moderate comments" on public.fishbread_comments;
-create policy "admins can moderate comments"
+drop policy if exists comments_admin on public.fishbread_comments;
+create policy comments_admin
   on public.fishbread_comments
   for all
   to authenticated
@@ -121,8 +118,8 @@ create policy "admins can moderate comments"
     )
   );
 
-drop policy if exists "admins can read admin emails" on public.fishbread_admins;
-create policy "admins can read admin emails"
+drop policy if exists admins_read on public.fishbread_admins;
+create policy admins_read
   on public.fishbread_admins
   for select
   to authenticated
@@ -143,7 +140,7 @@ declare
   inserted_count integer;
   r public.fishbread_reports%rowtype;
 begin
-  if p_vote_type not in ('up', 'down') then
+  if p_vote_type is null or p_vote_type not in ('up', 'down') or p_device_hash is null or length(trim(p_device_hash)) not between 1 and 128 then
     raise exception 'invalid vote type';
   end if;
 
@@ -185,7 +182,15 @@ $$;
 revoke all on function public.submit_fishbread_vote(uuid, text, text) from public;
 grant execute on function public.submit_fishbread_vote(uuid, text, text) to anon, authenticated;
 
--- Add at least one admin email after running this script.
-insert into public.fishbread_admins(email)
-values ('admin@example.com')
-on conflict (email) do nothing;
+-- Register the real administrator in fishbread_admins after creating their Auth user.
+-- Do not insert a placeholder administrator.
+
+-- Explicit privileges: public clients cannot set counters or insert votes directly.
+revoke all on public.fishbread_reports, public.fishbread_comments, public.fishbread_votes, public.fishbread_admins from anon, authenticated;
+grant select on public.fishbread_reports, public.fishbread_comments to anon, authenticated;
+grant insert(name,region,flavor,detail,lat,lng,status) on public.fishbread_reports to anon, authenticated;
+grant insert(report_id,body,status) on public.fishbread_comments to anon, authenticated;
+grant select on public.fishbread_admins to authenticated;
+grant update,delete on public.fishbread_reports,public.fishbread_comments to authenticated;
+create index if not exists fishbread_reports_status_created on public.fishbread_reports(status,created_at desc);
+create index if not exists fishbread_comments_report on public.fishbread_comments(report_id,status,created_at);

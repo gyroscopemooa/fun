@@ -11,11 +11,7 @@ create table if not exists public.fishbread_votes (
 alter table public.fishbread_votes enable row level security;
 
 drop policy if exists "anon can insert vote rows" on public.fishbread_votes;
-create policy "anon can insert vote rows"
-  on public.fishbread_votes
-  for insert
-  to anon, authenticated
-  with check (true);
+revoke insert on public.fishbread_votes from anon, authenticated;
 
 drop function if exists public.submit_fishbread_vote(uuid, text, text);
 create or replace function public.submit_fishbread_vote(
@@ -32,7 +28,7 @@ declare
   inserted_count integer;
   r public.fishbread_reports%rowtype;
 begin
-  if p_vote_type not in ('up', 'down') then
+  if p_vote_type is null or p_vote_type not in ('up', 'down') or p_device_hash is null or length(trim(p_device_hash)) not between 1 and 128 then
     raise exception 'invalid vote type';
   end if;
 
