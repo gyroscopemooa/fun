@@ -29,6 +29,8 @@ export const MOODS: Mood[] = [
   { key: 'sleepy', label: '졸림', emoji: '😴', color: '#6366F1', soft: '#EEF2FF', words: ['졸', '피곤', '나른', '편안'] }
 ];
 
+const EN_MOOD_LABELS: Record<string, string> = { hungry: 'Hungry', anxious: 'Anxious', angry: 'Annoyed', love: 'Affectionate', happy: 'Happy', curious: 'Curious', bored: 'Bored', sleepy: 'Sleepy', talk: 'Message' };
+
 const FALLBACK_MOOD: Mood = { key: 'talk', label: '대화', emoji: '💬', color: '#E11D48', soft: '#FFF1F2', words: [] };
 
 export const moodOf = (emotion = '') => MOODS.find((mood) => mood.words.some((word) => emotion.includes(word))) ?? FALLBACK_MOOD;
@@ -89,7 +91,7 @@ function MoodMeter({ active }: { active: Mood }) {
             style={{ background: on ? mood.soft : '#F8FAFC', outline: on ? `2px solid ${mood.color}` : 'none' }}
           >
             <span className="text-xl leading-none">{mood.emoji}</span>
-            <span className="mt-1 text-[10px] font-bold" style={{ color: on ? mood.color : '#64748B' }}>{mood.label}</span>
+            <span className="mt-1 text-[10px] font-bold" style={{ color: on ? mood.color : '#64748B' }}>{locale === 'ko' ? mood.label : EN_MOOD_LABELS[mood.key]}</span>
           </div>
         );
       })}
@@ -129,7 +131,7 @@ export function PetResultCard({ result, sample = false, locale = 'en' }: Props) 
 
       <section className="rounded-[26px] border border-slate-200 bg-white p-5">
         <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Mood</p>
-        <h4 className="mt-1 text-lg font-black text-slate-900">{locale === 'ko' ? '지금 기분은 ' : 'Current mood: '}<span style={{ color: mood.color }}>{result.emotion || mood.label}</span></h4>
+        <h4 className="mt-1 text-lg font-black text-slate-900">{locale === 'ko' ? '지금 기분은 ' : 'Current mood: '}<span style={{ color: mood.color }}>{result.emotion || (locale === 'ko' ? mood.label : EN_MOOD_LABELS[mood.key])}</span></h4>
         <div className="mt-4">
           <MoodMeter active={mood} />
         </div>
