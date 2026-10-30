@@ -1,0 +1,13 @@
+---
+import Page from '../../pages/ai-personal-color.astro';
+import { seoLocaleCodes } from '../../lib/i18n';
+
+// Each locale gets the real interactive tool, rather than the SEO introduction page.
+export function getStaticPaths() {
+  return seoLocaleCodes
+    .filter((locale) => locale !== 'ko' && locale !== 'en' && locale !== 'ja')
+    .map((locale) => ({ params: { locale } }));
+}
+---
+
+<Page />

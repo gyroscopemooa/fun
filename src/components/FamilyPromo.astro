@@ -1,8 +1,19 @@
 ---
 import { familyServices } from '../data/family-services';
+import { detectLocale } from '../lib/i18n';
+
+const locale = detectLocale(Astro.url.pathname);
+const localizedCopy = {
+  ko: { label: '라이브 자막 패밀리', copies: [] },
+  en: { label: 'LIVE SUB FAMILY', copies: ['Real-time captions and translation for broadcasts and meetings', 'Track workouts and routines in one place', 'A platform to introduce apps, products, and services', 'A light community for humor, issues, and the economy', 'Compare quotes from businesses and specialists', 'An easy hiring page for growing companies', 'Verified group buying that connects creators and fans', 'Learn languages with AI through films and dramas'] },
+  es: { label: 'FAMILIA DE SUBTÍTULOS EN VIVO', copies: ['Subtítulos y traducción en tiempo real para emisiones y reuniones', 'Registra entrenamientos y rutinas en un solo lugar', 'Una plataforma para presentar apps, productos y servicios', 'Una comunidad ligera de humor, actualidad y economía', 'Compara presupuestos de empresas y especialistas', 'Una página de empleo sencilla para empresas en crecimiento', 'Compras grupales verificadas que conectan creadores y fans', 'Aprende idiomas con IA a través de películas y series'] },
+  zh: { label: '实时字幕服务', copies: ['为直播和会议提供实时字幕与翻译', '集中记录运动和日常计划', '推广应用、商品和服务的平台', '轻松浏览幽默、热点和经济资讯的社区', '比较企业和专业人士报价', '为成长型企业打造简单的招聘页面', '连接创作者与粉丝的可靠团购', '通过电影和电视剧与 AI 一起学习语言'] },
+  ja: { label: 'ライブ字幕ファミリー', copies: ['配信・会議向けのリアルタイム字幕と翻訳', '運動記録とルーティン管理を一か所で', 'アプリ・商品・サービスを紹介するプラットフォーム', 'ユーモア、話題、経済を気軽に楽しむコミュニティ', '企業や専門家の見積もりを比較', '成長企業向けの簡単な採用ページ', 'クリエイターとファンをつなぐ安心の共同購入', '映画やドラマをAIと楽しみながら学ぶ言語学習'] }
+} as const;
+const copy = localizedCopy[locale as keyof typeof localizedCopy] ?? localizedCopy.en;
 ---
 
-<aside class="family-promo" aria-label="live sub 패밀리 서비스" data-family-promo>
+<aside class="family-promo" aria-label={copy.label} data-family-promo>
   <div class="family-promo__rail">
     {familyServices.map((service, index) => (
       <a
@@ -14,9 +25,9 @@ import { familyServices } from '../data/family-services';
         aria-hidden={index === 0 ? 'false' : 'true'}
         style={`--promo-accent:${service.accent}`}
       >
-        <span class="family-promo__label">LIVE SUB FAMILY · {service.eyebrow}</span>
+        <span class="family-promo__label">{copy.label} · {service.eyebrow}</span>
         <span class="family-promo__name">{service.name}</span>
-        <span class="family-promo__copy">{service.copy}</span>
+        <span class="family-promo__copy">{copy.copies[index] ?? service.copy}</span>
         <span class="family-promo__arrow" aria-hidden="true">↗</span>
       </a>
     ))}

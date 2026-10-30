@@ -16,8 +16,38 @@ import promo2 from '../assets/personal-color/promo-2.png';
 import promo3 from '../assets/personal-color/promo-3.png';
 import promo4 from '../assets/personal-color/promo-4.png';
 import promo5 from '../assets/personal-color/promo-5.png';
+import { detectLocale } from '../lib/i18n';
 
 const apiBase = (import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787').replace(/\/+$/, '');
+const locale = detectLocale(Astro.url.pathname);
+const localizedCopy = {
+  ko: {
+    title: 'AI 퍼스널컬러 자가진단 | 사진 업로드·카메라 촬영 분석 | ManyTool', description: '모바일 카메라 촬영 또는 사진 업로드로 시작하는 AI 퍼스널컬러 자가진단. OpenAI 기반으로 톤 분석, 추천 컬러, 메이크업, 헤어 컬러 가이드를 확인하세요.',
+    badge: '모바일 촬영 지원', heading: 'AI 퍼스널컬러 자가진단', intro: '업로드뿐 아니라 카메라 촬영으로도 바로 시작할 수 있게 만든 유료 분석 페이지입니다. 웜/쿨, 명도, 채도, 대비감을 기준으로 12톤 중 내 톤을 찾고, 가상 드레이핑과 실제 컬러칩 팔레트로 결과를 바로 확인할 수 있습니다.',
+    start: '시작 방식', startValue: '사진 업로드 또는 카메라 촬영', result: '결과 구성', resultValue: '12톤 진단 · 가상 드레이핑 · 컬러칩', delivery: '결과 전달', deliveryValue: '결제 이메일 기준 결과 링크 재확인', step: '사진 준비', stepDesc: '모바일에서는 셀카를 바로 찍고, PC에서는 업로드로 바로 진행할 수 있습니다.', upload: '사진 업로드', camera: '카메라 시작', capture: '촬영', reset: '초기화', empty: '정면 얼굴 사진을 준비해 주세요', analyze: 'AI 퍼스널컬러 분석 시작', ready: '사진을 준비하면 결제 후 바로 분석을 이어서 진행합니다.'
+  },
+  en: {
+    title: 'AI Personal Color Analysis | Photo Upload & Camera Analysis | ManyTool', description: 'Find your personal color with a photo or camera capture. Get AI-powered tone analysis, color recommendations, makeup and hair color guidance.',
+    badge: 'Mobile camera supported', heading: 'AI Personal Color Analysis', intro: 'Start with a photo upload or a camera capture. We assess warmth, brightness, saturation and contrast across 12 tones, then show virtual draping and a practical color-chip palette.',
+    start: 'How to start', startValue: 'Upload a photo or use your camera', result: 'Your report', resultValue: '12-tone result · virtual draping · color chips', delivery: 'Result access', deliveryValue: 'Reopen your result from the purchase email', step: 'Prepare your photo', stepDesc: 'Take a selfie on mobile, or upload a photo from your computer.', upload: 'Upload photo', camera: 'Start camera', capture: 'Take photo', reset: 'Reset', empty: 'Prepare a front-facing photo', analyze: 'Start AI color analysis', ready: 'Prepare a photo to continue to secure checkout and analysis.'
+  },
+  es: {
+    title: 'Análisis de color personal con IA | ManyTool', description: 'Descubre tu color personal con una foto o la cámara. Obtén análisis de tono, colores, maquillaje y cabello con IA.',
+    badge: 'Compatible con cámara móvil', heading: 'Análisis de color personal con IA', intro: 'Empieza subiendo una foto o usando la cámara. Analizamos calidez, luminosidad, saturación y contraste en 12 tonos, con drapeado virtual y una paleta de colores.',
+    start: 'Cómo empezar', startValue: 'Sube una foto o usa la cámara', result: 'Tu informe', resultValue: '12 tonos · drapeado virtual · paleta', delivery: 'Acceso al resultado', deliveryValue: 'Vuelve a abrir el resultado desde el correo de compra', step: 'Prepara tu foto', stepDesc: 'Hazte un selfie en el móvil o sube una foto desde tu ordenador.', upload: 'Subir foto', camera: 'Abrir cámara', capture: 'Tomar foto', reset: 'Restablecer', empty: 'Prepara una foto frontal', analyze: 'Iniciar análisis de color con IA', ready: 'Prepara una foto para continuar al pago y análisis.'
+  },
+  zh: {
+    title: 'AI 个人色彩分析 | ManyTool', description: '通过照片或相机了解您的个人色彩。获取 AI 色调、配色、妆容和发色建议。',
+    badge: '支持手机拍摄', heading: 'AI 个人色彩分析', intro: '上传照片或使用相机即可开始。我们从冷暖、明度、饱和度和对比度分析 12 种色调，并提供虚拟披色和实用色卡。',
+    start: '开始方式', startValue: '上传照片或使用相机', result: '报告内容', resultValue: '12 色调 · 虚拟披色 · 色卡', delivery: '查看结果', deliveryValue: '可通过购买邮件再次打开结果', step: '准备照片', stepDesc: '在手机上拍自拍照，或从电脑上传照片。', upload: '上传照片', camera: '打开相机', capture: '拍照', reset: '重置', empty: '请准备一张正面照片', analyze: '开始 AI 色彩分析', ready: '准备照片后即可继续付款和分析。'
+  },
+  ja: {
+    title: 'AIパーソナルカラー診断 | ManyTool', description: '写真またはカメラでパーソナルカラーを分析。AIによるトーン、カラー、メイク、ヘアカラーの提案を確認できます。',
+    badge: 'モバイルカメラ対応', heading: 'AIパーソナルカラー診断', intro: '写真のアップロードまたはカメラ撮影から始められます。暖色・寒色、明度、彩度、コントラストを12トーンで分析し、バーチャルドレーピングとカラーパレットを確認できます。',
+    start: '開始方法', startValue: '写真をアップロードまたはカメラで撮影', result: 'レポート内容', resultValue: '12トーン · バーチャルドレーピング · カラーチップ', delivery: '結果の確認', deliveryValue: '購入メールから結果を再度開けます', step: '写真を準備', stepDesc: 'スマートフォンでは自撮り、PCでは写真をアップロードしてください。', upload: '写真をアップロード', camera: 'カメラを開始', capture: '撮影', reset: 'リセット', empty: '正面の顔写真を準備してください', analyze: 'AIカラー分析を開始', ready: '写真を準備すると、決済後すぐに分析を始められます。'
+  }
+} as const;
+const copy = localizedCopy[locale as keyof typeof localizedCopy] ?? localizedCopy.en;
 
 // Source files are 1-2.5MB; serve resized webp to the React islands.
 const toWebp = (src: ImageMetadata, width: number) => getImage({ src, width, format: 'webp', quality: 82 }).then((image) => image.src);
@@ -28,30 +58,30 @@ const promoSlides = await Promise.all(
 ---
 
 <Layout
-  title="AI 퍼스널컬러 자가진단 | 사진 업로드·카메라 촬영 분석 | ManyTool"
-  description="모바일 카메라 촬영 또는 사진 업로드로 시작하는 AI 퍼스널컬러 자가진단. OpenAI 기반으로 톤 분석, 추천 컬러, 메이크업, 헤어 컬러 가이드를 확인하세요."
+  title={copy.title}
+  description={copy.description}
   keywords="AI 퍼스널컬러, 퍼스널컬러 자가진단, 카메라 퍼스널컬러, 얼굴 톤 분석, 메이크업 컬러 추천, 퍼스널컬러 추천"
 >
   <Header />
   <main class="mx-auto max-w-6xl px-4 py-8 pb-24 md:pb-8">
     <section class="rounded-3xl border border-rose-200 bg-[radial-gradient(circle_at_top_left,#ffe4e6_0%,#fff7ed_34%,#ffffff_74%)] p-6 shadow-sm">
-      <p class="inline-flex rounded-full bg-white/85 px-3 py-1 text-xs font-semibold text-rose-700">모바일 촬영 지원</p>
-      <h1 class="mt-3 text-3xl font-black tracking-tight text-slate-900">AI 퍼스널컬러 자가진단</h1>
+      <p class="inline-flex rounded-full bg-white/85 px-3 py-1 text-xs font-semibold text-rose-700">{copy.badge}</p>
+      <h1 class="mt-3 text-3xl font-black tracking-tight text-slate-900">{copy.heading}</h1>
       <p class="mt-3 max-w-3xl text-sm leading-6 text-slate-700 sm:text-base">
-        업로드뿐 아니라 카메라 촬영으로도 바로 시작할 수 있게 만든 유료 분석 페이지입니다. 웜/쿨, 명도, 채도, 대비감을 기준으로 12톤 중 내 톤을 찾고, 가상 드레이핑과 실제 컬러칩 팔레트로 결과를 바로 확인할 수 있습니다.
+        {copy.intro}
       </p>
       <div class="mt-5 grid gap-3 sm:grid-cols-3">
         <div class="rounded-2xl border border-white/70 bg-white/85 p-4">
-          <p class="text-sm font-bold text-slate-900">시작 방식</p>
-          <p class="mt-1 text-sm text-slate-600">사진 업로드 또는 카메라 촬영</p>
+          <p class="text-sm font-bold text-slate-900">{copy.start}</p>
+          <p class="mt-1 text-sm text-slate-600">{copy.startValue}</p>
         </div>
         <div class="rounded-2xl border border-white/70 bg-white/85 p-4">
-          <p class="text-sm font-bold text-slate-900">결과 구성</p>
-          <p class="mt-1 text-sm text-slate-600">12톤 진단 · 가상 드레이핑 · 컬러칩</p>
+          <p class="text-sm font-bold text-slate-900">{copy.result}</p>
+          <p class="mt-1 text-sm text-slate-600">{copy.resultValue}</p>
         </div>
         <div class="rounded-2xl border border-white/70 bg-white/85 p-4">
-          <p class="text-sm font-bold text-slate-900">결과 전달</p>
-          <p class="mt-1 text-sm text-slate-600">결제 이메일 기준 결과 링크 재확인</p>
+          <p class="text-sm font-bold text-slate-900">{copy.delivery}</p>
+          <p class="mt-1 text-sm text-slate-600">{copy.deliveryValue}</p>
         </div>
       </div>
     </section>
@@ -67,8 +97,8 @@ const promoSlides = await Promise.all(
       <div class="flex flex-wrap items-end justify-between gap-2">
         <div>
           <p class="text-xs font-bold tracking-[0.16em] text-rose-600">STEP 1</p>
-          <h2 class="mt-1 text-xl font-black text-slate-900">사진 준비</h2>
-          <p class="mt-1 text-sm text-slate-600">모바일에서는 셀카를 바로 찍고, PC에서는 업로드로 바로 진행할 수 있습니다.</p>
+          <h2 class="mt-1 text-xl font-black text-slate-900">{copy.step}</h2>
+          <p class="mt-1 text-sm text-slate-600">{copy.stepDesc}</p>
         </div>
       </div>
 
@@ -78,24 +108,24 @@ const promoSlides = await Promise.all(
           <img id="preview" alt="퍼스널컬러 분석용 미리보기" class="hidden h-80 w-full rounded-xl object-contain" />
           <div id="empty-state" class="flex h-80 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-white text-center text-sm text-slate-500">
             <svg viewBox="0 0 64 64" class="h-14 w-14 text-slate-300" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><ellipse cx="32" cy="28" rx="13" ry="16"/><path d="M12 58c3-11 11-15 20-15s17 4 20 15"/></svg>
-            정면 얼굴 사진을 준비해 주세요
+            {copy.empty}
           </div>
         </div>
 
         <div class="flex flex-col">
           <div class="flex flex-wrap gap-2">
             <label class="inline-flex cursor-pointer items-center justify-center rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white">
-              사진 업로드
+              {copy.upload}
               <input id="file-input" type="file" accept="image/*" class="hidden" />
             </label>
             <button id="camera-start" class="inline-flex items-center justify-center rounded-xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50">
-              카메라 시작
+              {copy.camera}
             </button>
             <button id="camera-capture" class="inline-flex items-center justify-center rounded-xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" disabled>
-              촬영
+              {copy.capture}
             </button>
             <button id="reset-all" class="inline-flex items-center justify-center rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100">
-              초기화
+              {copy.reset}
             </button>
           </div>
 
@@ -112,9 +142,9 @@ const promoSlides = await Promise.all(
           <input id="notes-input" type="text" maxlength="120" placeholder="메모 (선택) 예: 원래 흑발인데 지금은 밝은 갈색 염색" class="mt-3 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none" />
 
           <button id="analyze-button" class="mt-auto w-full rounded-2xl bg-rose-600 px-4 py-4 text-sm font-bold text-white shadow-[0_18px_40px_rgba(225,29,72,0.24)] transition hover:-translate-y-0.5 hover:bg-rose-500 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none max-lg:mt-4" disabled>
-            AI 퍼스널컬러 분석 시작
+            {copy.analyze}
           </button>
-          <p id="status" class="mt-3 text-sm text-slate-600">사진을 준비하면 결제 후 바로 분석을 이어서 진행합니다.</p>
+          <p id="status" class="mt-3 text-sm text-slate-600">{copy.ready}</p>
           <div id="status-box" class="mt-3 hidden rounded-2xl border p-4 text-sm"></div>
         </div>
       </div>
