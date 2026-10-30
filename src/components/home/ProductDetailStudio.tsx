@@ -870,6 +870,16 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
     toast.success(ui.clearSuccess);
   };
 
+  const sellingReasons = locale === 'zh'
+    ? ['让小型卖家也呈现品牌感的首屏结构','简洁说明送礼、自用和改善氛围等购买理由','仅用商品照片也能连接视觉氛围与购买流程','快速整理自然且有说服力的销售文案']
+    : locale === 'ko' ? ['작은 셀러도 브랜드처럼 보이게 하는 첫 화면 구성','선물, 자기만족, 분위기 전환 같은 구매 이유를 짧게 설명','상품 사진만으로도 감성 흐름과 구매 흐름이 함께 이어지게 구성','과하지 않게 설득하는 판매형 상세페이지 카피를 빠르게 정리']
+    : ['A branded opening even for small sellers','Explain gift, self-purchase, and mood benefits clearly','Connect product photos with a natural buying flow','Create persuasive sales copy without exaggeration'];
+  const capabilityCards = locale === 'zh'
+    ? [{ icon: ScanSearch, title:'图片分类', body:'自动区分主图、细节图和使用场景图。' },{ icon: Wand2, title:'生成版块', body:'根据照片和要求组合5至20个版块。' },{ icon: Download, title:'多格式保存', body:'可保存 HTML、PNG、JPG、PDF 和文案。' }]
+    : locale === 'ko' ? [{ icon: ScanSearch, title:'이미지 분류', body:'히어로컷, 디테일컷, 사용컷을 자동으로 나눕니다.' },{ icon: Wand2, title:'섹션 생성', body:'5~20개 섹션을 상품 사진과 요청에 맞춰 구성합니다.' },{ icon: Download, title:'다중 저장', body:'HTML, PNG, JPG, PDF, 복사 텍스트까지 저장합니다.' }]
+    : [{ icon: ScanSearch, title:'Image classification', body:'Automatically separates hero, detail, and usage images.' },{ icon: Wand2, title:'Section generation', body:'Builds 5 to 20 sections from your photos and request.' },{ icon: Download, title:'Multiple exports', body:'Save HTML, PNG, JPG, PDF, and copy text.' }];
+  const quickPrompts = locale === 'zh' ? ['根据商品照片和信息生成电商详情页文案。','按860px移动端详情页组织自然的版块流程。','用简洁而有说服力的销售文案整理内容。'] : starterPrompts;
+
   return (
     <section className="pb-10 pt-8">
       <motion.div
@@ -940,12 +950,7 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
               </div>
               <p className="mt-3 max-w-3xl text-sm leading-6 text-white/76">{ui.sectionBody}</p>
               <div className="mt-4 grid gap-3 md:grid-cols-2">
-                {[
-                  '작은 셀러도 브랜드처럼 보이게 하는 첫 화면 구성',
-                  '선물, 자기만족, 분위기 전환 같은 구매 이유를 짧게 설명',
-                  '상품 사진만으로도 감성 흐름과 구매 흐름이 함께 이어지게 구성',
-                  '과하지 않게 설득하는 판매형 상세페이지 카피를 빠르게 정리'
-                ].map((point) => (
+                {sellingReasons.map((point) => (
                   <div key={point} className="rounded-2xl border border-white/10 bg-black/10 px-4 py-3 text-sm text-white/82">
                     {point}
                   </div>
@@ -954,11 +959,7 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3">
-              {[
-                { icon: ScanSearch, title: '이미지 분류', body: '히어로컷, 디테일컷, 사용컷을 자동으로 나눕니다.' },
-                { icon: Wand2, title: '섹션 생성', body: '5~20개 섹션을 상품 사진과 요청에 맞춰 구성하고, 사진 중심·분할·텍스트형 배치를 조합합니다.' },
-                { icon: Download, title: '다중 저장', body: 'HTML, PNG, JPG, PDF, 복사 텍스트까지 바로 저장합니다.' }
-              ].map((item) => (
+              {capabilityCards.map((item) => (
                 <div key={item.title} className="rounded-[1.6rem] border border-white/10 bg-white/8 p-4 backdrop-blur">
                   <item.icon className="h-5 w-5 text-white" />
                   <h2 className="mt-4 text-sm font-semibold">{item.title}</h2>
@@ -971,7 +972,7 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs uppercase tracking-[0.2em] text-white/45">Prompt Quick Fill</p>
-                  <p className="mt-1 text-sm text-white/74">자주 쓰는 지시문을 바로 넣을 수 있습니다.</p>
+                  <p className="mt-1 text-sm text-white/74">{locale === 'zh' ? '可快速填入常用要求。' : locale === 'ko' ? '자주 쓰는 지시문을 바로 넣을 수 있습니다.' : 'Quickly insert a commonly used request.'}</p>
                 </div>
               </div>
               <div className="mt-4 grid gap-3 md:grid-cols-3">
@@ -987,7 +988,7 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
                 ))}
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
-                {starterPrompts.map((prompt) => (
+                {quickPrompts.map((prompt) => (
                   <button
                     key={prompt}
                     type="button"
@@ -1032,7 +1033,7 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
             <DetailPageThemeSelect value={theme} onChange={setTheme} locale={locale} dark />
             <p className="mt-3 text-xs leading-5 text-white/60">{locale === 'ko' ? '선택한 톤은 하단 미리보기와 내 생성 결과에 적용됩니다. 아래 3종 샘플은 각각의 원래 디자인을 보여줍니다.' : locale === 'ja' ? '選択した配色は下のプレビューと生成結果に反映されます。3つのサンプルは元のデザインを表示します。' : 'Your selection applies to the preview below and your generated page. The three examples retain their original designs.'}</p>
             <p className="mt-3 text-xs leading-5 text-white/60">{locale === 'ko' ? '테마는 색감을 정합니다. 섹션 순서와 사진·텍스트 배치는 상품 사진, 이미지 수, 요청에 맞춰 생성됩니다.' : locale === 'ja' ? 'テーマは配色を選びます。構成と画像・テキストの配置は商品写真とリクエストに合わせて生成されます。' : 'Themes set the colors. Section order and image/text layouts are generated from your photos, image count and requests.'}</p>
-            <ProductDetailSamples locale={locale} />
+            {locale === 'ko' || locale === 'ja' ? <ProductDetailSamples locale={locale} /> : null}
           </div>
         </div>
 
