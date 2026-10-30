@@ -405,7 +405,7 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
     price: ui.sample.price,
     audience: ui.sample.audience,
     sellingPoints: ui.sample.sellingPoints,
-    prompt: starterPrompts[0],
+    prompt: locale === 'ko' ? starterPrompts[0] : locale === 'zh' ? '根据商品照片和信息生成自然、有说服力的电商详情页文案。' : 'Create clear, persuasive ecommerce detail-page copy from the product photos and information.',
     pageCount: 7
   };
   const { register, handleSubmit, reset, setValue, watch } = useForm<ProductDetailFormValues>({
@@ -1215,7 +1215,7 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
               <div className="min-w-0 sm:text-right">
                 <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{ui.estimated}</p>
                 <p className="text-lg font-black text-slate-900">{formatDetailPagePrice(pricingSummary.total_price, pricingSummary.currency)}</p>
-                <p className="text-xs text-slate-400">{formatApproxKrw(pricingSummary.total_price)} · {ui.usdNotice}</p>
+                <p className="text-xs text-slate-400">{locale === 'ko' ? `${formatApproxKrw(pricingSummary.total_price)} · ` : ''}{ui.usdNotice}</p>
               </div>
             </div>
 
