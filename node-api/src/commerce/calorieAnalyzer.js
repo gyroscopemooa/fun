@@ -208,7 +208,7 @@ export const analyzeMealCalories = async ({ imageDataUrl, goal = 'maintain', loc
     throw new Error('A valid image data URL is required');
   }
   const safeGoal = GOALS[goal] ? goal : 'maintain';
-  const language = locale === 'en' ? 'natural English' : 'natural Korean';
+  const language = ({ ko: 'natural Korean', en: 'natural English', es: 'natural Spanish', zh: 'natural Simplified Chinese', ja: 'natural Japanese', de: 'natural German', fr: 'natural French', pt: 'natural Portuguese', vi: 'natural Vietnamese', id: 'natural Indonesian' }[locale] ?? 'natural English');
 
   const completion = await getClient().chat.completions.create({
     model: DEFAULT_MODEL,

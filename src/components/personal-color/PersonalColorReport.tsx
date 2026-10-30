@@ -102,7 +102,9 @@ export const toReport = (analysis: PersonalColorAnalysis) => {
   };
 };
 
-const confidenceLabel: Record<string, string> = { low: '낮음', medium: '보통', high: '높음' };
+const confidenceLabel = (value: string, locale?: PersonalColorLocale) => locale === 'ko'
+  ? ({ low: '낮음', medium: '보통', high: '높음' }[value] ?? value)
+  : ({ low: 'Low', medium: 'Medium', high: 'High' }[value] ?? value);
 
 const gradientOf = (swatches: Swatch[]) => `linear-gradient(135deg, ${swatches.slice(0, 3).map((item) => item.hex).join(', ')})`;
 
@@ -148,7 +150,7 @@ function SwatchTile({ swatch, onCopy, copied, avoid = false, locale }: { swatch:
         </span>
       </div>
       <div className="p-2.5">
-        <p className="text-sm font-bold text-slate-900">{swatch.name}</p>
+        <p className="text-sm font-bold text-slate-900">{locale === 'ko' ? swatch.name : swatch.hex}</p>
         <p className="font-mono text-[11px] text-slate-500">{swatch.hex}</p>
         {swatch.note ? <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-slate-600">{swatch.note}</p> : null}
       </div>
@@ -156,12 +158,12 @@ function SwatchTile({ swatch, onCopy, copied, avoid = false, locale }: { swatch:
   );
 }
 
-function ToneMap({ current, runnerUp }: { current: ToneInfo; runnerUp: ToneInfo | null }) {
+function ToneMap({ current, runnerUp, locale }: { current: ToneInfo; runnerUp: ToneInfo | null; locale?: PersonalColorLocale }) {
   return (
     <div className="grid grid-cols-4 gap-2">
       {SEASONS.map((season) => (
         <div key={season} className="space-y-2">
-          <p className="text-center text-xs font-bold text-slate-500">{season}</p>
+          <p className="text-center text-xs font-bold text-slate-500">{locale === 'ko' ? season : TONES.find((tone) => tone.season === season)?.english.split(' ')[0]}</p>
           {TONES.filter((item) => item.season === season).map((item) => {
             const isCurrent = item.id === current.id;
             const isRunner = item.id === runnerUp?.id;
@@ -173,10 +175,10 @@ function ToneMap({ current, runnerUp }: { current: ToneInfo; runnerUp: ToneInfo 
               >
                 {isCurrent || isRunner ? (
                   <span className={`absolute right-1.5 top-1.5 rounded-full px-1.5 py-0.5 text-[9px] font-black ${isCurrent ? 'bg-slate-900 text-white' : 'bg-white/90 text-slate-700'}`}>
-                    {isCurrent ? 'MY' : '2순위'}
+                    {isCurrent ? 'MY' : locale === 'ko' ? '2순위' : '2ND'}
                   </span>
                 ) : null}
-                <span className="rounded-md bg-white/85 px-1.5 py-0.5 text-center text-[11px] font-bold text-slate-800">{item.sub}</span>
+                <span className="rounded-md bg-white/85 px-1.5 py-0.5 text-center text-[11px] font-bold text-slate-800">{locale === 'ko' ? item.sub : item.english.split(' ').slice(1).join(' ')}</span>
               </div>
             );
           })}
@@ -193,10 +195,16 @@ const axisDefs = [
   { key: 'contrast', label: '대비감', left: '부드러움', right: '강함', gradient: 'linear-gradient(90deg,#E7E5E4,#8B8580,#111827)' }
 ] as const;
 
-function AxisBars({ axes }: { axes: ReportData['axes'] }) {
+function AxisBars({ axes, locale }: { axes: ReportData['axes']; locale?: PersonalColorLocale }) {
+  const labels = locale === 'ko' ? axisDefs : [
+    { ...axisDefs[0], label: 'Temperature', left: 'Cool', right: 'Warm' },
+    { ...axisDefs[1], label: 'Brightness', left: 'Dark', right: 'Light' },
+    { ...axisDefs[2], label: 'Saturation', left: 'Muted', right: 'Clear' },
+    { ...axisDefs[3], label: 'Contrast', left: 'Soft', right: 'Strong' }
+  ];
   return (
     <div className="space-y-4">
-      {axisDefs.map((axis) => (
+      {labels.map((axis) => (
         <div key={axis.key}>
           <div className="flex items-center justify-between text-xs font-semibold text-slate-600">
             <span>{axis.left}</span>
@@ -260,11 +268,11 @@ export function PersonalColorReport({ analysis, photoUrl, comparePhotoUrl, sampl
                 {sample ? t.sample : 'MY PERSONAL COLOR'}
               </span>
               {report.confidence ? (
-                <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700">{t.confidence} {confidenceLabel[report.confidence] ?? report.confidence}</span>
+                <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700">{t.confidence} {confidenceLabel(report.confidence, locale)}</span>
               ) : null}
             </div>
             <p className="mt-4 text-sm font-bold tracking-[0.2em] text-slate-600">{tone.english.toUpperCase()}</p>
-            <h3 className="mt-1 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">{tone.label}</h3>
+            <h3 className="mt-1 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">{locale === 'ko' ? tone.label : tone.english}</h3>
             {report.runnerUp ? (
               <p className="mt-1 text-sm font-semibold text-slate-600">{t.runnerUp} · {report.runnerUp.english}</p>
             ) : null}
@@ -335,7 +343,7 @@ export function PersonalColorReport({ analysis, photoUrl, comparePhotoUrl, sampl
           <p className="text-xs font-bold tracking-[0.16em] text-violet-600">12 TONE MAP</p>
           <h4 className="mt-1 text-lg font-black text-slate-900">{t.toneMap}</h4>
           <div className="mt-4">
-            <ToneMap current={tone} runnerUp={report.runnerUp} />
+            <ToneMap current={tone} runnerUp={report.runnerUp} locale={locale} />
           </div>
         </section>
 
@@ -343,7 +351,7 @@ export function PersonalColorReport({ analysis, photoUrl, comparePhotoUrl, sampl
           <p className="text-xs font-bold tracking-[0.16em] text-amber-600">DIAGNOSIS</p>
           <h4 className="mt-1 text-lg font-black text-slate-900">{t.diagnosis}</h4>
           <div className="mt-4">
-            <AxisBars axes={report.axes} />
+            <AxisBars axes={report.axes} locale={locale} />
           </div>
           <div className="mt-5 grid grid-cols-3 gap-2">
             {([[t.skin, report.features.skin], [t.hair, report.features.hair], [t.eye, report.features.eye]] as const).map(([label, hex]) => (

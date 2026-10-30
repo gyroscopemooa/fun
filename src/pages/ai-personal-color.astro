@@ -48,6 +48,11 @@ const localizedCopy = {
   }
 } as const;
 const copy = localizedCopy[locale as keyof typeof localizedCopy] ?? localizedCopy.en;
+const reportCopy = locale === 'ko' ? { light:'자연광·창가', face:'정면·민낯 권장', filter:'필터·보정 X', tips:['흰 벽 앞, 컬러 조명이 없는 곳에서 찍으면 정확도가 올라가요','모자·마스크·컬러렌즈·강한 색조 메이크업은 피해 주세요','염색모라면 메모에 원래 머리색을 남기면 반영돼요'], report:'내 퍼스널컬러 리포트', sample:'실제 결과 리포트 샘플', sampleDesc:'결제 후 받게 되는 리포트와 같은 화면입니다. 샘플 사진으로 가상 드레이핑과 톤별 차이를 확인해 보세요.', free:'무료 자가진단 보기' }
+  : locale === 'zh' ? { light:'自然光·窗边', face:'正面·建议素颜', filter:'请勿使用滤镜', tips:['白墙和中性光线可提高准确度','请避免帽子、口罩、美瞳和浓妆','染发时请在备注中填写原本发色'], report:'我的个人色彩报告', sample:'实际结果报告示例', sampleDesc:'这是与购买后报告相同的界面。可查看虚拟披色并比较不同色调。', free:'查看免费测试' }
+  : locale === 'ja' ? { light:'自然光・窓際', face:'正面・すっぴん推奨', filter:'フィルターなし', tips:['白い壁と自然な照明で精度が上がります','帽子、マスク、カラーコンタクト、濃いメイクは避けてください','染髪している場合は元の髪色を記入してください'], report:'パーソナルカラーレポート', sample:'実際の結果レポート例', sampleDesc:'購入後と同じレポート画面です。バーチャルドレーピングとトーンを比較できます。', free:'無料診断を見る' }
+  : locale === 'es' ? { light:'Luz natural', face:'De frente y sin maquillaje', filter:'Sin filtros', tips:['Una pared blanca y luz neutra mejoran la precisión','Evita sombreros, mascarillas, lentillas de color y maquillaje intenso','Si llevas el pelo teñido, indica tu color natural'], report:'Mi informe de color personal', sample:'Ejemplo de informe real', sampleDesc:'Esta es la misma pantalla que recibirás tras la compra. Compara el drapeado virtual y los tonos.', free:'Ver análisis gratuito' }
+  : { light:'Natural window light', face:'Front-facing, no makeup', filter:'No filters', tips:['Use a white wall and neutral light for better accuracy','Avoid hats, masks, colored contacts and strong makeup','If your hair is dyed, add your natural color'], report:'My personal color report', sample:'Real report example', sampleDesc:'This is the same report layout you receive after purchase. Compare virtual draping and tones.', free:'Try the free test' };
 
 // Source files are 1-2.5MB; serve resized webp to the React islands.
 const toWebp = (src: ImageMetadata, width: number) => getImage({ src, width, format: 'webp', quality: 82 }).then((image) => image.src);
@@ -130,16 +135,14 @@ const promoSlides = await Promise.all(
           </div>
 
           <div class="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
-            <div class="rounded-2xl bg-emerald-50 p-3 text-emerald-800"><p class="text-lg">☀️</p><p class="mt-1 font-bold">자연광·창가</p></div>
-            <div class="rounded-2xl bg-sky-50 p-3 text-sky-800"><p class="text-lg">🙂</p><p class="mt-1 font-bold">정면·민낯 권장</p></div>
-            <div class="rounded-2xl bg-rose-50 p-3 text-rose-800"><p class="text-lg">🚫</p><p class="mt-1 font-bold">필터·보정 X</p></div>
+            <div class="rounded-2xl bg-emerald-50 p-3 text-emerald-800"><p class="text-lg">☀️</p><p class="mt-1 font-bold">{reportCopy.light}</p></div>
+            <div class="rounded-2xl bg-sky-50 p-3 text-sky-800"><p class="text-lg">🙂</p><p class="mt-1 font-bold">{reportCopy.face}</p></div>
+            <div class="rounded-2xl bg-rose-50 p-3 text-rose-800"><p class="text-lg">🚫</p><p class="mt-1 font-bold">{reportCopy.filter}</p></div>
           </div>
           <ul class="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-600">
-            <li>흰 벽 앞, 컬러 조명이 없는 곳에서 찍으면 정확도가 올라가요</li>
-            <li>모자·마스크·컬러렌즈·강한 색조 메이크업은 피해 주세요</li>
-            <li>염색모라면 메모에 원래 머리색을 남기면 반영돼요</li>
+            {reportCopy.tips.map((tip) => <li>{tip}</li>)}
           </ul>
-          <input id="notes-input" type="text" maxlength="120" placeholder="메모 (선택) 예: 원래 흑발인데 지금은 밝은 갈색 염색" class="mt-3 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none" />
+          <input id="notes-input" type="text" maxlength="120" placeholder={locale === 'ko' ? '메모 (선택) 예: 원래 흑발인데 지금은 밝은 갈색 염색' : 'Optional note about your natural hair color'} class="mt-3 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none" />
 
           <button id="analyze-button" class="mt-auto w-full rounded-2xl bg-rose-600 px-4 py-4 text-sm font-bold text-white shadow-[0_18px_40px_rgba(225,29,72,0.24)] transition hover:-translate-y-0.5 hover:bg-rose-500 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none max-lg:mt-4" disabled>
             {copy.analyze}
@@ -152,7 +155,7 @@ const promoSlides = await Promise.all(
 
     <section id="personal-color-report" class="mt-6 scroll-mt-20">
       <p class="text-xs font-bold tracking-[0.16em] text-rose-600">STEP 2</p>
-      <h2 class="mt-1 text-xl font-black text-slate-900">내 퍼스널컬러 리포트</h2>
+      <h2 class="mt-1 text-xl font-black text-slate-900">{reportCopy.report}</h2>
       <div class="mt-4">
         <PersonalColorResultPanel client:load locale={locale} />
       </div>
@@ -162,13 +165,13 @@ const promoSlides = await Promise.all(
       <div class="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p class="text-xs font-semibold tracking-[0.16em] text-rose-600">SAMPLE REPORT</p>
-          <h2 class="mt-2 text-2xl font-black tracking-tight text-slate-900">실제 결과 리포트 샘플</h2>
+          <h2 class="mt-2 text-2xl font-black tracking-tight text-slate-900">{reportCopy.sample}</h2>
           <p class="mt-2 max-w-3xl text-sm text-slate-600">
-            결제 후 받게 되는 리포트와 똑같은 화면입니다. 샘플 사진으로 가상 드레이핑을 보여주며, 톤을 바꿔 가며 차이를 비교해 보세요.
+            {reportCopy.sampleDesc}
           </p>
         </div>
         <a href="/personal-color" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50">
-          무료 자가진단 보기
+          {reportCopy.free}
         </a>
       </div>
       <div class="mt-5">

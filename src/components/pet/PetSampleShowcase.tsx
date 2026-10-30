@@ -54,14 +54,22 @@ const SAMPLES: { id: string; label: string; result: PetResult }[] = [
   }
 ];
 
-export function PetSampleShowcase() {
+const EN_SAMPLES: typeof SAMPLES = [
+  { id: 'dog-walk', label: '🐶 Let’s go for a walk!', result: { animal: 'dog', text: 'Let’s go now! Where is my leash?', emotion: 'Happy and excited', description: 'Short, high-pitched barks often show eager excitement, especially near walk time.', transcript: 'Woof! Woof woof! (short, high-pitched barks)', durationSeconds: 3 } },
+  { id: 'cat-food', label: '🐱 Feed me', result: { animal: 'cat', text: 'My bowl is empty. Please fill it.', emotion: 'Hungry and mildly annoyed', description: 'A long meow is commonly used to ask a person for something. Check the food and water bowls first.', transcript: 'Meeooow (long meow)', durationSeconds: 2 } },
+  { id: 'dog-alone', label: '🐶 Don’t leave me', result: { animal: 'dog', text: 'Where are you going? You will be back soon, right?', emotion: 'Anxious', description: 'Low whining is common when a dog expects separation. A short play session or treat toy can help.', transcript: 'Whine… whimper… (low whining)', durationSeconds: 4 } },
+  { id: 'cat-love', label: '🐱 Purring', result: { animal: 'cat', text: 'Keep petting me right there. That feels perfect.', emotion: 'Affectionate and relaxed', description: 'Purring with a short meow often means the cat feels safe and content.', transcript: 'Purr… meow (purring)', durationSeconds: 3 } }
+];
+
+export function PetSampleShowcase({ locale = 'en' }: { locale?: string }) {
+  const samples = locale === 'ko' ? SAMPLES : EN_SAMPLES;
   const [active, setActive] = useState(SAMPLES[0].id);
-  const sample = SAMPLES.find((item) => item.id === active) ?? SAMPLES[0];
+  const sample = samples.find((item) => item.id === active) ?? samples[0];
 
   return (
     <div>
       <div className="flex flex-wrap gap-2">
-        {SAMPLES.map((item) => (
+        {samples.map((item) => (
           <button
             key={item.id}
             type="button"
@@ -73,7 +81,7 @@ export function PetSampleShowcase() {
         ))}
       </div>
       <div className="mt-4">
-        <PetResultCard key={sample.id} result={sample.result} sample />
+        <PetResultCard key={sample.id} result={sample.result} sample locale={locale} />
       </div>
     </div>
   );

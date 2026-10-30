@@ -7,9 +7,11 @@ import AdSense from '../components/AdSense.astro';
 import Recommend from '../components/Recommend.astro';
 import CalorieResultPanel from '../components/calorie/CalorieResultPanel';
 import CalorieSampleShowcase from '../components/calorie/CalorieSampleShowcase';
+import { detectLocale } from '../lib/i18n';
 
 const rawApiBase = (import.meta.env.PUBLIC_NODE_API_BASE ?? '').trim();
 const apiBase = rawApiBase.replace(/\/+$/, '');
+const locale = detectLocale(Astro.url.pathname);
 ---
 
 <Layout
@@ -96,14 +98,13 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       </div>
     </section>
 
-    <script is:inline define:vars={{ apiBase }}>
+    <script is:inline define:vars={{ apiBase, locale }}>
       const API_BASE = apiBase;
       const CALORIE_DRAFT_STORAGE_KEY = 'manytool.calorieDraft.v1';
       const CALORIE_ORDER_STORAGE_KEY = 'manytool.calorieOrder.v1';
       const CALORIE_PRICE_CENTS = 99;
       const CALORIE_CURRENCY = 'USD';
-      // The report UI is Korean on every locale (/en reuses this page), so ask the AI for Korean text too.
-      const pageLocale = 'ko';
+      const pageLocale = locale;
 
       const fileInput = document.getElementById('calorie-image-input');
       const preview = document.getElementById('calorie-preview');

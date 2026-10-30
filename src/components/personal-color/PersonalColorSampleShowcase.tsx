@@ -96,13 +96,37 @@ const SAMPLES: { id: string; label: string; analysis: PersonalColorAnalysis }[] 
 type ShowcaseProps = { leftPhotoUrl?: string; rightPhotoUrl?: string; locale?: PersonalColorLocale };
 
 export function PersonalColorSampleShowcase({ leftPhotoUrl, rightPhotoUrl, locale = 'en' }: ShowcaseProps) {
-  const [active, setActive] = useState(SAMPLES[0].id);
-  const sample = SAMPLES.find((item) => item.id === active) ?? SAMPLES[0];
+  const localizedSamples = locale === 'ko' ? SAMPLES : SAMPLES.map((item) => {
+    const tone = TONE_MAP[item.analysis.toneId as ToneId];
+    return {
+      ...item,
+      label: tone.english,
+      analysis: {
+        ...item.analysis,
+        season: tone.english.split(' ')[0],
+        secondaryTone: tone.english,
+        summary: `This sample has the clearest harmony with ${tone.english} colors. The report compares temperature, brightness, saturation and contrast to explain the result.`,
+        undertone: item.id === 'spring-bright' ? 'Warm undertone' : 'Cool undertone',
+        chroma: item.id === 'summer-mute' ? 'Muted chroma' : 'Clear chroma',
+        contrast: item.id === 'summer-mute' ? 'Low contrast' : 'High contrast',
+        signatureKeywords: [tone.english, 'balanced palette', 'personal color'],
+        bestPalette: tone.best.map((color, index) => ({ name: `Best color ${index + 1}`, hex: color.hex })),
+        avoidPalette: tone.avoid.map((color, index) => ({ name: `Avoid color ${index + 1}`, hex: color.hex })),
+        photoCheck: { score: item.analysis.photoCheck?.score, lighting: 'Even natural-looking light', issues: [] },
+        makeup: { base: 'A base matched to the undertone', lip: 'A lip color from the recommended palette', blush: 'A soft matching blush', eye: 'Balanced neutral eye color' },
+        hair: { best: 'A hair color matched to the result', avoid: 'Strong opposing undertones' },
+        stylingTips: ['Use the recommended palette near the face', 'Balance neutrals with one signature color'],
+        cautions: ['Lighting and display settings can affect perceived color']
+      }
+    };
+  });
+  const [active, setActive] = useState(localizedSamples[0].id);
+  const sample = localizedSamples.find((item) => item.id === active) ?? localizedSamples[0];
 
   return (
     <div>
       <div className="flex flex-wrap gap-2">
-        {SAMPLES.map((item) => {
+        {localizedSamples.map((item) => {
           const tone = TONE_MAP[item.analysis.toneId as ToneId];
           const isActive = item.id === active;
           return (

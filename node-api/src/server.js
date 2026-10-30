@@ -2205,7 +2205,7 @@ app.post('/ai-calorie-calculator/analyze', upload.single('image'), async (req, r
 
     const imageDataUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
     const goal = typeof req.body?.goal === 'string' ? req.body.goal.trim() : 'maintain';
-    const locale = req.body?.locale === 'en' ? 'en' : 'ko';
+    const locale = typeof req.body?.locale === 'string' ? req.body.locale.trim().toLowerCase().slice(0, 2) : 'en';
     const analysis = await analyzeMealCalories({ imageDataUrl, goal, locale });
 
     // A photo with no food gives the buyer nothing, so the order stays usable for a retake.
