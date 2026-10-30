@@ -23,6 +23,16 @@ export function getStaticPaths() {
 const { locale } = Astro.props;
 const copy = locales[locale as keyof typeof locales] ?? locales.en;
 const styleLinks = ['figure', 'body-profile', 'travel-background', 'snapshot', 'kakao-profile', 'instagram-photo', 'outfit-change', 'hairstyle', 'interior', 'free-style'];
+const styleLabelSets: Record<string, string[]> = {
+  zh: ['AI 手办','AI 健身写真','AI 旅行背景','AI 随拍','AI 聊天头像','AI 社交照片','AI 换装','AI 发型','AI 室内设计','AI 自由风格'],
+  es: ['Figura IA','Foto fitness IA','Fondo de viaje IA','Foto casual IA','Perfil social IA','Foto para Instagram IA','Cambio de ropa IA','Peinado IA','Interior IA','Estilo libre IA'],
+  de: ['KI-Figur','KI-Fitnessfoto','KI-Reisehintergrund','KI-Schnappschuss','KI-Profilbild','KI-Instagram-Foto','KI-Outfitwechsel','KI-Frisur','KI-Innenraum','Freier KI-Stil'],
+  fr: ['Figurine IA','Photo fitness IA','Arrière-plan voyage IA','Instantané IA','Profil social IA','Photo Instagram IA','Changement de tenue IA','Coiffure IA','Intérieur IA','Style libre IA'],
+  pt: ['Figura IA','Foto fitness IA','Fundo de viagem IA','Foto casual IA','Perfil social IA','Foto para Instagram IA','Troca de roupa IA','Penteado IA','Interior IA','Estilo livre IA'],
+  vi: ['Mô hình AI','Ảnh thể hình AI','Nền du lịch AI','Ảnh tự nhiên AI','Ảnh đại diện AI','Ảnh Instagram AI','Đổi trang phục AI','Kiểu tóc AI','Nội thất AI','Phong cách tự do AI'],
+  id: ['Figur AI','Foto kebugaran AI','Latar perjalanan AI','Foto spontan AI','Profil sosial AI','Foto Instagram AI','Ganti pakaian AI','Gaya rambut AI','Interior AI','Gaya bebas AI']
+};
+const styleLabels = styleLabelSets[locale] ?? styleLinks.map((style) => `AI ${style.replaceAll('-', ' ')}`);
 ---
 
 <Layout title={copy.title} description={copy.description} keywords={`${copy.title}, AI image generator, ManyTool`}>
@@ -33,7 +43,7 @@ const styleLinks = ['figure', 'body-profile', 'travel-background', 'snapshot', '
         <h1 class="text-2xl font-black tracking-tight text-slate-900">{copy.heading}</h1>
         <p class="mt-2 text-sm leading-6 text-slate-600">{copy.body}</p>
         <div class="mt-5 flex flex-wrap gap-3">
-          {styleLinks.map((style) => <a href={`/${locale}/ai-image-generator/${style}`} class="rounded-full border border-slate-300 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-900 hover:bg-white">AI {style.replaceAll('-', ' ')}</a>)}
+          {styleLinks.map((style, index) => <a href={`/${locale}/ai-image-generator/${style}`} class="rounded-full border border-slate-300 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-900 hover:bg-white">{styleLabels[index]}</a>)}
         </div>
       </div>
     </section>

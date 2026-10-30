@@ -79,7 +79,7 @@ export function PetAvatar({ animal, mood, size = 88 }: { animal: PetAnimal; mood
   );
 }
 
-function MoodMeter({ active }: { active: Mood }) {
+function MoodMeter({ active, locale }: { active: Mood; locale?: PetLocale }) {
   return (
     <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-8">
       {MOODS.map((mood) => {
@@ -133,7 +133,7 @@ export function PetResultCard({ result, sample = false, locale = 'en' }: Props) 
         <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Mood</p>
         <h4 className="mt-1 text-lg font-black text-slate-900">{locale === 'ko' ? '지금 기분은 ' : 'Current mood: '}<span style={{ color: mood.color }}>{result.emotion || (locale === 'ko' ? mood.label : EN_MOOD_LABELS[mood.key])}</span></h4>
         <div className="mt-4">
-          <MoodMeter active={mood} />
+          <MoodMeter active={mood} locale={locale} />
         </div>
       </section>
 

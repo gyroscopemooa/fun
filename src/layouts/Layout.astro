@@ -255,6 +255,21 @@ const sidebarText = {
   ]
 };
 
+const sidebarLabels: Record<string, string[]> = {
+  zh: ['首页','AI 图像生成器','AI 商品模特生成','AI 个人色彩分析','AI 四柱分析','AI 高级姓名分析','AI 宠物翻译器','AI 热量计算器','AI 证件照','AI 商品详情页工作室'],
+  es: ['Inicio','Generador de imágenes IA','Crear modelo IA de producto','Análisis de color personal IA','Análisis de saju IA','Análisis premium de nombres','Traductor de mascotas IA','Calculadora de calorías IA','Foto de identificación IA','Estudio de páginas de producto IA'],
+  ja: ['ホーム','AI画像生成','商品からAIモデルを作成','AIパーソナルカラー診断','AI四柱推命精密分析','AIプレミアム名前分析','AIペット翻訳','AIカロリー計算','AI証明写真','AI商品詳細ページ生成'],
+  de: ['Startseite','KI-Bildgenerator','KI-Produktmodell erstellen','KI-Farbanalyse','KI-Saju-Analyse','Premium-Namensanalyse','KI-Haustierübersetzer','KI-Kalorienrechner','KI-Ausweisfoto','KI-Produktseitenstudio'],
+  fr: ['Accueil','Générateur d’images IA','Créer un modèle produit IA','Analyse colorimétrique IA','Analyse saju IA','Analyse premium de prénom','Traducteur d’animaux IA','Calculateur de calories IA','Photo d’identité IA','Studio de page produit IA'],
+  pt: ['Início','Gerador de imagens IA','Criar modelo de produto IA','Análise de coloração pessoal IA','Análise de saju IA','Análise premium de nomes','Tradutor de animais IA','Calculadora de calorias IA','Foto de documento IA','Estúdio de página de produto IA'],
+  vi: ['Trang chủ','Tạo ảnh AI','Tạo người mẫu sản phẩm AI','Phân tích màu cá nhân AI','Phân tích saju AI','Phân tích tên cao cấp','Dịch ngôn ngữ thú cưng AI','Tính calo AI','Ảnh thẻ AI','Studio trang sản phẩm AI'],
+  id: ['Beranda','Pembuat gambar AI','Buat model produk AI','Analisis warna pribadi AI','Analisis saju AI','Analisis nama premium','Penerjemah hewan AI','Kalkulator kalori AI','Foto identitas AI','Studio halaman produk AI']
+};
+if (locale !== 'ko') {
+  const labels = sidebarLabels[locale] ?? ['Home','AI Image Generator','Create an AI Product Model','AI Personal Color Analysis','AI Saju Analysis','AI Premium Name Analysis','AI Pet Translator','AI Calorie Calculator','AI ID Photo','AI Product Page Studio'];
+  sidebarText.links.forEach((link, index) => { if (labels[index]) link.label = labels[index]; });
+}
+
 // 증명사진 계열은 운영에서 비활성(준비 중). 로컬 개발 서버에서는 열어서 바로 확인할 수 있게 함
 if (import.meta.env.DEV) {
   sidebarText.links.push(
@@ -273,7 +288,7 @@ if (import.meta.env.DEV) {
 const disabledSidebarPaths = new Set(import.meta.env.DEV ? [] : ['/ai-id-photo', '/ai-passport-photo', '/ai-headshot']);
 // 기부하기: 운영에서는 PG 심사 전까지 숨기고, 로컬 개발 서버나 PUBLIC_SHOW_DONATE=true 일 때만 표시
 const showDonate = import.meta.env.DEV || import.meta.env.PUBLIC_SHOW_DONATE === 'true';
-const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.replace(/^\/(en|ja)(?=\/|$)/, '') || '/'));
+const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.replace(/^\/[a-z]{2}(?=\/|$)/, '') || '/'));
 ---
 
 <!doctype html>

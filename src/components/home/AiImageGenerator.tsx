@@ -535,8 +535,12 @@ const localizedModeContent = (locale: Locale): Record<Mode, ModeContent> => {
   const base = EN_MODE_CONTENT;
   if (locale === 'ko' || locale === 'en') return locale === 'ko' ? MODE_CONTENT : base;
   const ui = LOCALIZED_UI[locale as keyof typeof LOCALIZED_UI] ?? LOCALIZED_UI.en;
+  const zhLabels: Partial<Record<Mode, string>> = { figure:'手办', body:'健身写真', travel:'旅行背景', europe:'欧洲风格', proofshot:'随拍', kakao:'聊天头像', instagram:'社交照片', hanbok:'韩服风格', kimono:'和服风格', outfit:'换装', streamer:'主播宣传', pethuman:'宠物拟人', hairstyle:'发型模拟', interior:'室内设计', animation:'动画风格', modelcut:'商品模特', free:'自由风格' };
   return Object.fromEntries(Object.entries(base).map(([mode, content]) => [mode, {
     ...content,
+    tabLabel: locale === 'zh' ? (zhLabels[mode as Mode] ?? content.tabLabel) : content.tabLabel,
+    title: locale === 'zh' ? `AI ${zhLabels[mode as Mode] ?? content.tabLabel}生成器` : content.title,
+    exampleTitle: locale === 'zh' ? `${zhLabels[mode as Mode] ?? content.tabLabel}示例` : content.exampleTitle,
     buttonLabel: content.buttonLabel.replace(/^Generate(?: custom style)?/, ui.generate),
     inputLabel: content.inputLabel === 'Custom prompt' ? ui.prompt : ui.prompt,
   }])) as Record<Mode, ModeContent>;
@@ -715,6 +719,8 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
   const uiLabels = locale === 'ko' ? { mode: '모드', moreExamples: '스타일별 샘플 갤러리' } : locale === 'en' ? EN_LABELS : (LOCALIZED_UI[locale as keyof typeof LOCALIZED_UI] ?? EN_LABELS);
   const generatorCopy = ({
     en: { upload: 'Upload image', uploadHint: 'Drag or click to choose an image.', uploadPrompt: 'Upload an image', change: 'Change image', ready: 'Your final image is ready.', saveHint: 'Save the high-resolution original and share it on your profile or social media.', save: 'Save', share: 'Share' },
+    zh: { upload: '上传图片', uploadHint: '拖放或点击选择图片。', uploadPrompt: '上传一张图片', change: '更换图片', ready: '最终图片已生成。', saveHint: '保存高清原图并分享到社交平台。', save: '保存', share: '分享' },
+    es: { upload: 'Subir imagen', uploadHint: 'Arrastra o haz clic para elegir una imagen.', uploadPrompt: 'Sube una imagen', change: 'Cambiar imagen', ready: 'Tu imagen final está lista.', saveHint: 'Guarda el original en alta resolución y compártelo.', save: 'Guardar', share: 'Compartir' },
     it: { upload: 'Carica immagine', uploadHint: 'Trascina o fai clic per scegliere un’immagine.', uploadPrompt: 'Carica un’immagine', change: 'Cambia immagine', ready: 'La tua immagine finale è pronta.', saveHint: 'Salva l’originale ad alta risoluzione e condividilo sui social.', save: 'Salva', share: 'Condividi' },
     nl: { upload: 'Afbeelding uploaden', uploadHint: 'Sleep of klik om een afbeelding te kiezen.', uploadPrompt: 'Upload een afbeelding', change: 'Afbeelding wijzigen', ready: 'Je eindafbeelding is klaar.', saveHint: 'Sla het origineel in hoge resolutie op en deel het op sociale media.', save: 'Opslaan', share: 'Delen' },
     ru: { upload: 'Загрузить изображение', uploadHint: 'Перетащите файл или нажмите, чтобы выбрать изображение.', uploadPrompt: 'Загрузите изображение', change: 'Изменить изображение', ready: 'Итоговое изображение готово.', saveHint: 'Сохраните оригинал в высоком качестве и поделитесь им.', save: 'Сохранить', share: 'Поделиться' },
@@ -725,7 +731,11 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
     th: { upload: 'อัปโหลดรูปภาพ', uploadHint: 'ลากหรือคลิกเพื่อเลือกรูปภาพ', uploadPrompt: 'อัปโหลดรูปภาพ', change: 'เปลี่ยนรูปภาพ', ready: 'รูปภาพสุดท้ายพร้อมแล้ว', saveHint: 'บันทึกต้นฉบับความละเอียดสูงและแชร์บนโซเชียล', save: 'บันทึก', share: 'แชร์' },
     sv: { upload: 'Ladda upp bild', uploadHint: 'Dra eller klicka för att välja en bild.', uploadPrompt: 'Ladda upp en bild', change: 'Byt bild', ready: 'Din färdiga bild är klar.', saveHint: 'Spara originalet i hög upplösning och dela det.', save: 'Spara', share: 'Dela' },
     uk: { upload: 'Завантажити зображення', uploadHint: 'Перетягніть або натисніть, щоб вибрати зображення.', uploadPrompt: 'Завантажте зображення', change: 'Змінити зображення', ready: 'Підсумкове зображення готове.', saveHint: 'Збережіть оригінал у високій якості та поділіться ним.', save: 'Зберегти', share: 'Поділитися' }
-  } as const)[locale as 'en' | 'it' | 'nl' | 'ru' | 'ar' | 'hi' | 'tr' | 'pl' | 'th' | 'sv' | 'uk'] ?? { upload: 'Upload image', uploadHint: 'Drag and drop or click to choose an image.', uploadPrompt: 'Upload an image', change: 'Change image', ready: 'Your final result image is ready.', saveHint: 'Save the high-resolution original and share it to your profile or social media.', save: 'Save', share: 'Share' };
+  } as const)[locale as 'en' | 'zh' | 'es' | 'it' | 'nl' | 'ru' | 'ar' | 'hi' | 'tr' | 'pl' | 'th' | 'sv' | 'uk'] ?? { upload: 'Upload image', uploadHint: 'Drag and drop or click to choose an image.', uploadPrompt: 'Upload an image', change: 'Change image', ready: 'Your final result image is ready.', saveHint: 'Save the high-resolution original and share it to your profile or social media.', save: 'Save', share: 'Share' };
+  const screenCopy = locale === 'ko' ? { changeHint:'다른 이미지를 선택하려면 클릭하거나 파일을 다시 드래그하세요.', faceHint:'얼굴이 잘 보이는 사진일수록 결과가 안정적입니다. 먼저 얼굴 품질을 보정하고 이후 최종 스타일을 적용합니다.', productHint:'옷 전체가 잘 보이는 사진을 올려주세요. 색상·패턴·로고를 살려 AI 모델에게 입혀 드립니다.', clickUpload:'클릭해서 업로드', optional:'선택 사항입니다. 짧은 추가 디테일만 입력하세요.', required:'원하는 스타일을 짧게 설명해 주세요.', preview:'예시 미리보기', how:'작동 방식', steps:['사진 업로드','얼굴 보정','스타일 완성'], howDesc:'얼굴 디테일을 먼저 보정한 뒤 최종 스타일을 적용합니다.' }
+    : locale === 'zh' ? { changeHint:'点击或再次拖放文件可更换图片。', faceHint:'面部清晰的照片效果更稳定。系统会先优化面部细节，再应用最终风格。', productHint:'请上传能看清整件商品的照片。系统会保留颜色、图案和标志并应用到 AI 模特。', clickUpload:'点击上传', optional:'可选。仅添加简短的细节说明。', required:'请简短描述想要的风格。', preview:'示例预览', how:'使用方法', steps:['上传照片','优化面部','完成风格'], howDesc:'先优化面部细节，再应用最终风格。' }
+    : locale === 'es' ? { changeHint:'Haz clic o arrastra otro archivo para cambiar la imagen.', faceHint:'Las fotos con el rostro visible ofrecen resultados más estables.', productHint:'Sube una foto donde se vea la prenda completa.', clickUpload:'Haz clic para subir', optional:'Opcional. Añade solo detalles breves.', required:'Describe brevemente el estilo que deseas.', preview:'Vista previa', how:'Cómo funciona', steps:['Subir foto','Mejorar rostro','Aplicar estilo'], howDesc:'Primero mejoramos el rostro y después aplicamos el estilo final.' }
+    : { changeHint:'Click or drag another file to change the image.', faceHint:'A clear, front-facing photo produces the most stable result. We refine facial detail before applying the final style.', productHint:'Upload a photo that clearly shows the whole product.', clickUpload:'Click to upload', optional:'Optional. Add only a short extra detail.', required:'Briefly describe the style you want.', preview:'Example preview', how:'How it works', steps:['Upload photo','Refine face','Finish style'], howDesc:'We refine facial detail first, then apply the final style.' };
   const statusCopy = ({
     en: { generating: 'Generating', done: 'Generation complete', failed: 'Generation failed' }, it: { generating: 'Generazione in corso', done: 'Generazione completata', failed: 'Generazione non riuscita' }, nl: { generating: 'Bezig met genereren', done: 'Generatie voltooid', failed: 'Generatie mislukt' }, ru: { generating: 'Создание', done: 'Создание завершено', failed: 'Не удалось создать' }, ar: { generating: 'جارٍ الإنشاء', done: 'اكتمل الإنشاء', failed: 'فشل الإنشاء' }, hi: { generating: 'बनाया जा रहा है', done: 'जनरेशन पूरा हुआ', failed: 'जनरेशन विफल' }, tr: { generating: 'Oluşturuluyor', done: 'Oluşturma tamamlandı', failed: 'Oluşturma başarısız' }, pl: { generating: 'Generowanie', done: 'Generowanie ukończone', failed: 'Generowanie nie powiodło się' }, th: { generating: 'กำลังสร้าง', done: 'สร้างเสร็จแล้ว', failed: 'สร้างไม่สำเร็จ' }, sv: { generating: 'Skapar', done: 'Skapandet är klart', failed: 'Det gick inte att skapa' }, uk: { generating: 'Створення', done: 'Створення завершено', failed: 'Не вдалося створити' }
   } as const)[locale as 'en' | 'it' | 'nl' | 'ru' | 'ar' | 'hi' | 'tr' | 'pl' | 'th' | 'sv' | 'uk'] ?? { generating: 'Generating', done: 'Generation complete', failed: 'Generation failed' };
@@ -1290,7 +1300,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
                   <div className="flex min-w-0 w-full flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 sm:flex-row sm:justify-between">
                     <div className="min-w-0 w-full text-center sm:text-left">
                       <p className="truncate text-sm font-semibold text-slate-900">{uploadedImage?.name}</p>
-                      <p className="text-xs text-slate-500">다른 이미지를 선택하려면 클릭하거나 파일을 다시 드래그하세요.</p>
+                      <p className="text-xs text-slate-500">{screenCopy.changeHint}</p>
                     </div>
                     <button
                       type="button"
@@ -1312,8 +1322,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
                   <h3 className="text-xl font-bold text-slate-950">{generatorCopy.uploadPrompt}</h3>
                   <p className="mt-3 max-w-md text-sm leading-6 text-slate-500">
                     {mode === 'modelcut'
-                      ? '옷 전체가 잘 보이는 바닥컷·행거컷·마네킹컷을 올려주세요. 색상·패턴·로고를 그대로 살려 AI 모델에게 입혀 드립니다.'
-                      : '얼굴이 잘 보이는 사진일수록 결과가 안정적입니다. 먼저 얼굴 품질을 보정하고 이후 최종 스타일을 적용합니다.'}
+                      ? screenCopy.productHint : screenCopy.faceHint}
                   </p>
                   <button
                     type="button"
@@ -1323,7 +1332,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
                     }}
                     className="mt-6 inline-flex items-center rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-800 shadow-sm transition hover:scale-[1.02] hover:border-slate-300 hover:bg-slate-50"
                   >
-                    클릭해서 업로드
+                    {screenCopy.clickUpload}
                   </button>
                 </>
               )}
@@ -1350,8 +1359,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
               />
               <p className="mt-2 text-xs leading-5 text-slate-500">
                 {activeContent.inputRequired
-                  ? '자유형 모드는 짧은 스타일 설명이 필요합니다. 얼굴은 유지하고 설명만 추가로 반영합니다.'
-                  : '선택 사항입니다. 기본 엔진 설정은 유지하고, 짧은 추가 디테일만 더합니다.'}
+                  ? screenCopy.required : screenCopy.optional}
               </p>
               {!activeContent.inputRequired ? (
                 <p className="mt-1 text-[11px] leading-5 text-amber-700">
@@ -1363,7 +1371,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
 
           <aside className="min-w-0 overflow-hidden rounded-[32px] border border-slate-200/80 bg-white p-4 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-6 lg:p-7">
             <div className="mb-5">
-              <h2 className="text-2xl font-black tracking-tight text-slate-950">예시 미리보기</h2>
+              <h2 className="text-2xl font-black tracking-tight text-slate-950">{screenCopy.preview}</h2>
             </div>
 
             <div className="overflow-hidden rounded-[28px] bg-gradient-to-br from-rose-100 via-white to-orange-50 p-3">
@@ -1405,9 +1413,9 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
 
             <div className="mt-5 space-y-3">
               <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">How it works</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">{screenCopy.how}</p>
                 <ol className="mt-3 grid grid-cols-3 gap-2 text-center">
-                  {[['📷', '사진 업로드'], ['🪄', '얼굴 보정'], ['🖼️', '스타일 완성']].map(([icon, label], index) => (
+                  {[['📷', screenCopy.steps[0]], ['🪄', screenCopy.steps[1]], ['🖼️', screenCopy.steps[2]]].map(([icon, label], index) => (
                     <li key={label} className="rounded-2xl bg-white px-2 py-3 shadow-sm">
                       <span className="block text-xl">{icon}</span>
                       <span className="mt-1 block text-[11px] font-bold text-slate-700">{index + 1}. {label}</span>
@@ -1415,7 +1423,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
                   ))}
                 </ol>
                 <p className="mt-3 text-sm leading-6 text-slate-600">
-                  얼굴 디테일을 먼저 보정한 뒤 최종 스타일을 입혀요. 마지막 단계가 실패하면 자동으로 한 번 더 시도해요.
+                  {screenCopy.howDesc}
                 </p>
               </div>
               <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">

@@ -2,9 +2,17 @@
 import Layout from '../layouts/Layout.astro';
 import AdsterraBanner from '../components/ads/AdsterraBanner.astro';
 import ManseryeokShareCard from '../components/manseryeok/ManseryeokShareCard';
+import { detectLocale } from '../lib/i18n';
 
 const rawApiBase = (import.meta.env.PUBLIC_NODE_API_BASE ?? '').trim();
 const apiBase = rawApiBase.replace(/\/+$/, '');
+const locale = detectLocale(Astro.url.pathname);
+const s = locale === 'zh' ? {
+  home:'首页', premium:'高级服务', about:'介绍', details:'详细目录', input:'输入信息', base:'基础运势', love:'恋爱', marriage:'婚姻', money:'财富', business:'事业', career:'职业', study:'学业', health:'健康', social:'人际关系', benefactor:'贵人', periods:'今日至全年', later:'中晚年', recommend:'建议', graph:'人生曲线', master:'AI 命理师详情', start:'开始详细分析', mode:'报告模式', modeDesc:'结合 AI 性格分析与数据型生活洞察的自我理解报告。', eyebrow:'记录解读 · KOREAN SAJU PALJA · NO. 2026', title:'AI 四柱命理', titleAccent:'一站式综合报告', intro:'根据出生日期和时间计算四柱结构，并在一份高级报告中整理今天、本周、本月、上半年、下半年和全年的趋势。它是帮助自我理解的生活洞察工具，并非未来预言。', f1:'AI 性格分析', f1d:'根据四柱结构和五行分布整理性格、判断方式和生活节奏。', f2:'数据型生活洞察', f2d:'按时期展示财富、关系和日常节奏的变化与评分。', f3:'数据型自我理解报告', f3d:'相同输入保持一致结构，并区分时间信息对可信度的影响。', contents:'报告包含内容', c1:'四柱与五行分布', c1d:'年、月、日、时四柱与五行平衡评分', c2:'九项基础运势', c2d:'恋爱、婚姻、财富、事业、职业、学业、健康、人际、贵人', c3:'阶段趋势', c3d:'今天、本周、本月、上半年、下半年、全年', c4:'中晚年与人生曲线', c4d:'AI 命理师提供时机、方向和幸运物建议', sample:'预览示例报告', sampleDesc:'使用虚拟人物制作的真实结果界面，无需付款即可查看。'
+} : {
+  home:'Home', premium:'Premium services', about:'About', details:'Report sections', input:'Input', base:'Base reading', love:'Love', marriage:'Marriage', money:'Money', business:'Business', career:'Career', study:'Study', health:'Health', social:'Relationships', benefactor:'Benefactors', periods:'Today to year', later:'Later life', recommend:'Recommendations', graph:'Life graph', master:'AI master details', start:'Start detailed analysis', mode:'Report mode', modeDesc:'A self-understanding report combining AI personality analysis with data-based life insights.', eyebrow:'RECORD READING · KOREAN SAJU PALJA · NO. 2026', title:'AI Korean Saju', titleAccent:'All-in-one report', intro:'Calculate a Korean birth-chart structure from your birth date and time, then review today, this week, this month, each half-year and the year in one report. It is a self-understanding tool, not a prediction of the future.', f1:'AI personality analysis', f1d:'Summarizes tendencies, decision patterns and daily rhythm from the chart and five elements.', f2:'Data-based life insights', f2d:'Shows changes in money, relationships and daily rhythm by period.', f3:'Self-understanding report', f3d:'Keeps a consistent structure for the same input and shows how time data affects confidence.', contents:'What the report includes', c1:'Four pillars and five elements', c1d:'Year, month, day and hour pillars with balance scores', c2:'Nine base readings', c2d:'Love, marriage, money, business, career, study, health, relationships and benefactors', c3:'Period trends', c3d:'Today, this week, this month, half-years and the year', c4:'Later life and life graph', c4d:'Timing, direction and lucky-item guidance from the AI master', sample:'Preview sample report', sampleDesc:'A real result screen made with a fictional profile. No payment required.'
+};
+const nav = [s.input,s.base,s.love,s.marriage,s.money,s.business,s.career,s.study,s.health,s.social,s.benefactor,s.periods,s.later,s.recommend,s.graph,s.master];
 ---
 
 <Layout
@@ -91,9 +99,9 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       <div class="mx-auto flex max-w-[1440px] items-center justify-between px-4 py-4 sm:px-6">
         <a href="/" class="ledger-serif text-lg font-black tracking-tight text-[#e9c349] sm:text-2xl">MANYTOOL.NET</a>
         <div class="hidden items-center gap-8 text-sm font-semibold text-white/60 md:flex">
-          <a href="/" class="transition hover:text-white">홈으로</a>
-          <a href="/tools" class="transition hover:text-white">프리미엄 서비스</a>
-          <a href="/what-is-manytool" class="transition hover:text-white">소개</a>
+          <a href="/" class="transition hover:text-white">{s.home}</a>
+          <a href="/tools" class="transition hover:text-white">{s.premium}</a>
+          <a href="/what-is-manytool" class="transition hover:text-white">{s.about}</a>
         </div>
         <div class="flex items-center gap-3 text-[#e9c349]">
           <a href="/en/ai-manseryeok" class="rounded-full p-2 transition hover:bg-[#e9c349]/10" aria-label="English version">🌐</a>
@@ -106,32 +114,17 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       <aside class="hidden min-h-[calc(100vh-73px)] border-r border-white/8 px-5 py-8 2xl:block">
         <div class="space-y-8 sticky top-[88px]">
           <div>
-            <p class="ledger-label text-[11px] uppercase tracking-[0.24em] text-[#e9c349]">상세 내역</p>
+            <p class="ledger-label text-[11px] uppercase tracking-[0.24em] text-[#e9c349]">{s.details}</p>
             <div class="mt-4 h-px w-full ledger-gold-line"></div>
           </div>
           <nav class="space-y-2 text-sm text-white/55">
-            <a href="#saju-form-section" class="flex items-center justify-between ledger-subpanel px-4 py-3 text-white"><span>입력 정보</span><span class="text-[#e9c349]">01</span></a>
-            <a href="#base-overview" class="flex items-center justify-between px-4 py-3 transition hover:bg-white/5"><span>기본 운세</span><span>02</span></a>
-            <a href="#section-love" class="flex items-center justify-between px-4 py-3 transition hover:bg-white/5"><span>연애운</span><span>03</span></a>
-            <a href="#section-marriage" class="flex items-center justify-between px-4 py-3 transition hover:bg-white/5"><span>결혼운</span><span>04</span></a>
-            <a href="#section-money" class="flex items-center justify-between px-4 py-3 transition hover:bg-white/5"><span>재물운</span><span>05</span></a>
-            <a href="#section-business" class="flex items-center justify-between px-4 py-3 transition hover:bg-white/5"><span>사업운</span><span>06</span></a>
-            <a href="#section-career" class="flex items-center justify-between px-4 py-3 transition hover:bg-white/5"><span>직업운</span><span>07</span></a>
-            <a href="#section-study" class="flex items-center justify-between px-4 py-3 transition hover:bg-white/5"><span>학업운</span><span>08</span></a>
-            <a href="#section-health" class="flex items-center justify-between px-4 py-3 transition hover:bg-white/5"><span>건강운</span><span>09</span></a>
-            <a href="#section-social" class="flex items-center justify-between px-4 py-3 transition hover:bg-white/5"><span>대인관계운</span><span>10</span></a>
-            <a href="#section-benefactor" class="flex items-center justify-between px-4 py-3 transition hover:bg-white/5"><span>귀인운</span><span>11</span></a>
-            <a href="#fortune-grid" class="flex items-center justify-between px-4 py-3 transition hover:bg-white/5"><span>오늘-올해</span><span>12</span></a>
-            <a href="#life-stage-grid" class="flex items-center justify-between px-4 py-3 transition hover:bg-white/5"><span>중년-말년</span><span>13</span></a>
-            <a href="#recommend-grid" class="flex items-center justify-between px-4 py-3 transition hover:bg-white/5"><span>추천</span><span>14</span></a>
-            <a href="#life-graph" class="flex items-center justify-between px-4 py-3 transition hover:bg-white/5"><span>인생 그래프</span><span>15</span></a>
-            <a href="#dosa-detail" class="flex items-center justify-between px-4 py-3 transition hover:bg-white/5"><span>AI 도사 상세</span><span>16</span></a>
+            {nav.map((label, index) => <a href={['#saju-form-section','#base-overview','#section-love','#section-marriage','#section-money','#section-business','#section-career','#section-study','#section-health','#section-social','#section-benefactor','#fortune-grid','#life-stage-grid','#recommend-grid','#life-graph','#dosa-detail'][index]} class:list={['flex items-center justify-between px-4 py-3 transition hover:bg-white/5', index === 0 && 'ledger-subpanel text-white']}><span>{label}</span><span class={index === 0 ? 'text-[#e9c349]' : ''}>{String(index + 1).padStart(2,'0')}</span></a>)}
           </nav>
           <div class="ledger-panel px-4 py-5 text-sm leading-6 text-white/60">
             <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#59de9b]">Report Mode</p>
-            <p class="mt-3">AI 기반 성향 분석과 통계 기반 라이프 인사이트를 조합한 자기이해 리포트 형식입니다.</p>
+            <p class="mt-3">{s.modeDesc}</p>
           </div>
-          <a href="#saju-form-section" class="block bg-[#e9c349] px-4 py-4 text-center text-xs font-black uppercase tracking-[0.22em] text-[#3c2f00] transition hover:brightness-110">정밀 분석 시작</a>
+          <a href="#saju-form-section" class="block bg-[#e9c349] px-4 py-4 text-center text-xs font-black uppercase tracking-[0.22em] text-[#3c2f00] transition hover:brightness-110">{s.start}</a>
         </div>
       </aside>
 
@@ -160,45 +153,38 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           <div class="grid gap-8 2xl:grid-cols-[minmax(0,1.1fr)_360px]">
             <div class="space-y-8">
               <div>
-                <p class="ledger-label text-[11px] uppercase tracking-[0.24em] text-[#59de9b]">기록 해석 · Korean Saju Palja · No. 2026</p>
+                <p class="ledger-label text-[11px] uppercase tracking-[0.24em] text-[#59de9b]">{s.eyebrow}</p>
                 <h1 class="ledger-serif mt-5 max-w-4xl text-4xl font-black leading-[1.12] tracking-tight text-white sm:text-5xl 2xl:text-6xl">
-                  AI 만세력 <span class="text-[#e9c349] italic">사주풀이</span><br />올인원 통합형
+                  {s.title}<br /><span class="text-[#e9c349] italic">{s.titleAccent}</span>
                 </h1>
                 <p class="mt-5 max-w-2xl text-base leading-8 text-white/62">
-                  생년월일시를 기반으로 만세력 구조를 계산하고, 오늘과 이번주, 이번달, 상반기, 하반기, 올해의 흐름을 한 장의 프리미엄 리포트로 정리합니다.
-                  미래 예언이 아니라 참고용 라이프 인사이트와 데이터 기반 자기이해 도구로 설계했습니다.
+                  {s.intro}
                 </p>
               </div>
 
               <div class="grid gap-4 md:grid-cols-3">
                 <div class="space-y-3">
                   <div class="ledger-serif text-3xl italic text-[#e9c349]">01.</div>
-                  <h2 class="text-sm font-bold uppercase tracking-[0.18em] text-[#e9c349]">AI 기반 성향 분석</h2>
-                  <p class="text-sm leading-7 text-white/55">사주 구조와 오행 분포를 바탕으로 성향, 판단 패턴, 생활 리듬을 정리합니다.</p>
+                  <h2 class="text-sm font-bold uppercase tracking-[0.18em] text-[#e9c349]">{s.f1}</h2><p class="text-sm leading-7 text-white/55">{s.f1d}</p>
                 </div>
                 <div class="space-y-3">
                   <div class="ledger-serif text-3xl italic text-[#59de9b]">02.</div>
-                  <h2 class="text-sm font-bold uppercase tracking-[0.18em] text-[#59de9b]">통계 기반 라이프 인사이트</h2>
-                  <p class="text-sm leading-7 text-white/55">기간별 흐름을 읽기 쉽게 나누고 재물, 관계, 일상 리듬의 변화를 점수와 해설로 보여줍니다.</p>
+                  <h2 class="text-sm font-bold uppercase tracking-[0.18em] text-[#59de9b]">{s.f2}</h2><p class="text-sm leading-7 text-white/55">{s.f2d}</p>
                 </div>
                 <div class="space-y-3">
                   <div class="ledger-serif text-3xl italic text-white/50">03.</div>
-                  <h2 class="text-sm font-bold uppercase tracking-[0.18em] text-white/70">데이터 기반 자기이해 리포트</h2>
-                  <p class="text-sm leading-7 text-white/55">같은 입력에는 같은 구조가 유지되며, 시간 정보 유무에 따라 신뢰도와 입력 정확도를 분리해 표시합니다.</p>
+                  <h2 class="text-sm font-bold uppercase tracking-[0.18em] text-white/70">{s.f3}</h2><p class="text-sm leading-7 text-white/55">{s.f3d}</p>
                 </div>
               </div>
             </div>
 
             <aside class="ledger-panel px-6 py-7 text-sm leading-7 text-white/62 2xl:mt-8">
-              <p class="ledger-serif text-lg font-bold text-[#e9c349]">리포트에 담기는 내용</p>
+              <p class="ledger-serif text-lg font-bold text-[#e9c349]">{s.contents}</p>
               <ul class="mt-5 space-y-3">
-                <li class="flex gap-3"><span class="text-[#e9c349]">◆</span><span><strong class="text-white">만세력 4주 · 오행 분포</strong><br />연·월·일·시주와 일간, 다섯 기운의 균형 점수</span></li>
-                <li class="flex gap-3"><span class="text-[#e9c349]">◆</span><span><strong class="text-white">9가지 기본 운세</strong><br />연애·결혼·재물·사업·직업·학업·건강·대인·귀인</span></li>
-                <li class="flex gap-3"><span class="text-[#59de9b]">◆</span><span><strong class="text-white">기간별 흐름</strong><br />오늘·이번주·이번달·상반기·하반기·올해</span></li>
-                <li class="flex gap-3"><span class="text-[#59de9b]">◆</span><span><strong class="text-white">중년·말년과 인생 그래프</strong><br />AI 도사의 타이밍·방향·행운 아이템 조언</span></li>
+                {[[s.c1,s.c1d],[s.c2,s.c2d],[s.c3,s.c3d],[s.c4,s.c4d]].map(([title,desc],index) => <li class="flex gap-3"><span class={index < 2 ? 'text-[#e9c349]' : 'text-[#59de9b]'}>◆</span><span><strong class="text-white">{title}</strong><br />{desc}</span></li>)}
               </ul>
-              <button id="saju-sample-btn" type="button" class="mt-6 w-full border border-[#e9c349]/60 px-4 py-3 text-xs font-black uppercase tracking-[0.2em] text-[#e9c349] transition hover:bg-[#e9c349]/10">샘플 리포트 미리보기</button>
-              <p class="mt-3 text-[11px] leading-5 text-white/40">가상 인물(1994년생)로 만든 실제 결과 화면이에요. 결제 없이 확인할 수 있어요.</p>
+              <button id="saju-sample-btn" type="button" class="mt-6 w-full border border-[#e9c349]/60 px-4 py-3 text-xs font-black uppercase tracking-[0.2em] text-[#e9c349] transition hover:bg-[#e9c349]/10">{s.sample}</button>
+              <p class="mt-3 text-[11px] leading-5 text-white/40">{s.sampleDesc}</p>
 
               <div class="mt-7 border-t border-white/10 pt-6">
                 <div class="flex items-center justify-between gap-2">

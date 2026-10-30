@@ -1,0 +1,12 @@
+---
+import Page from '../../../pages/tools/product-detail-studio.astro';
+import { seoLocaleCodes } from '../../../lib/i18n';
+
+export function getStaticPaths() {
+  return seoLocaleCodes
+    .filter((locale) => locale !== 'ko')
+    .map((locale) => ({ params: { locale } }));
+}
+---
+
+<Page />
