@@ -197,12 +197,29 @@ function Meter({ label, value, unit, daily, invert = false }: { label: string; v
   );
 }
 
-type Props = { analysis: CalorieAnalysis; photoUrl?: string; sample?: boolean };
+type Props = { analysis: CalorieAnalysis; photoUrl?: string; sample?: boolean; locale?: string };
 
-export function CalorieReport({ analysis, photoUrl, sample = false }: Props) {
+export function CalorieReport({ analysis, photoUrl, sample = false, locale = 'ko' }: Props) {
   const report = useMemo(() => toCalorieReport(analysis), [analysis]);
   const [shareOpen, setShareOpen] = useState(false);
   const maxItemKcal = Math.max(1, ...report.items.map((item) => item.kcal));
+
+  if (locale !== 'ko') {
+    const zh = locale === 'zh';
+    return <section className="rounded-[24px] border border-emerald-200 bg-white p-6 shadow-sm">
+      <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-600">{zh ? 'AI 饮食报告' : 'AI MEAL REPORT'}</p>
+      <h3 className="mt-2 text-2xl font-black text-slate-950">{report.mealName}</h3>
+      {report.summary ? <p className="mt-2 text-sm leading-6 text-slate-600">{report.summary}</p> : null}
+      <div className="mt-5 grid gap-3 sm:grid-cols-3">
+        <div className="rounded-2xl bg-emerald-50 p-4"><p className="text-xs font-bold text-emerald-700">{zh ? '总热量' : 'Total calories'}</p><p className="mt-1 text-2xl font-black">{report.total} kcal</p><p className="text-xs text-slate-500">{report.range.min}–{report.range.max} kcal</p></div>
+        <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-bold text-slate-500">{zh ? '饮食评分' : 'Meal score'}</p><p className="mt-1 text-2xl font-black">{report.score ?? '—'}</p></div>
+        <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-bold text-slate-500">{zh ? '每日占比' : 'Daily share'}</p><p className="mt-1 text-2xl font-black">{report.dailyPercent}%</p></div>
+      </div>
+      <div className="mt-5 grid gap-2 sm:grid-cols-3">{([['Carbs',report.grams.carbs],['Protein',report.grams.protein],['Fat',report.grams.fat]] as const).map(([label,value]) => <div key={label} className="rounded-xl border border-slate-200 p-3 text-sm"><span className="font-bold">{label}</span><span className="float-right">{Math.round(value)}g</span></div>)}</div>
+      {report.items.length ? <div className="mt-5"><h4 className="font-black">{zh ? '食物明细' : 'Food details'}</h4><ul className="mt-2 divide-y divide-slate-100">{report.items.map((item) => <li key={item.name} className="flex justify-between py-2 text-sm"><span>{item.emoji} {item.name}</span><strong>{item.kcal} kcal</strong></li>)}</ul></div> : null}
+      {report.improvements.length ? <div className="mt-5 rounded-2xl bg-amber-50 p-4"><h4 className="font-black text-amber-900">{zh ? '改善建议' : 'Suggestions'}</h4><ul className="mt-2 list-disc pl-5 text-sm leading-6 text-amber-900">{report.improvements.map((item) => <li key={item}>{item}</li>)}</ul></div> : null}
+    </section>;
+  }
 
   if (analysis.isFood === false || (!report.items.length && !report.total)) {
     return (

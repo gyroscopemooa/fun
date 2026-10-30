@@ -10,12 +10,13 @@ const rawApiBase = (import.meta.env.PUBLIC_NODE_API_BASE ?? '').trim();
 const apiBase = rawApiBase.replace(/\/+$/, '');
 const locale = detectLocale(Astro.url.pathname);
 const text = petText(locale);
+const meta = locale === 'ko' ? { title:'AI 펫 언어 분석기 | 강아지 고양이 번역기', desc:'강아지와 고양이 소리를 녹음해 분석하고 짧은 명령 음성을 만드는 AI 펫 언어 분석기입니다.' } : locale === 'zh' ? { title:'AI 宠物声音分析器 | 猫狗翻译器', desc:'录制并分析猫狗声音，也可为简短指令生成宠物语音。' } : locale === 'ja' ? { title:'AIペット音声分析 | 犬猫翻訳', desc:'犬や猫の声を録音して分析し、短い指示の音声も作成できます。' } : { title:'AI Pet Sound Analyzer | Dog and Cat Translator', desc:'Record and analyze dog or cat sounds and create pet-friendly audio for short commands.' };
 ---
 
 <Layout
-  title="AI 펫 언어 분석기 | 강아지 고양이 번역기"
-  description="강아지와 고양이 소리를 바로 녹음해 분석하고, 짧은 명령은 텍스트로 입력해 음성까지 만드는 ManyTool AI 펫 언어 분석기입니다."
-  keywords="AI 펫 번역기, 강아지 번역기, 고양이 번역기, 펫 언어 분석기, 반려동물 명령기, pet translator"
+  title={meta.title}
+  description={meta.desc}
+  keywords="AI pet translator, dog translator, cat translator, pet sound analyzer"
 >
   <main class="relative bg-[radial-gradient(circle_at_top,#fff2ef,transparent_38%),linear-gradient(180deg,#fffaf7_0%,#f6f4ff_100%)] pb-20">
     <div id="pet-loading-overlay" class="pointer-events-none fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/55 px-4 backdrop-blur-sm">

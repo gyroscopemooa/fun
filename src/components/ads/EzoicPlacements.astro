@@ -1,14 +1,17 @@
 ---
+import { detectLocale } from '../../lib/i18n';
+const locale = detectLocale(Astro.url.pathname);
+const ad = locale === 'ko' ? '광고' : locale === 'ja' ? '広告' : locale === 'zh' ? '广告' : 'AD';
 // Ezoic Standalone is the only production ad renderer. The placeholders are
 // moved into the page's main content so they never cover forms or controls.
 ---
 
 <div id="ezoic-placement-staging" hidden>
-  <aside class="ezoic-ad-slot" data-ezoic-slot="content" aria-label="광고">
-    <span class="ezoic-ad-slot__label">광고</span>
+  <aside class="ezoic-ad-slot" data-ezoic-slot="content" aria-label={ad}>
+    <span class="ezoic-ad-slot__label">{ad}</span>
   </aside>
-  <aside class="ezoic-ad-slot" data-ezoic-slot="footer" aria-label="광고">
-    <span class="ezoic-ad-slot__label">광고</span>
+  <aside class="ezoic-ad-slot" data-ezoic-slot="footer" aria-label={ad}>
+    <span class="ezoic-ad-slot__label">{ad}</span>
   </aside>
 </div>
 

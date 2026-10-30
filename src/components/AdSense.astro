@@ -2,19 +2,23 @@
 interface Props {
   slotName?: string;
 }
+import { detectLocale } from '../lib/i18n';
 
 const { slotName = '본문 상단' } = Astro.props;
 const showPlaceholder = import.meta.env.DEV || import.meta.env.PUBLIC_SHOW_AD_PLACEHOLDERS === 'true';
 const renderLiveAdShell = import.meta.env.PUBLIC_ENABLE_AD_SLOTS === 'true';
+const locale = detectLocale(Astro.url.pathname);
+const adLabel = locale === 'ko' ? '광고' : locale === 'ja' ? '広告' : locale === 'zh' ? '广告' : 'AD';
+const localizedSlot = locale === 'ko' ? slotName : adLabel;
 ---
 
 {
   showPlaceholder && (
-    <section aria-label={`${slotName} 광고`} class="my-5 px-4 lg:px-10">
+    <section aria-label={`${localizedSlot} ${adLabel}`} class="my-5 px-4 lg:px-10">
       <div class="mx-auto w-full max-w-5xl rounded-xl border border-dashed border-slate-300 bg-slate-100 p-3">
-        <p class="mb-2 text-center text-[11px] font-semibold uppercase tracking-wide text-slate-500">광고</p>
+        <p class="mb-2 text-center text-[11px] font-semibold uppercase tracking-wide text-slate-500">{adLabel}</p>
         <div class="flex min-h-[96px] items-center justify-center rounded-lg bg-white text-center text-sm text-slate-600 sm:min-h-[120px]">
-          Adsense Placeholder: {slotName}
+          Adsense Placeholder: {localizedSlot}
         </div>
       </div>
     </section>
@@ -22,9 +26,9 @@ const renderLiveAdShell = import.meta.env.PUBLIC_ENABLE_AD_SLOTS === 'true';
 }
 {
   !showPlaceholder && renderLiveAdShell && (
-    <section aria-label={`${slotName} 광고`} class="my-5 px-4 lg:px-10">
+    <section aria-label={`${localizedSlot} ${adLabel}`} class="my-5 px-4 lg:px-10">
       <div class="mx-auto w-full max-w-5xl">
-        <p class="mb-2 text-center text-[11px] font-semibold uppercase tracking-wide text-slate-500">광고</p>
+        <p class="mb-2 text-center text-[11px] font-semibold uppercase tracking-wide text-slate-500">{adLabel}</p>
       </div>
     </section>
   )

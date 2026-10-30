@@ -2342,6 +2342,7 @@ app.post('/ai-manseryeok/analyze', async (req, res) => {
     const isLeapMonth = Boolean(req.body?.isLeapMonth);
     const timeUnknown = Boolean(req.body?.timeUnknown);
     const name = typeof req.body?.name === 'string' ? req.body.name.trim() : '';
+    const locale = typeof req.body?.locale === 'string' ? req.body.locale.trim().toLowerCase() : 'ko';
 
     if (!birthDate) {
       return res.status(400).json({ error: 'birthDate is required' });
@@ -2372,7 +2373,8 @@ app.post('/ai-manseryeok/analyze', async (req, res) => {
       birthTime,
       calendarType,
       isLeapMonth,
-      timeUnknown
+      timeUnknown,
+      locale
     });
 
     job.status = 'done';

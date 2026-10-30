@@ -706,7 +706,7 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
         canvas.toDataURL(mime, quality),
         `${getExportFileBaseName(values.productName)}.${format === 'png' ? 'png' : 'jpg'}`
       );
-      toast.success(`${format.toUpperCase()} 파일을 저장했습니다.`);
+      toast.success(locale === 'ko' ? `${format.toUpperCase()} 파일을 저장했습니다.` : locale === 'zh' ? `${format.toUpperCase()} 文件已保存。` : `${format.toUpperCase()} file saved.`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : ui.saveImageFail);
     } finally {
@@ -731,7 +731,7 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
       });
       pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, canvas.width, canvas.height);
       pdf.save(`${getExportFileBaseName(values.productName)}.pdf`);
-      toast.success('PDF 파일을 저장했습니다.');
+      toast.success(locale === 'ko' ? 'PDF 파일을 저장했습니다.' : locale === 'zh' ? 'PDF 文件已保存。' : 'PDF file saved.');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : ui.savePdfFail);
     } finally {
@@ -976,11 +976,19 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
                 </div>
               </div>
               <div className="mt-4 grid gap-3 md:grid-cols-3">
-                {[
-                  { title: 'Gift Angle', body: '집들이, 생일, 작은 감사 선물처럼 구매 명분이 바로 보이는 상품에 잘 맞습니다.' },
-                  { title: 'Mood Upgrade', body: '실용성뿐 아니라 사진발, 공간 무드, 취향 만족감까지 같이 전달하는 구조를 빠르게 만듭니다.' },
-                  { title: 'Soft Persuasion', body: '과장하지 않아도 예뻐 보이고 사고 싶어 보이게 만드는 판매 흐름을 정리합니다.' }
-                ].map((item) => (
+                {(locale === 'ko' ? [
+                  { title: '선물 포인트', body: '집들이, 생일, 작은 감사 선물처럼 구매 명분이 바로 보이는 상품에 잘 맞습니다.' },
+                  { title: '분위기 개선', body: '실용성과 사진, 공간 무드, 취향 만족감을 함께 전달합니다.' },
+                  { title: '부드러운 설득', body: '과장 없이 사고 싶어지는 판매 흐름을 정리합니다.' }
+                ] : locale === 'zh' ? [
+                  { title: '礼赠卖点', body: '清楚展示乔迁、生日和感谢礼物等购买理由。' },
+                  { title: '氛围升级', body: '同时传达实用性、上镜效果、空间氛围和审美满足。' },
+                  { title: '自然说服', body: '无需夸张，也能整理出吸引顾客的销售流程。' }
+                ] : [
+                  { title: 'Gift angle', body: 'Show clear reasons to buy for housewarmings, birthdays, and thank-you gifts.' },
+                  { title: 'Mood upgrade', body: 'Present function, visual appeal, space, and personal taste together.' },
+                  { title: 'Soft persuasion', body: 'Build a persuasive sales flow without exaggerated claims.' }
+                ]).map((item) => (
                   <div key={item.title} className="rounded-2xl border border-white/10 bg-white/6 px-4 py-3">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[rgba(255,220,232,0.88)]">{item.title}</p>
                     <p className="mt-2 text-xs leading-5 text-white/74">{item.body}</p>
@@ -1031,8 +1039,8 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
               <Store className="h-5 w-5 text-white/72" />
             </div>
             <DetailPageThemeSelect value={theme} onChange={setTheme} locale={locale} dark />
-            <p className="mt-3 text-xs leading-5 text-white/60">{locale === 'ko' ? '선택한 톤은 하단 미리보기와 내 생성 결과에 적용됩니다. 아래 3종 샘플은 각각의 원래 디자인을 보여줍니다.' : locale === 'ja' ? '選択した配色は下のプレビューと生成結果に反映されます。3つのサンプルは元のデザインを表示します。' : 'Your selection applies to the preview below and your generated page. The three examples retain their original designs.'}</p>
-            <p className="mt-3 text-xs leading-5 text-white/60">{locale === 'ko' ? '테마는 색감을 정합니다. 섹션 순서와 사진·텍스트 배치는 상품 사진, 이미지 수, 요청에 맞춰 생성됩니다.' : locale === 'ja' ? 'テーマは配色を選びます。構成と画像・テキストの配置は商品写真とリクエストに合わせて生成されます。' : 'Themes set the colors. Section order and image/text layouts are generated from your photos, image count and requests.'}</p>
+            <p className="mt-3 text-xs leading-5 text-white/60">{locale === 'ko' ? '선택한 톤은 하단 미리보기와 내 생성 결과에 적용됩니다. 아래 3종 샘플은 각각의 원래 디자인을 보여줍니다.' : locale === 'ja' ? '選択した配色は下のプレビューと生成結果に反映されます。3つのサンプルは元のデザインを表示します。' : locale === 'zh' ? '所选配色会应用到下方预览和生成结果。' : 'Your selection applies to the preview below and your generated page.'}</p>
+            <p className="mt-3 text-xs leading-5 text-white/60">{locale === 'ko' ? '테마는 색감을 정합니다. 섹션 순서와 사진·텍스트 배치는 상품 사진, 이미지 수, 요청에 맞춰 생성됩니다.' : locale === 'ja' ? 'テーマは配色を選びます。構成と画像・テキストの配置は商品写真とリクエストに合わせて生成されます。' : locale === 'zh' ? '主题决定配色，版块顺序及图片、文字布局会根据商品照片和要求生成。' : 'Themes set the colors. Section order and image/text layouts are generated from your photos, image count and requests.'}</p>
             {locale === 'ko' || locale === 'ja' ? <ProductDetailSamples locale={locale} /> : null}
           </div>
         </div>
@@ -1089,7 +1097,7 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
                             : 'text-slate-600 hover:bg-white hover:text-slate-900'
                         )}
                       >
-                        {option.pageCount}장
+                        {option.pageCount}{locale === 'ko' ? '장' : locale === 'ja' ? 'ページ' : locale === 'zh' ? '页' : ' pages'}
                       </button>
                     );
                   })}
@@ -1100,8 +1108,8 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
 
             <div className="mt-4 rounded-[1.4rem] border border-slate-200 bg-slate-50 p-4">
               <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{ui.selectedTier}</p>
-              <h3 className="mt-1 text-base font-black text-slate-950">{activeTier.pageCount}장 · {activeTier.name}</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">{activeTier.summary}</p>
+              <h3 className="mt-1 text-base font-black text-slate-950">{activeTier.pageCount}{locale === 'ko' ? '장' : locale === 'ja' ? 'ページ' : locale === 'zh' ? '页' : ' pages'}{locale === 'ko' ? ` · ${activeTier.name}` : ''}</h3>
+              {locale === 'ko' ? <p className="mt-2 text-sm leading-6 text-slate-600">{activeTier.summary}</p> : null}
               <p className="mt-2 text-xs leading-5 text-slate-400">{ui.selectedTierHint}</p>
             </div>
 
@@ -1189,20 +1197,20 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
 
             <div className="hidden mt-5 items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
               <div>
-                <p className="font-semibold text-slate-900">{ui.selectedPages}: {pricingSummary.page_count}장</p>
-                <p className="text-xs text-slate-500">장당 약 {Math.round(pricingSummary.unit_price * 1450).toLocaleString('ko-KR')}원</p>
+                <p className="font-semibold text-slate-900">{ui.selectedPages}: {pricingSummary.page_count}{locale === 'ko' ? '장' : locale === 'zh' ? '页' : ' pages'}</p>
+                {locale === 'ko' ? <p className="text-xs text-slate-500">장당 약 {Math.round(pricingSummary.unit_price * 1450).toLocaleString('ko-KR')}원</p> : null}
               </div>
               <div className="text-right">
                 <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Estimated</p>
-                <p className="font-semibold text-slate-900">예상 금액: 약 {Math.round(pricingSummary.total_price * 1450).toLocaleString('ko-KR')}원</p>
+                {locale === 'ko' ? <p className="font-semibold text-slate-900">예상 금액: 약 {Math.round(pricingSummary.total_price * 1450).toLocaleString('ko-KR')}원</p> : null}
               </div>
             </div>
 
             <div className="mt-5 grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 sm:grid-cols-2">
               <div className="min-w-0">
-                <p className="font-semibold text-slate-900">{ui.selectedPages}: {pricingSummary.page_count}장</p>
+                <p className="font-semibold text-slate-900">{ui.selectedPages}: {pricingSummary.page_count}{locale === 'ko' ? '장' : locale === 'zh' ? '页' : ' pages'}</p>
                 <p className="text-xs text-slate-500">{ui.perPageApprox} {formatDetailPagePrice(pricingSummary.unit_price, pricingSummary.currency)}</p>
-                <p className="text-xs text-slate-400">{ui.perPageApprox} {formatApproxKrw(pricingSummary.unit_price)}</p>
+                {locale === 'ko' ? <p className="text-xs text-slate-400">{ui.perPageApprox} {formatApproxKrw(pricingSummary.unit_price)}</p> : null}
               </div>
               <div className="min-w-0 sm:text-right">
                 <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{ui.estimated}</p>

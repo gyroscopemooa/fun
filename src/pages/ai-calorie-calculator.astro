@@ -12,20 +12,20 @@ import { detectLocale } from '../lib/i18n';
 const rawApiBase = (import.meta.env.PUBLIC_NODE_API_BASE ?? '').trim();
 const apiBase = rawApiBase.replace(/\/+$/, '');
 const locale = detectLocale(Astro.url.pathname);
+const c = locale === 'ko' ? { title:'AI 칼로리 계산기', desc:'음식 사진 한 장으로 영양과 칼로리를 추정하고 목표에 맞춘 식단 리포트를 제공합니다.', upload:'음식 사진 올리기', uploadDesc:'식판, 디저트, 간식, 음료 사진도 분석할 수 있어요.', choose:'음식 사진 선택', photoHint:'위에서 내려다보거나 45도로 찍은 사진일수록 정확해요.', goal:'나의 목표', lose:'체중 감량', maintain:'체중 유지', gain:'근력 증가', goalHint:'목표에 따라 식단 점수와 추천이 달라져요.', info:'이런 걸 알려드려요', infoItems:['총 칼로리와 추정 범위','탄단지와 주요 영양소','식단 점수와 대체 메뉴'], caution:'사진만으로 분석하므로 실제 중량과 조리법에 따라 차이가 날 수 있어요.', analyze:'칼로리 분석하기', status:'사진을 첨부하면 음식별 추정 칼로리와 식단 리포트를 보여줍니다.', report:'내 식단 리포트' } : locale === 'zh' ? { title:'AI 热量计算器', desc:'上传一张食物照片，AI 即可估算营养和热量，并根据目标生成饮食报告。结果仅供参考。', upload:'上传食物照片', uploadDesc:'也支持餐盘、甜点、零食和饮料照片。', choose:'选择食物照片', photoHint:'俯拍或45度角照片通常更容易分析。', goal:'我的目标', lose:'减脂', maintain:'维持体重', gain:'增肌', goalHint:'饮食评分和建议会根据目标调整。', info:'报告内容', infoItems:['总热量和估算范围','宏量营养素与主要营养信息','饮食评分与替换建议'], caution:'仅根据照片估算，实际重量和烹饪方式可能造成差异。', analyze:'分析热量', status:'上传照片后，这里会显示热量估算和饮食报告。', report:'我的饮食报告' } : { title:'AI Calorie Calculator', desc:'Upload one food photo to estimate nutrition and calories and receive a goal-based meal report.', upload:'Upload a food photo', uploadDesc:'Meal plates, desserts, snacks, and drinks are supported.', choose:'Choose a food photo', photoHint:'Top-down or 45-degree photos usually work best.', goal:'My goal', lose:'Weight loss', maintain:'Maintain weight', gain:'Build muscle', goalHint:'Scores and recommendations change with your goal.', info:'What you will get', infoItems:['Total calories and estimated range','Macros and key nutrients','Meal score and healthier swaps'], caution:'Photo estimates can differ from actual weight and preparation.', analyze:'Analyze calories', status:'Upload a photo to see calorie estimates and a meal report.', report:'My meal report' };
 ---
 
 <Layout
-  title="AI 칼로리 계산기 | 음식 사진 칼로리 추정, 식단 사진 분석 | ManyTool"
-  description="음식 사진 한 장으로 총 칼로리, 탄단지 비율, 식단 점수, 대체 메뉴까지 알려주는 ManyTool AI 칼로리 계산기입니다."
+  title={`${c.title} | ManyTool`}
+  description={c.desc}
 >
   <Header />
   <main class="mx-auto max-w-5xl px-4 py-8">
     <section class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
       <p class="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-600">AI Nutrition</p>
-      <h1 class="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">AI 칼로리 계산기</h1>
+      <h1 class="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">{c.title}</h1>
       <p class="mt-3 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
-        음식 사진 한 장이면 AI가 음식별 분량과 칼로리, 탄단지 비율, 나트륨·당류를 추정하고 내 목표에 맞춘 식단 점수와 대체 메뉴까지 알려드립니다.
-        병원 진단용이 아닌 빠른 참고용 추정치입니다.
+        {c.desc}
       </p>
       <AdSense slotName="본문 상단" />
     </section>
@@ -35,8 +35,8 @@ const locale = detectLocale(Astro.url.pathname);
       <div class="flex items-start justify-between gap-3">
         <div>
           <p class="text-xs font-bold tracking-[0.16em] text-emerald-600">STEP 1</p>
-          <h2 class="mt-1 text-xl font-black text-slate-950">음식 사진 올리기</h2>
-          <p class="mt-1 text-sm leading-6 text-slate-500">식판, 디저트, 간식, 음료 사진도 분석할 수 있어요.</p>
+          <h2 class="mt-1 text-xl font-black text-slate-950">{c.upload}</h2>
+          <p class="mt-1 text-sm leading-6 text-slate-500">{c.uploadDesc}</p>
         </div>
         <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">$0.99</span>
       </div>
@@ -46,57 +46,55 @@ const locale = detectLocale(Astro.url.pathname);
           <input id="calorie-image-input" type="file" accept="image/*" class="hidden" />
           <div id="calorie-empty" class="space-y-3">
             <p class="text-4xl">🍱</p>
-            <p class="text-base font-semibold text-slate-900">음식 사진 선택</p>
-            <p class="text-sm leading-6 text-slate-500">위에서 내려다보거나 45도로 찍은 사진일수록 정확해요.</p>
+            <p class="text-base font-semibold text-slate-900">{c.choose}</p>
+            <p class="text-sm leading-6 text-slate-500">{c.photoHint}</p>
           </div>
           <img id="calorie-preview" alt="meal preview" class="hidden max-h-[260px] rounded-[24px] object-contain shadow-sm" />
         </label>
 
         <div class="flex flex-col">
-          <p class="text-sm font-bold text-slate-900">나의 목표</p>
+          <p class="text-sm font-bold text-slate-900">{c.goal}</p>
           <div id="calorie-goal" class="mt-2 grid grid-cols-3 gap-2" role="radiogroup" aria-label="식단 목표">
-            <button type="button" role="radio" data-goal="lose" class="rounded-2xl border border-slate-200 px-2 py-3 text-sm font-bold text-slate-700 transition">🔥 체중 감량</button>
-            <button type="button" role="radio" data-goal="maintain" class="rounded-2xl border border-slate-200 px-2 py-3 text-sm font-bold text-slate-700 transition">⚖️ 체중 유지</button>
-            <button type="button" role="radio" data-goal="gain" class="rounded-2xl border border-slate-200 px-2 py-3 text-sm font-bold text-slate-700 transition">💪 근력 증가</button>
+            <button type="button" role="radio" data-goal="lose" class="rounded-2xl border border-slate-200 px-2 py-3 text-sm font-bold text-slate-700 transition">🔥 {c.lose}</button>
+            <button type="button" role="radio" data-goal="maintain" class="rounded-2xl border border-slate-200 px-2 py-3 text-sm font-bold text-slate-700 transition">⚖️ {c.maintain}</button>
+            <button type="button" role="radio" data-goal="gain" class="rounded-2xl border border-slate-200 px-2 py-3 text-sm font-bold text-slate-700 transition">💪 {c.gain}</button>
           </div>
-          <p class="mt-2 text-xs text-slate-500">목표에 따라 식단 점수와 권장 탄단지 비율, 대체 메뉴 추천이 달라져요.</p>
+          <p class="mt-2 text-xs text-slate-500">{c.goalHint}</p>
 
           <div class="mt-4 rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-600">
-            <p class="font-semibold text-slate-900">이런 걸 알려드려요</p>
+            <p class="font-semibold text-slate-900">{c.info}</p>
             <ul class="mt-1 list-disc space-y-0.5 pl-5">
-              <li>총 칼로리와 추정 범위, 하루 목표 대비 비율</li>
-              <li>탄단지 비율과 식이섬유·당류·나트륨</li>
-              <li>A+~D 식단 점수와 대체 메뉴 추천</li>
+              {c.infoItems.map((item) => <li>{item}</li>)}
             </ul>
-            <p class="mt-2 text-xs text-slate-500">국물, 소스, 오일, 정확한 중량은 오차가 있을 수 있어요.</p>
+            <p class="mt-2 text-xs text-slate-500">{c.caution}</p>
           </div>
 
           <p id="calorie-payment-note" class="mt-4 text-xs leading-5 text-slate-500"></p>
 
           <button id="calorie-analyze-button" class="mt-auto w-full rounded-2xl bg-slate-950 px-5 py-4 text-sm font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400 max-lg:mt-4">
-            칼로리 분석하기
+            {c.analyze}
           </button>
-          <p id="calorie-status" class="mt-3 text-sm text-slate-600">사진을 첨부하면 음식별 추정 칼로리와 식단 리포트를 보여줍니다.</p>
+          <p id="calorie-status" class="mt-3 text-sm text-slate-600">{c.status}</p>
         </div>
       </div>
     </section>
 
     <section id="calorie-report" class="mt-6 scroll-mt-20">
       <p class="text-xs font-bold tracking-[0.16em] text-emerald-600">STEP 2</p>
-      <h2 class="mt-1 text-xl font-black text-slate-950">내 식단 리포트</h2>
+      <h2 class="mt-1 text-xl font-black text-slate-950">{c.report}</h2>
       <div class="mt-4">
-        <CalorieResultPanel client:load />
+        <CalorieResultPanel locale={locale} client:load />
       </div>
     </section>
 
-    <section class="mt-8 rounded-[28px] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0fdf4_100%)] p-6 shadow-sm">
+    {locale === 'ko' && <section class="mt-8 rounded-[28px] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f0fdf4_100%)] p-6 shadow-sm">
       <p class="text-xs font-semibold tracking-[0.16em] text-emerald-600">SAMPLE REPORT</p>
       <h2 class="mt-2 text-2xl font-black tracking-tight text-slate-900">실제 음식 사진으로 분석한 샘플</h2>
       <p class="mt-2 max-w-3xl text-sm text-slate-600">샐러드·짜장면·초밥 사진을 실제 AI 분석 기능으로 분석한 결과예요. 모두 체중 유지 목표를 기준으로 했으며, 칼로리와 영양소는 사진 속 재료와 양을 바탕으로 한 추정치입니다.</p>
       <div class="mt-5">
         <CalorieSampleShowcase client:visible />
       </div>
-    </section>
+    </section>}
 
     <script is:inline define:vars={{ apiBase, locale }}>
       const API_BASE = apiBase;
@@ -424,11 +422,9 @@ const locale = detectLocale(Astro.url.pathname);
 
     <AdsterraBanner placement="bottom" />
     <section class="mt-6 rounded-[28px] border border-slate-200 bg-white p-6 text-sm leading-7 text-slate-600 shadow-sm">
-      <h2 class="text-xl font-bold text-slate-950">참고 사항</h2>
+      <h2 class="text-xl font-bold text-slate-950">{locale === 'ko' ? '참고 사항' : locale === 'zh' ? '注意事项' : 'Important notes'}</h2>
       <ul class="mt-3 list-disc space-y-2 pl-5">
-        <li>의료나 영양 처방용이 아닌 참고용 AI 추정치입니다.</li>
-        <li>국물, 소스, 오일, 숨겨진 재료는 실제보다 높거나 낮게 추정될 수 있습니다.</li>
-        <li>정확한 식단 관리가 필요하면 제품 영양정보나 전문가 상담을 함께 참고하는 것이 좋습니다.</li>
+        {locale === 'ko' ? <><li>의료나 영양 처방용이 아닌 참고용 AI 추정치입니다.</li><li>국물, 소스, 오일, 숨겨진 재료는 실제보다 높거나 낮게 추정될 수 있습니다.</li><li>정확한 식단 관리가 필요하면 제품 영양정보나 전문가 상담을 함께 참고하는 것이 좋습니다.</li></> : locale === 'zh' ? <><li>AI 估算仅供参考，不能替代医疗或营养建议。</li><li>汤汁、酱料、油和不可见食材可能造成误差。</li><li>如需精确管理，请同时参考营养标签或咨询专业人士。</li></> : <><li>AI estimates are for reference and are not medical or nutrition advice.</li><li>Soups, sauces, oils, and hidden ingredients can affect accuracy.</li><li>For precise tracking, also use nutrition labels or professional guidance.</li></>}
       </ul>
     </section>
 

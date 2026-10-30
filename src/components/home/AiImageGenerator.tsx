@@ -1432,7 +1432,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
                   {activeContent.exampleDescription}
                 </p>
                 <p className="mt-2 text-[11px] leading-5 text-slate-500">
-                  {locale === 'en' ? 'Discount code: manytool50' : '할인코드: manytool50'}
+                  {locale === 'ko' ? '할인코드: manytool50' : locale === 'zh' ? '优惠码：manytool50' : 'Discount code: manytool50'}
                 </p>
               </div>
             </div>
@@ -1466,12 +1466,12 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
           <div className="mx-auto w-full max-w-lg max-h-[calc(100vh-2rem)] overflow-y-auto rounded-[32px] bg-white p-6 shadow-[0_40px_100px_rgba(15,23,42,0.32)] sm:p-8">
             <div className="mb-6 flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold text-slate-500">처리 상태</p>
+                <p className="text-sm font-semibold text-slate-500">{locale === 'ko' ? '처리 상태' : locale === 'zh' ? '处理状态' : 'Processing status'}</p>
                 <p className="mt-2 text-[11px] leading-5 text-slate-500">
                   {locale === 'ko' ? '할인코드: manytool50' : 'Discount code: manytool50'}
                 </p>
                 <h3 className="mt-1 text-2xl font-black tracking-tight text-slate-950">
-                  {generationPhase === 'payment' && `${PROVIDER_LABELS[activeProvider]} 요청 준비 중`}
+                  {generationPhase === 'payment' && (locale === 'ko' ? `${PROVIDER_LABELS[activeProvider]} 요청 준비 중` : locale === 'zh' ? `正在准备 ${PROVIDER_LABELS[activeProvider]} 请求` : `Preparing ${PROVIDER_LABELS[activeProvider]} request`)}
                   {generationPhase === 'generating' && `${PROVIDER_LABELS[activeProvider]} ${statusCopy.generating}`}
                   {generationPhase === 'done' && statusCopy.done}
                   {generationPhase === 'error' && statusCopy.failed}
@@ -1493,10 +1493,10 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
                   <LoaderCircle className="h-7 w-7 animate-spin" />
                 </div>
                 <p className="mt-6 text-lg font-bold text-slate-900">
-                  {generationPhase === 'payment' ? `${PROVIDER_LABELS[activeProvider]} 요청 준비 중` : `${PROVIDER_LABELS[activeProvider]} 2단계 생성 중`}
+                  {generationPhase === 'payment' ? (locale === 'ko' ? `${PROVIDER_LABELS[activeProvider]} 요청 준비 중` : locale === 'zh' ? `正在准备 ${PROVIDER_LABELS[activeProvider]} 请求` : `Preparing ${PROVIDER_LABELS[activeProvider]} request`) : (locale === 'ko' ? `${PROVIDER_LABELS[activeProvider]} 2단계 생성 중` : locale === 'zh' ? `${PROVIDER_LABELS[activeProvider]} 两阶段生成中` : `${PROVIDER_LABELS[activeProvider]} two-stage generation`)}
                 </p>
                 <p className="mt-3 max-w-sm text-sm leading-6 text-slate-500">
-                  얼굴 보정 후 최종 스타일 변환을 진행하고 있습니다. 마지막 단계가 실패하면 자동으로 한 번 더 시도합니다.
+                  {locale === 'ko' ? '얼굴 보정 후 최종 스타일 변환을 진행하고 있습니다. 마지막 단계가 실패하면 자동으로 한 번 더 시도합니다.' : locale === 'zh' ? '正在完成人脸细节优化和最终风格转换。如果最后一步失败，系统会自动重试一次。' : 'Refining facial details and applying the final style. The final step retries once automatically if needed.'}
                 </p>
                 {generationPhase === 'generating' ? (
                   <ol className="mt-6 w-full max-w-xs space-y-2 text-left">
@@ -1517,7 +1517,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
                     })}
                   </ol>
                 ) : null}
-                <p className="mt-4 text-xs font-semibold text-slate-400">{elapsedSeconds}초 경과 · 보통 30초~1분 걸려요</p>
+                <p className="mt-4 text-xs font-semibold text-slate-400">{locale === 'ko' ? `${elapsedSeconds}초 경과 · 보통 30초~1분 걸려요` : locale === 'zh' ? `已用时 ${elapsedSeconds} 秒 · 通常需要30至60秒` : `${elapsedSeconds}s elapsed · Usually takes 30–60 seconds`}</p>
               </div>
             )}
 
@@ -1529,7 +1529,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
                     <p className="mt-1 text-sm font-semibold text-slate-900">{ENGINE_LABEL}</p>
                   </div>
                   <div className={`rounded-full bg-gradient-to-r ${activeContent.accentClass} px-3 py-1 text-xs font-black text-white shadow-sm`}>
-                    {activeContent.tabLabel} 완성
+                    {locale === 'ko' ? `${activeContent.tabLabel} 완성` : locale === 'zh' ? `${activeContent.tabLabel} 已完成` : `${activeContent.tabLabel} complete`}
                   </div>
                 </div>
                 <div className="flex min-h-[260px] sm:min-h-[360px] items-center justify-center overflow-hidden rounded-[28px] border border-slate-200 bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.14),_transparent_40%),linear-gradient(180deg,_#f8fafc_0%,_#e2e8f0_100%)] p-4">
@@ -1559,7 +1559,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
                     <img src={resultImageUrl} alt="생성 결과" className={`${imageClass} max-h-[240px] sm:max-h-[328px] rounded-[20px]`} />
                   )}
                 </div>
-                {previewUrl ? <p className="-mt-2 text-center text-xs text-slate-400">이미지를 좌우로 밀면 원본과 비교할 수 있어요</p> : null}
+                {previewUrl ? <p className="-mt-2 text-center text-xs text-slate-400">{locale === 'ko' ? '이미지를 좌우로 밀면 원본과 비교할 수 있어요' : locale === 'zh' ? '左右拖动即可对比原图和结果' : 'Drag left or right to compare the original and result'}</p> : null}
                 <div className="rounded-3xl border border-emerald-100 bg-emerald-50 px-4 py-3">
                   <p className="text-sm font-semibold text-emerald-700">{generatorCopy.ready}</p>
                   <p className="mt-1 text-sm text-emerald-600">{generatorCopy.saveHint}</p>
@@ -1588,7 +1588,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
                 <div className={`${lockMode ? 'hidden' : ''} rounded-3xl border border-slate-200 bg-white px-4 py-3`}>
                   <p className="flex items-center gap-1.5 text-xs font-bold text-slate-500">
                     <RefreshCw className="h-3.5 w-3.5" />
-                    같은 사진으로 다른 스타일 만들기
+                    {locale === 'ko' ? '같은 사진으로 다른 스타일 만들기' : locale === 'zh' ? '用同一张照片制作其他风格' : 'Create another style with this photo'}
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {QUICK_SWITCH_MODES.filter((item) => item !== mode).slice(0, 5).map((item) => (
@@ -1628,7 +1628,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
                     <AlertCircle className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-rose-700">이미지 생성에 실패했습니다.</p>
+                    <p className="text-sm font-semibold text-rose-700">{locale === 'ko' ? '이미지 생성에 실패했습니다.' : locale === 'zh' ? '图片生成失败。' : 'Image generation failed.'}</p>
                     <p className="mt-2 text-sm leading-6 text-rose-600">{errorMessage}</p>
                   </div>
                 </div>

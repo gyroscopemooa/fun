@@ -13,11 +13,12 @@ const s = locale === 'zh' ? {
   home:'Home', premium:'Premium services', about:'About', details:'Report sections', input:'Input', base:'Base reading', love:'Love', marriage:'Marriage', money:'Money', business:'Business', career:'Career', study:'Study', health:'Health', social:'Relationships', benefactor:'Benefactors', periods:'Today to year', later:'Later life', recommend:'Recommendations', graph:'Life graph', master:'AI master details', start:'Start detailed analysis', mode:'Report mode', modeDesc:'A self-understanding report combining AI personality analysis with data-based life insights.', eyebrow:'RECORD READING · KOREAN SAJU PALJA · NO. 2026', title:'AI Korean Saju', titleAccent:'All-in-one report', intro:'Calculate a Korean birth-chart structure from your birth date and time, then review today, this week, this month, each half-year and the year in one report. It is a self-understanding tool, not a prediction of the future.', f1:'AI personality analysis', f1d:'Summarizes tendencies, decision patterns and daily rhythm from the chart and five elements.', f2:'Data-based life insights', f2d:'Shows changes in money, relationships and daily rhythm by period.', f3:'Self-understanding report', f3d:'Keeps a consistent structure for the same input and shows how time data affects confidence.', contents:'What the report includes', c1:'Four pillars and five elements', c1d:'Year, month, day and hour pillars with balance scores', c2:'Nine base readings', c2d:'Love, marriage, money, business, career, study, health, relationships and benefactors', c3:'Period trends', c3d:'Today, this week, this month, half-years and the year', c4:'Later life and life graph', c4d:'Timing, direction and lucky-item guidance from the AI master', sample:'Preview sample report', sampleDesc:'A real result screen made with a fictional profile. No payment required.'
 };
 const nav = [s.input,s.base,s.love,s.marriage,s.money,s.business,s.career,s.study,s.health,s.social,s.benefactor,s.periods,s.later,s.recommend,s.graph,s.master];
+const l = (ko: string, zh: string, en: string) => locale === 'ko' ? ko : locale === 'zh' ? zh : en;
 ---
 
 <Layout
-  title="AI 만세력 사주팔자 정밀분석 | Korean Saju Palja Premium Report | ManyTool"
-  description="AI 기반 성향 분석, 통계 기반 라이프 인사이트, 데이터 기반 자기이해 리포트를 제공하는 Korean Saju Palja 프리미엄 분석 페이지입니다. 오늘, 이번주, 이번달, 상반기, 하반기, 올해와 중년·말년 흐름까지 정리합니다."
+  title={`${s.title} ${s.titleAccent} | ManyTool`}
+  description={s.intro}
   keywords="AI 만세력, Korean Saju Palja, 사주팔자 정밀분석, AI 기반 성향 분석, 통계 기반 라이프 인사이트, 데이터 기반 자기 이해 리포트, 오늘 운세, 이번주 운세, 이번달 운세"
   canonical="https://manytool.net/ai-manseryeok"
 >
@@ -216,8 +217,8 @@ const nav = [s.input,s.base,s.love,s.marriage,s.money,s.business,s.career,s.stud
             <div class="ledger-panel px-5 py-6 sm:px-8 sm:py-8">
               <div class="flex flex-wrap items-end justify-between gap-4">
                 <div>
-                  <p class="ledger-label text-[11px] uppercase tracking-[0.24em] text-[#e9c349]">1 단계 · 기록 입력</p>
-                  <h2 class="ledger-serif mt-3 text-3xl font-black tracking-tight text-white sm:text-4xl 2xl:text-5xl">당신의 <span class="text-[#e9c349] italic">운명 좌표</span>를 입력하세요</h2>
+                  <p class="ledger-label text-[11px] uppercase tracking-[0.24em] text-[#e9c349]">{l('1 단계 · 기록 입력','第1步 · 输入资料','STEP 1 · ENTER DETAILS')}</p>
+                  <h2 class="ledger-serif mt-3 text-3xl font-black tracking-tight text-white sm:text-4xl 2xl:text-5xl">{l('당신의 운명 좌표를 입력하세요','输入您的出生资料','Enter your birth details')}</h2>
                 </div>
                 <div class="min-w-[180px]">
                   <div class="flex justify-between text-[11px] uppercase tracking-[0.18em] text-white/40"><span>입력 준비</span><span>65% 가독성</span></div>
@@ -226,19 +227,19 @@ const nav = [s.input,s.base,s.love,s.marriage,s.money,s.business,s.career,s.stud
               </div>
 
               <p class="mt-5 max-w-3xl text-sm leading-7 text-white/58">
-                본 서비스는 참고용 자기이해 리포트입니다. AI 기반 성향 분석과 통계 기반 라이프 인사이트를 제공하며, 의학·법률·재정적 조언이나 미래 보장을 의미하지 않습니다.
+                {l('본 서비스는 참고용 자기이해 리포트입니다. 의학·법률·재정적 조언이나 미래 보장을 의미하지 않습니다.','本服务是用于自我理解的参考报告，不构成医疗、法律或财务建议，也不保证未来结果。','This is a self-understanding report for reference. It is not medical, legal, or financial advice and does not guarantee future outcomes.')}
               </p>
 
               <div class="mt-8 grid gap-8 md:grid-cols-2">
                 <label class="block">
-                  <span class="ledger-label text-[10px] uppercase tracking-[0.2em] text-white/40">이름 또는 닉네임</span>
+                  <span class="ledger-label text-[10px] uppercase tracking-[0.2em] text-white/40">{l('이름 또는 닉네임','姓名或昵称','Name or nickname')}</span>
                   <input id="saju-name" type="text" placeholder="예: JI-HO PARK" class="ledger-field text-lg" />
                 </label>
                 <div>
-                  <span class="ledger-label text-[10px] uppercase tracking-[0.2em] text-white/40">달력 기준</span>
+                  <span class="ledger-label text-[10px] uppercase tracking-[0.2em] text-white/40">{l('달력 기준','历法','Calendar')}</span>
                   <div class="mt-5 flex flex-wrap gap-2">
-                    <label class="ledger-chip inline-flex items-center gap-2 px-4 py-3 text-sm text-white"><input type="radio" name="calendar-type" value="solar" checked />양력</label>
-                    <label class="ledger-chip inline-flex items-center gap-2 px-4 py-3 text-sm text-white"><input type="radio" name="calendar-type" value="lunar" />음력</label>
+                    <label class="ledger-chip inline-flex items-center gap-2 px-4 py-3 text-sm text-white"><input type="radio" name="calendar-type" value="solar" checked />{l('양력','公历','Solar')}</label>
+                    <label class="ledger-chip inline-flex items-center gap-2 px-4 py-3 text-sm text-white"><input type="radio" name="calendar-type" value="lunar" />{l('음력','农历','Lunar')}</label>
                     <label id="saju-leap-wrap" class="ledger-chip hidden inline-flex items-center gap-2 px-4 py-3 text-sm text-white"><input id="saju-leap-month" type="checkbox" />윤달</label>
                   </div>
                 </div>
@@ -246,12 +247,12 @@ const nav = [s.input,s.base,s.love,s.marriage,s.money,s.business,s.career,s.stud
 
               <div class="mt-10 grid gap-8 md:grid-cols-[1.2fr_0.8fr]">
                 <label class="block">
-                  <span class="ledger-label text-[10px] uppercase tracking-[0.2em] text-white/40">생년월일</span>
+                  <span class="ledger-label text-[10px] uppercase tracking-[0.2em] text-white/40">{l('생년월일','出生日期','Birth date')}</span>
                   <input id="saju-birth-date" type="date" class="ledger-field text-lg" />
                 </label>
                 <div>
                   <div class="flex items-center gap-2">
-                    <span class="ledger-label text-[10px] uppercase tracking-[0.2em] text-white/40">출생 시간</span>
+                    <span class="ledger-label text-[10px] uppercase tracking-[0.2em] text-white/40">{l('출생 시간','出生时间','Birth time')}</span>
                     <span class="text-xs text-[#e9c349]">시주 반영</span>
                   </div>
                   <input id="saju-birth-time" type="time" class="ledger-field text-lg" />
@@ -278,23 +279,23 @@ const nav = [s.input,s.base,s.love,s.marriage,s.money,s.business,s.career,s.stud
                   </select>
                 </div>
                 <label class="block">
-                  <span class="ledger-label text-[10px] uppercase tracking-[0.2em] text-white/40">출생지</span>
+                  <span class="ledger-label text-[10px] uppercase tracking-[0.2em] text-white/40">{l('출생지','出生地','Birthplace')}</span>
                   <input id="saju-birth-place" type="text" placeholder="예: 서울, 부산, 도쿄" class="ledger-field text-lg" />
                 </label>
               </div>
 
               <div class="mt-8 grid gap-8 md:grid-cols-[1fr_auto] md:items-end">
                 <div>
-                  <span class="ledger-label text-[10px] uppercase tracking-[0.2em] text-white/40">성별</span>
+                  <span class="ledger-label text-[10px] uppercase tracking-[0.2em] text-white/40">{l('성별','性别','Gender')}</span>
                   <div class="mt-4 flex flex-wrap gap-2">
-                    <label class="ledger-chip inline-flex items-center gap-2 px-4 py-3 text-sm text-white"><input type="radio" name="saju-gender" value="male" />남성</label>
-                    <label class="ledger-chip inline-flex items-center gap-2 px-4 py-3 text-sm text-white"><input type="radio" name="saju-gender" value="female" />여성</label>
-                    <label class="ledger-chip inline-flex items-center gap-2 px-4 py-3 text-sm text-white"><input type="radio" name="saju-gender" value="unknown" checked />선택 안 함</label>
+                    <label class="ledger-chip inline-flex items-center gap-2 px-4 py-3 text-sm text-white"><input type="radio" name="saju-gender" value="male" />{l('남성','男性','Male')}</label>
+                    <label class="ledger-chip inline-flex items-center gap-2 px-4 py-3 text-sm text-white"><input type="radio" name="saju-gender" value="female" />{l('여성','女性','Female')}</label>
+                    <label class="ledger-chip inline-flex items-center gap-2 px-4 py-3 text-sm text-white"><input type="radio" name="saju-gender" value="unknown" checked />{l('선택 안 함','不指定','Prefer not to say')}</label>
                   </div>
                 </div>
                 <label class="inline-flex items-center gap-3 text-sm text-white/70">
                   <input id="saju-time-unknown" type="checkbox" class="h-4 w-4 rounded border-white/20 bg-transparent text-[#e9c349] focus:ring-[#e9c349]" />
-                  출생 시간을 모름
+                  {l('출생 시간을 모름','不知道出生时间','Birth time unknown')}
                 </label>
               </div>
 
@@ -308,8 +309,8 @@ const nav = [s.input,s.base,s.love,s.marriage,s.money,s.business,s.career,s.stud
                   </ul>
                 </div>
                 <div class="space-y-4">
-                  <button id="saju-submit" class="w-full bg-[#e9c349] px-5 py-5 text-sm font-black uppercase tracking-[0.24em] text-[#3c2f00] transition hover:brightness-110 disabled:cursor-not-allowed disabled:brightness-75">풀이 시작 ($29.88)</button>
-                  <div id="saju-status-box" class="ledger-subpanel px-4 py-4 text-sm leading-6 text-white/70">생년월일과 시간을 입력한 뒤 버튼을 누르면 결제 또는 분석이 진행됩니다.</div>
+                  <button id="saju-submit" class="w-full bg-[#e9c349] px-5 py-5 text-sm font-black uppercase tracking-[0.24em] text-[#3c2f00] transition hover:brightness-110 disabled:cursor-not-allowed disabled:brightness-75">{l('풀이 시작','开始分析','Start analysis')} ($29.88)</button>
+                  <div id="saju-status-box" class="ledger-subpanel px-4 py-4 text-sm leading-6 text-white/70">{l('생년월일과 시간을 입력한 뒤 버튼을 누르면 결제 또는 분석이 진행됩니다.','输入出生日期和时间后即可继续付款和分析。','Enter your birth date and time to continue to payment and analysis.')}</div>
                   <div class="flex items-center justify-between text-[11px] uppercase tracking-[0.18em] text-white/40"><span id="saju-stage">입력 대기</span><span>secure archive</span></div>
                 </div>
               </div>
@@ -1046,7 +1047,7 @@ const nav = [s.input,s.base,s.love,s.marriage,s.money,s.business,s.career,s.stud
       const runAnalysis = async (payload) => {
         setLoading(true, '분석 중', '입력된 생년월일시를 만세력 구조로 계산하고, AI 해석과 기간별 흐름 리포트를 구성하고 있습니다.');
         setStatus('만세력 계산과 AI 해석을 생성하는 중입니다.', '분석 중');
-        const response = await fetch(`${API_BASE}/ai-manseryeok/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...payload, orderId: currentOrderId }) });
+        const response = await fetch(`${API_BASE}/ai-manseryeok/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...payload, orderId: currentOrderId, locale }) });
         const result = await response.json().catch(() => null);
         if (!response.ok || !result?.job) throw new Error(result?.error || 'analysis failed');
         renderResult(result.job);

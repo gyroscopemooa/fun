@@ -557,7 +557,7 @@ const normalizeAnalysis = (payload) => ({
   accuracyComment: typeof payload?.accuracy_comment === 'string' ? payload.accuracy_comment.trim() : ''
 });
 
-export const analyzeSaju = async ({ name = '', birthDate, birthTime, calendarType = 'solar', isLeapMonth = false, timeUnknown = false }) => {
+export const analyzeSaju = async ({ name = '', birthDate, birthTime, calendarType = 'solar', isLeapMonth = false, timeUnknown = false, locale = 'ko' }) => {
   const date = parseBirthDate(birthDate);
   const time = parseBirthTime(birthTime, timeUnknown);
   const isLunar = calendarType === 'lunar';
@@ -601,7 +601,7 @@ export const analyzeSaju = async ({ name = '', birthDate, birthTime, calendarTyp
         content: [
           '당신은 한국 만세력과 사주팔자 해석을 구조적으로 정리하는 분석가입니다.',
           '입력으로 주어진 사주 계산 결과를 바꾸지 말고 그 위에 해석만 덧붙이십시오.',
-          '모든 출력은 자연스러운 한국어로 작성하십시오.',
+          locale === 'ko' ? '모든 출력은 자연스러운 한국어로 작성하십시오.' : locale === 'zh' ? '所有输出必须使用自然、清晰的简体中文。' : `Write every output field in the user's language for locale "${locale}". If uncertain, use clear English.`,
           '운세를 사실처럼 단정하지 말고 경향, 흐름, 가능성이라는 표현을 사용하십시오.',
           '결과는 프리미엄 리포트처럼 자세하지만 반복은 줄이고 실제 행동 조언을 포함하십시오.',
           '쉬운 해석 파트도 반드시 포함하십시오. AI 도사가 말하듯 은유적이지만 이해하기 쉬운 한마디가 있어야 합니다.',

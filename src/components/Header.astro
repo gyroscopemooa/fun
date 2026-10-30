@@ -60,7 +60,7 @@ const langLinks = [
     </div>
   </div>
 </header>
-<nav class="border-t border-slate-100 px-4 py-2 text-sm md:hidden" aria-label="커뮤니티 바로가기"><a href="/community/" class="font-bold text-cyan-800">커뮤니티 · 문제 해결 팁</a></nav>
+<nav class="border-t border-slate-100 px-4 py-2 text-sm md:hidden" aria-label={locale === 'ko' ? '커뮤니티 바로가기' : 'Community shortcut'}><a href={localizedHrefOrOriginal(locale, '/community/')} class="font-bold text-cyan-800">{locale === 'ko' ? '커뮤니티 · 문제 해결 팁' : locale === 'zh' ? '社区 · 问题解决技巧' : locale === 'ja' ? 'コミュニティ · 問題解決のヒント' : 'Community · problem-solving tips'}</a></nav>
 <FamilyPromo />
 
 <script is:inline define:vars={{ locale, strippedPath, supportedLocales: seoLocaleCodes, preserveCurrentRoute }}>

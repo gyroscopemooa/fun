@@ -5,17 +5,22 @@ import { localizedHrefOrOriginal } from '../lib/locale-routes';
 const pathname = Astro.url.pathname;
 const locale = detectLocale(pathname);
 const t = await createTranslator(locale);
+const c = locale === 'ko'
+  ? { support:'운영 문의', family:'패밀리사이트', community:'커뮤니티', business:'사업자 정보', company:'상호', owner:'대표', registration:'사업자등록번호', mailOrder:'통신판매업신고번호', address:'주소', email:'이메일', ownerValue:'전민수', mailOrderValue:'2023-울산남구-0547', addressValue:'울산광역시 남구 번영로 124번길 21 울산비즈니스센터 307호' }
+  : locale === 'zh'
+    ? { support:'运营咨询', family:'关联网站', community:'社区', business:'企业信息', company:'商号', owner:'负责人', registration:'营业执照编号', mailOrder:'电商备案编号', address:'地址', email:'电子邮箱', ownerValue:'Jeon Minsu', mailOrderValue:'2023-Ulsan Nam-gu-0547', addressValue:'韩国蔚山广域市南区 Beonyeong-ro 124beon-gil 21, Ulsan Business Center 307' }
+    : { support:'Support', family:'Family site', community:'Community', business:'Business information', company:'Company', owner:'Owner', registration:'Business registration', mailOrder:'E-commerce registration', address:'Address', email:'Email', ownerValue:'Jeon Minsu', mailOrderValue:'2023-Ulsan Nam-gu-0547', addressValue:'Ulsan Business Center 307, 21 Beonyeong-ro 124beon-gil, Nam-gu, Ulsan, Republic of Korea' };
 ---
 
 <footer class="mt-12 border-t border-slate-200 bg-white">
   <div class="mx-auto grid max-w-5xl gap-4 px-4 py-6 text-sm text-slate-600 md:grid-cols-2">
     <div class="space-y-1">
       <p>&copy; {new Date().getFullYear()} ManyTool. {t('footer.rights')}</p>
-      <p class="text-xs text-slate-500">운영 문의: <a href="mailto:support@manytool.net" class="underline underline-offset-4">support@manytool.net</a></p>
+      <p class="text-xs text-slate-500">{c.support}: <a href="mailto:support@manytool.net" class="underline underline-offset-4">support@manytool.net</a></p>
     </div>
     <div class="flex flex-wrap gap-3 md:justify-end">
-      <a href="https://live-sub.com/" target="_blank" rel="noopener noreferrer" class="font-semibold text-slate-800 hover:underline">패밀리사이트 LIVE-SUB.COM ↗</a>
-      <a href="/community/" class="hover:underline">커뮤니티</a>
+      <a href="https://live-sub.com/" target="_blank" rel="noopener noreferrer" class="font-semibold text-slate-800 hover:underline">{c.family} LIVE-SUB.COM ↗</a>
+      <a href="/community/" class="hover:underline">{c.community}</a>
       <a href={localizedHrefOrOriginal(locale, '/about')} class="hover:underline">{t('footer.about')}</a>
       <a href={localizedHrefOrOriginal(locale, '/privacy')} class="hover:underline">{t('footer.privacy')}</a>
       <a href={localizedHrefOrOriginal(locale, '/terms')} class="hover:underline">{t('footer.terms')}</a>
@@ -27,15 +32,15 @@ const t = await createTranslator(locale);
     <details class="group md:col-span-2">
       <summary class="flex w-fit cursor-pointer list-none items-center gap-1.5 text-sm font-bold text-slate-700 hover:text-slate-950">
         <span class="text-xs transition-transform group-open:rotate-0 -rotate-90" aria-hidden="true">▼</span>
-        Business Information
+        {c.business}
       </summary>
       <dl class="mt-2 space-y-1 text-xs leading-5 text-slate-500">
-        <div class="flex gap-1"><dt>상호:</dt><dd>gyroscope</dd></div>
-        <div class="flex gap-1"><dt>대표:</dt><dd>전민수</dd></div>
-        <div class="flex gap-1"><dt>사업자등록번호:</dt><dd>696-55-00795</dd></div>
-        <div class="flex gap-1"><dt>통신판매업신고번호:</dt><dd>2023-울산남구-0547</dd></div>
-        <div class="flex gap-1"><dt>주소:</dt><dd>울산광역시 남구 번영로 124번길 21 울산비즈니스센터 307호</dd></div>
-        <div class="flex gap-1"><dt>이메일:</dt><dd><a href="mailto:support@manytool.net" class="underline underline-offset-4">support@manytool.net</a></dd></div>
+        <div class="flex gap-1"><dt>{c.company}:</dt><dd>gyroscope</dd></div>
+        <div class="flex gap-1"><dt>{c.owner}:</dt><dd>{c.ownerValue}</dd></div>
+        <div class="flex gap-1"><dt>{c.registration}:</dt><dd>696-55-00795</dd></div>
+        <div class="flex gap-1"><dt>{c.mailOrder}:</dt><dd>{c.mailOrderValue}</dd></div>
+        <div class="flex gap-1"><dt>{c.address}:</dt><dd>{c.addressValue}</dd></div>
+        <div class="flex gap-1"><dt>{c.email}:</dt><dd><a href="mailto:support@manytool.net" class="underline underline-offset-4">support@manytool.net</a></dd></div>
       </dl>
     </details>
   </div>
