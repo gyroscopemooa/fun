@@ -54,7 +54,7 @@ const c = locale === 'ko' ? { title:'AI 칼로리 계산기', desc:'음식 사�
 
         <div class="flex flex-col">
           <p class="text-sm font-bold text-slate-900">{c.goal}</p>
-          <div id="calorie-goal" class="mt-2 grid grid-cols-3 gap-2" role="radiogroup" aria-label="식단 목표">
+          <div id="calorie-goal" class="mt-2 grid grid-cols-3 gap-2" role="radiogroup" aria-label={c.goal}>
             <button type="button" role="radio" data-goal="lose" class="rounded-2xl border border-slate-200 px-2 py-3 text-sm font-bold text-slate-700 transition">🔥 {c.lose}</button>
             <button type="button" role="radio" data-goal="maintain" class="rounded-2xl border border-slate-200 px-2 py-3 text-sm font-bold text-slate-700 transition">⚖️ {c.maintain}</button>
             <button type="button" role="radio" data-goal="gain" class="rounded-2xl border border-slate-200 px-2 py-3 text-sm font-bold text-slate-700 transition">💪 {c.gain}</button>
@@ -103,6 +103,7 @@ const c = locale === 'ko' ? { title:'AI 칼로리 계산기', desc:'음식 사�
       const CALORIE_PRICE_CENTS = 99;
       const CALORIE_CURRENCY = 'USD';
       const pageLocale = locale;
+      const tr = (ko, zh, en) => pageLocale === 'ko' ? ko : pageLocale === 'zh' ? zh : en;
 
       const fileInput = document.getElementById('calorie-image-input');
       const preview = document.getElementById('calorie-preview');
@@ -181,10 +182,10 @@ const c = locale === 'ko' ? { title:'AI 칼로리 계산기', desc:'음식 사�
       const updatePaymentNote = () => {
         if (!paymentNoteEl) return;
         if (paymentMode === 'polar') {
-          paymentNoteEl.textContent = '결제 후 같은 페이지로 돌아오면 자동으로 칼로리 분석이 시작됩니다.';
+          paymentNoteEl.textContent = tr('결제 후 같은 페이지로 돌아오면 자동으로 칼로리 분석이 시작됩니다.','付款后返回此页面，系统会自动开始热量分析。','After payment, return to this page to start the analysis automatically.');
           return;
         }
-        paymentNoteEl.textContent = '현재는 테스트 모드로 바로 분석됩니다.';
+        paymentNoteEl.textContent = tr('현재는 테스트 모드로 바로 분석됩니다.','当前为测试模式，将直接开始分析。','Test mode is active, so analysis starts directly.');
       };
 
       updatePaymentNote();
@@ -264,7 +265,7 @@ const c = locale === 'ko' ? { title:'AI 칼로리 계산기', desc:'음식 사�
 
       const analyzeCurrentFile = async () => {
         if (!selectedFile) {
-          setStatus('먼저 음식 사진을 첨부해주세요.');
+          setStatus(tr('먼저 음식 사진을 첨부해주세요.','请先上传食物照片。','Upload a food photo first.'));
           return;
         }
 
@@ -276,8 +277,8 @@ const c = locale === 'ko' ? { title:'AI 칼로리 계산기', desc:'음식 사�
         formData.append('goal', selectedGoal);
         formData.append('orderId', currentOrderId || '');
 
-        setButtonState('분석 중...', true);
-        setStatus('AI가 음식과 영양 성분을 분석하고 있어요. 보통 30초~1분 정도 걸려요.');
+        setButtonState(tr('분석 중...','分析中…','Analyzing…'), true);
+        setStatus(tr('AI가 음식과 영양 성분을 분석하고 있어요. 보통 30초~1분 정도 걸려요.','AI 正在分析食物和营养成分，通常需要30至60秒。','AI is analyzing the food and nutrients. This usually takes 30–60 seconds.'));
         pushResult(null);
 
         try {
@@ -300,16 +301,16 @@ const c = locale === 'ko' ? { title:'AI 칼로리 계산기', desc:'음식 사�
           pushResult(payload.analysis, photoUrl);
           if (payload.analysis.isFood === false) {
             // The server keeps the order open for a retake, so the same payment covers the next photo.
-            setStatus('음식을 찾지 못했어요. 같은 결제로 다른 사진을 다시 분석할 수 있어요.');
+            setStatus(tr('음식을 찾지 못했어요. 같은 결제로 다른 사진을 다시 분석할 수 있어요.','未识别到食物，您可以使用同一笔付款换一张照片重试。','No food was detected. You can retry with another photo using the same payment.'));
           } else {
             setOrderId(null);
-            setStatus('분석이 완료되었습니다. 아래 리포트를 확인해주세요.');
+            setStatus(tr('분석이 완료되었습니다. 아래 리포트를 확인해주세요.','分析完成，请查看下方报告。','Analysis complete. See the report below.'));
           }
           window.sessionStorage.removeItem(CALORIE_DRAFT_STORAGE_KEY);
         } catch (error) {
           setStatus(error instanceof Error ? error.message : '분석에 실패했습니다.');
         } finally {
-          setButtonState('칼로리 분석하기', false);
+          setButtonState(tr('칼로리 분석하기','分析热量','Analyze calories'), false);
         }
       };
 
@@ -319,18 +320,18 @@ const c = locale === 'ko' ? { title:'AI 칼로리 계산기', desc:'음식 사�
 
       analyzeButton?.addEventListener('click', async () => {
         if (!selectedFile) {
-          setStatus('먼저 음식 사진을 첨부해주세요.');
+          setStatus(tr('먼저 음식 사진을 첨부해주세요.','请先上传食物照片。','Upload a food photo first.'));
           return;
         }
 
         if (!API_BASE) {
-          setStatus('API 주소가 설정되지 않았습니다. PUBLIC_NODE_API_BASE를 확인해주세요.');
+          setStatus(tr('API 주소가 설정되지 않았습니다.','API 地址尚未配置。','The API address is not configured.'));
           return;
         }
 
         if (!currentOrderId) {
           if (paymentMode === 'polar' && !isPolarBaseReady) {
-            setStatus('Polar base 상품이 아직 설정되지 않았습니다.');
+            setStatus(tr('결제 상품이 아직 설정되지 않았습니다.','付款商品尚未配置。','The payment product is not configured yet.'));
             return;
           }
           try {
