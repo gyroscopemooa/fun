@@ -3,9 +3,13 @@ import Layout from '../layouts/Layout.astro';
 import AdsterraBanner from '../components/ads/AdsterraBanner.astro';
 import PetResultPanel from '../components/pet/PetResultPanel';
 import PetSampleShowcase from '../components/pet/PetSampleShowcase';
+import { detectLocale } from '../lib/i18n';
+import { petText } from '../lib/pet-i18n';
 
 const rawApiBase = (import.meta.env.PUBLIC_NODE_API_BASE ?? '').trim();
 const apiBase = rawApiBase.replace(/\/+$/, '');
+const locale = detectLocale(Astro.url.pathname);
+const text = petText(locale);
 ---
 
 <Layout
@@ -40,14 +44,13 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
             AI Pet Translator
           </p>
           <h1 class="mt-4 text-3xl font-black tracking-tight text-slate-950 sm:text-5xl">
-            반려동물 소리를
+            {text.title.split(' ')[0]} {text.title.split(' ')[1]}
             <span class="block bg-[linear-gradient(135deg,#e11d48_0%,#7c3aed_100%)] bg-clip-text text-transparent">
-              바로 분석하고 들려주기
+              {text.title.split(' ').slice(2).join(' ')}
             </span>
           </h1>
           <p class="mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
-            강아지와 고양이 소리를 바로 눌러서 간단히 녹음하고, 짧은 명령은 텍스트로 빠르게 만들어 전달하는 방식으로 구성했습니다.
-            모바일에서도 손쉽게 바로 실행할 수 있고, 불필요한 업로드나 복잡한 입력은 화면에서 최대한 줄였습니다.
+            {text.intro}
           </p>
 
           <div class="mt-7 grid gap-3 sm:grid-cols-3">
@@ -70,41 +73,41 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           <div class="flex items-start justify-between gap-3">
             <div>
               <p class="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Mobile Studio</p>
-              <h2 class="mt-2 text-2xl font-black text-slate-950">바로 녹음하고 바로 실행</h2>
+              <h2 class="mt-2 text-2xl font-black text-slate-950">{text.studio}</h2>
             </div>
           </div>
 
           <div class="mt-6 rounded-[24px] border border-slate-200 bg-slate-50 p-4">
             <div class="flex items-start justify-between gap-3">
               <div>
-                <p class="text-sm font-black text-slate-900">구독 로그인</p>
+                <p class="text-sm font-black text-slate-900">{text.login}</p>
                 <p id="pet-auth-copy" class="mt-1 text-sm leading-6 text-slate-600">구독 중인 이메일로 로그인 링크를 받으면 30일 동안 바로 사용할 수 있습니다.</p>
               </div>
               <button id="pet-auth-logout" type="button" class="hidden rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-black text-slate-700">로그아웃</button>
             </div>
             <div class="mt-4 flex flex-col gap-3 sm:flex-row">
-              <input id="pet-auth-email" type="email" inputmode="email" autocomplete="email" placeholder="구독에 사용한 이메일" class="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:ring-4 focus:ring-slate-100" />
-              <button id="pet-auth-submit" type="button" class="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-black text-white transition hover:translate-y-[-1px] disabled:cursor-not-allowed disabled:opacity-60">로그인 링크 받기</button>
+              <input id="pet-auth-email" type="email" inputmode="email" autocomplete="email" placeholder={text.email} class="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:ring-4 focus:ring-slate-100" />
+              <button id="pet-auth-submit" type="button" class="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-black text-white transition hover:translate-y-[-1px] disabled:cursor-not-allowed disabled:opacity-60">{text.loginLink}</button>
             </div>
           </div>
 
           <div class="mt-6 grid gap-3 sm:grid-cols-2">
             <label class="block">
-              <span class="mb-2 block text-sm font-bold text-slate-800">반려동물</span>
+              <span class="mb-2 block text-sm font-bold text-slate-800">{text.animal}</span>
               <select id="pet-animal" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-rose-400 focus:ring-4 focus:ring-rose-100">
-                <option value="dog">강아지</option>
-                <option value="cat">고양이</option>
+                <option value="dog">{text.dog}</option>
+                <option value="cat">{text.cat}</option>
               </select>
             </label>
 
             <div>
-              <span class="mb-2 block text-sm font-bold text-slate-800">모드</span>
+              <span class="mb-2 block text-sm font-bold text-slate-800">{text.mode}</span>
               <div class="grid grid-cols-2 gap-2 rounded-2xl bg-slate-100 p-1.5">
                 <button id="mode-analyze" type="button" class="pet-mode-btn rounded-[18px] bg-white px-4 py-3 text-sm font-black text-slate-900 shadow-sm" data-mode="analyze">
-                  언어 분석
+                  {text.analyze}
                 </button>
                 <button id="mode-command" type="button" class="pet-mode-btn rounded-[18px] px-4 py-3 text-sm font-black text-slate-500" data-mode="command">
-                  명령 음성 생성
+                  {text.command}
                 </button>
               </div>
             </div>
@@ -113,7 +116,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           <div class="mt-5 rounded-[28px] bg-[linear-gradient(135deg,#fff1f2_0%,#eef2ff_100%)] p-5">
             <div class="flex items-start justify-between gap-3">
               <div>
-                <p class="text-sm font-black text-slate-900">녹음 상태</p>
+                <p class="text-sm font-black text-slate-900">{text.record}</p>
                 <p id="pet-recorder-status" class="mt-2 text-sm leading-6 text-slate-600">
                   반려동물 소리 버튼을 누르고 있는 동안 바로 녹음합니다. 분석용 녹음은 4초 안쪽으로 짧게 녹음하는 편이 가장 안정적입니다.
                 </p>
@@ -126,7 +129,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
             <div class="mt-5 rounded-[24px] bg-white/90 p-4">
               <div class="flex items-center justify-between gap-3">
                 <p class="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Live Meter</p>
-                <span id="pet-recording-badge" class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">대기 중</span>
+                <span id="pet-recording-badge" class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">{text.ready}</span>
               </div>
               <div class="mt-4 flex h-20 items-end gap-2">
                 <span class="pet-bar h-4 flex-1 rounded-full bg-rose-200"></span>
@@ -142,7 +145,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
 
             <div id="analyze-recorder-panel" class="mt-5">
               <button id="pet-record-hold" type="button" class="flex min-h-[112px] w-full touch-none items-center justify-center rounded-[28px] bg-[linear-gradient(135deg,#e11d48_0%,#fb7185_100%)] px-6 py-6 text-center text-base font-black text-white shadow-[0_18px_40px_rgba(225,29,72,0.28)] transition active:scale-[0.98] sm:text-lg">
-                길게 눌러 녹음 시작
+                {text.hold}
               </button>
               <p class="mt-3 text-center text-xs leading-6 text-slate-500">
                 누르고 있는 동안만 녹음하고 손을 떼면 바로 분석합니다. 모바일 기준 1초에서 4초 정도가 가장 좋습니다.
@@ -186,7 +189,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p class="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Result</p>
-              <h2 class="mt-2 text-2xl font-black text-slate-950">번역 결과</h2>
+              <h2 class="mt-2 text-2xl font-black text-slate-950">{text.result}</h2>
             </div>
             <span id="pet-usage" class="rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-700">
               사용량 -
@@ -204,10 +207,10 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
           </div>
 
           <p id="pet-status" class="mt-6 text-sm leading-7 text-slate-500">
-            아직 결과가 없습니다. 반려동물 소리를 짧게 녹음하거나 짧은 명령 텍스트를 입력해 주세요.
+            {text.noResult}
           </p>
 
-          <PetResultPanel client:load />
+          <PetResultPanel client:load locale={locale} />
         </article>
 
         <aside class="rounded-[32px] border border-white/70 bg-white/90 p-6 shadow-[0_24px_50px_rgba(66,71,105,0.08)] sm:p-8">
@@ -251,7 +254,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
       </div>
     </section>
 
-    <script is:inline define:vars={{ apiBase }}>
+    <script is:inline define:vars={{ apiBase, locale }}>
       const IS_LOCAL_HOST = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost';
       const API_BASE = apiBase || (IS_LOCAL_HOST
         ? 'http://127.0.0.1:8787'
@@ -920,6 +923,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
             }
             formData.append('animal', animal);
             formData.append('mode', currentMode);
+            formData.append('locale', locale);
             formData.append('audioMimeType', body.audioMimeType || body.audioFile.type || 'audio/webm');
             formData.append(
               'audio',
@@ -933,6 +937,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
               ...(currentOrderId ? { orderId: currentOrderId } : (token ? { token } : {})),
               animal,
               mode: currentMode,
+              locale,
               ...body
             });
           }

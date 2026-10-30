@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { readableText, type Swatch } from '@/lib/personal-color-tones';
 import type { ReportData } from './PersonalColorReport';
+import { personalColorText, type PersonalColorLocale } from '@/lib/personal-color-i18n';
 
 type Features = ReportData['features'];
 
@@ -67,7 +68,8 @@ export function DrapeStage({ drape, features, photoUrl, lipHex, blushHex, captio
 type Mode = 'best' | 'avoid' | 'compare';
 
 // comparePhotoUrl lets the sample show a second person on the right-hand (worst) stage.
-export function DrapeStudio({ report, photoUrl, comparePhotoUrl }: { report: ReportData; photoUrl?: string; comparePhotoUrl?: string }) {
+export function DrapeStudio({ report, photoUrl, comparePhotoUrl, locale = 'en' }: { report: ReportData; photoUrl?: string; comparePhotoUrl?: string; locale?: PersonalColorLocale }) {
+  const t = personalColorText(locale);
   const [mode, setMode] = useState<Mode>('compare');
   const [index, setIndex] = useState(0);
 
@@ -82,11 +84,11 @@ export function DrapeStudio({ report, photoUrl, comparePhotoUrl }: { report: Rep
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-xs font-bold tracking-[0.16em] text-sky-600">VIRTUAL DRAPING</p>
-          <h4 className="mt-1 text-lg font-black text-slate-900">가상 드레이핑 테스트</h4>
-          <p className="mt-1 text-xs text-slate-500">진단샵처럼 얼굴에 컬러를 비춰보는 시뮬레이션이에요. 실제 조명에 따라 체감은 달라질 수 있어요.</p>
+          <h4 className="mt-1 text-lg font-black text-slate-900">{t.drapeTitle}</h4>
+          <p className="mt-1 text-xs text-slate-500">{t.drapeDesc}</p>
         </div>
         <div className="inline-flex rounded-xl bg-slate-100 p-1 text-xs font-bold">
-          {([['compare', '베스트 vs 워스트'], ['best', '베스트'], ['avoid', '워스트']] as const).map(([value, label]) => (
+          {([['compare', t.compare], ['best', t.best], ['avoid', t.worst]] as const).map(([value, label]) => (
             <button
               key={value}
               type="button"
@@ -102,17 +104,17 @@ export function DrapeStudio({ report, photoUrl, comparePhotoUrl }: { report: Rep
       <div className="mt-4 grid gap-5 md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:items-start">
         {mode === 'compare' ? (
           <div className="grid grid-cols-2 gap-3">
-            <DrapeStage {...stageBase} drape={report.best[pairIndex]} caption={`BEST · ${report.best[pairIndex].name}`} tone="best" />
-            <DrapeStage {...stageBase} photoUrl={comparePhotoUrl ?? photoUrl} drape={report.avoid[pairIndex]} caption={`WORST · ${report.avoid[pairIndex].name}`} tone="avoid" />
+            <DrapeStage {...stageBase} drape={report.best[pairIndex]} caption={`${t.best.toUpperCase()} · ${report.best[pairIndex].name}`} tone="best" />
+            <DrapeStage {...stageBase} photoUrl={comparePhotoUrl ?? photoUrl} drape={report.avoid[pairIndex]} caption={`${t.worst.toUpperCase()} · ${report.avoid[pairIndex].name}`} tone="avoid" />
           </div>
         ) : (
           <div className="mx-auto w-full max-w-[320px]">
-            <DrapeStage {...stageBase} drape={list[safeIndex]} caption={`${mode === 'best' ? 'BEST' : 'WORST'} · ${list[safeIndex].name}`} tone={mode} />
+            <DrapeStage {...stageBase} drape={list[safeIndex]} caption={`${mode === 'best' ? t.best.toUpperCase() : t.worst.toUpperCase()} · ${list[safeIndex].name}`} tone={mode} />
           </div>
         )}
 
         <div>
-          <p className="text-sm font-bold text-slate-900">{mode === 'compare' ? '비교할 컬러 쌍' : '드레이프 컬러'}</p>
+          <p className="text-sm font-bold text-slate-900">{mode === 'compare' ? t.pair : t.drapeColor}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {swatches.map((item, i) => {
               const active = (mode === 'compare' ? pairIndex : safeIndex) === i;
@@ -138,12 +140,12 @@ export function DrapeStudio({ report, photoUrl, comparePhotoUrl }: { report: Rep
 
           <div className="mt-5 grid grid-cols-2 gap-2 text-xs leading-5">
             <div className="rounded-2xl bg-emerald-50 p-3 text-emerald-900">
-              <p className="font-black">베스트 컬러를 대면</p>
-              <p className="mt-1">피부가 맑아 보이고 다크서클·잡티가 덜 보이며 윤곽이 또렷해져요.</p>
+              <p className="font-black">{t.bestEffect}</p>
+              <p className="mt-1">{t.bestEffectDesc}</p>
             </div>
             <div className="rounded-2xl bg-rose-50 p-3 text-rose-900">
-              <p className="font-black">워스트 컬러를 대면</p>
-              <p className="mt-1">안색이 칙칙하거나 붉어 보이고, 얼굴보다 옷이 먼저 눈에 들어와요.</p>
+              <p className="font-black">{t.worstEffect}</p>
+              <p className="mt-1">{t.worstEffectDesc}</p>
             </div>
           </div>
           {mode !== 'compare' ? (

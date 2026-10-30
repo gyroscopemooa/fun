@@ -236,7 +236,13 @@ const normalizeAnalysis = (payload) => {
 // Reasoning-only parameters are rejected by older chat models such as gpt-4.1.
 const reasoningOptions = (model) => (/^(gpt-5|o\d)/.test(model) ? { reasoning_effort: 'low' } : {});
 
-export const analyzePersonalColor = async ({ imageDataUrl, notes = '' }) => {
+const outputLanguage = (locale) => ({
+  ko: 'natural Korean', en: 'natural English', es: 'natural Spanish', zh: 'natural Simplified Chinese',
+  ja: 'natural Japanese', de: 'natural German', fr: 'natural French', pt: 'natural Portuguese',
+  vi: 'natural Vietnamese', id: 'natural Indonesian'
+}[locale] ?? 'natural English');
+
+export const analyzePersonalColor = async ({ imageDataUrl, notes = '', locale = 'en' }) => {
   if (typeof imageDataUrl !== 'string' || !imageDataUrl.startsWith('data:image/')) {
     throw new Error('A valid image data URL is required');
   }
@@ -248,8 +254,8 @@ export const analyzePersonalColor = async ({ imageDataUrl, notes = '' }) => {
       {
         role: 'system',
         content: [
-          'You are a professional Korean personal color consultant analyzing a face photo.',
-          'Return strict JSON only. All human-readable fields must be natural Korean.',
+          'You are a professional personal color consultant analyzing a face photo.',
+          `Return strict JSON only. All human-readable fields must be ${outputLanguage(locale)}.`,
           `Classify into exactly one of the 12 tones: ${toneGuide}.`,
           'Judge in this order: 1) undertone from skin (yellow/peach vs pink/blue base, jaw and neck area), 2) value from skin lightness and hair/eye depth, 3) chroma from how clear or grayish the overall coloring looks, 4) contrast between skin, hair, brows and eyes.',
           'light = high value, low-mid contrast. true = the season center. bright = high chroma and clarity. mute = low chroma, grayish softness. deep = low value, high depth.',
@@ -258,8 +264,8 @@ export const analyzePersonalColor = async ({ imageDataUrl, notes = '' }) => {
           'Treat heavy makeup, dyed hair, filters, colored lighting and white balance shifts as unreliable; mention them in photo_check.issues and lower confidence.',
           'If evidence is mixed, keep the closest stable tone, lower confidence and add cautions instead of jumping to a distant season.',
           'feature_colors are your best estimate of natural skin (cheek), hair and iris colors as #RRGGBB hex.',
-          'best_colors: exactly 8 colors that fit tone_id, each with a Korean color name, an accurate #RRGGBB hex, and a short use (where to wear it, e.g. 상의, 포인트, 아우터).',
-          'avoid_colors: exactly 4 colors with Korean name, #RRGGBB hex and a short reason why they clash.',
+          'best_colors: exactly 8 colors that fit tone_id, each with a color name in the selected language, an accurate #RRGGBB hex, and a short use (where to wear it).',
+          'avoid_colors: exactly 4 colors with a selected-language name, #RRGGBB hex and a short reason why they clash.',
           'makeup lip_hex, blush_hex, eye_hex and hair best_hex must be realistic product-like shades as #RRGGBB.',
           'photo_check.score (0-100) rates how reliable the photo is for color analysis; lighting describes the light briefly.',
           'Give 3-5 signature_keywords, 3-5 styling_tips and 1-3 cautions. Give practical styling guidance, not medical statements.'
@@ -273,7 +279,7 @@ export const analyzePersonalColor = async ({ imageDataUrl, notes = '' }) => {
             text: [
               'Analyze this face photo for 12-tone personal color.',
               'summary: 2 sentences describing why this tone fits, citing visible skin, hair and eye traits.',
-              'undertone, chroma, contrast: short Korean terms such as 옐로 베이스, 저채도, 중간 대비.',
+              'undertone, chroma, contrast: use short terms in the selected language.',
               'Scores 0-100: warmth (0 = very cool, 100 = very warm), brightness, saturation, contrast.',
               notes ? `Additional note from user: ${notes}` : ''
             ].filter(Boolean).join(' ')

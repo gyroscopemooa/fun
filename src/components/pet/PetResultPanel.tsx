@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { PawPrint } from 'lucide-react';
 
 import { PetResultCard, type PetResult } from './PetResultCard';
+import { petText, type PetLocale } from '@/lib/pet-i18n';
 
 declare global {
   interface WindowEventMap {
@@ -10,7 +11,7 @@ declare global {
 }
 
 // Results come from the inline script in ai-pet-translator.astro.
-export function PetResultPanel() {
+export function PetResultPanel({ locale = 'en' }: { locale?: PetLocale }) {
   const [result, setResult] = useState<PetResult | null>(null);
 
   useEffect(() => {
@@ -20,20 +21,21 @@ export function PetResultPanel() {
   }, []);
 
   if (!result) {
+    const t = petText(locale);
     return (
       <div className="mt-6 flex flex-col items-center rounded-[28px] border border-dashed border-rose-200 bg-rose-50/40 px-6 py-10 text-center">
         <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-rose-500 shadow-sm">
           <PawPrint className="h-7 w-7" />
         </span>
-        <p className="mt-3 text-base font-black text-slate-900">녹음하면 여기에 속마음 말풍선이 떠요</p>
-        <p className="mt-1 max-w-sm text-sm text-slate-500">하고 싶은 말, 지금 기분, 집사를 위한 해석까지 보여드리고 저장용 카드도 만들 수 있어요. 아래 샘플에서 미리 확인해 보세요.</p>
+        <p className="mt-3 text-base font-black text-slate-900">{t.noResult}</p>
+        <p className="mt-1 max-w-sm text-sm text-slate-500">{locale === 'ko' ? '말풍선 결과, 현재 기분, 보호자를 위한 해석과 저장용 카드가 여기에 표시됩니다.' : 'Your pet’s message, current mood, guidance, and a shareable card will appear here.'}</p>
       </div>
     );
   }
 
   return (
     <div className="mt-6">
-      <PetResultCard result={result} />
+      <PetResultCard result={result} locale={locale} />
     </div>
   );
 }

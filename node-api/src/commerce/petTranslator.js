@@ -240,13 +240,15 @@ const transcribePetAudio = async ({ buffer, mimeType, filename, animal }) => {
   };
 };
 
-const generatePetTranslation = async ({ transcript, animal, mode, durationSeconds }) => {
+const languageForLocale = (locale) => ({ ko: 'Korean', en: 'English', es: 'Spanish', zh: 'Simplified Chinese', ja: 'Japanese', de: 'German', fr: 'French', pt: 'Portuguese', vi: 'Vietnamese', id: 'Indonesian' }[locale] ?? 'English');
+
+const generatePetTranslation = async ({ transcript, animal, mode, durationSeconds, locale = 'en' }) => {
   const completion = await getClient().chat.completions.create({
     model: DEFAULT_TEXT_MODEL,
     messages: [
       {
         role: 'system',
-        content: PET_TRANSLATOR_PROMPT
+        content: `${PET_TRANSLATOR_PROMPT}\nWrite every human-readable line in natural ${languageForLocale(locale)}.`
       },
       {
         role: 'user',
@@ -394,7 +396,7 @@ const synthesizePetCommandAudio = async ({ text, emotion, animal }) => {
   };
 };
 
-export const analyzePetAudio = async ({ audioInput, animal = 'dog', mode = 'analyze', textInput = '' }) => {
+export const analyzePetAudio = async ({ audioInput, animal = 'dog', mode = 'analyze', textInput = '', locale = 'en' }) => {
   if (!['dog', 'cat'].includes(animal)) {
     throw new Error('animal must be dog or cat');
   }
@@ -426,7 +428,8 @@ export const analyzePetAudio = async ({ audioInput, animal = 'dog', mode = 'anal
     transcript: transcription.transcript,
     animal,
     mode,
-    durationSeconds: transcription.durationSeconds
+    durationSeconds: transcription.durationSeconds,
+    locale
   });
 
   if (mode === 'command') {

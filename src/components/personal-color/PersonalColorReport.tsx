@@ -14,6 +14,7 @@ import {
 import { DrapeStudio } from './DrapeStudio';
 import { PersonalColorShareCard } from './PersonalColorShareCard';
 import { ShareLinkButton } from '@/components/share/ShareLinkButton';
+import { personalColorText, type PersonalColorLocale } from '@/lib/personal-color-i18n';
 
 type RawSwatch = { name?: string; hex?: string; use?: string; reason?: string };
 
@@ -105,7 +106,8 @@ const confidenceLabel: Record<string, string> = { low: '낮음', medium: '보통
 
 const gradientOf = (swatches: Swatch[]) => `linear-gradient(135deg, ${swatches.slice(0, 3).map((item) => item.hex).join(', ')})`;
 
-function MatchRing({ value }: { value: number }) {
+function MatchRing({ value, locale }: { value: number; locale?: PersonalColorLocale }) {
+  const t = personalColorText(locale);
   const r = 34;
   const c = 2 * Math.PI * r;
   return (
@@ -116,19 +118,20 @@ function MatchRing({ value }: { value: number }) {
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-xl font-black text-slate-900">{Math.round(value)}%</span>
-        <span className="text-[10px] font-semibold text-slate-600">일치도</span>
+        <span className="text-[10px] font-semibold text-slate-600">{t.match}</span>
       </div>
     </div>
   );
 }
 
-function SwatchTile({ swatch, onCopy, copied, avoid = false }: { swatch: Swatch; onCopy: (hex: string) => void; copied: boolean; avoid?: boolean }) {
+function SwatchTile({ swatch, onCopy, copied, avoid = false, locale }: { swatch: Swatch; onCopy: (hex: string) => void; copied: boolean; avoid?: boolean; locale?: PersonalColorLocale }) {
+  const t = personalColorText(locale);
   return (
     <button
       type="button"
       onClick={() => onCopy(swatch.hex)}
       className="group overflow-hidden rounded-2xl border border-slate-200 bg-white text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-      title={`${swatch.hex} 복사`}
+      title={`${swatch.hex} ${t.copied}`}
     >
       <div className="relative flex h-20 items-end justify-end p-2" style={{ background: swatch.hex }}>
         {avoid ? (
@@ -141,7 +144,7 @@ function SwatchTile({ swatch, onCopy, copied, avoid = false }: { swatch: Swatch;
           style={{ color: readableText(swatch.hex), background: 'rgba(0,0,0,0.12)' }}
         >
           {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-          {copied ? '복사됨' : 'HEX'}
+          {copied ? t.copied : 'HEX'}
         </span>
       </div>
       <div className="p-2.5">
@@ -227,9 +230,10 @@ function Dot({ swatch, label }: { swatch: Swatch; label: string }) {
   );
 }
 
-type Props = { analysis: PersonalColorAnalysis; photoUrl?: string; comparePhotoUrl?: string; sample?: boolean };
+type Props = { analysis: PersonalColorAnalysis; photoUrl?: string; comparePhotoUrl?: string; sample?: boolean; locale?: PersonalColorLocale };
 
-export function PersonalColorReport({ analysis, photoUrl, comparePhotoUrl, sample = false }: Props) {
+export function PersonalColorReport({ analysis, photoUrl, comparePhotoUrl, sample = false, locale = 'en' }: Props) {
+  const t = personalColorText(locale);
   const report = useMemo(() => toReport(analysis), [analysis]);
   const [copiedHex, setCopiedHex] = useState('');
   const [shareOpen, setShareOpen] = useState(false);
@@ -253,16 +257,16 @@ export function PersonalColorReport({ analysis, photoUrl, comparePhotoUrl, sampl
           <div className="min-w-0">
             <div className="flex flex-wrap gap-2">
               <span className="inline-flex items-center rounded-full bg-slate-900 px-3 py-1 text-xs font-bold text-white">
-                {sample ? '샘플 리포트' : 'MY PERSONAL COLOR'}
+                {sample ? t.sample : 'MY PERSONAL COLOR'}
               </span>
               {report.confidence ? (
-                <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700">신뢰도 {confidenceLabel[report.confidence] ?? report.confidence}</span>
+                <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700">{t.confidence} {confidenceLabel[report.confidence] ?? report.confidence}</span>
               ) : null}
             </div>
             <p className="mt-4 text-sm font-bold tracking-[0.2em] text-slate-600">{tone.english.toUpperCase()}</p>
             <h3 className="mt-1 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">{tone.label}</h3>
             {report.runnerUp ? (
-              <p className="mt-1 text-sm font-semibold text-slate-600">2순위 · {report.runnerUp.label}</p>
+              <p className="mt-1 text-sm font-semibold text-slate-600">{t.runnerUp} · {report.runnerUp.english}</p>
             ) : null}
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-800">{report.summary}</p>
             {report.keywords.length ? (
@@ -273,7 +277,7 @@ export function PersonalColorReport({ analysis, photoUrl, comparePhotoUrl, sampl
               </div>
             ) : null}
           </div>
-          {report.matchPercent ? <MatchRing value={report.matchPercent} /> : null}
+          {report.matchPercent ? <MatchRing value={report.matchPercent} locale={locale} /> : null}
         </div>
         <div className="relative mt-5 flex h-10 overflow-hidden rounded-2xl shadow-sm">
           {report.best.map((item) => <span key={item.hex + item.name} className="flex-1" style={{ background: item.hex }} title={item.name} />)}
@@ -285,13 +289,13 @@ export function PersonalColorReport({ analysis, photoUrl, comparePhotoUrl, sampl
             className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-slate-700"
           >
             <Download className="h-4 w-4" />
-            결과 카드 저장
+            {t.save}
           </button>
           <ShareLinkButton
             url={`/personal-color/result/${tone.id}`}
             title={`내 퍼스널컬러는 ${tone.label}`}
             text="나도 퍼스널컬러 진단해 보기"
-            label="결과 링크 공유"
+            label={t.share}
             className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-800 transition hover:bg-slate-50"
           />
           {[report.undertone, report.chroma, report.contrast].filter(Boolean).map((term) => (
@@ -302,26 +306,26 @@ export function PersonalColorReport({ analysis, photoUrl, comparePhotoUrl, sampl
 
       {shareOpen ? <PersonalColorShareCard report={report} photoUrl={photoUrl} onClose={() => setShareOpen(false)} /> : null}
 
-      <DrapeStudio report={report} photoUrl={photoUrl} comparePhotoUrl={comparePhotoUrl} />
+      <DrapeStudio report={report} photoUrl={photoUrl} comparePhotoUrl={comparePhotoUrl} locale={locale} />
 
       <section className="rounded-[24px] border border-slate-200 bg-white p-5">
         <div className="flex flex-wrap items-end justify-between gap-2">
           <div>
             <p className="text-xs font-bold tracking-[0.16em] text-emerald-600">BEST PALETTE</p>
-            <h4 className="mt-1 text-lg font-black text-slate-900">나에게 어울리는 컬러 8</h4>
+            <h4 className="mt-1 text-lg font-black text-slate-900">{t.palette}</h4>
           </div>
-          <p className="text-xs text-slate-500">칩을 누르면 HEX 코드가 복사돼요</p>
+          <p className="text-xs text-slate-500">{t.paletteHint}</p>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {report.best.map((item) => (
-            <SwatchTile key={item.hex + item.name} swatch={item} onCopy={copyHex} copied={copiedHex === item.hex} />
+            <SwatchTile key={item.hex + item.name} swatch={item} onCopy={copyHex} copied={copiedHex === item.hex} locale={locale} />
           ))}
         </div>
         <p className="mt-6 text-xs font-bold tracking-[0.16em] text-rose-600">AVOID</p>
-        <h4 className="mt-1 text-lg font-black text-slate-900">피하면 좋은 컬러</h4>
+        <h4 className="mt-1 text-lg font-black text-slate-900">{t.avoid}</h4>
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {report.avoid.map((item) => (
-            <SwatchTile key={item.hex + item.name} swatch={item} onCopy={copyHex} copied={copiedHex === item.hex} avoid />
+            <SwatchTile key={item.hex + item.name} swatch={item} onCopy={copyHex} copied={copiedHex === item.hex} avoid locale={locale} />
           ))}
         </div>
       </section>
@@ -329,7 +333,7 @@ export function PersonalColorReport({ analysis, photoUrl, comparePhotoUrl, sampl
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="rounded-[24px] border border-slate-200 bg-white p-5">
           <p className="text-xs font-bold tracking-[0.16em] text-violet-600">12 TONE MAP</p>
-          <h4 className="mt-1 text-lg font-black text-slate-900">12톤 중 내 위치</h4>
+          <h4 className="mt-1 text-lg font-black text-slate-900">{t.toneMap}</h4>
           <div className="mt-4">
             <ToneMap current={tone} runnerUp={report.runnerUp} />
           </div>
@@ -337,12 +341,12 @@ export function PersonalColorReport({ analysis, photoUrl, comparePhotoUrl, sampl
 
         <section className="rounded-[24px] border border-slate-200 bg-white p-5">
           <p className="text-xs font-bold tracking-[0.16em] text-amber-600">DIAGNOSIS</p>
-          <h4 className="mt-1 text-lg font-black text-slate-900">진단 축 분석</h4>
+          <h4 className="mt-1 text-lg font-black text-slate-900">{t.diagnosis}</h4>
           <div className="mt-4">
             <AxisBars axes={report.axes} />
           </div>
           <div className="mt-5 grid grid-cols-3 gap-2">
-            {([['피부', report.features.skin], ['헤어', report.features.hair], ['눈동자', report.features.eye]] as const).map(([label, hex]) => (
+            {([[t.skin, report.features.skin], [t.hair, report.features.hair], [t.eye, report.features.eye]] as const).map(([label, hex]) => (
               <div key={label} className="rounded-2xl border border-slate-100 bg-slate-50 p-2 text-center">
                 <span className="mx-auto block h-9 w-9 rounded-full border-2 border-white shadow" style={{ background: hex }} />
                 <p className="mt-1 text-xs font-bold text-slate-800">{label}</p>
@@ -352,7 +356,7 @@ export function PersonalColorReport({ analysis, photoUrl, comparePhotoUrl, sampl
           </div>
           {report.photoCheck ? (
             <p className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-600">
-              <strong className="text-slate-800">사진 신뢰도 {Math.round(report.photoCheck.score ?? 0)}점</strong>
+              <strong className="text-slate-800">{t.photoConfidence} {Math.round(report.photoCheck.score ?? 0)}</strong>
               {report.photoCheck.lighting ? ` · ${report.photoCheck.lighting}` : ''}
               {report.photoCheck.issues?.length ? ` · ${report.photoCheck.issues.join(', ')}` : ''}
             </p>
@@ -363,35 +367,35 @@ export function PersonalColorReport({ analysis, photoUrl, comparePhotoUrl, sampl
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="rounded-[24px] border border-rose-100 bg-rose-50/60 p-5">
           <p className="text-xs font-bold tracking-[0.16em] text-rose-600">MAKEUP</p>
-          <h4 className="mt-1 text-lg font-black text-slate-900">메이크업 컬러</h4>
+          <h4 className="mt-1 text-lg font-black text-slate-900">{t.makeup}</h4>
           <div className="mt-4 space-y-4">
-            <Dot swatch={report.lip} label="립" />
-            <Dot swatch={report.blush} label="블러셔" />
-            <Dot swatch={report.eye} label="아이" />
+            <Dot swatch={report.lip} label={t.lip} />
+            <Dot swatch={report.blush} label={t.blush} />
+            <Dot swatch={report.eye} label={t.eyeMakeup} />
           </div>
-          {report.base ? <p className="mt-4 rounded-xl bg-white px-3 py-2 text-xs leading-5 text-slate-600"><strong className="text-slate-800">베이스</strong> · {report.base}</p> : null}
+          {report.base ? <p className="mt-4 rounded-xl bg-white px-3 py-2 text-xs leading-5 text-slate-600"><strong className="text-slate-800">{t.base}</strong> · {report.base}</p> : null}
         </section>
         <section className="rounded-[24px] border border-violet-100 bg-violet-50/60 p-5">
           <p className="text-xs font-bold tracking-[0.16em] text-violet-600">HAIR</p>
-          <h4 className="mt-1 text-lg font-black text-slate-900">헤어 컬러</h4>
+          <h4 className="mt-1 text-lg font-black text-slate-900">{t.hairColor}</h4>
           <div className="mt-4 space-y-4">
-            <Dot swatch={report.hairBest} label="추천" />
-            <Dot swatch={tone.hair[1]} label="대안" />
+            <Dot swatch={report.hairBest} label={t.recommended} />
+            <Dot swatch={tone.hair[1]} label={t.alternative} />
           </div>
-          {report.hairAvoid ? <p className="mt-4 rounded-xl bg-white px-3 py-2 text-xs leading-5 text-slate-600"><strong className="text-slate-800">피할 컬러</strong> · {report.hairAvoid}</p> : null}
+          {report.hairAvoid ? <p className="mt-4 rounded-xl bg-white px-3 py-2 text-xs leading-5 text-slate-600"><strong className="text-slate-800">{t.avoidColor}</strong> · {report.hairAvoid}</p> : null}
         </section>
       </div>
 
       {report.tips.length || report.cautions.length ? (
         <div className="grid gap-4 md:grid-cols-2">
           <section className="rounded-[24px] border border-slate-200 bg-white p-5">
-            <h4 className="text-sm font-black text-slate-900">스타일링 팁</h4>
+            <h4 className="text-sm font-black text-slate-900">{t.styling}</h4>
             <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-700">
               {report.tips.map((item) => <li key={item} className="flex gap-2"><Check className="mt-1 h-4 w-4 shrink-0 text-emerald-600" />{item}</li>)}
             </ul>
           </section>
           <section className="rounded-[24px] border border-slate-200 bg-white p-5">
-            <h4 className="text-sm font-black text-slate-900">주의 포인트</h4>
+            <h4 className="text-sm font-black text-slate-900">{t.cautions}</h4>
             <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-700">
               {report.cautions.map((item) => <li key={item} className="flex gap-2"><span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />{item}</li>)}
             </ul>

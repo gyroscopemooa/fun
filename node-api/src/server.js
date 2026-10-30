@@ -504,6 +504,7 @@ const handlePetTranslator = async (req, res) => {
     const mode = typeof req.body?.mode === 'string' ? req.body.mode.trim() : 'analyze';
     const animal = typeof req.body?.animal === 'string' ? req.body.animal.trim() : 'dog';
     const textInput = typeof req.body?.text === 'string' ? req.body.text.trim() : '';
+    const locale = typeof req.body?.locale === 'string' ? req.body.locale.trim().toLowerCase().slice(0, 2) : 'en';
     const orderId = typeof req.body?.orderId === 'string' ? req.body.orderId.trim() : '';
     const audioInput = parsePetAudioPayload({
       file: req.file,
@@ -526,7 +527,8 @@ const handlePetTranslator = async (req, res) => {
       audioInput,
       mode,
       animal,
-      textInput
+      textInput,
+      locale
     });
 
     const usage = tokenState ? commitPetTranslatorUsage(tokenState) : null;
@@ -2245,6 +2247,7 @@ app.post('/ai-personal-color/analyze', upload.single('image'), async (req, res) 
 
     const orderId = typeof req.body?.orderId === 'string' ? req.body.orderId.trim() : '';
     const notes = typeof req.body?.notes === 'string' ? req.body.notes.trim() : '';
+    const locale = typeof req.body?.locale === 'string' ? req.body.locale.trim().toLowerCase().slice(0, 2) : 'en';
     const order = await ensureAiPersonalColorOrder(orderId);
     orderIdForError = order.id;
     const imageDataUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
@@ -2263,7 +2266,7 @@ app.post('/ai-personal-color/analyze', upload.single('image'), async (req, res) 
     };
     db.aiPersonalColorJobs.set(jobId, job);
 
-    const analysis = await analyzePersonalColor({ imageDataUrl, notes });
+    const analysis = await analyzePersonalColor({ imageDataUrl, notes, locale });
     job.status = 'done';
     job.completedAt = new Date().toISOString();
     job.analysis = analysis;

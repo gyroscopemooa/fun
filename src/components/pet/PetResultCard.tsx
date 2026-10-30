@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Download, Ear, Timer } from 'lucide-react';
 
 import { PetShareCard } from './PetShareCard';
+import { petText, type PetLocale } from '@/lib/pet-i18n';
 
 export type PetAnimal = 'dog' | 'cat';
 
@@ -96,9 +97,10 @@ function MoodMeter({ active }: { active: Mood }) {
   );
 }
 
-type Props = { result: PetResult; sample?: boolean };
+type Props = { result: PetResult; sample?: boolean; locale?: PetLocale };
 
-export function PetResultCard({ result, sample = false }: Props) {
+export function PetResultCard({ result, sample = false, locale = 'en' }: Props) {
+  const t = petText(locale);
   const animal = animalOf(result.animal);
   const mood = useMemo(() => moodOf(result.emotion), [result.emotion]);
   const [shareOpen, setShareOpen] = useState(false);
@@ -108,7 +110,7 @@ export function PetResultCard({ result, sample = false }: Props) {
     <div className="space-y-4">
       <section className="overflow-hidden rounded-[30px] p-5 sm:p-6" style={{ background: `linear-gradient(135deg, ${mood.soft} 0%, #ffffff 60%)` }}>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-slate-900 px-3 py-1 text-xs font-bold text-white">{sample ? '샘플 결과' : `${ANIMAL_LABEL[animal].name} 번역 결과`}</span>
+          <span className="rounded-full bg-slate-900 px-3 py-1 text-xs font-bold text-white">{sample ? (locale === 'ko' ? '샘플 결과' : 'Sample result') : `${animal === 'dog' ? t.dog : t.cat} · ${t.result}`}</span>
           {result.emotion ? (
             <span className="rounded-full px-3 py-1 text-xs font-black text-white" style={{ background: mood.color }}>
               {mood.emoji} {result.emotion}
@@ -120,14 +122,14 @@ export function PetResultCard({ result, sample = false }: Props) {
           <SpeechBubble text={text} color={mood.color} />
           <div className="mt-6 flex items-end gap-4">
             <PetAvatar animal={animal} mood={mood} />
-            <p className="pb-2 text-sm font-semibold text-slate-500">— 우리 {ANIMAL_LABEL[animal].name}의 속마음</p>
+            <p className="pb-2 text-sm font-semibold text-slate-500">— {locale === 'ko' ? `우리 ${ANIMAL_LABEL[animal].name}의 속마음` : `${animal === 'dog' ? t.dog : t.cat}'s message`}</p>
           </div>
         </div>
       </section>
 
       <section className="rounded-[26px] border border-slate-200 bg-white p-5">
         <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Mood</p>
-        <h4 className="mt-1 text-lg font-black text-slate-900">지금 기분은 <span style={{ color: mood.color }}>{mood.label}</span></h4>
+        <h4 className="mt-1 text-lg font-black text-slate-900">{locale === 'ko' ? '지금 기분은 ' : 'Current mood: '}<span style={{ color: mood.color }}>{result.emotion || mood.label}</span></h4>
         <div className="mt-4">
           <MoodMeter active={mood} />
         </div>
@@ -136,7 +138,7 @@ export function PetResultCard({ result, sample = false }: Props) {
       {result.description ? (
         <section className="rounded-[26px] border border-slate-200 bg-white p-5">
           <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-600">For You</p>
-          <h4 className="mt-1 text-lg font-black text-slate-900">집사를 위한 한 줄 해석</h4>
+          <h4 className="mt-1 text-lg font-black text-slate-900">{locale === 'ko' ? '집사를 위한 한 줄 해석' : 'A note for you'}</h4>
           <p className="mt-3 text-sm leading-7 text-slate-700">{result.description}</p>
         </section>
       ) : null}
@@ -145,15 +147,15 @@ export function PetResultCard({ result, sample = false }: Props) {
         <div className="flex items-start gap-3 rounded-[22px] bg-slate-50 p-4">
           <Ear className="mt-0.5 h-5 w-5 shrink-0 text-slate-400" />
           <div>
-            <p className="text-xs font-bold text-slate-500">들린 소리</p>
-            <p className="mt-1 text-sm leading-6 text-slate-700">{result.transcript?.trim() || '말소리 대신 울음소리 위주로 들렸어요'}</p>
+            <p className="text-xs font-bold text-slate-500">{locale === 'ko' ? '들린 소리' : 'What we heard'}</p>
+            <p className="mt-1 text-sm leading-6 text-slate-700">{result.transcript?.trim() || (locale === 'ko' ? '말소리 대신 울음소리 위주로 들렸어요' : 'Mostly pet sounds were heard rather than spoken words.')}</p>
           </div>
         </div>
         <div className="flex items-start gap-3 rounded-[22px] bg-slate-50 p-4">
           <Timer className="mt-0.5 h-5 w-5 shrink-0 text-slate-400" />
           <div>
-            <p className="text-xs font-bold text-slate-500">녹음 길이</p>
-            <p className="mt-1 text-sm leading-6 text-slate-700">{result.durationSeconds && result.durationSeconds > 0 ? `${result.durationSeconds}초` : '길이 정보 없음'}</p>
+            <p className="text-xs font-bold text-slate-500">{locale === 'ko' ? '녹음 길이' : 'Recording length'}</p>
+            <p className="mt-1 text-sm leading-6 text-slate-700">{result.durationSeconds && result.durationSeconds > 0 ? `${result.durationSeconds}${locale === 'ko' ? '초' : ' sec'}` : (locale === 'ko' ? '길이 정보 없음' : 'Length unavailable')}</p>
           </div>
         </div>
       </div>
@@ -164,7 +166,7 @@ export function PetResultCard({ result, sample = false }: Props) {
         className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white transition hover:bg-slate-700 sm:w-auto"
       >
         <Download className="h-4 w-4" />
-        {shareOpen ? '카드 닫기' : '결과 카드 저장'}
+        {shareOpen ? (locale === 'ko' ? '카드 닫기' : 'Close card') : (locale === 'ko' ? '결과 카드 저장' : 'Save result card')}
       </button>
       {shareOpen ? <PetShareCard animal={animal} mood={mood} text={text} emotion={result.emotion} description={result.description} sample={sample} /> : null}
     </div>

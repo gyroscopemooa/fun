@@ -154,7 +154,7 @@ const promoSlides = await Promise.all(
       <p class="text-xs font-bold tracking-[0.16em] text-rose-600">STEP 2</p>
       <h2 class="mt-1 text-xl font-black text-slate-900">내 퍼스널컬러 리포트</h2>
       <div class="mt-4">
-        <PersonalColorResultPanel client:load />
+        <PersonalColorResultPanel client:load locale={locale} />
       </div>
     </section>
 
@@ -172,7 +172,7 @@ const promoSlides = await Promise.all(
         </a>
       </div>
       <div class="mt-5">
-        <PersonalColorSampleShowcase client:visible leftPhotoUrl={sampleLeftUrl} rightPhotoUrl={sampleRightUrl} />
+        <PersonalColorSampleShowcase client:visible leftPhotoUrl={sampleLeftUrl} rightPhotoUrl={sampleRightUrl} locale={locale} />
       </div>
     </section>
 
@@ -192,7 +192,7 @@ const promoSlides = await Promise.all(
   <Footer />
 
 
-  <script is:inline define:vars={{ apiBase }}>
+  <script is:inline define:vars={{ apiBase, locale }}>
     const API_BASE = apiBase;
     const STORAGE_IMAGE_KEY = 'manytool.aiPersonalColor.image';
     const STORAGE_PENDING_KEY = 'manytool.aiPersonalColor.pendingCheckout';
@@ -377,6 +377,7 @@ const promoSlides = await Promise.all(
         formData.append('orderId', currentOrderId);
         const notes = notesInput instanceof HTMLInputElement ? notesInput.value.trim() : '';
         if (notes) formData.append('notes', notes);
+        formData.append('locale', locale);
 
         const response = await fetch(`${API_BASE}/ai-personal-color/analyze`, {
           method: 'POST',

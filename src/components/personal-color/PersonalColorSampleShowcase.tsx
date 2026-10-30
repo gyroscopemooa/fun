@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { TONE_MAP, type ToneId } from '@/lib/personal-color-tones';
 import { PersonalColorReport, type PersonalColorAnalysis } from './PersonalColorReport';
+import type { PersonalColorLocale } from '@/lib/personal-color-i18n';
 
 const fromTone = (id: ToneId, extra: PersonalColorAnalysis): PersonalColorAnalysis => {
   const tone = TONE_MAP[id];
@@ -92,9 +93,9 @@ const SAMPLES: { id: string; label: string; analysis: PersonalColorAnalysis }[] 
   }
 ];
 
-type ShowcaseProps = { leftPhotoUrl?: string; rightPhotoUrl?: string };
+type ShowcaseProps = { leftPhotoUrl?: string; rightPhotoUrl?: string; locale?: PersonalColorLocale };
 
-export function PersonalColorSampleShowcase({ leftPhotoUrl, rightPhotoUrl }: ShowcaseProps) {
+export function PersonalColorSampleShowcase({ leftPhotoUrl, rightPhotoUrl, locale = 'en' }: ShowcaseProps) {
   const [active, setActive] = useState(SAMPLES[0].id);
   const sample = SAMPLES.find((item) => item.id === active) ?? SAMPLES[0];
 
@@ -120,7 +121,7 @@ export function PersonalColorSampleShowcase({ leftPhotoUrl, rightPhotoUrl }: Sho
         })}
       </div>
       <div className="mt-4">
-        <PersonalColorReport key={sample.id} analysis={sample.analysis} photoUrl={leftPhotoUrl} comparePhotoUrl={rightPhotoUrl} sample />
+        <PersonalColorReport key={sample.id} analysis={sample.analysis} photoUrl={leftPhotoUrl} comparePhotoUrl={rightPhotoUrl} sample locale={locale} />
       </div>
     </div>
   );
