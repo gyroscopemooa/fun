@@ -22,7 +22,7 @@ export function getStaticPaths() {
 
 const { locale } = Astro.props;
 const copy = locales[locale as keyof typeof locales] ?? locales.en;
-const styleLinks = ['figure', 'body-profile', 'travel-background', 'snapshot', 'kakao-profile', 'instagram-photo', 'outfit-change', 'hairstyle', 'interior', 'free-style'];
+const styleLinks = ['figure', 'body-profile', 'travel-background', 'snapshot', 'instagram-photo', 'outfit-change', 'hairstyle', 'interior', 'free-style'];
 const styleLabelSets: Record<string, string[]> = {
   zh: ['AI 手办','AI 健身写真','AI 旅行背景','AI 随拍','AI 聊天头像','AI 社交照片','AI 换装','AI 发型','AI 室内设计','AI 自由风格'],
   es: ['Figura IA','Foto fitness IA','Fondo de viaje IA','Foto casual IA','Perfil social IA','Foto para Instagram IA','Cambio de ropa IA','Peinado IA','Interior IA','Estilo libre IA'],

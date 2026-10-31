@@ -89,7 +89,9 @@ type SavedDraft = {
 
 const DEFAULT_PROVIDER: Provider = 'openai';
 const ENGINE_LABEL = 'ManyTool AI';
-const MODE_ORDER: Mode[] = ['figure', 'body', 'travel', 'europe', 'proofshot', 'kakao', 'instagram', 'hanbok', 'kimono', 'outfit', 'modelcut', 'streamer', 'pethuman', 'hairstyle', 'interior', 'animation', 'free'];
+// Keep unfinished modes out of the public selector. The implementation can stay
+// in place until it is ready without exposing a half-launched entry point.
+const MODE_ORDER: Mode[] = ['figure', 'body', 'travel', 'europe', 'proofshot', 'instagram', 'hanbok', 'kimono', 'outfit', 'modelcut', 'streamer', 'pethuman', 'hairstyle', 'interior', 'animation', 'free'];
 
 const MODE_CONTENT: Record<Mode, ModeContent> = {
   figure: {
@@ -535,12 +537,22 @@ const localizedModeContent = (locale: Locale): Record<Mode, ModeContent> => {
   const base = EN_MODE_CONTENT;
   if (locale === 'ko' || locale === 'en') return locale === 'ko' ? MODE_CONTENT : base;
   const ui = LOCALIZED_UI[locale as keyof typeof LOCALIZED_UI] ?? LOCALIZED_UI.en;
-  const zhLabels: Partial<Record<Mode, string>> = { figure:'手办', body:'健身写真', travel:'旅行背景', europe:'欧洲风格', proofshot:'随拍', kakao:'聊天头像', instagram:'社交照片', hanbok:'韩服风格', kimono:'和服风格', outfit:'换装', streamer:'主播宣传', pethuman:'宠物拟人', hairstyle:'发型模拟', interior:'室内设计', animation:'动画风格', modelcut:'商品模特', free:'自由风格' };
+  const modeLabels: Record<Exclude<Locale, 'ko' | 'en'>, Partial<Record<Mode, string>>> = {
+    ja: { figure:'フィギュア', body:'ボディプロフィール', travel:'旅行背景', europe:'ヨーロッパ旅行', proofshot:'スナップ写真', kakao:'プロフィール写真', instagram:'インスタ写真', hanbok:'韓服スタイル', kimono:'着物スタイル', outfit:'着せ替え', streamer:'配信者プロモ', pethuman:'ペット擬人化', hairstyle:'髪型シミュレーター', interior:'インテリア', animation:'アニメ風', modelcut:'商品モデル', free:'自由スタイル' },
+    zh: { figure:'手办', body:'健身写真', travel:'旅行背景', europe:'欧洲风格', proofshot:'随拍', kakao:'聊天头像', instagram:'社交照片', hanbok:'韩服风格', kimono:'和服风格', outfit:'换装', streamer:'主播宣传', pethuman:'宠物拟人', hairstyle:'发型模拟', interior:'室内设计', animation:'动画风格', modelcut:'商品模特', free:'自由风格' },
+    es: { figure:'Figura', body:'Foto fitness', travel:'Fondo de viaje', europe:'Viaje europeo', proofshot:'Foto espontánea', kakao:'Foto de perfil', instagram:'Foto de Instagram', hanbok:'Estilo hanbok', kimono:'Estilo kimono', outfit:'Cambio de ropa', streamer:'Promo de streamer', pethuman:'Mascota humana', hairstyle:'Peinado', interior:'Interior', animation:'Animación', modelcut:'Modelo de producto', free:'Estilo libre' },
+    de: { figure:'Figur', body:'Fitnessfoto', travel:'Reisehintergrund', europe:'Europareise', proofshot:'Schnappschuss', kakao:'Profilbild', instagram:'Instagram-Foto', hanbok:'Hanbok-Stil', kimono:'Kimono-Stil', outfit:'Outfit wechseln', streamer:'Streamer-Promo', pethuman:'Tier als Mensch', hairstyle:'Frisur', interior:'Innendesign', animation:'Animationsstil', modelcut:'Produktmodell', free:'Freier Stil' },
+    fr: { figure:'Figurine', body:'Photo fitness', travel:'Décor de voyage', europe:'Voyage en Europe', proofshot:'Photo spontanée', kakao:'Photo de profil', instagram:'Photo Instagram', hanbok:'Style hanbok', kimono:'Style kimono', outfit:'Changer de tenue', streamer:'Promo streamer', pethuman:'Animal humanisé', hairstyle:'Coiffure', interior:'Intérieur', animation:'Animation', modelcut:'Modèle produit', free:'Style libre' },
+    pt: { figure:'Miniatura', body:'Foto fitness', travel:'Fundo de viagem', europe:'Viagem europeia', proofshot:'Foto espontânea', kakao:'Foto de perfil', instagram:'Foto do Instagram', hanbok:'Estilo hanbok', kimono:'Estilo kimono', outfit:'Trocar roupa', streamer:'Promo de streamer', pethuman:'Pet humanizado', hairstyle:'Penteado', interior:'Interiores', animation:'Animação', modelcut:'Modelo de produto', free:'Estilo livre' },
+    vi: { figure:'Mô hình', body:'Ảnh thể hình', travel:'Nền du lịch', europe:'Du lịch châu Âu', proofshot:'Ảnh tự nhiên', kakao:'Ảnh hồ sơ', instagram:'Ảnh Instagram', hanbok:'Phong cách hanbok', kimono:'Phong cách kimono', outfit:'Đổi trang phục', streamer:'Quảng bá streamer', pethuman:'Thú cưng hóa người', hairstyle:'Kiểu tóc', interior:'Nội thất', animation:'Hoạt hình', modelcut:'Người mẫu sản phẩm', free:'Phong cách tự do' },
+    id: { figure:'Figur', body:'Foto fitness', travel:'Latar perjalanan', europe:'Wisata Eropa', proofshot:'Foto candid', kakao:'Foto profil', instagram:'Foto Instagram', hanbok:'Gaya hanbok', kimono:'Gaya kimono', outfit:'Ganti pakaian', streamer:'Promo streamer', pethuman:'Hewan jadi manusia', hairstyle:'Gaya rambut', interior:'Interior', animation:'Animasi', modelcut:'Model produk', free:'Gaya bebas' }
+  };
+  const labels = modeLabels[locale as Exclude<Locale, 'ko' | 'en'>] ?? {};
   return Object.fromEntries(Object.entries(base).map(([mode, content]) => [mode, {
     ...content,
-    tabLabel: locale === 'zh' ? (zhLabels[mode as Mode] ?? content.tabLabel) : content.tabLabel,
-    title: locale === 'zh' ? `AI ${zhLabels[mode as Mode] ?? content.tabLabel}生成器` : content.title,
-    exampleTitle: locale === 'zh' ? `${zhLabels[mode as Mode] ?? content.tabLabel}示例` : content.exampleTitle,
+    tabLabel: labels[mode as Mode] ?? content.tabLabel,
+    title: locale === 'zh' ? `AI ${labels[mode as Mode] ?? content.tabLabel}生成器` : content.title,
+    exampleTitle: locale === 'zh' ? `${labels[mode as Mode] ?? content.tabLabel}示例` : content.exampleTitle,
     buttonLabel: content.buttonLabel.replace(/^Generate(?: custom style)?/, ui.generate),
     inputLabel: content.inputLabel === 'Custom prompt' ? ui.prompt : ui.prompt,
   }])) as Record<Mode, ModeContent>;

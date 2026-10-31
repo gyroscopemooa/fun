@@ -488,8 +488,10 @@ const SPECS: ModeSpec[] = [
   }
 ];
 
+const HIDDEN_MODES = new Set(['kakao']);
+
 const buildEntries = (locale: Locale): SeoEntry[] =>
-  SPECS.map((spec) => {
+  SPECS.filter((spec) => !HIDDEN_MODES.has(spec.mode)).map((spec) => {
     const copy = spec[locale];
     return {
       slug: spec.slug,
