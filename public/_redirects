@@ -8,3 +8,7 @@
 /ai-image-generator/model-cut/ /ai-model-cut/ 301
 /en/ai-image-generator/model-cut /en/ai-model-cut 301
 /en/ai-image-generator/model-cut/ /en/ai-model-cut/ 301
+/ai-image-generator/kakao-profile /ai-image-generator/ 301
+/ai-image-generator/kakao-profile/ /ai-image-generator/ 301
+/:locale/ai-image-generator/kakao-profile /:locale/ai-image-generator/ 301
+/:locale/ai-image-generator/kakao-profile/ /:locale/ai-image-generator/ 301
