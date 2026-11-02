@@ -572,5 +572,56 @@ const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.r
     <script>
       import '../scripts/file-input-enhancer';
     </script>
+    <script is:inline>
+      (function () {
+        // AI 도구는 서비스 점검 동안 실행 요청만 막고 "준비 중" 팝업을 보여준다. 페이지 자체는 그대로 노출한다.
+        var AI_PAGE = /^\/(?:[a-z]{2,3}(?:-[A-Za-z]+)?\/)?(?:ai-(?:calorie-calculator|headshot|id-photo|image-generator|manseryeok|model-cut|passport-photo|personal-color|pet-translator|photoshop)|name-premium|tools\/product-detail-studio|product-detail-studio)(?:\/|$)/;
+        var AI_ENDPOINT = /\/(?:checkout|upload|generate|analyze|recommend|refund|api\/pet|pet-access\/request-link)(?:\/|$|\?)/;
+        if (!AI_PAGE.test(location.pathname)) return;
+        var lang = (document.documentElement.lang || 'ko').slice(0, 2);
+        var copy = {
+          ko: ['AI 기능 준비 중', '현재 AI 기능을 준비하고 있습니다. 더 안정적인 상태로 곧 다시 열어드릴게요.', '확인'],
+          ja: ['AI機能は準備中です', '現在AI機能を準備しています。安定した状態で近日中に再開します。', '閉じる'],
+          en: ['AI feature coming soon', 'We are getting the AI feature ready. It will be back soon in a more stable state.', 'OK']
+        }[lang] || ['AI feature coming soon', 'We are getting the AI feature ready. It will be back soon in a more stable state.', 'OK'];
+        function showNotice() {
+          if (document.getElementById('ai-soon-modal')) return;
+          var wrap = document.createElement('div');
+          wrap.id = 'ai-soon-modal';
+          wrap.setAttribute('role', 'dialog');
+          wrap.setAttribute('aria-modal', 'true');
+          wrap.style.cssText = 'position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;background:rgba(15,23,42,.55);padding:16px';
+          var box = document.createElement('div');
+          box.style.cssText = 'max-width:380px;width:100%;background:#fff;border-radius:24px;padding:28px 24px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.25);font-family:inherit';
+          var h = document.createElement('p');
+          h.style.cssText = 'font-size:18px;font-weight:800;color:#0f172a;margin:0';
+          h.textContent = copy[0];
+          var p = document.createElement('p');
+          p.style.cssText = 'font-size:14px;line-height:1.6;color:#475569;margin:12px 0 20px';
+          p.textContent = copy[1];
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.style.cssText = 'border:0;border-radius:14px;background:#0f172a;color:#fff;font-weight:700;font-size:14px;padding:12px 28px;cursor:pointer';
+          b.textContent = copy[2];
+          function close() { wrap.remove(); }
+          b.addEventListener('click', close);
+          wrap.addEventListener('click', function (e) { if (e.target === wrap) close(); });
+          box.appendChild(h); box.appendChild(p); box.appendChild(b);
+          wrap.appendChild(box);
+          document.body.appendChild(wrap);
+          b.focus();
+        }
+        var nativeFetch = window.fetch;
+        window.fetch = function (input, init) {
+          var url = typeof input === 'string' ? input : (input && input.url) || String(input);
+          var method = String((init && init.method) || (input && input.method) || 'GET').toUpperCase();
+          if (method !== 'GET' && AI_ENDPOINT.test(url)) {
+            showNotice();
+            return Promise.reject(new DOMException('AI feature is not available yet', 'AbortError'));
+          }
+          return nativeFetch.apply(this, arguments);
+        };
+      })();
+    </script>
   </body>
 </html>
