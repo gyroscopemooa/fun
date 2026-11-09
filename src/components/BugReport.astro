@@ -1,0 +1,80 @@
+---
+import { detectLocale } from '../lib/i18n';
+const ko = detectLocale(Astro.url.pathname) === 'ko';
+const c = ko ? {
+  title: '작동하지 않나요? 버그·오류 문의', intro: '문제가 생긴 상황을 알려주세요. 현재 도구 이름과 페이지 주소가 문의에 자동으로 포함됩니다.',
+  kind: '문의 유형', options: ['작동하지 않아요', '다운로드가 안 돼요', '결과가 이상해요', '화면이 깨져요', '기타 문의'],
+  detail: '문제 내용', placeholder: '어떤 버튼을 눌렀는지, 오류 문구와 문제가 발생한 영상 링크 등을 적어주세요.',
+  privacy: '비밀번호·인증번호·결제정보 등 민감한 정보는 입력하지 마세요.', send: '메일 앱에서 문의 작성', copy: '문의 내용 복사',
+  note: '메일 앱이 열리면 내용을 확인한 뒤 직접 전송해주세요. 스크린샷은 메일에 첨부할 수 있습니다.',
+  fallback: '메일 앱이 없다면 문의 내용을 복사해 아래 주소로 보내주세요.', copied: '문의 내용을 복사했습니다. 이메일에 붙여넣어 보내주세요.',
+  failed: '복사하지 못했습니다. 작성한 내용을 직접 복사해 지원 이메일로 보내주세요.', opened: '메일 앱에서 전송을 완료해주세요. 아직 메일이 전송된 것은 아닙니다.',
+} : {
+  title: 'Not working? Report a bug', intro: 'Tell us what happened. The tool name and page address are included automatically.',
+  kind: 'Issue type', options: ['Not working', 'Download failed', 'Unexpected result', 'Display problem', 'Other question'],
+  detail: 'Describe the issue', placeholder: 'Include the steps, error message, and affected video link if relevant.',
+  privacy: 'Do not include passwords, verification codes, or payment details.', send: 'Compose in email app', copy: 'Copy report',
+  note: 'Review and send the message in your email app. You can attach screenshots there.',
+  fallback: 'No email app? Copy your report and send it to the address below.', copied: 'Report copied. Paste it into your email and send it.',
+  failed: 'Could not copy. Copy your description manually and email support.', opened: 'Complete sending in your email app. No email has been sent yet.',
+};
+---
+<details class="bug-report" data-bug-report data-locale={ko ? 'ko' : 'en'} data-copied={c.copied} data-failed={c.failed} data-opened={c.opened}>
+  <summary>{c.title}<span aria-hidden="true">＋</span></summary>
+  <form>
+    <p>{c.intro}</p>
+    <label>{c.kind}<select name="issue">{c.options.map(option => <option>{option}</option>)}</select></label>
+    <label>{c.detail}<textarea name="description" rows="4" maxlength="1200" required placeholder={c.placeholder}></textarea></label>
+    <p class="hint">{c.privacy}</p>
+    <div class="actions"><button type="submit">{c.send}</button><button type="button" data-copy>{c.copy}</button></div>
+    <p class="hint">{c.note}</p>
+    <p class="hint">{c.fallback} <a href="mailto:support@manytool.net">support@manytool.net</a></p>
+    <p role="status" aria-live="polite" data-status></p>
+  </form>
+</details>
+<style>
+  .bug-report{margin:0 auto;max-width:64rem;border:1px solid #cbd5e1;border-radius:16px;background:#f8fafc;color:#334155;font-size:14px}
+  summary{display:flex;justify-content:space-between;gap:12px;cursor:pointer;padding:18px 20px;font-weight:700;list-style:none}
+  summary::-webkit-details-marker{display:none} summary:focus-visible,button:focus-visible{outline:3px solid #0891b2;outline-offset:3px}
+  form{display:grid;gap:14px;padding:0 20px 20px}label{display:grid;gap:7px;font-weight:600}
+  select,textarea{width:100%;min-width:0;border:1px solid #cbd5e1;border-radius:10px;background:white;padding:11px;color:#0f172a;font:inherit}
+  textarea{resize:vertical}.hint{font-size:12px;line-height:1.7;color:#64748b}a{text-decoration:underline;overflow-wrap:anywhere}
+  .actions{display:flex;flex-wrap:wrap;gap:10px}button{border:1px solid #cbd5e1;border-radius:10px;padding:11px 16px;background:white;font-weight:700;cursor:pointer}
+  button[type=submit]{background:#0f172a;color:white;border-color:#0f172a}[data-status]{font-size:13px;line-height:1.6}
+</style>
+<script>
+  function setupBugReports() {
+    document.querySelectorAll<HTMLElement>('[data-bug-report]').forEach(root => {
+      if (root.dataset.bound) return;
+      root.dataset.bound = 'true';
+      const form = root.querySelector('form')!;
+      const status = root.querySelector<HTMLElement>('[data-status]')!;
+      const report = () => {
+        const fields = new FormData(form);
+        const issue = String(fields.get('issue') || '');
+        const tool = (document.querySelector('main h1')?.textContent || document.title).trim();
+        const page = location.origin + location.pathname;
+        const body = root.dataset.locale === 'ko'
+          ? `도구: ${tool}\n페이지: ${page}\n문의 유형: ${issue}\n\n문제 내용:\n${fields.get('description')}\n`
+          : `Tool: ${tool}\nPage: ${page}\nIssue: ${issue}\n\nDescription:\n${fields.get('description')}\n`;
+        return { subject: `[ManyTool] ${issue} - ${tool}`, body };
+      };
+      form.addEventListener('submit', event => {
+        event.preventDefault();
+        const {subject,body} = report();
+        window.location.href = `mailto:support@manytool.net?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        status.textContent = root.dataset.opened!;
+      });
+      root.querySelector('[data-copy]')!.addEventListener('click', async () => {
+        if (!form.reportValidity()) return;
+        const {subject,body} = report();
+        try {
+          await navigator.clipboard.writeText(`To: support@manytool.net\nSubject: ${subject}\n\n${body}`);
+          status.textContent = root.dataset.copied!;
+        } catch { status.textContent = root.dataset.failed!; }
+      });
+    });
+  }
+  setupBugReports();
+  document.addEventListener('astro:page-load', setupBugReports);
+</script>

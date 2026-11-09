@@ -1,6 +1,7 @@
 ---
 import { createTranslator, detectLocale } from '../lib/i18n';
 import { localizedHrefOrOriginal } from '../lib/locale-routes';
+import BugReport from './BugReport.astro';
 
 const pathname = Astro.url.pathname;
 const locale = detectLocale(pathname);
@@ -13,6 +14,7 @@ const c = locale === 'ko'
 ---
 
 <footer class="mt-12 border-t border-slate-200 bg-white">
+  <div class="px-4 pt-6"><BugReport /></div>
   <div class="mx-auto grid max-w-5xl gap-4 px-4 py-6 text-sm text-slate-600 md:grid-cols-2">
     <div class="space-y-1">
       <p>&copy; {new Date().getFullYear()} ManyTool. {t('footer.rights')}</p>
