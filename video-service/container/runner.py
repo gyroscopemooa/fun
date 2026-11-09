@@ -17,7 +17,7 @@ def failure_code(error):
     for code, patterns in (
         ('upstream_access', ('403', '429', 'sign in', 'login', 'captcha', 'blocked', 'not a bot')),
         ('format_unavailable', ('requested format', 'no video formats', 'unsupported external downloader')),
-        ('upstream_extract', ('unable to extract', 'failed to extract', 'empty', 'json')),
+        ('upstream_extract', ('unable to extract', 'failed to extract', 'unexpected response from webpage', 'empty', 'json')),
         ('unavailable', ('not available', 'unavailable', 'not found', 'private', 'removed')),
         ('upstream_timeout', ('timed out', 'timeout')),
         ('merge_failed', ('ffmpeg', 'ffprobe', 'postprocessing')),
@@ -86,6 +86,11 @@ def download_platform(url, directory):
         'logger':QuietLogger(),'progress_hooks':[progress],'js_runtimes':{'node':{}},
         'remote_components':set(),'proxy':'','noprogress':True,
     }
+    if urlsplit(url).hostname in ('www.tiktok.com', 'tiktok.com', 'vm.tiktok.com', 'vt.tiktok.com'):
+        options['http_headers'] = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36',
+            'Referer': 'https://www.tiktok.com/',
+        }
     with yt_dlp.YoutubeDL(options) as downloader:
         if '/clips/' in url and urlsplit(url).hostname == 'chzzk.naver.com':
             from extractors import ManyToolChzzkClipIE
