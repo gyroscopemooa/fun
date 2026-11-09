@@ -1,0 +1,40 @@
+import { chromium } from '@playwright/test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const base=process.env.ID_PHOTO_TEST_URL||'http://127.0.0.1:4339';
+const browser=await chromium.launch({channel:'msedge',headless:true});
+try {
+ const page=await browser.newPage({viewport:{width:390,height:844}});
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ let outfit,ready=true,fail=false;
+ const sample=readFileSync(new URL('../public/images/product-model/women-01-model.webp',import.meta.url));
+ await page.route('**/*',async route=>{
+  const url=new URL(route.request().url());
+  if(url.hostname==='api.manytool.net'){
+   const json=(body,status=200)=>route.fulfill({json:body,status,headers:{'Access-Control-Allow-Origin':'*'}});
+   if(route.request().method()==='OPTIONS')return route.fulfill({status:204,headers:{'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'POST, GET, OPTIONS','Access-Control-Allow-Headers':'content-type'}});
+   if(url.pathname==='/health')return json({ok:true});
+   if(url.pathname==='/config')return json({paymentMode:'mock',readiness:{idPhotoReady:ready},providerAvailability:{openai_image:ready},imageProvider:'local_sharp'});
+   if(url.pathname==='/upload')return json({photoId:'test-photo'},201);
+   if(url.pathname==='/generate'){outfit=route.request().postDataJSON().outfitType;return json({jobId:'test-job',status:'processing'},202);}
+   if(url.pathname==='/job/test-job')return json(fail?{status:'failed'}:{status:'done',candidates:[1,2,3].map(i=>({id:String(i),imageUrl:'/image.jpg'})),pipelineReport:{resolvedProvider:'openai_image'}});
+   if(url.pathname==='/image.jpg')return route.fulfill({body:sample,contentType:'image/webp'});
+   return json({});
+  }
+  if(url.origin===base||url.protocol==='data:'||url.protocol==='blob:')return route.continue();
+  return route.abort();
+ });
+ await page.goto(base+'/ai-id-photo/',{waitUntil:'domcontentloaded'});
+ assert.equal(await page.evaluate(()=>Boolean(window.manytoolAiUnavailable)),false);
+ const toggle=page.getByRole('switch',{name:'정장 입히기'});await toggle.waitFor();assert.equal(await toggle.isChecked(),false);
+ await page.locator('#file-input').setInputFiles({name:'portrait.webp',mimeType:'image/webp',buffer:sample});
+ await page.locator('#generate:enabled').waitFor({timeout:15000});
+ await page.locator('#generate').click();await page.locator('#candidate-grid button').first().waitFor({timeout:15000});assert.equal(outfit,'current');
+ await toggle.check();await page.locator('#generate').click();await page.waitForFunction(()=>document.querySelector('#generate')?.disabled===false);assert.equal(outfit,'suit');
+ assert.equal(await page.locator('#candidate-grid button').count(),3);
+ await page.screenshot({path:'tmp/id-photo-mobile.png',fullPage:true});
+ fail=true;await page.locator('#generate').click();await page.waitForFunction(()=>document.querySelector('#generate')?.disabled===false);assert.equal(await page.locator('#candidate-grid button').count(),0);
+ ready=false;await page.reload({waitUntil:'domcontentloaded'});await page.waitForTimeout(200);assert.equal(await page.locator('#generate').isDisabled(),true);
+ assert.deepEqual(errors,[]);
+ console.log('PASS: mobile ON/OFF payload, async results, failed generation without fallback, readiness and no maintenance popup');
+}finally{await browser.close();}

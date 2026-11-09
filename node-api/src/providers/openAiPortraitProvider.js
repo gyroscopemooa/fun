@@ -13,7 +13,7 @@ let client = null;
 const getClient = () => {
   const apiKey = process.env.OPENAI_API_KEY?.trim();
   if (!apiKey) throw new Error('OPENAI_API_KEY is missing');
-  client ??= new OpenAI({ apiKey });
+  client ??= new OpenAI({ apiKey, timeout: 240_000, maxRetries: 0 });
   return client;
 };
 
@@ -25,13 +25,15 @@ const IDENTITY_RULES = [
 
 const OUTFIT_RULES = {
   suit: 'Dress the person in a neat, well-fitted dark navy business suit jacket over a crisp white shirt (a simple dark tie for men, an open collar blouse for women), with natural fit and folds.',
-  current: 'Keep the person\'s current clothing, only tidying obvious wrinkles.'
+  current: 'Keep the person\'s original clothing exactly: same garment, neckline, color and pattern. Do not add a suit, jacket, shirt, blouse or tie. Only tidy obvious wrinkles.'
 };
 
 const TOOL_PROMPTS = {
   id_photo: [
     'Create a Korean ID photo (증명사진) for a resume or student card.',
     'Face the camera straight on, head level, neutral expression with mouth closed or a very slight natural smile, both eyes open.',
+    'Correct mild head yaw, pitch and roll so the face and shoulders face the camera directly. Keep the actual person\'s facial proportions and natural asymmetry; do not invent a different face.',
+    'Neatly arrange stray and flyaway hair while preserving the original hairline, hair length, color and overall hairstyle. Keep eyes and eyebrows visible.',
     'Frame head and top of shoulders, head centered horizontally, eyes about 40% from the top, some empty space above the head.',
     'Plain pure white background with no shadows or texture. Even soft studio lighting, sharp focus.',
     'Light natural retouching only: even out skin tone and remove temporary blemishes, tidy flyaway hairs.'
@@ -52,7 +54,7 @@ const TOOL_PROMPTS = {
   ]
 };
 
-const buildPrompt = (toolType, outfitType) => [
+export const buildPrompt = (toolType, outfitType) => [
   ...IDENTITY_RULES,
   ...(TOOL_PROMPTS[toolType] ?? TOOL_PROMPTS.id_photo),
   OUTFIT_RULES[outfitType] ?? OUTFIT_RULES.current,
@@ -111,8 +113,8 @@ export async function generateWithOpenAiImage({ inputPath, storageDir, jobId, to
       filePath,
       identityScore: null,
       regenerated: false,
-      // The model returns candidates in no particular order; keep a stable descending score for ranking.
-      score: 100 - index
+      // No biometric or quality assessment has been performed.
+      score: null
     });
   }
 

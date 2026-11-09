@@ -15,7 +15,7 @@ import { analyzeMealCalories } from './commerce/calorieAnalyzer.js';
 import { analyzePersonalColor } from './commerce/personalColorAnalyzer.js';
 import { analyzeSaju } from './commerce/sajuAnalyzer.js';
 import { analyzePetAudio, parsePetAudioPayload } from './commerce/petTranslator.js';
-import { generateCandidatesWithProvider, getImageProvider, getResolvedImageProvider, isExternalAiEnabled, normalizeRequestedProvider, resolveImageProvider } from './providers/providerRouter.js';
+import { generateCandidatesWithProvider, getImageProvider, getResolvedImageProvider, isIdPhotoEnabled, isExternalAiEnabled, normalizeRequestedProvider, resolveImageProvider } from './providers/providerRouter.js';
 import { getNamingDataset } from './naming/repository.js';
 import { validateNamingInput, validateRecommendInput } from './naming/validate.js';
 import { calculateFiveGrid } from './naming/fiveGrid.js';
@@ -145,7 +145,7 @@ if (process.env.CREDITS_ENABLED === 'true' || process.env.CREDITS_DB_PATH) {
     res.json = body => {
       const id = req.body?.orderId || /^\/order\/([^/]+)\/detail-page$/.exec(req.path)?.[1];
       const isGeneration = ['/generate', '/ai-calorie-calculator/analyze', '/ai-personal-color/analyze', '/ai-manseryeok/analyze', '/name-premium/analyze', '/name-premium/recommend'].includes(req.path) || /^\/order\/[^/]+\/detail-page$/.test(req.path);
-      if (req.method === 'POST' && isGeneration && id && req.creditClaimed === id) {
+      if (req.method === 'POST' && isGeneration && id && req.creditClaimed === id && !req.creditAsync) {
         const order = creditStore.order(id);
         const success = Boolean(order?.detailPageResult) || (res.statusCode < 400 && body?.analysis?.isFood !== false);
         creditStore.finish(id, success);
@@ -520,6 +520,7 @@ app.get('/config', (_req, res) => {
     },
     readiness: {
       openAiReady,
+      idPhotoReady: isIdPhotoEnabled(),
       xaiReady,
       aiImageGeneratorReady: openAiReady || xaiReady,
       aiPersonalColorReady: openAiReady,
@@ -2039,6 +2040,8 @@ app.post('/upload', upload.single('image'), async (req, res) => {
 app.post('/generate', async (req, res) => {
   const { photoId, toolType = 'id_photo', outfitType = 'current', faceHint = null, provider = null } = req.body ?? {};
   const orderId = typeof req.body?.orderId === 'string' ? req.body.orderId.trim() : '';
+  if (toolType === 'id_photo' && !isIdPhotoEnabled()) return res.status(503).json({ error: 'ID photo AI is unavailable' });
+  if (toolType === 'id_photo' && !['current', 'suit'].includes(outfitType)) return res.status(400).json({ error: 'invalid outfit' });
   if (!photoId) {
     return res.status(400).json({ error: 'photoId is required' });
   }
@@ -2078,6 +2081,16 @@ app.post('/generate', async (req, res) => {
       order = await ensureAiPhotoOrder(orderId);
       claimCreditExecution(req, order);
     }
+    if (order?.id) {
+      const active = db.jobs.get(db.orders.get(order.id)?.aiPhotoJobId);
+      if (active && active.status !== 'failed') throw Object.assign(new Error('this order has already been used'), { statusCode: 409 });
+      db.orders.set(order.id, { ...order, aiPhotoJobId: jobId });
+    }
+    if (toolType === 'id_photo') {
+      await persistJobSnapshot(job);
+      req.creditAsync = Boolean(req.creditClaimed);
+      res.status(202).json({ jobId, status: 'processing' });
+    }
     const generation = await generateCandidatesWithProvider({
       inputPath: photo.originalPath,
       storageDir: generatedDir,
@@ -2114,6 +2127,8 @@ app.post('/generate', async (req, res) => {
     }
     await persistJobSnapshot(job);
 
+    if (req.creditAsync) creditStore.finish(req.creditClaimed, true);
+    if (res.headersSent) return;
     return res.status(201).json({
       jobId,
       status: job.status,
@@ -2123,10 +2138,15 @@ app.post('/generate', async (req, res) => {
       resolvedProvider: resolveImageProvider(requestedProvider)
     });
   } catch (error) {
+    if (req.creditAsync) {
+      creditStore.finish(req.creditClaimed, false);
+      job.creditRefunded = true;
+    }
     job.status = 'failed';
     job.error = error.message;
     job.originalUrl = `/files/originals/${path.basename(photo.originalPath)}`;
     await persistJobSnapshot(job);
+    if (res.headersSent) return;
     const statusCode = Number.isFinite(error?.statusCode) ? error.statusCode : 500;
     return res.status(statusCode).json({ error: statusCode === 402 ? 'payment required' : `generate failed: ${error.message}`, jobId });
   }

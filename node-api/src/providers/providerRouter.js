@@ -5,6 +5,9 @@ import { generateWithOpenAiImage } from './openAiPortraitProvider.js';
 
 const hasOpenAiKey = () => Boolean(process.env.OPENAI_API_KEY?.trim());
 
+// Dedicated launch flag: other experimental photo tools retain their existing switch.
+export const isIdPhotoEnabled = () => process.env.ID_PHOTO_ENABLED !== 'false' && hasOpenAiKey();
+
 export function getImageProvider() {
   return process.env.IMAGE_PROVIDER ?? 'auto';
 }
@@ -55,7 +58,12 @@ async function runProvider({ provider, inputPath, storageDir, jobId, toolType, o
 
 export async function generateCandidatesWithProvider({ inputPath, storageDir, jobId, toolType, outfitType, faceHint, cacheKey, requestedProvider = null }) {
   const normalizedRequestedProvider = normalizeRequestedProvider(requestedProvider) ?? getImageProvider();
-  const resolved = resolveImageProvider(normalizedRequestedProvider);
+  const resolved = toolType === 'id_photo' && isIdPhotoEnabled()
+    ? 'openai_image' : resolveImageProvider(normalizedRequestedProvider);
+  // ID photos require generative editing; filters cannot correct pose or clothing.
+  if (toolType === 'id_photo' && (!isIdPhotoEnabled() || resolved !== 'openai_image')) {
+    throw Object.assign(new Error('증명사진 AI 서버가 준비되지 않았습니다. 잠시 후 다시 시도해주세요.'), { statusCode: 503 });
+  }
   try {
     const result = await runProvider({ provider: resolved, inputPath, storageDir, jobId, toolType, outfitType, faceHint, cacheKey });
     return {
@@ -68,6 +76,7 @@ export async function generateCandidatesWithProvider({ inputPath, storageDir, jo
       }
     };
   } catch (error) {
+    if (resolved === 'openai_image' || toolType === 'id_photo') throw error;
     if (resolved !== 'local_sharp') {
       // eslint-disable-next-line no-console
       console.warn(`[provider] ${resolved} failed, fallback to local_sharp: ${error.message}`);

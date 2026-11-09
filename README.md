@@ -20,8 +20,8 @@ npm run preview
 
 ## AI 증명사진(Node API 연동)
 
-`/ai-id-photo` 페이지는 Node API가 켜져 있으면 서버 파이프라인을 사용하고,
-연결 실패 시 브라우저 로컬 생성 모드로 자동 fallback 됩니다.
+`/ai-id-photo`는 OpenAI 이미지 편집 API로 정면·흰 배경·잔머리를 정리하고 정장 ON/OFF를 지원합니다.
+서버의 `readiness.idPhotoReady` 확인 후 결제·생성을 시작하며, 실패 시 로컬 필터 사진으로 대체하지 않습니다.
 
 ### 1) Node API 실행
 
