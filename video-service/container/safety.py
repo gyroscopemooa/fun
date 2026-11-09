@@ -54,7 +54,8 @@ def validate_url(value, platform):
             value = urlunsplit(('https','www.tiktok.com',path.rstrip('/'),'',''))
         valid |= host in ('vm.tiktok.com','vt.tiktok.com') and bool(re.fullmatch(r'/[A-Za-z0-9]+/?',path))
     elif platform in ('instagram','instagram-reels'):
-        kind = '(?:reel|reels)' if platform == 'instagram-reels' else '(?:p|reel|reels)'
+        # Instagram can display the same reel under /p/ in the browser and /reel/ when shared.
+        kind = '(?:p|reel|reels)'
         valid = host in ('www.instagram.com','instagram.com') and bool(re.fullmatch(r'/'+kind+r'/[A-Za-z0-9_-]+/?',path))
     elif platform == 'chzzk':
         valid = host == 'chzzk.naver.com' and bool(re.fullmatch(r'/video/\d+/?',path))

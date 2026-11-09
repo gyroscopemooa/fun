@@ -7,6 +7,14 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'container'))
 from safety import validate_url,public_ip,install_network_guard
 
 class SafetyTests(unittest.TestCase):
+    def test_instagram_reel_browser_and_share_links(self):
+        for platform in ('instagram', 'instagram-reels'):
+            for path in ('p', 'reel', 'reels'):
+                for query in ('', '?utm_source=ig_web_copy_link&cplk=example&srtk=example'):
+                    url=f'https://www.instagram.com/{path}/DQZKO07gGnJ/{query}'
+                    self.assertEqual(validate_url(url,platform),url)
+            for url in ('https://www.instagram.com/stories/name/123/', 'https://www.instagram.com/name/', 'https://www.instagram.com.evil.com/p/DQZKO07gGnJ/'):
+                with self.assertRaises(ValueError):validate_url(url,platform)
     def test_tiktok_desktop_tracking_parameters(self):
         canonical='https://www.tiktok.com/@s2kitty_____/video/7705713556226002197'
         self.assertEqual(validate_url(canonical+'?is_from_webapp=1&sender_device=pc&web_id=7670216931320432144','tiktok'),canonical)
