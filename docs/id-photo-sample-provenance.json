@@ -1,0 +1,50 @@
+{
+  "date": "2026-11-09",
+  "method": "generateWithOpenAiImage, same provider used by /generate; 3 candidates per input, first candidate selected; encoded only, no manual retouch",
+  "samples": [
+    {
+      "name": "man",
+      "before": "/images/id-studio/man-before.webp",
+      "after": "/images/id-studio/man-after.webp",
+      "sha256": "c749b3848a1de82eadde203e47d59a71c214658773af551778fe949c1e050129",
+      "selectedVariant": "clean",
+      "source": "user-provided with explicit API-processing and public-display consent",
+      "model": "gpt-image-2",
+      "settings": {
+        "toolType": "id_photo",
+        "outfitType": "suit",
+        "groomingMode": "neat",
+        "fullPackage": true,
+        "retouchEnabled": true,
+        "beautyOptions": {
+          "skin": true,
+          "contour": true,
+          "vitality": true,
+          "makeup": true
+        }
+      }
+    },
+    {
+      "name": "woman",
+      "before": "/images/id-studio/woman-before.webp",
+      "after": "/images/id-studio/woman-after.webp",
+      "sha256": "a726ca3a4a4f9932f210c061a024cc2f9e7824773619b2c98d8a244155e1b9ef",
+      "selectedVariant": "clean",
+      "source": "user-provided with explicit API-processing and public-display consent",
+      "model": "gpt-image-2",
+      "settings": {
+        "toolType": "id_photo",
+        "outfitType": "suit",
+        "groomingMode": "neat",
+        "fullPackage": true,
+        "retouchEnabled": true,
+        "beautyOptions": {
+          "skin": true,
+          "contour": true,
+          "vitality": true,
+          "makeup": true
+        }
+      }
+    }
+  ]
+}

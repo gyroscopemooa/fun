@@ -506,6 +506,7 @@ app.get('/config', (_req, res) => {
 
   res.json({
     idPhotoGroomingModes: GROOMING_MODES,
+    idPhotoBeautyOptions: ['skin', 'contour', 'vitality', 'makeup'],
     imageProvider: getResolvedImageProvider(),
     configuredImageProvider: getImageProvider(),
     externalAiEnabled: isExternalAiEnabled(),
@@ -2040,12 +2041,13 @@ app.post('/upload', upload.single('image'), async (req, res) => {
 });
 
 app.post('/generate', async (req, res) => {
-  const { photoId, toolType = 'id_photo', outfitType = 'current', faceHint = null, provider = null } = req.body ?? {};
+  const { photoId, toolType = 'id_photo', outfitType: requestedOutfitType = 'current', faceHint = null, provider = null } = req.body ?? {};
   let styling = {};
   if (toolType === 'id_photo') {
     try { styling = normalizeIdPhotoStyling(req.body ?? {}); }
     catch (error) { return res.status(400).json({ error: error.message }); }
   }
+  const outfitType = styling.fullPackage ? 'suit' : requestedOutfitType;
   const orderId = typeof req.body?.orderId === 'string' ? req.body.orderId.trim() : '';
   if (toolType === 'id_photo' && !isIdPhotoEnabled()) return res.status(503).json({ error: 'ID photo AI is unavailable' });
   if (toolType === 'id_photo' && !['current', 'suit'].includes(outfitType)) return res.status(400).json({ error: 'invalid outfit' });

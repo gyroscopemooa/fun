@@ -1,33 +1,11 @@
 ﻿---
+import IdPhotoShowcase from '../components/IdPhotoShowcase.astro';
+import '../styles/id-photo-studio.css';
 import Layout from '../layouts/Layout.astro';
-import AdsterraBanner from '../components/ads/AdsterraBanner.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 
 const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'https://api.manytool.net';
-
-// Illustrated sample person for the before/after explainer (no real photo needed).
-const portrait = ({ bg, tilt = 0, dx = 0, outfit, frame = false }: { bg: string; tilt?: number; dx?: number; outfit: 'casual' | 'suit'; frame?: boolean }) => `
-  <svg viewBox="0 0 120 160" xmlns="http://www.w3.org/2000/svg" class="block h-full w-full" preserveAspectRatio="xMidYMid slice">
-    ${bg}
-    <g transform="translate(${dx} 0) rotate(${tilt} 60 80)">
-      ${outfit === 'suit'
-        ? '<path d="M14 160 Q16 118 60 112 Q104 118 106 160Z" fill="#1e293b"/><path d="M48 113 L60 140 L72 113 Q60 118 48 113Z" fill="#fff"/><path d="M57 118 L63 118 L62 142 L60 146 L58 142Z" fill="#1d4ed8"/>'
-        : '<path d="M14 160 Q16 118 60 112 Q104 118 106 160Z" fill="#f59e0b"/><path d="M50 113 Q60 124 70 113" fill="none" stroke="#b45309" stroke-width="3"/>'}
-      <rect x="51" y="92" width="18" height="22" rx="7" fill="#e8b48f"/>
-      <ellipse cx="60" cy="70" rx="24" ry="29" fill="#f1c7a5"/>
-      <path d="M35 66 Q34 36 60 36 Q87 36 85 66 Q80 50 60 49 Q42 50 35 66Z" fill="#3f2a1d"/>
-      <circle cx="51" cy="72" r="2.6" fill="#1f2937"/><circle cx="69" cy="72" r="2.6" fill="#1f2937"/>
-      <path d="M53 86 Q60 90 67 86" fill="none" stroke="#b45309" stroke-width="2" stroke-linecap="round"/>
-    </g>
-    ${frame ? '<rect x="30" y="28" width="60" height="78" rx="26" fill="none" stroke="#0ea5e9" stroke-width="2" stroke-dasharray="5 4"/><line x1="60" y1="20" x2="60" y2="112" stroke="#0ea5e9" stroke-width="1" stroke-dasharray="3 3"/>' : ''}
-  </svg>`;
-
-const samples = [
-  { label: 'Before', tone: 'text-slate-500', box: 'bg-slate-50', caption: '일반 셀카', svg: portrait({ bg: '<rect width="120" height="160" fill="#c7d2fe"/><rect x="0" y="96" width="120" height="64" fill="#a5b4fc"/><circle cx="98" cy="26" r="14" fill="#fde68a"/><rect x="6" y="18" width="26" height="34" rx="3" fill="#818cf8"/>', tilt: -8, dx: 10, outfit: 'casual' }) },
-  { label: 'Step', tone: 'text-sky-700', box: 'bg-sky-50', caption: '배경 정리 + 얼굴 정렬', svg: portrait({ bg: '<rect width="120" height="160" fill="#e0f2fe"/>', outfit: 'casual', frame: true }) },
-  { label: 'After', tone: 'text-emerald-700', box: 'bg-emerald-50', caption: '증명사진 규격 결과', svg: portrait({ bg: '<rect width="120" height="160" fill="#ffffff"/>', outfit: 'suit' }) }
-];
 
 // Physical sizes in cm; the download converter in the page script renders them at 300 dpi with the same ids.
 const sizePresets = [
@@ -44,49 +22,15 @@ const sizePresets = [
   keywords="AI 증명사진, 증명사진 만들기, 온라인 증명사진, 셀카 증명사진, 3x4 증명사진, 증명사진 편집"
 >
   <Header />
-  <main class="mx-auto max-w-5xl px-4 py-8 pb-28 md:pb-8">
-    <section class="overflow-hidden rounded-[28px] border border-sky-100 p-6 sm:p-8" style="background: radial-gradient(circle at 92% 0%, rgba(56,189,248,0.28), transparent 45%), radial-gradient(circle at 0% 100%, rgba(16,185,129,0.18), transparent 45%), #ffffff">
-      <div class="grid grid-cols-[minmax(0,1fr)] gap-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
-        <div>
-          <p class="inline-flex rounded-full bg-sky-600 px-3 py-1 text-xs font-bold text-white">셀카 → 증명사진</p>
-          <h1 class="mt-3 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">AI 증명사진 생성기</h1>
-          <p class="mt-2 text-slate-600">사진 한 장으로 정면·흰 배경·단정한 머리의 증명사진 후보 3장을 만드세요. 정장 입히기는 ON/OFF로 선택할 수 있습니다.</p>
-          <div class="mt-4 flex flex-wrap gap-1.5 text-xs font-bold">
-            <span class="rounded-full bg-white px-3 py-1 text-slate-700 shadow-sm">📸 업로드·카메라</span>
-            <span class="rounded-full bg-white px-3 py-1 text-slate-700 shadow-sm">🧍 얼굴 자동 정렬</span>
-            <span class="rounded-full bg-white px-3 py-1 text-slate-700 shadow-sm">⬜ 흰 배경 정리</span>
-            <span class="rounded-full bg-white px-3 py-1 text-slate-700 shadow-sm">📐 규격·인화 시트</span>
-          </div>
-        </div>
-        <div class="mx-auto flex items-end gap-3" aria-hidden="true">
-          <div class="aspect-[3/4] w-24 -rotate-3 overflow-hidden rounded-2xl border-4 border-white shadow-lg sm:w-28" set:html={samples[0].svg} />
-          <span class="mb-10 text-2xl font-black text-sky-500">→</span>
-          <div class="aspect-[3/4] w-28 rotate-2 overflow-hidden rounded-2xl border-4 border-white shadow-xl ring-2 ring-emerald-300 sm:w-32" set:html={samples[2].svg} />
-        </div>
-      </div>
-      <div class="mt-5 grid gap-3 text-sm sm:grid-cols-3">
-        <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
-          <p class="font-bold text-slate-900">기본 상품</p>
-          <p class="mt-1 text-slate-600">$9.90 / 후보 3장 / 최종 1장 다운로드</p>
-        </div>
-        <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
-          <p class="font-bold text-slate-900">추가 생성</p>
-          <p class="mt-1 text-slate-600">+2($3.90) / +3($4.90) / +7($5.90)</p>
-        </div>
-        <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
-          <p class="font-bold text-slate-900">의상 옵션</p>
-          <p class="mt-1 text-slate-600">정장 ON/OFF · 추가 옵션 비용 없음</p>
-        </div>
-      </div>
-    </section>
-    <AdsterraBanner placement="top" />
-
-    <section class="mt-6 grid gap-4 lg:grid-cols-2">
-      <article id="candidate-section" class="rounded-2xl border border-slate-200 bg-white p-5">
-        <h2 class="text-xl font-bold text-slate-900">1) 사진 입력</h2>
+  <main class="portrait-studio">
+    <IdPhotoShowcase />
+    <div class="studio-workspace-heading"><h2>나에게 맞게, 한 번 더 섬세하게.</h2><p>01 사진 업로드　→　02 옵션 선택　→　03 결과 다운로드</p></div>
+    <section class="studio-workspace">
+      <article id="candidate-section" class="studio-input-card">
+        <h2 class="text-xl font-bold text-slate-900"><span class="studio-step">01 / YOUR PHOTO</span>내 사진 & 스타일</h2>
         <div class="mt-3 flex flex-wrap gap-2">
-          <label class="cursor-pointer rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white">
-            사진 업로드
+          <label id="upload-drop" class="studio-upload-trigger">
+            <span class="studio-upload-icon">↥</span><strong>사진을 선택하거나 여기로 놓아주세요</strong><small>JPG · PNG · WebP · 얼굴이 잘 보이는 사진</small>
             <input id="file-input" type="file" accept="image/*" class="hidden" />
           </label>
           <button id="camera-start" class="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">
@@ -147,10 +91,11 @@ const sizePresets = [
           </div>
         </div>
 
+        <label class="studio-package" for="full-package"><span><strong>✦ 풀패키지</strong><small>정장 + 머리 단정 + 피부·얼굴선·생기·메이크업<br />한 번에 켜고, 원하는 부분은 다시 조절하세요.</small></span><input id="full-package" type="checkbox" role="switch" aria-label="풀패키지" class="studio-switch" /></label>
         <div class="mt-4">
           <label class="flex cursor-pointer items-center justify-between rounded-xl border border-sky-200 bg-sky-50 p-4" for="outfit">
             <span><span class="block text-sm font-bold text-slate-900">정장 입히기 ON/OFF</span><span class="mt-1 block text-xs text-slate-600">ON: 자연스러운 정장으로 변경 · OFF: 원래 옷 유지</span></span>
-            <input id="outfit" type="checkbox" role="switch" aria-label="정장 입히기" class="h-6 w-6 accent-sky-600" />
+            <input id="outfit" type="checkbox" role="switch" aria-label="정장 입히기" class="studio-switch" />
           </label>
         </div>
 
@@ -173,6 +118,18 @@ const sizePresets = [
           <p class="mt-3 text-xs leading-5 text-slate-500">정장 ON/OFF와 따로 선택할 수 있습니다. 얼굴과 헤어라인·머리 길이·색은 유지하도록 요청합니다. 여권 스타일은 촬영 구도와 머리 정리용 프리셋이며, 공식 여권사진 적합 판정이 아닙니다.</p>
         </fieldset>
 
+        <fieldset class="mt-4 rounded-xl border p-4">
+          <legend class="px-1 font-bold">자연스러운 뽀샵</legend>
+          <label class="studio-retouch-heading" for="retouch-enabled"><span><strong>뽀샵 ON / OFF</strong><span class="block mt-1 text-xs text-slate-500">OFF는 피부·얼굴선·색조를 원래대로 유지</span></span><input id="retouch-enabled" type="checkbox" role="switch" aria-label="뽀샵" class="studio-switch" /></label>
+          <div id="beauty-options" class="studio-beauty-grid" data-disabled="true">
+            <label><input id="beauty-skin" type="checkbox" checked />피부 정돈</label>
+            <label><input id="beauty-contour" type="checkbox" />얼굴선·윤곽</label>
+            <label><input id="beauty-vitality" type="checkbox" checked />혈색·생기</label>
+            <label><input id="beauty-makeup" type="checkbox" />내추럴 메이크업</label>
+          </div>
+          <p id="beauty-note" class="studio-retouch-note" aria-live="polite">본인 인상을 유지하는 자연스러운 보정을 요청합니다. 여권 스타일에서는 미용 보정이 자동으로 꺼집니다.</p>
+        </fieldset>
+
         <div class="mt-4" data-dev-only>
           <label class="text-sm font-semibold text-slate-700" for="provider-select">AI 처리 엔진</label>
           <select id="provider-select" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
@@ -192,60 +149,14 @@ const sizePresets = [
         <div id="generate-ready" class="mt-3 hidden rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-900"></div>
         <div id="assessment-score" class="mt-3 hidden rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-800"></div>
 
-        <section class="mt-4 rounded-2xl border border-sky-100 bg-[linear-gradient(135deg,#eff6ff_0%,#f8fafc_55%,#fefce8_100%)] p-4 text-sm text-slate-700">
-          <p class="font-bold text-slate-900">정면 정렬 · 흰 배경 · 단정한 머리 · 정장 선택</p>
-          <p class="mt-1">AI가 얼굴 특징을 유지하며 고개와 어깨 각도, 배경, 잔머리를 정리합니다. 측면이 심하거나 얼굴이 가려진 사진은 정면 사진으로 다시 촬영해주세요. 생성에는 몇 분이 걸릴 수 있습니다.</p>
-          <p class="mt-2 text-xs text-slate-500">이력서·프로필용 AI 편집 사진입니다. 실제 얼굴과 결과를 비교하고, 신분증·여권 제출 전에는 제출처의 사진 기준을 확인해주세요.</p>
-          <ul class="mt-2 list-disc space-y-1 pl-5">
-            <li>모바일/PC 업로드 + 카메라 촬영 지원</li>
-            <li>정장 ON/OFF 선택 · OFF는 원래 옷 유지</li>
-            <li>후보 3장 비교 후 1장씩 다운로드</li>
-          </ul>
-        </section>
-
-        <section class="mt-4 rounded-xl border border-rose-100 bg-rose-50 p-4">
-          <h3 class="text-sm font-bold text-slate-900">이런 사진도 먼저 시도해보세요</h3>
-          <div class="mt-2 flex flex-wrap gap-2 text-xs font-semibold">
-            <span class="rounded-full bg-white px-3 py-1 text-slate-700">정면 셀카</span>
-            <span class="rounded-full bg-white px-3 py-1 text-slate-700">전신 사진</span>
-            <span class="rounded-full bg-white px-3 py-1 text-slate-700">저해상도 사진</span>
-            <span class="rounded-full bg-white px-3 py-1 text-slate-700">스크린샷</span>
-          </div>
-          <p class="mt-2 text-xs text-slate-600">얼굴이 너무 가려졌거나 옆얼굴이면 품질이 떨어질 수 있습니다. 정면에 가깝고 얼굴이 또렷할수록 더 예쁘게 나옵니다.</p>
-        </section>
-
-        <section class="mt-4 rounded-lg border border-slate-200 bg-white p-4">
-          <h3 class="text-base font-bold text-slate-900">셀카가 증명사진으로 바뀌는 방식</h3>
-          <p class="mt-1 text-xs text-slate-600">아래 예시는 홍보용 샘플 일러스트입니다. 실제 결과는 원본 상태에 따라 달라질 수 있습니다.</p>
-          <div class="mt-3 grid grid-cols-3 gap-2 sm:gap-3">
-            {samples.map((sample, i) => (
-              <article class={`relative rounded-lg border border-slate-200 p-2 sm:p-3 ${sample.box}`}>
-                <p class={`text-[11px] font-semibold ${sample.tone}`}>{sample.label}</p>
-                <div class="mt-2 aspect-[3/4] overflow-hidden rounded-md border border-black/5 bg-white shadow-sm" set:html={sample.svg} />
-                <p class="mt-2 text-[11px] text-slate-600">{sample.caption}</p>
-                {i < samples.length - 1 ? <span class="absolute -right-2.5 top-1/2 z-10 hidden h-5 w-5 items-center justify-center rounded-full bg-white text-[11px] font-black text-sky-600 shadow sm:flex">→</span> : null}
-              </article>
-            ))}
-          </div>
-          <ol class="mt-3 list-decimal space-y-1 pl-5 text-xs text-slate-700">
-            <li>정면 얼굴 자동 감지</li>
-            <li>흰 배경/규격 비율 자동 적용</li>
-            <li>밝기/톤 미세 보정 후보 3장 생성</li>
-          </ol>
-        </section>
+        <details class="studio-help"><summary>더 좋은 결과를 위한 촬영 팁</summary><p>눈과 얼굴이 또렷하게 보이는 사진이 좋습니다. 가려진 얼굴은 AI가 재구성하므로 결과에서 본인 모습이 잘 유지됐는지 확인해주세요. 생성에는 몇 분이 걸릴 수 있습니다.</p></details>
       </article>
 
-      <article class="rounded-2xl border border-slate-200 bg-white p-5">
-        <h2 class="text-xl font-bold text-slate-900">2) 후보 선택</h2>
+      <article class="studio-results-card">
+        <h2 class="text-xl font-bold text-slate-900"><span class="studio-step">02 / YOUR PORTRAITS</span>마음에 드는 한 장을 골라보세요</h2>
         <p class="mt-2 text-sm text-slate-600">후보 중 1장을 선택하면 다운로드가 활성화됩니다. 생성 후 바로 비교해서 고르면 됩니다.</p>
         <div id="candidate-grid" class="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          <div class="col-span-full flex flex-col items-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center">
-            <div class="flex gap-2" aria-hidden="true">
-              {[0, 1, 2].map((n) => <span class={`block aspect-[3/4] w-[3.75rem] overflow-hidden rounded-xl border-2 border-white bg-white shadow-sm ${n === 1 ? '-translate-y-1.5 ring-2 ring-emerald-200' : 'opacity-60'}`} set:html={samples[2].svg} />)}
-            </div>
-            <p class="mt-3 text-sm font-bold text-slate-700">생성 결과가 여기에 표시됩니다.</p>
-            <p class="mt-1 text-xs text-slate-500">후보 3장을 나란히 비교하고 마음에 드는 1장을 골라요.</p>
-          </div>
+          <div class="studio-result-empty"><img src="/images/id-studio/woman-after.webp" width="110" height="147" alt="실제 생성 샘플, 내 사진 결과가 아닙니다" loading="lazy" /><span class="studio-sample-label">SAMPLE PREVIEW</span><p><strong>내 사진의 결과가 여기에 나타나요.</strong></p><p>옵션을 고르고 생성하면 후보 3장을 비교할 수 있어요.</p></div>
         </div>
         <div class="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3">
           <div class="flex items-center justify-between gap-2">
@@ -270,7 +181,7 @@ const sizePresets = [
             <input id="print-sheet" type="checkbox" class="mt-0.5 h-4 w-4 accent-sky-600" />
             <span><strong>4×6 인화용 시트로 받기</strong> · 선택한 규격을 여러 장 배치해 사진관·편의점 인화기로 한 번에 뽑을 수 있어요.</span>
           </label>
-          <p class="mt-1 text-[11px] text-slate-400">여권사진은 얼굴 크기 규정이 엄격하니 <a href="/online-passport-photo" class="underline">여권사진 전용 페이지</a>를 권장해요.</p>
+          <p class="mt-1 text-[11px] text-slate-400">이력서·프로필용 AI 편집 사진입니다. 신분증·여권 제출 전에는 제출처의 사진 기준을 확인해주세요.</p>
         </div>
         <button id="download-selected" class="mt-4 w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white shadow-[0_10px_30px_rgba(5,150,105,0.28)] transition hover:-translate-y-0.5 hover:bg-emerald-500 active:translate-y-0 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none" disabled>
           선택한 1장 다운로드
@@ -301,8 +212,9 @@ const sizePresets = [
       </article>
     </section>
 
-    <section class="mt-8 rounded-2xl border border-slate-200 bg-white p-5">
-      <h2 class="text-2xl font-black tracking-tight text-slate-900">Before / After 비교</h2>
+    <IdPhotoShowcase variant="gallery" />
+    <section id="personal-comparison" class="hidden mt-8 rounded-2xl border border-slate-200 bg-white p-5">
+      <h2 class="text-2xl font-black tracking-tight text-slate-900">내 사진 전후 비교</h2>
       <p class="mt-2 text-sm text-slate-600">슬라이더로 원본과 생성 결과 차이를 확인하세요.</p>
       <div class="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-3">
         <div class="relative h-72 overflow-hidden rounded-lg bg-slate-100">
@@ -317,73 +229,12 @@ const sizePresets = [
       </div>
     </section>
 
-    <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-5">
-      <h2 class="text-xl font-bold text-slate-900">증명사진 규격 한눈에 보기</h2>
-      <p class="mt-1 text-sm text-slate-600">실제 크기 비율로 그렸어요. 다운로드할 때 원하는 규격을 고르면 300dpi 인화 해상도로 맞춰 드려요.</p>
-      <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {sizePresets.map((preset) => (
-          <div class="flex flex-col items-center rounded-2xl bg-slate-50 p-3 text-center">
-            <div class="flex h-32 items-end">
-              <div class="overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm" style={`width:${preset.w * 18}px;height:${preset.h * 18}px`} set:html={samples[2].svg} />
-            </div>
-            <p class="mt-2 text-sm font-black text-slate-900">{preset.label} <span class="text-slate-400">{preset.size}</span></p>
-            <p class="text-xs text-slate-500">{preset.use}</p>
-          </div>
-        ))}
-      </div>
-    </section>
-
-    <section class="mt-6 grid gap-4 lg:grid-cols-2">
-      <article class="rounded-2xl border border-slate-200 bg-white p-5">
-        <h2 class="text-xl font-bold text-slate-900">처리 단계</h2>
-        <ol class="mt-3 list-decimal space-y-1 pl-5 text-sm text-slate-700">
-          <li>사진 업로드 또는 카메라 촬영</li>
-          <li>얼굴 위치/각도 분석</li>
-          <li>배경 정리 + 3x4 규격 정렬</li>
-          <li>자연 보정 후보 3장 생성</li>
-          <li>1장 선택 후 다운로드</li>
-        </ol>
-      </article>
-
-      <article class="rounded-2xl border border-slate-200 bg-white p-5">
-        <h2 class="text-xl font-bold text-slate-900">촬영 가이드</h2>
-        <ul class="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-700">
-          <li>정면 얼굴, 수평 맞춤</li>
-          <li>얼굴 중앙 배치</li>
-          <li>밝은 조명 환경 권장</li>
-          <li>모자/마스크/선글라스 제거</li>
-          <li>얼굴선을 가리는 머리카락 최소화</li>
-        </ul>
-      </article>
-    </section>
-
-    <AdsterraBanner placement="bottom" />
-    <section class="mt-6 grid gap-4 lg:grid-cols-2">
-      <article class="rounded-2xl border border-slate-200 bg-white p-5">
-        <h2 class="text-xl font-bold text-slate-900">가격 안내</h2>
-        <div class="mt-3 space-y-2 text-sm text-slate-700">
-          <p><span class="font-bold text-slate-900">기본:</span> $9.90 (후보 3장 / 최종 1장)</p>
-          <p><span class="font-bold text-slate-900">추가:</span> +2장 $3.90 / +3장 $4.90 / +7장 $5.90</p>
-          <p><span class="font-bold text-slate-900">다운로드:</span> 추가 1장마다 기본 결제가 한 번 더 필요합니다.</p>
-          <p><span class="font-bold text-slate-900">의상:</span> 정장 ON/OFF · 추가 옵션 비용 없음</p>
-        </div>
-      </article>
-
-      <article class="rounded-2xl border border-slate-200 bg-white p-5">
-        <h2 class="text-xl font-bold text-slate-900">FAQ</h2>
-        <div class="mt-3 space-y-2 text-sm text-slate-700">
-          <p><span class="font-semibold text-slate-900">Q.</span> 모바일에서도 가능한가요? <span class="font-semibold text-slate-900">A.</span> 네, 업로드/촬영 모두 지원합니다.</p>
-          <p><span class="font-semibold text-slate-900">Q.</span> 여권사진도 만들 수 있나요? <span class="font-semibold text-slate-900">A.</span> 아래 페이지에서 바로 이동할 수 있습니다.</p>
-        </div>
-        <div class="mt-3 grid gap-2 text-sm font-semibold sm:grid-cols-2">
-          <a href="/web-id-photo" class="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-sky-700">웹 증명사진</a>
-          <a href="/free-id-photo" class="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-sky-700">무료 증명사진</a>
-          <a href="/online-passport-photo" class="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-sky-700">온라인 여권사진</a>
-          <a href="/free-passport-photo" class="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-sky-700">무료 여권사진</a>
-          <a href="/ai-headshot" class="rounded-md border border-sky-100 bg-sky-50 px-3 py-2 text-sky-700">AI 프로필사진</a>
-        </div>
-      </article>
-    </section>
+    <section class="studio-faq"><div><p class="studio-eyebrow">GOOD TO KNOW</p><h2>시작 전에 궁금한 것들</h2></div><div>
+      <details><summary>풀패키지는 무엇이 달라지나요?</summary><p>정장, 단정한 머리, 피부 정돈, 얼굴선, 생기, 내추럴 메이크업을 한 번에 켭니다. 추가 옵션 비용은 없으며, 끄면 이전 설정으로 돌아갑니다. 개별 항목을 바꾸면 직접 설정으로 전환됩니다.</p></details>
+      <details><summary>보정 없이 원래 모습으로 만들 수 있나요?</summary><p>뽀샵을 OFF로 두면 피부·얼굴선·색조를 원래대로 유지하도록 요청합니다. 정장과 머리 정리는 별도로 선택할 수 있습니다. AI가 재구성한 결과이므로 실제 얼굴과 비교해 선택해주세요.</p></details>
+      <details><summary>여권이나 신분증에 제출할 수 있나요?</summary><p>여권 스타일은 정면·머리·표정을 정리하는 프리셋이며 공식 적합 판정이 아닙니다. 이 모드에서는 미용 보정이 꺼집니다. 제출 전 해당 기관의 AI 편집 사진 기준과 얼굴 크기 규정을 확인해주세요.</p></details>
+      <details><summary>가격과 다운로드는 어떻게 되나요?</summary><p>기본 $9.90에 후보 3장을 생성하고 최종 1장을 다운로드합니다. 반명함·신분증·명함판·정사각 규격 또는 4×6 인화 시트를 선택할 수 있습니다. 최종 결제 금액은 결제 화면에서 확인해주세요.</p></details>
+    </div></section>
   </main>
   <div id="mobile-download-bar" class="fixed inset-x-0 bottom-0 z-40 hidden border-t border-slate-200 bg-white/95 p-4 shadow-[0_-12px_28px_rgba(15,23,42,0.16)] backdrop-blur md:hidden">
     <div class="mx-auto flex max-w-5xl items-center gap-3">
@@ -400,6 +251,16 @@ const sizePresets = [
 
   <script define:vars={{ apiBase, isDevServer: import.meta.env.DEV }} is:inline>
     const fileInput = document.getElementById('file-input');
+    const uploadDrop = document.getElementById('upload-drop');
+    uploadDrop?.addEventListener('dragover', (event) => { event.preventDefault(); uploadDrop.classList.add('is-dragging'); });
+    uploadDrop?.addEventListener('dragleave', () => uploadDrop.classList.remove('is-dragging'));
+    uploadDrop?.addEventListener('drop', (event) => {
+      event.preventDefault(); uploadDrop.classList.remove('is-dragging');
+      if (fileInput instanceof HTMLInputElement && event.dataTransfer?.files?.length) {
+        fileInput.files = event.dataTransfer.files;
+        fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    });
     const cameraStartBtn = document.getElementById('camera-start');
     const cameraCaptureBtn = document.getElementById('camera-capture');
     const cameraMirrorFixEl = document.getElementById('camera-mirror-fix');
@@ -423,6 +284,12 @@ const sizePresets = [
     const readyToGenerateEl = document.getElementById('generate-ready');
     const assessmentScoreEl = document.getElementById('assessment-score');
     const outfitEl = document.getElementById('outfit');
+    const fullPackageEl = document.getElementById('full-package');
+    const retouchEl = document.getElementById('retouch-enabled');
+    const beautyPanel = document.getElementById('beauty-options');
+    const beautyNote = document.getElementById('beauty-note');
+    const beautyInputs = Object.fromEntries(['skin', 'contour', 'vitality', 'makeup'].map(key => [key, document.getElementById(`beauty-${key}`)]));
+    let packageSnapshot = null;
     const groomingEl = document.getElementById('grooming-mode');
     const groomingHelp = document.getElementById('grooming-help');
     const hairCustomOptions = document.getElementById('hair-custom-options');
@@ -440,6 +307,9 @@ const sizePresets = [
     };
     const getStylingOptions = () => ({
       groomingMode: groomingEl instanceof HTMLSelectElement ? groomingEl.value : 'natural',
+      fullPackage: fullPackageEl instanceof HTMLInputElement && fullPackageEl.checked,
+      retouchEnabled: retouchEl instanceof HTMLInputElement && retouchEl.checked,
+      beautyOptions: Object.fromEntries(Object.entries(beautyInputs).map(([key, el]) => [key, el instanceof HTMLInputElement && el.checked])),
       hairOptions: Object.fromEntries(Object.entries(hairInputs).map(([key, el]) => [key, el instanceof HTMLInputElement && el.checked]))
     });
     const updateGroomingControls = () => {
@@ -448,6 +318,25 @@ const sizePresets = [
       hairCustomOptions?.classList.toggle('grid', mode === 'custom');
       if (groomingHelp) groomingHelp.textContent = groomingDescriptions[mode] ?? groomingDescriptions.natural;
       Object.values(hairInputs).forEach((el) => { if (el instanceof HTMLInputElement) el.disabled = mode !== 'custom'; });
+    };
+
+    const updateBeautyControls = () => {
+      const passport = groomingEl?.value === 'passport';
+      if (passport) { retouchEl.checked = false; fullPackageEl.checked = false; packageSnapshot = null; }
+      retouchEl.disabled = passport;
+      const disabled = passport || !retouchEl.checked;
+      beautyPanel.dataset.disabled = String(disabled);
+      Object.values(beautyInputs).forEach(el => { el.disabled = disabled; });
+      beautyNote.textContent = passport ? '여권 스타일에서는 피부·얼굴선·색조·메이크업 보정을 사용하지 않습니다.' : 'ON에서는 체크한 부분만 자연스럽게 보정합니다. OFF는 원래 피부·얼굴선·색조를 유지합니다.';
+    };
+    const restoreStyleControls = (style) => {
+      if (!style || typeof style !== 'object') return;
+      if (Object.hasOwn(groomingDescriptions, style.groomingMode ?? '')) groomingEl.value = style.groomingMode;
+      if (typeof style.outfit === 'boolean') outfitEl.checked = style.outfit;
+      if (typeof style.retouchEnabled === 'boolean') retouchEl.checked = style.retouchEnabled;
+      fullPackageEl.checked = style.fullPackage === true;
+      for (const [key, el] of Object.entries(beautyInputs)) if (typeof style.beautyOptions?.[key] === 'boolean') el.checked = style.beautyOptions[key];
+      for (const [key, el] of Object.entries(hairInputs)) if (typeof style.hairOptions?.[key] === 'boolean') el.checked = style.hairOptions[key];
     };
 
     const providerSelectEl = document.getElementById('provider-select');
@@ -1018,6 +907,7 @@ const sizePresets = [
           latestJobId,
           savedAt: Date.now(),
           styling: getStylingOptions(),
+          packageSnapshot,
           outfit: outfitEl instanceof HTMLInputElement && outfitEl.checked ? 'suit' : 'current',
           provider: getSelectedProvider()
         };
@@ -1388,6 +1278,7 @@ const sizePresets = [
     };
 
     const renderCandidates = () => {
+      document.getElementById('personal-comparison')?.classList.toggle('hidden', candidates.length === 0);
       if (!(gridEl instanceof HTMLElement)) return;
       gridEl.innerHTML = '';
       candidates.forEach((item, idx) => {
@@ -1408,7 +1299,7 @@ const sizePresets = [
             <p class="text-sm font-bold text-slate-800">후보 ${idx + 1}</p>
             <span class="text-xs font-semibold ${item.selected ? 'text-emerald-600' : 'text-slate-400'}">${item.selected ? '선택됨' : '탭해서 선택'}</span>
           </div>
-          <div class="mt-2 rounded-xl bg-slate-50 px-3 py-2 text-[11px] leading-5 text-slate-600">
+          <div class="${isDevHost ? '' : 'hidden'} mt-2 rounded-xl bg-slate-50 px-3 py-2 text-[11px] leading-5 text-slate-600">
             <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
               <span><strong class="text-slate-900">점수</strong> ${typeof item.score === 'number' ? item.score.toFixed(1) : 'n/a'}</span>
               <span><strong class="text-slate-900">동일성</strong> ${typeof item.identityScore === 'number' ? item.identityScore.toFixed(1) : 'n/a'}</span>
@@ -1454,7 +1345,10 @@ const sizePresets = [
             if (el instanceof HTMLInputElement && typeof parsed.styling?.hairOptions?.[key] === 'boolean') el.checked = parsed.styling.hairOptions[key];
           });
         }
+        restoreStyleControls(parsed.styling);
+        packageSnapshot = parsed.packageSnapshot && typeof parsed.packageSnapshot === 'object' ? parsed.packageSnapshot : null;
         updateGroomingControls();
+        updateBeautyControls();
         if (providerSelectEl instanceof HTMLSelectElement && typeof parsed.provider === 'string') {
           providerSelectEl.value = parsed.provider;
           updateProviderHelp();
@@ -1944,10 +1838,28 @@ const sizePresets = [
     loadApiStatus();
     restorePageState();
     updateGroomingControls();
-    [groomingEl, ...Object.values(hairInputs), outfitEl].forEach((el) => el?.addEventListener('change', () => {
+    updateBeautyControls();
+    [groomingEl, ...Object.values(hairInputs), outfitEl, retouchEl, ...Object.values(beautyInputs)].forEach((el) => el?.addEventListener('change', () => {
+      if (fullPackageEl.checked) { fullPackageEl.checked = false; packageSnapshot = null; }
       updateGroomingControls();
+      updateBeautyControls();
       savePageState();
     }));
+    fullPackageEl.addEventListener('change', () => {
+      if (fullPackageEl.checked) {
+        packageSnapshot = { ...getStylingOptions(), fullPackage: false, outfit: outfitEl.checked };
+        outfitEl.checked = true;
+        groomingEl.value = 'neat';
+        retouchEl.checked = true;
+        Object.values(beautyInputs).forEach(el => { el.checked = true; });
+      } else if (packageSnapshot) {
+        restoreStyleControls(packageSnapshot);
+        packageSnapshot = null;
+      }
+      updateGroomingControls();
+      updateBeautyControls();
+      savePageState();
+    });
     verifyBaseOrder();
 
     if (fileInput instanceof HTMLInputElement) {
