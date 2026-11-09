@@ -1,0 +1,28 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from './Header.astro';
+import Footer from './Footer.astro';
+import DocumentWorkshop from './DocumentWorkshop';
+interface Props { mode: 'photo' | 'voice' | 'translate' }
+const { mode } = Astro.props;
+const content = {
+  photo: ['사진으로 문서 만들기', '사진 속 한글·영문을 편집 가능한 글로 가져오고 TXT·Word 문서로 저장하세요.'],
+  voice: ['말해서 문서 만들기', '마이크로 말하거나 녹음 파일을 올려 글로 바꾸세요. 내용을 다듬어 TXT·Word 문서로 저장할 수 있습니다.'],
+  translate: ['글·음성 번역', '한국어와 영어 사이의 짧은 글·TXT 문서를 번역하세요. 음성으로 원문을 입력하고 번역문을 문서로 저장할 수 있습니다.'],
+}[mode];
+---
+<Layout title={`${content[0]} | 무료 문서 도구 | ManyTool`} description={content[1]}>
+  <Header />
+  <main class="mx-auto max-w-6xl px-4 py-10">
+    <a href="/tools" class="text-sm font-bold text-teal-800">← 온라인 도구 모음</a>
+    <section class="mt-5 rounded-[28px] bg-[#eaf3ed] p-7 sm:p-10">
+      <p class="text-xs font-bold tracking-widest text-teal-800">MANYTOOL · 매일 쓰는 문서 도구</p>
+      <h1 class="mt-4 text-3xl font-black tracking-tight text-[#123d36] sm:text-4xl">{content[0]}</h1>
+      <p class="mt-4 max-w-2xl text-base leading-8 text-slate-700">{content[1]}</p>
+      <p class="mt-5 text-sm font-semibold text-teal-800">무료 기본 기능 · 로그인 없이 시작 · PC와 휴대폰에서</p>
+    </section>
+    <DocumentWorkshop mode={mode} client:load />
+    <noscript><p class="mt-6">이 도구를 사용하려면 브라우저에서 JavaScript를 켜 주세요.</p></noscript>
+  </main>
+  <Footer />
+</Layout>
