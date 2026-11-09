@@ -31,7 +31,6 @@ export const getHomeSearchEntries = (cards: HomeSearchEntry[], locale: string): 
     ['bmi-calculator', 'BMI 계산기', 'BMI Calculator', '체질량지수 키 몸무게'],
     ['color-converter', '색상 변환기', 'Color Converter', '색상 코드 HEX RGB'],
     ['game-character-picker', '게임 캐릭터 뽑기', 'Game Character Picker', '랜덤 캐릭터 추천'],
-    ['image-cropper', '이미지 자르기', 'Image Cropper', '사진 크롭 잘라내기'],
     ['percentage-calculator', '퍼센트 계산기', 'Percentage Calculator', '백분율 비율'],
     ['time-zone-converter', '시간대 변환기', 'Time Zone Converter', '세계 시차 시간'],
     ['tip-calculator', '팁 계산기', 'Tip Calculator', '식사 팁 금액'],

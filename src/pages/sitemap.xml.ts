@@ -6,6 +6,10 @@ import { GUIDES } from '../lib/guides';
 import { hasTranslation, localeCodes, seoLocaleCodes } from '../lib/i18n';
 
 const paths = [
+  '/image-converter',
+  '/lotto-generator',
+  '/image-tools',
+  '/image-merger',
   '/',
   '/tools',
   '/games',
