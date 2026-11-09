@@ -28,13 +28,16 @@ test('paid ID photo async completion, duplicate prevention and failure refund', 
  try{
   for(let n=0;n<100;n++){if(child.exitCode!==null)throw Error(log);try{if((await fetch(base+'/health')).ok)break;}catch{} await new Promise(r=>setTimeout(r,100));}
   assert.equal((await (await fetch(base+'/config')).json()).readiness.idPhotoReady,true);
+  assert.deepEqual((await (await fetch(base+'/config')).json()).idPhotoGroomingModes,['natural','neat','passport','custom']);
+  assert.equal((await fetch(base+'/generate',json({groomingMode:'invalid'}))).status,400);
+  assert.equal((await fetch(base+'/generate',json({groomingMode:'custom',hairOptions:{flyaways:'yes'}}))).status,400);
   const form=new FormData();form.append('image',new Blob([bytes],{type:'image/png'}),'test.png');
   const upload=await (await fetch(base+'/upload',{method:'POST',body:form})).json();
   assert.equal((await fetch(base+'/generate',json({photoId:upload.photoId}))).status,402);
   for(const outfitType of ['suit','current']){
    const purchase=await fetch(base+'/credits/purchase',{...json({productType:'base',requestKey:'id-photo-test-'+outfitType}),headers:{'Content-Type':'application/json',Origin:'https://manytool.net',Cookie:`manytool_credit_session=${session}`}});
    assert.equal(purchase.status,201);const {orderId}=await purchase.json();
-   const body={photoId:upload.photoId,toolType:'id_photo',outfitType,orderId};
+   const body={photoId:upload.photoId,toolType:'id_photo',outfitType,orderId,groomingMode:'neat'};
    const start=await fetch(base+'/generate',json(body));assert.equal(start.status,202);const {jobId}=await start.json();
    assert.equal(store.state(orderId),'processing');
    assert.equal((await fetch(base+'/generate',json(body))).status,409);
@@ -42,7 +45,7 @@ test('paid ID photo async completion, duplicate prevention and failure refund', 
    for(let n=0;n<100;n++){job=await (await fetch(base+'/job/'+jobId)).json();if(job.status!=='processing')break;await new Promise(r=>setTimeout(r,100));}
    assert.equal(job.status,outfitType==='suit'?'done':'failed');
    if(outfitType==='suit'){
-    assert.equal(job.candidates.length,3);assert.equal(store.state(orderId),'done');
+    assert.equal(job.pipelineReport.groomingMode,'neat');assert.equal(job.pipelineReport.hairOptions.smoothVolume,true);assert.equal(job.candidates.length,3);assert.equal(store.state(orderId),'done');
     assert.equal((await fetch(base+job.candidates[0].imageUrl)).status,200);
    } else {assert.equal(job.creditRefunded,true);assert.equal(store.state(orderId),'refunded');}
   }

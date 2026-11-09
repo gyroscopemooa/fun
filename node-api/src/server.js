@@ -15,6 +15,7 @@ import { analyzeMealCalories } from './commerce/calorieAnalyzer.js';
 import { analyzePersonalColor } from './commerce/personalColorAnalyzer.js';
 import { analyzeSaju } from './commerce/sajuAnalyzer.js';
 import { analyzePetAudio, parsePetAudioPayload } from './commerce/petTranslator.js';
+import { normalizeIdPhotoStyling, GROOMING_MODES } from './providers/idPhotoStyling.js';
 import { generateCandidatesWithProvider, getImageProvider, getResolvedImageProvider, isIdPhotoEnabled, isExternalAiEnabled, normalizeRequestedProvider, resolveImageProvider } from './providers/providerRouter.js';
 import { getNamingDataset } from './naming/repository.js';
 import { validateNamingInput, validateRecommendInput } from './naming/validate.js';
@@ -504,6 +505,7 @@ app.get('/config', (_req, res) => {
   const resend = getResendConfig();
 
   res.json({
+    idPhotoGroomingModes: GROOMING_MODES,
     imageProvider: getResolvedImageProvider(),
     configuredImageProvider: getImageProvider(),
     externalAiEnabled: isExternalAiEnabled(),
@@ -2039,6 +2041,11 @@ app.post('/upload', upload.single('image'), async (req, res) => {
 
 app.post('/generate', async (req, res) => {
   const { photoId, toolType = 'id_photo', outfitType = 'current', faceHint = null, provider = null } = req.body ?? {};
+  let styling = {};
+  if (toolType === 'id_photo') {
+    try { styling = normalizeIdPhotoStyling(req.body ?? {}); }
+    catch (error) { return res.status(400).json({ error: error.message }); }
+  }
   const orderId = typeof req.body?.orderId === 'string' ? req.body.orderId.trim() : '';
   if (toolType === 'id_photo' && !isIdPhotoEnabled()) return res.status(503).json({ error: 'ID photo AI is unavailable' });
   if (toolType === 'id_photo' && !['current', 'suit'].includes(outfitType)) return res.status(400).json({ error: 'invalid outfit' });
@@ -2069,6 +2076,7 @@ app.post('/generate', async (req, res) => {
     photoId,
     toolType,
     outfitType,
+    ...styling,
     status: 'processing',
     candidates: [],
     createdAt: new Date().toISOString()
@@ -2097,6 +2105,7 @@ app.post('/generate', async (req, res) => {
       jobId,
       toolType,
       outfitType,
+      ...styling,
       faceHint: faceHint ?? photo.faceHint ?? null,
       cacheKey: photoId,
       requestedProvider

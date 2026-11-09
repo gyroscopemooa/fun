@@ -3,6 +3,7 @@ import path from 'node:path';
 import sharp from 'sharp';
 import OpenAI, { toFile } from 'openai';
 import { v4 as uuidv4 } from 'uuid';
+import { normalizeIdPhotoStyling, groomingPrompt } from './idPhotoStyling.js';
 import { VARIANT_PROFILES, getToolPreset } from './pipelineConfig.js';
 
 const OPENAI_IMAGE_MODEL = process.env.OPENAI_IMAGE_MODEL?.trim() || 'gpt-image-2';
@@ -19,7 +20,7 @@ const getClient = () => {
 
 const IDENTITY_RULES = [
   'The uploaded image is a photo of a real person. The result must be the SAME person and clearly recognizable as them.',
-  'IDENTITY (highest priority): keep the exact face shape, eyes, eyelids, nose, mouth, eyebrows, ears, skin tone, moles, age, gender, hairstyle and hair color.',
+  'IDENTITY (highest priority): keep the exact face shape, eyes, eyelids, nose, mouth, eyebrows, ears, skin tone, moles, age and gender. Preserve the real hairline and hair color; hair arrangement follows the selected grooming options.',
   'Do not beautify, slim, reshape, de-age or change any facial feature. Do not swap the face.'
 ];
 
@@ -33,10 +34,9 @@ const TOOL_PROMPTS = {
     'Create a Korean ID photo (증명사진) for a resume or student card.',
     'Face the camera straight on, head level, neutral expression with mouth closed or a very slight natural smile, both eyes open.',
     'Correct mild head yaw, pitch and roll so the face and shoulders face the camera directly. Keep the actual person\'s facial proportions and natural asymmetry; do not invent a different face.',
-    'Neatly arrange stray and flyaway hair while preserving the original hairline, hair length, color and overall hairstyle. Keep eyes and eyebrows visible.',
     'Frame head and top of shoulders, head centered horizontally, eyes about 40% from the top, some empty space above the head.',
     'Plain pure white background with no shadows or texture. Even soft studio lighting, sharp focus.',
-    'Light natural retouching only: even out skin tone and remove temporary blemishes, tidy flyaway hairs.'
+    'Light natural retouching only: even out skin tone and remove temporary blemishes. Hair grooming follows the selected options.'
   ],
   passport_photo: [
     'Create a passport-style photo.',
@@ -54,12 +54,20 @@ const TOOL_PROMPTS = {
   ]
 };
 
-export const buildPrompt = (toolType, outfitType) => [
-  ...IDENTITY_RULES,
-  ...(TOOL_PROMPTS[toolType] ?? TOOL_PROMPTS.id_photo),
-  OUTFIT_RULES[outfitType] ?? OUTFIT_RULES.current,
-  'Photorealistic photograph, not an illustration. No text, no watermark, no frame, no extra people.'
-].join(' ');
+export const buildPrompt = (toolType, outfitType, styling = {}) => {
+  const normalized = toolType === 'id_photo' ? normalizeIdPhotoStyling(styling) : null;
+  const passportStyle = normalized?.groomingMode === 'passport';
+  const toolRules = (TOOL_PROMPTS[toolType] ?? TOOL_PROMPTS.id_photo).filter((rule) =>
+    !passportStyle || (!rule.startsWith('Face the camera') && !rule.startsWith('Light natural retouching'))
+  );
+  return [
+    ...IDENTITY_RULES,
+    ...toolRules,
+    ...(normalized ? [groomingPrompt(normalized)] : ['Preserve the original hairstyle.']),
+    OUTFIT_RULES[outfitType] ?? OUTFIT_RULES.current,
+    'Photorealistic photograph, not an illustration. No text, no watermark, no frame, no extra people.'
+  ].join(' ');
+};
 
 const decodeImages = async (response) => Promise.all((response?.data ?? []).map(async (item) => {
   if (item?.b64_json) return Buffer.from(item.b64_json, 'base64');
@@ -71,10 +79,10 @@ const decodeImages = async (response) => Promise.all((response?.data ?? []).map(
   throw new Error('OpenAI image edit returned no image');
 }));
 
-export async function generateWithOpenAiImage({ inputPath, storageDir, jobId, toolType, outfitType }) {
+export async function generateWithOpenAiImage({ inputPath, storageDir, jobId, toolType, outfitType, groomingMode, hairOptions }) {
   const startedAt = Date.now();
   const preset = getToolPreset(toolType);
-  const prompt = buildPrompt(toolType, outfitType);
+  const prompt = buildPrompt(toolType, outfitType, { groomingMode, hairOptions });
 
   // Normalize orientation and size before upload; phone photos are often huge and EXIF-rotated.
   const source = await sharp(await fs.readFile(inputPath))
@@ -123,6 +131,7 @@ export async function generateWithOpenAiImage({ inputPath, storageDir, jobId, to
     pipelineReport: {
       toolType,
       outfitType,
+      ...(toolType === 'id_photo' ? normalizeIdPhotoStyling({ groomingMode, hairOptions }) : {}),
       engine: 'openai_image',
       model: OPENAI_IMAGE_MODEL,
       generatedVariants: generated.map((item) => item.variant),
