@@ -9,11 +9,11 @@ export class VideoContainer extends Container<Env> {
   private imageReady?: Promise<void>;
   private ensureImage(): Promise<void> {
     return this.imageReady ??= this.ctx.blockConcurrencyWhile(async () => {
-      // One-time activation of the already deployed Instagram URL validation fix.
+      // One-time activation of the deployed X downloader image.
       // Keep rate limits in Durable Object storage across the process restart.
-      if (!await this.ctx.storage.get('reelsPostUrlsMigrated')) {
+      if (!await this.ctx.storage.get('xDownloadActivated')) {
         await this.destroy();
-        await this.ctx.storage.put('reelsPostUrlsMigrated', true);
+        await this.ctx.storage.put('xDownloadActivated', true);
       }
     }).catch(error => { this.imageReady = undefined; throw error; });
   }
