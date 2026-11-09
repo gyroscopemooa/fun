@@ -6,7 +6,21 @@ export class VideoContainer extends Container<Env> {
   defaultPort = 8080;
   sleepAfter = '10m';
   enableInternet = true;
+  private imageReady?: Promise<void>;
+  private ensureImage(): Promise<void> {
+    return this.imageReady ??= this.ctx.blockConcurrencyWhile(async () => {
+      // One-time migration off the diagnostic images. Do not reset rate limits
+      // or restart future releases that use a different version identifier.
+      const health = await this.containerFetch(new Request('http://container/health'));
+      const data = await health.json() as { serviceVersion?: string };
+      if (/^tiktok-20261109-[1-4]$/.test(data.serviceVersion || '') && !await this.ctx.storage.get('diagnosticImageRetired')) {
+        await this.destroy();
+        await this.ctx.storage.put('diagnosticImageRetired', true);
+      }
+    }).catch(error => { this.imageReady = undefined; throw error; });
+  }
   async fetch(request: Request): Promise<Response> {
+    await this.ensureImage();
     if (request.method === 'POST') {
       const day = new Date().toISOString().slice(0, 10);
       const allowed = await this.ctx.storage.transaction(async txn => {
