@@ -1045,7 +1045,7 @@ const l = (ko: string, zh: string, en: string) => locale === 'ko' ? ko : locale 
           return false;
         }
       };
-      const requestCheckout = async () => { const currentUrl = window.location.href.split('?')[0]; const response = await fetch(`${API_BASE}/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ productType: 'ai_manseryeok', amount: CHECKOUT_AMOUNT, currency: CHECKOUT_CURRENCY, successUrl: currentUrl, returnUrl: currentUrl }) }); const payload = await response.json().catch(() => null); if (!response.ok || !payload) throw new Error(payload?.error || 'checkout failed'); return payload; };
+      const requestCheckout = async () => { const currentUrl = window.location.href.split('?')[0]; const response = await window.manytoolCreditCheckout(`${API_BASE}/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ productType: 'ai_manseryeok', amount: CHECKOUT_AMOUNT, currency: CHECKOUT_CURRENCY, successUrl: currentUrl, returnUrl: currentUrl }) }); const payload = await response.json().catch(() => null); if (!response.ok || !payload) throw new Error(payload?.error || 'checkout failed'); return payload; };
       const runAnalysis = async (payload) => {
         setLoading(true, '분석 중', '입력된 생년월일시를 만세력 구조로 계산하고, AI 해석과 기간별 흐름 리포트를 구성하고 있습니다.');
         setStatus('만세력 계산과 AI 해석을 생성하는 중입니다.', '분석 중');

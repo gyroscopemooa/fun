@@ -1352,7 +1352,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
         throw new Error(`Polar product is not configured for add${count}`);
       }
 
-      const res = await fetch(`${API_BASE}/checkout`, {
+      const res = await window.manytoolCreditCheckout(`${API_BASE}/checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1369,7 +1369,7 @@ const apiBase = import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787';
       if (!isPolarProductReady('base')) {
         throw new Error('Polar base product is not configured');
       }
-      const res = await fetch(`${API_BASE}/checkout`, {
+      const res = await window.manytoolCreditCheckout(`${API_BASE}/checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

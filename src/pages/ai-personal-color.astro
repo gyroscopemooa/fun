@@ -352,7 +352,7 @@ const promoSlides = await Promise.all(
     };
 
     const requestCheckout = async () => {
-      const response = await fetch(`${API_BASE}/checkout`, {
+      const response = await window.manytoolCreditCheckout(`${API_BASE}/checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

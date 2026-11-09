@@ -17,6 +17,7 @@ const navItems = [
   { href: '/tests', label: locale === 'ko' ? '테스트' : locale === 'ja' ? 'テスト' : 'Tests' },
   { href: '/guides', label: locale === 'ko' ? '가이드' : locale === 'ja' ? 'ガイド' : 'Guides' },
   ...(locale === 'ko' ? [{ href: '/community/', label: '커뮤니티' }] : []),
+  ...(locale === 'ko' && import.meta.env.PUBLIC_CREDITS_ENABLED === 'true' ? [{ href: '/credits/', label: '크레딧 충전' }] : []),
   { href: '/maps/fishbread', label: t('header.fishbreadMap') },
   { href: '/contact', label: t('header.contact') }
 ];
