@@ -23,6 +23,6 @@ Deploy the service before publishing the Astro pages. Verify `/api/video/health`
 
 `python -m unittest discover -s tests -v` checks URL validation and network restrictions. Install `container/requirements.txt`, Node.js and FFmpeg before running `python container/server.py`. Set `PORT` if needed (default 8080). The production Docker image includes the dependencies.
 
-From the site root, `node scripts/test-video-download.mjs` tests twelve SEO pages, main cards, mobile layout, private URL rejection, and an actual CC0 MP4 download. Set `VIDEO_TEST_URL` to the site with `/api/video/*` connected to the local service. The default is `http://127.0.0.1:8767`; the test uses installed Microsoft Edge.
+From the site root, `node scripts/test-video-download.mjs` tests sixteen SEO pages, main cards, mobile layout, private URL rejection, and an actual CC0 MP4 download. Set `VIDEO_TEST_URL` to the site with `/api/video/*` connected to the local service. The default is `http://127.0.0.1:8767`; the test uses installed Microsoft Edge.
 
 Do not treat successful direct-file testing as validation of all upstream platforms. Verify representative public links after production deployment and show upstream failures honestly.

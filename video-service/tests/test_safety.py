@@ -59,4 +59,29 @@ class SafetyTests(unittest.TestCase):
         for url, platform in [('https://chzzk.naver.com/video/123','chzzk-clips'),('https://chzzk.naver.com/clips/AbCd_123','chzzk'),('https://vimeo.com/showcase/123','vimeo'),('https://vimeo.com.evil.com/123','vimeo')]:
             with self.assertRaises(ValueError): validate_url(url,platform)
 
+    def test_twitch_naver_dailymotion(self):
+        from yt_dlp.extractor.twitch import TwitchVodIE, TwitchClipsIE
+        from yt_dlp.extractor.naver import NaverIE
+        from yt_dlp.extractor.dailymotion import DailymotionIE
+        cases=[
+            ('https://www.twitch.tv/videos/123456','twitch',TwitchVodIE),
+            ('https://m.twitch.tv/videos/123456','twitch',TwitchVodIE),
+            ('https://clips.twitch.tv/FaintLightGullWholeWheat','twitch-clips',TwitchClipsIE),
+            ('https://www.twitch.tv/channel/clip/AbCd-123','twitch-clips',TwitchClipsIE),
+            ('https://tv.naver.com/v/123456','naver-tv',NaverIE),
+            ('https://m.tv.naver.com/embed/123456','naver-tv',NaverIE),
+            ('https://www.dailymotion.com/video/x123abc','dailymotion',DailymotionIE),
+            ('https://dai.ly/x123abc','dailymotion',DailymotionIE)]
+        for url,platform,extractor in cases:
+            self.assertEqual(validate_url(url,platform),url)
+            self.assertTrue(extractor.suitable(url))
+        for url,platform in [
+            ('https://www.twitch.tv/channel','twitch'),
+            ('https://www.twitch.tv/channel/clips','twitch-clips'),
+            ('https://www.twitch.tv/videos/123','twitch-clips'),
+            ('https://clips.twitch.tv.evil.com/SomeClip','twitch-clips'),
+            ('https://tv.naver.com/l/123','naver-tv'),
+            ('https://www.dailymotion.com/playlist/x123','dailymotion')]:
+            with self.assertRaises(ValueError): validate_url(url,platform)
+
 if __name__=='__main__':unittest.main()

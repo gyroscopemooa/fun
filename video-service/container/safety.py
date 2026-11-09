@@ -5,7 +5,7 @@ from urllib.parse import urlsplit, parse_qs, urlunsplit
 
 MAX_BYTES = 300 * 1024 * 1024
 MAX_DURATION = 30 * 60
-PLATFORMS = {'youtube', 'youtube-shorts', 'tiktok', 'instagram', 'instagram-reels', 'chzzk', 'chzzk-clips', 'soop', 'soop-clips', 'soop-catch', 'vimeo', 'direct'}
+PLATFORMS = {'youtube', 'youtube-shorts', 'tiktok', 'instagram', 'instagram-reels', 'chzzk', 'chzzk-clips', 'soop', 'soop-clips', 'soop-catch', 'vimeo', 'twitch', 'twitch-clips', 'naver-tv', 'dailymotion', 'direct'}
 
 
 def public_ip(value):
@@ -66,6 +66,14 @@ def validate_url(value, platform):
             value = urlunsplit(('https','vod.sooplive.com',f'/player/{match[1]}',url.query,''))
     elif platform == 'vimeo':
         valid = (host in ('vimeo.com','www.vimeo.com') and bool(re.fullmatch(r'/(?:\d+(?:/[A-Za-z0-9]+)?|channels/[A-Za-z0-9_-]+/\d+|groups/[A-Za-z0-9_-]+/videos/\d+)/?',path))) or (host == 'player.vimeo.com' and bool(re.fullmatch(r'/video/\d+/?',path)))
+    elif platform == 'twitch':
+        valid = host in ('twitch.tv','www.twitch.tv','m.twitch.tv','go.twitch.tv') and bool(re.fullmatch(r'/videos/\d+/?',path))
+    elif platform == 'twitch-clips':
+        valid = (host == 'clips.twitch.tv' and bool(re.fullmatch(r'/[A-Za-z0-9_-]+/?',path)) and path.rstrip('/') != '/embed') or (host in ('twitch.tv','www.twitch.tv','m.twitch.tv','go.twitch.tv') and bool(re.fullmatch(r'/(?:[A-Za-z0-9_]+/)?clip/[A-Za-z0-9_-]+/?',path)))
+    elif platform == 'naver-tv':
+        valid = host in ('tv.naver.com','m.tv.naver.com','tvcast.naver.com','m.tvcast.naver.com') and bool(re.fullmatch(r'/(?:v|embed)/\d+/?',path))
+    elif platform == 'dailymotion':
+        valid = (host in ('dailymotion.com','www.dailymotion.com') and bool(re.fullmatch(r'/(?:embed/)?video/[A-Za-z0-9]+(?:_[A-Za-z0-9_-]+)?/?',path))) or (host == 'dai.ly' and bool(re.fullmatch(r'/[A-Za-z0-9]+/?',path)))
     elif platform == 'direct':
         valid = bool(re.search(r'\.(mp4|webm|mov|m4v)$',path,re.I))
     if not valid:
