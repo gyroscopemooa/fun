@@ -54,7 +54,7 @@ def perform(token,payload):
                 target=(job['directory']/filename).resolve()
                 if target.parent!=job['directory'] or not target.is_file() or not 0<target.stat().st_size<=MAX_BYTES: raise ValueError('Invalid output')
                 job.update(state='ready',file=target,title=result.get('title','영상'),size=target.stat().st_size,extension=target.suffix[1:],duration=result.get('duration'))
-            else: job.update(state='failed',message=result.get('message','영상 처리에 실패했습니다.'),diagnostic=result.get('diagnostic'))
+            else: job.update(state='failed',message=result.get('message','영상 처리에 실패했습니다.'))
     except subprocess.TimeoutExpired:
         terminate(process);process.communicate()
         with LOCK:job.update(state='failed',message='처리 제한 시간(3분)을 초과했습니다. 더 짧은 영상을 사용해주세요.')
@@ -84,7 +84,7 @@ class Handler(BaseHTTPRequestHandler):
     protocol_version='HTTP/1.1'
     def log_message(self,*args):pass
     def reply(self,status,data):
-        data['serviceVersion']='tiktok-20261109-4'
+        data['serviceVersion']='tiktok-20261109-5'
         body=json.dumps(data,ensure_ascii=False).encode('utf-8')
         self.send_response(status)
         self.send_header('Content-Type','application/json; charset=utf-8')
@@ -124,7 +124,7 @@ class Handler(BaseHTTPRequestHandler):
             job=JOBS.get(match[1])
             if not job:return self.reply(404,{'error':'작업이 만료되었거나 서버가 다시 시작되었습니다. 링크를 다시 입력해주세요.'})
             if not match[2]:
-                data={k:job[k] for k in ('state','title','size','extension','duration','message','diagnostic') if k in job}
+                data={k:job[k] for k in ('state','title','size','extension','duration','message') if k in job}
                 data['expiresAt']=int(job['expires']*1000)
                 return self.reply(200,data)
             if job['state']!='ready':return self.reply(409,{'error':'아직 다운로드할 수 없습니다.'})

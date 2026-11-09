@@ -6,22 +6,7 @@ export class VideoContainer extends Container<Env> {
   defaultPort = 8080;
   sleepAfter = '10m';
   enableInternet = true;
-  private imageReady?: Promise<void>;
-  private ensureImage(): Promise<void> {
-    // A rollout can finish while this Durable Object still talks to the old process.
-    // Restart at most once for this release; preserve rate-limit storage.
-    return this.imageReady ??= this.ctx.blockConcurrencyWhile(async () => {
-      const release = 'tiktok-20261109-4';
-      const health = await this.containerFetch(new Request('http://container/health'));
-      const data = await health.json() as { serviceVersion?: string };
-      if (data.serviceVersion !== release && await this.ctx.storage.get('imageRestart') !== release) {
-        await this.destroy();
-        await this.ctx.storage.put('imageRestart', release);
-      }
-    }).catch(error => { this.imageReady = undefined; throw error; });
-  }
   async fetch(request: Request): Promise<Response> {
-    await this.ensureImage();
     if (request.method === 'POST') {
       const day = new Date().toISOString().slice(0, 10);
       const allowed = await this.ctx.storage.transaction(async txn => {

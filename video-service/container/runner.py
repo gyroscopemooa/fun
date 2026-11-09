@@ -1,7 +1,6 @@
 """One bounded download process. No shell, browser cookies, playlists or remote FFmpeg."""
 import json
 import os
-import re
 import sys
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -126,6 +125,5 @@ if __name__=='__main__':
         sys.exit(1)
     except Exception as error:
         code = failure_code(error)
-        reason = re.sub(r'https?://\S+', '[url]', str(error))[:350]
-        emit({'status':'failed','diagnostic':f'{type(error).__name__}: {reason}','message':f'영상을 가져오지 못했습니다. 공개 여부와 링크를 확인해주세요. 원본 사이트의 로그인·지역·자동접근 제한이 있는 영상은 지원되지 않습니다. (오류: {code})'})
+        emit({'status':'failed','message':f'영상을 가져오지 못했습니다. 공개 여부와 링크를 확인해주세요. 원본 사이트의 로그인·지역·자동접근 제한이 있는 영상은 지원되지 않습니다. (오류: {code})'})
         sys.exit(1)
