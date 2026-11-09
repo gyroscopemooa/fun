@@ -9,13 +9,11 @@ export class VideoContainer extends Container<Env> {
   private imageReady?: Promise<void>;
   private ensureImage(): Promise<void> {
     return this.imageReady ??= this.ctx.blockConcurrencyWhile(async () => {
-      // One-time migration off the diagnostic images. Do not reset rate limits
-      // or restart future releases that use a different version identifier.
-      const health = await this.containerFetch(new Request('http://container/health'));
-      const data = await health.json() as { serviceVersion?: string };
-      if (/^tiktok-20261109-[1-4]$/.test(data.serviceVersion || '') && !await this.ctx.storage.get('diagnosticImageRetired')) {
+      // One-time activation of the already deployed Instagram URL validation fix.
+      // Keep rate limits in Durable Object storage across the process restart.
+      if (!await this.ctx.storage.get('reelsPostUrlsMigrated')) {
         await this.destroy();
-        await this.ctx.storage.put('diagnosticImageRetired', true);
+        await this.ctx.storage.put('reelsPostUrlsMigrated', true);
       }
     }).catch(error => { this.imageReady = undefined; throw error; });
   }
