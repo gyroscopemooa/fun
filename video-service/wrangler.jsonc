@@ -1,0 +1,18 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "manytool-video-download",
+  "account_id": "e93835463abc21b1f443176fab885921",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-09",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "routes": [{ "pattern": "manytool.net/api/video/*", "zone_name": "manytool.net" }],
+  "observability": {"enabled": true, "head_sampling_rate": 0.1, "traces": {"enabled": true, "head_sampling_rate": 0.1}},
+  "containers": [{"class_name":"VideoContainer","image":"./Dockerfile","max_instances":1,"instance_type":"basic"}],
+  "durable_objects": {"bindings":[{"name":"VIDEO","class_name":"VideoContainer"}]},
+  "migrations": [{"tag":"v1","new_sqlite_classes":["VideoContainer"]}],
+  "ratelimits": [
+    {"name":"CREATE_LIMIT","namespace_id":"21001","simple":{"limit":5,"period":60}},
+    {"name":"READ_LIMIT","namespace_id":"21002","simple":{"limit":90,"period":60}}
+  ]
+}

@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { videoTools } from '../data/video-tools';
 import HomeToolCard from '../components/HomeToolCard.astro';
 import { getHomeSearchEntries } from '../lib/home-search';
 import AdSense from '../components/AdSense.astro';
@@ -87,6 +88,8 @@ const paidServiceNotice = locale === 'ko'
     };
 
 const cardSeed = [
+  { href: '/video-download-tools', title: '영상 다운로드 도구 모음', desc: '유튜브·틱톡·릴스·치지직·SOOP 링크별 도구', icon: '🎬', iconClass: 'bg-cyan-100 text-cyan-700', category: 'tools', isNew: true },
+  ...videoTools.map(tool => ({ href: `/${tool.slug}`, title: tool.title, desc: tool.description, icon: tool.icon, iconClass: 'bg-cyan-100 text-cyan-700', category: 'tools', isNew: true })),
   { href: '/image-converter', title: '이미지 확장자 변경', desc: 'JPG·PNG·WebP 형식을 바꾸고 다운로드', icon: '🔄', iconClass: 'bg-emerald-100 text-emerald-700', category: 'tools', isNew: true },
   { href: '/lotto-generator', title: '로또 번호 생성기', desc: '1~45 중 중복 없는 6개 번호, 최대 5게임', icon: '🎱', iconClass: 'bg-amber-100 text-amber-700', category: 'tools', isNew: true },
   { href: '/image-tools', title: '이미지 도구 모음', desc: '사진 용량 줄이기·자르기·합치기를 한곳에', icon: '🖼️', iconClass: 'bg-violet-100 text-violet-700', category: 'tools', isNew: true },

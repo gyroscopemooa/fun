@@ -1,3 +1,4 @@
+import { videoTools } from '../data/video-tools';
 import { communityPosts } from '../lib/community';
 import type { APIRoute } from 'astro';
 
@@ -6,6 +7,8 @@ import { GUIDES } from '../lib/guides';
 import { hasTranslation, localeCodes, seoLocaleCodes } from '../lib/i18n';
 
 const paths = [
+  '/video-download-tools',
+  ...videoTools.map(tool => `/${tool.slug}`),
   '/image-converter',
   '/lotto-generator',
   '/image-tools',
