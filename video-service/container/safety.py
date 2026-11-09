@@ -5,7 +5,7 @@ from urllib.parse import urlsplit, parse_qs, urlunsplit
 
 MAX_BYTES = 300 * 1024 * 1024
 MAX_DURATION = 30 * 60
-PLATFORMS = {'youtube', 'youtube-shorts', 'tiktok', 'instagram', 'instagram-reels', 'chzzk', 'chzzk-clips', 'soop', 'soop-clips', 'soop-catch', 'vimeo', 'twitch', 'twitch-clips', 'naver-tv', 'dailymotion', 'direct'}
+PLATFORMS = {'twitter', 'youtube', 'youtube-shorts', 'tiktok', 'instagram', 'instagram-reels', 'chzzk', 'chzzk-clips', 'soop', 'soop-clips', 'soop-catch', 'vimeo', 'twitch', 'twitch-clips', 'naver-tv', 'dailymotion', 'direct'}
 
 
 def public_ip(value):
@@ -48,6 +48,10 @@ def validate_url(value, platform):
                  (bool(re.fullmatch(r'/shorts/[A-Za-z0-9_-]{11}/?',path)) or
                   (platform == 'youtube' and path == '/watch' and bool(re.fullmatch(r'[A-Za-z0-9_-]{11}',parse_qs(url.query).get('v',[''])[0])))))
         valid |= platform == 'youtube' and host == 'youtu.be' and bool(re.fullmatch(r'/[A-Za-z0-9_-]{11}/?',path))
+    elif platform == 'twitter':
+        valid = host in ('x.com','www.x.com','twitter.com','www.twitter.com','mobile.twitter.com','m.twitter.com') and bool(re.fullmatch(r'/(?:[A-Za-z0-9_]{1,15}|i/web)/status/\d+(?:/video/[1-4])?/?',path))
+        if valid:
+            value = urlunsplit(('https','x.com',path,'',''))
     elif platform == 'tiktok':
         valid = host in ('www.tiktok.com','tiktok.com') and bool(re.fullmatch(r'/@[^/]+/video/\d+/?',path))
         if valid:

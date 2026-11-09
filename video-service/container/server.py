@@ -84,7 +84,7 @@ class Handler(BaseHTTPRequestHandler):
     protocol_version='HTTP/1.1'
     def log_message(self,*args):pass
     def reply(self,status,data):
-        data['serviceVersion']='tiktok-20261109-5'
+        data['serviceVersion']='video-20261109-x1'
         body=json.dumps(data,ensure_ascii=False).encode('utf-8')
         self.send_response(status)
         self.send_header('Content-Type','application/json; charset=utf-8')
@@ -145,6 +145,8 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__=='__main__':
+    # PID 1 must handle SIGTERM explicitly so image rollouts do not wait for SIGKILL.
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))
     # No completed files survive a restart; links explicitly expire rather than pointing to stale data.
     for child in ROOT.iterdir():
         if child.is_dir() and re.fullmatch(r'[A-Za-z0-9_-]{43}',child.name):shutil.rmtree(child,ignore_errors=True)

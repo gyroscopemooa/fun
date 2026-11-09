@@ -1,0 +1,12 @@
+---
+import { siYoutube, siYoutubeshorts, siTiktok, siInstagram, siTwitch, siNaver, siVimeo, siDailymotion, siX } from 'simple-icons';
+import type { VideoPlatform } from '../data/video-tools';
+const { platform, size = 24 } = Astro.props as { platform: VideoPlatform; size?: number };
+const icons = { youtube: siYoutube, 'youtube-shorts': siYoutubeshorts, tiktok: siTiktok, instagram: siInstagram, 'instagram-reels': siInstagram, twitch: siTwitch, 'twitch-clips': siTwitch, 'naver-tv': siNaver, vimeo: siVimeo, dailymotion: siDailymotion, twitter: siX };
+const brand = icons[platform as keyof typeof icons];
+const image = platform.startsWith('chzzk') ? '/images/video-brands/chzzk.png' : null;
+---
+<span class="video-brand-icon" style={`width:${size}px;height:${size}px`} aria-hidden="true">
+  {brand ? <svg width={size} height={size} viewBox="0 0 24 24" fill={`#${brand.hex}`} focusable="false"><path d={brand.path}/></svg> : image ? <img src={image} width={size} height={size} alt="" loading="lazy" decoding="async"/> : platform.startsWith('soop') ? <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="m8 2 4 4 4-4M10 10l5 3-5 3z"/></svg> : <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M12 3v12m-5-5 5 5 5-5M4 16v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg>}
+</span>
+<style>.video-brand-icon{display:inline-flex;flex-shrink:0;align-items:center;justify-content:center;vertical-align:middle}.video-brand-icon img{width:100%;height:100%;object-fit:contain}</style>

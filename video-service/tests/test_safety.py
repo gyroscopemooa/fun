@@ -7,6 +7,16 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'container'))
 from safety import validate_url,public_ip,install_network_guard
 
 class SafetyTests(unittest.TestCase):
+    def test_twitter_post_urls(self):
+        from yt_dlp.extractor.twitter import TwitterIE
+        for host in ('x.com','www.x.com','twitter.com','mobile.twitter.com'):
+            for path in ('/NASA/status/623160978427936768','/i/web/status/623160978427936768','/NASA/status/623160978427936768/video/1'):
+                url=validate_url(f'https://{host}{path}?s=20','twitter')
+                self.assertEqual(url,'https://x.com'+path)
+                self.assertTrue(TwitterIE.suitable(url))
+        for url in ('https://x.com/NASA','https://x.com/i/spaces/123','https://x.com.evil.com/NASA/status/123','https://x.com/NASA/status/123/video/99'):
+            with self.assertRaises(ValueError):validate_url(url,'twitter')
+
     def test_instagram_reel_browser_and_share_links(self):
         for platform in ('instagram', 'instagram-reels'):
             for path in ('p', 'reel', 'reels'):

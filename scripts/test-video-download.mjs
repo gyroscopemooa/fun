@@ -5,7 +5,7 @@ const browser=await chromium.launch({headless:true,channel:process.env.PLAYWRIGH
 try {
  const page=await browser.newPage();
  await page.route('**/*',route=>route.request().url().startsWith(base)?route.continue():route.abort());
- const slugs=['twitch-downloader','twitch-clips-downloader','naver-tv-downloader','dailymotion-downloader','soop-clips-downloader','soop-catch-downloader','chzzk-clips-downloader','vimeo-downloader','youtube-downloader','youtube-shorts-downloader','tiktok-downloader','instagram-video-downloader','instagram-reels-downloader','chzzk-downloader','soop-downloader','video-link-downloader'];
+ const slugs=['twitter-video-downloader','twitch-downloader','twitch-clips-downloader','naver-tv-downloader','dailymotion-downloader','soop-clips-downloader','soop-catch-downloader','chzzk-clips-downloader','vimeo-downloader','youtube-downloader','youtube-shorts-downloader','tiktok-downloader','instagram-video-downloader','instagram-reels-downloader','chzzk-downloader','soop-downloader','video-link-downloader'];
  const titles=new Set();
  for(const slug of slugs){
   const response=await page.goto(`${base}/${slug}/`,{waitUntil:'domcontentloaded'});assert.equal(response.status(),200);
@@ -26,5 +26,5 @@ try {
  await page.goto(base+'/video-download-tools/',{waitUntil:'domcontentloaded'});assert.equal(await page.locator('section[aria-label="영상 다운로드 기능"] a').count(),slugs.length);
  await page.goto(base+'/',{waitUntil:'domcontentloaded'});
  for(const slug of [...slugs,'video-download-tools'])assert(await page.locator(`[data-card] a[href="/${slug}"]`).count()>0,slug);
- console.log('PASS: 16 unique SEO pages, hub, home cards, private URL rejection, real MP4 download, mobile layout');
+ console.log('PASS: 17 unique SEO pages, hub, home cards, private URL rejection, real MP4 download, mobile layout');
 } finally{await browser.close();}
