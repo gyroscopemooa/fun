@@ -48,4 +48,14 @@ class SafetyTests(unittest.TestCase):
     def test_old_soop_domain(self):
         self.assertEqual(validate_url('https://vod.afreecatv.com/player/123','soop'),'https://vod.sooplive.com/player/123')
 
+    def test_shortform_and_vimeo_urls(self):
+        for platform in ('soop','soop-clips','soop-catch'):
+            for host in ('vod.sooplive.com','vod.sooplive.co.kr','vod.afreecatv.com'):
+                self.assertEqual(validate_url(f'https://{host}/player/123/catch',platform),'https://vod.sooplive.com/player/123')
+            with self.assertRaises(ValueError): validate_url('https://vod.sooplive.com/player/123/catchstory',platform)
+        for url, platform in [('https://chzzk.naver.com/clips/AbCd_123','chzzk-clips'),('https://vimeo.com/123456','vimeo'),('https://player.vimeo.com/video/123456?h=abc','vimeo')]:
+            self.assertEqual(validate_url(url,platform),url)
+        for url, platform in [('https://chzzk.naver.com/video/123','chzzk-clips'),('https://chzzk.naver.com/clips/AbCd_123','chzzk'),('https://vimeo.com/showcase/123','vimeo'),('https://vimeo.com.evil.com/123','vimeo')]:
+            with self.assertRaises(ValueError): validate_url(url,platform)
+
 if __name__=='__main__':unittest.main()

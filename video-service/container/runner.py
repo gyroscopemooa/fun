@@ -69,7 +69,12 @@ def download_platform(url, directory):
         'remote_components':set(),'proxy':'','noprogress':True,
     }
     with yt_dlp.YoutubeDL(options) as downloader:
-        info=downloader.extract_info(url,download=False)
+        if '/clips/' in url and urlsplit(url).hostname == 'chzzk.naver.com':
+            from extractors import ManyToolChzzkClipIE
+            downloader.add_info_extractor(ManyToolChzzkClipIE())
+            info=downloader.extract_info(url,download=False,ie_key=ManyToolChzzkClipIE.ie_key())
+        else:
+            info=downloader.extract_info(url,download=False)
         if not info or info.get('_type') in ('playlist','multi_video') or 'entries' in info:
             raise ValueError('여러 영상 묶음은 지원하지 않습니다. 영상 하나의 링크를 입력해주세요.')
         reason=policy(info)

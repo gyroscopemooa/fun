@@ -1,11 +1,11 @@
 import ipaddress
 import re
 import socket
-from urllib.parse import urlsplit, parse_qs
+from urllib.parse import urlsplit, parse_qs, urlunsplit
 
 MAX_BYTES = 300 * 1024 * 1024
 MAX_DURATION = 30 * 60
-PLATFORMS = {'youtube', 'youtube-shorts', 'tiktok', 'instagram', 'instagram-reels', 'chzzk', 'soop', 'direct'}
+PLATFORMS = {'youtube', 'youtube-shorts', 'tiktok', 'instagram', 'instagram-reels', 'chzzk', 'chzzk-clips', 'soop', 'soop-clips', 'soop-catch', 'vimeo', 'direct'}
 
 
 def public_ip(value):
@@ -53,9 +53,16 @@ def validate_url(value, platform):
         valid = host in ('www.instagram.com','instagram.com') and bool(re.fullmatch(r'/'+kind+r'/[A-Za-z0-9_-]+/?',path))
     elif platform == 'chzzk':
         valid = host == 'chzzk.naver.com' and bool(re.fullmatch(r'/video/\d+/?',path))
-    elif platform == 'soop':
-        valid = host in ('vod.sooplive.com','vod.afreecatv.com') and bool(re.fullmatch(r'/(?:player|PLAYER/STATION)/\d+/?',path))
-        if valid and host == 'vod.afreecatv.com': value = value.replace('vod.afreecatv.com','vod.sooplive.com',1)
+    elif platform == 'chzzk-clips':
+        valid = host == 'chzzk.naver.com' and bool(re.fullmatch(r'/clips/[A-Za-z0-9_-]{5,100}/?',path))
+    elif platform in ('soop', 'soop-clips', 'soop-catch'):
+        match = re.fullmatch(r'/(?:player|PLAYER/STATION)/(\d+)(?:/catch)?/?',path)
+        valid = host in ('vod.sooplive.com','vod.sooplive.co.kr','vod.afreecatv.com') and bool(match)
+        if valid:
+            # Catch and clips share the same single-VOD API; never resolve a catchstory playlist.
+            value = urlunsplit(('https','vod.sooplive.com',f'/player/{match[1]}',url.query,''))
+    elif platform == 'vimeo':
+        valid = (host in ('vimeo.com','www.vimeo.com') and bool(re.fullmatch(r'/(?:\d+(?:/[A-Za-z0-9]+)?|channels/[A-Za-z0-9_-]+/\d+|groups/[A-Za-z0-9_-]+/videos/\d+)/?',path))) or (host == 'player.vimeo.com' and bool(re.fullmatch(r'/video/\d+/?',path)))
     elif platform == 'direct':
         valid = bool(re.search(r'\.(mp4|webm|mov|m4v)$',path,re.I))
     if not valid:
