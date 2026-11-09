@@ -8,6 +8,9 @@ AI 증명사진 MVP를 위한 로컬 Node API입니다.
 - `ID_PHOTO_ENABLED=false`로 증명사진만 중지할 수 있습니다. 이 전용 플래그는 다른 실험 기능의 `EXTERNAL_AI_ENABLED`와 별개입니다.
 - `/config`의 `readiness.idPhotoReady`로 활성화 여부를 확인합니다. 키 유무만 확인하므로 실제 모델 접근은 생성 테스트로 검증해야 합니다.
 - `outfitType=current`는 원래 옷 유지, `suit`는 정장 변경입니다. 실패 시 로컬 필터로 대체하지 않습니다.
+- `groomingMode`: `natural`(가볍게), `neat`(완전 단정), `passport`(여권 스타일), `custom`(직접 선택). `/config.idPhotoGroomingModes`에 지원 모드를 제공합니다.
+- 수동 `hairOptions`는 `flyaways`, `smoothVolume`, `clearForehead`, `tuckSides`의 boolean입니다. OFF는 해당 부분을 유지하라는 지시로 전달되며 프리셋에서는 수동 값 대신 프리셋 설정을 사용합니다. 알 수 없는 모드·옵션은 결제 실행 전에 400으로 거부합니다.
+- 여권 스타일은 정면·무표정·머리 정리 프리셋이며 공식 제출 적합 판정이 아닙니다. 얼굴·피부 미용 보정은 요청하지 않습니다.
 - 증명사진 `/generate`는 결제 검증 뒤 `202 {jobId,status:processing}`를 반환합니다. `/job/:id`를 조회해 `done`과 후보 3장을 받습니다. 실패는 `failed`로 반환됩니다.
 - 동일 주문의 중복 실행을 차단합니다. 크레딧은 작업 완료 시 사용 완료 처리하며 생성 실패 시 반환합니다.
 - 검증: `node --test src/providers/idPhoto.test.js src/providers/idPhotoHttp.test.js src/credits/credits.test.js`.

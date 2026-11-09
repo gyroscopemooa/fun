@@ -48,15 +48,15 @@ export function resolveImageProvider(requestedProvider = null) {
   return getResolvedImageProvider();
 }
 
-async function runProvider({ provider, inputPath, storageDir, jobId, toolType, outfitType, faceHint, cacheKey }) {
-  if (provider === 'local_sharp') return generateWithLocalSharp({ inputPath, storageDir, jobId, toolType, outfitType, faceHint, cacheKey });
-  if (provider === 'remove_bg') return generateWithRemoveBg({ inputPath, storageDir, jobId, toolType, outfitType, faceHint, cacheKey });
-  if (provider === 'photoroom') return generateWithPhotoRoom({ inputPath, storageDir, jobId, toolType, outfitType, faceHint, cacheKey });
-  if (provider === 'openai_image') return generateWithOpenAiImage({ inputPath, storageDir, jobId, toolType, outfitType });
+async function runProvider({ provider, inputPath, storageDir, jobId, toolType, outfitType, groomingMode, hairOptions, faceHint, cacheKey }) {
+  if (provider === 'local_sharp') return generateWithLocalSharp({ inputPath, storageDir, jobId, toolType, outfitType, groomingMode, hairOptions, faceHint, cacheKey });
+  if (provider === 'remove_bg') return generateWithRemoveBg({ inputPath, storageDir, jobId, toolType, outfitType, groomingMode, hairOptions, faceHint, cacheKey });
+  if (provider === 'photoroom') return generateWithPhotoRoom({ inputPath, storageDir, jobId, toolType, outfitType, groomingMode, hairOptions, faceHint, cacheKey });
+  if (provider === 'openai_image') return generateWithOpenAiImage({ inputPath, storageDir, jobId, toolType, outfitType, groomingMode, hairOptions });
   throw new Error(`unsupported IMAGE_PROVIDER: ${provider}`);
 }
 
-export async function generateCandidatesWithProvider({ inputPath, storageDir, jobId, toolType, outfitType, faceHint, cacheKey, requestedProvider = null }) {
+export async function generateCandidatesWithProvider({ inputPath, storageDir, jobId, toolType, outfitType, groomingMode, hairOptions, faceHint, cacheKey, requestedProvider = null }) {
   const normalizedRequestedProvider = normalizeRequestedProvider(requestedProvider) ?? getImageProvider();
   const resolved = toolType === 'id_photo' && isIdPhotoEnabled()
     ? 'openai_image' : resolveImageProvider(normalizedRequestedProvider);
@@ -65,7 +65,7 @@ export async function generateCandidatesWithProvider({ inputPath, storageDir, jo
     throw Object.assign(new Error('증명사진 AI 서버가 준비되지 않았습니다. 잠시 후 다시 시도해주세요.'), { statusCode: 503 });
   }
   try {
-    const result = await runProvider({ provider: resolved, inputPath, storageDir, jobId, toolType, outfitType, faceHint, cacheKey });
+    const result = await runProvider({ provider: resolved, inputPath, storageDir, jobId, toolType, outfitType, groomingMode, hairOptions, faceHint, cacheKey });
     return {
       ...result,
       pipelineReport: {
@@ -80,7 +80,7 @@ export async function generateCandidatesWithProvider({ inputPath, storageDir, jo
     if (resolved !== 'local_sharp') {
       // eslint-disable-next-line no-console
       console.warn(`[provider] ${resolved} failed, fallback to local_sharp: ${error.message}`);
-      const fallback = await runProvider({ provider: 'local_sharp', inputPath, storageDir, jobId, toolType, outfitType, faceHint, cacheKey });
+      const fallback = await runProvider({ provider: 'local_sharp', inputPath, storageDir, jobId, toolType, outfitType, groomingMode, hairOptions, faceHint, cacheKey });
       return {
         ...fallback,
         pipelineReport: {
