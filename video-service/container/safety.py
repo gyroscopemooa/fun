@@ -39,6 +39,9 @@ def validate_url(value, platform):
     else:
         if not public_ip(host): raise ValueError('내부 네트워크 주소는 사용할 수 없습니다.')
     path = url.path
+    if platform in ('chzzk', 'chzzk-clips') and host == 'm.chzzk.naver.com':
+        host = 'chzzk.naver.com'
+        value = urlunsplit(('https', host, path, url.query, ''))
     valid = False
     if platform in ('youtube', 'youtube-shorts'):
         valid = (host in ('youtube.com','www.youtube.com','m.youtube.com') and

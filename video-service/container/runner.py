@@ -60,7 +60,7 @@ def download_platform(url, directory):
         def error(self,*args): pass
     options={
         'outtmpl':str(directory/'video.%(ext)s'),'noplaylist':True,'playlistend':1,
-        'format':'bv[height<=720][ext=mp4][protocol=https]+ba[ext=m4a][protocol=https]/b[height<=720][ext=mp4]/b[height<=720]/b[height<=?720]',
+        'format':'bv[height<=720][ext=mp4]+ba[ext=m4a]/b[height<=720][ext=mp4]/b[height<=720]/b[height<=?720]',
         'merge_output_format':'mp4','max_filesize':MAX_BYTES,'match_filter':policy,
         'socket_timeout':20,'retries':1,'fragment_retries':1,'extractor_retries':1,
         'concurrent_fragment_downloads':1,'hls_prefer_native':True,'fixup':'never',

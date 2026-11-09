@@ -49,6 +49,7 @@ class SafetyTests(unittest.TestCase):
         self.assertEqual(validate_url('https://vod.afreecatv.com/player/123','soop'),'https://vod.sooplive.com/player/123')
 
     def test_shortform_and_vimeo_urls(self):
+        self.assertEqual(validate_url('https://m.chzzk.naver.com/clips/AbCd_123','chzzk-clips'),'https://chzzk.naver.com/clips/AbCd_123')
         for platform in ('soop','soop-clips','soop-catch'):
             for host in ('vod.sooplive.com','vod.sooplive.co.kr','vod.afreecatv.com'):
                 self.assertEqual(validate_url(f'https://{host}/player/123/catch',platform),'https://vod.sooplive.com/player/123')
