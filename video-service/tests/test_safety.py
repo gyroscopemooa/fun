@@ -7,6 +7,10 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'container'))
 from safety import validate_url,public_ip,install_network_guard
 
 class SafetyTests(unittest.TestCase):
+    def test_invalid_payload_types(self):
+        for platform in (None, [], {}, 1):
+            with self.subTest(platform=platform), self.assertRaises(ValueError):
+                validate_url('https://example.com/video.mp4', platform)
     def test_platform_urls(self):
         urls={
             'youtube':'https://www.youtube.com/watch?v=BaW_jenozKc',

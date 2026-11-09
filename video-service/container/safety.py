@@ -19,7 +19,7 @@ def public_ip(value):
 
 
 def validate_url(value, platform):
-    if platform not in PLATFORMS or not isinstance(value, str) or len(value) > 2048:
+    if not isinstance(platform, str) or platform not in PLATFORMS or not isinstance(value, str) or len(value) > 2048:
         raise ValueError('올바른 영상 링크와 서비스를 선택해주세요.')
     value = value.strip()
     try:
