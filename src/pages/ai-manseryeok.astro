@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import AdsterraBanner from '../components/ads/AdsterraBanner.astro';
+import Footer from '../components/Footer.astro';
 import ManseryeokShareCard from '../components/manseryeok/ManseryeokShareCard';
 import { detectLocale } from '../lib/i18n';
 
@@ -1158,4 +1159,5 @@ const l = (ko: string, zh: string, en: string) => locale === 'ko' ? ko : locale 
     </script>
     <AdsterraBanner placement="bottom" />
   </main>
+  <Footer />
 </Layout>

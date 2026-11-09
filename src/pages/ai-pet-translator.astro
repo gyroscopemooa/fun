@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import AdsterraBanner from '../components/ads/AdsterraBanner.astro';
+import Footer from '../components/Footer.astro';
 import PetResultPanel from '../components/pet/PetResultPanel';
 import PetSampleShowcase from '../components/pet/PetSampleShowcase';
 import { detectLocale } from '../lib/i18n';
@@ -1132,4 +1133,5 @@ const meta = locale === 'ko' ? { title:'AI 펫 언어 분석기 | 강아지 고�
     </script>
     <AdsterraBanner placement="bottom" />
   </main>
+  <Footer />
 </Layout>
