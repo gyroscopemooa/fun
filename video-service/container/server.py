@@ -84,6 +84,7 @@ class Handler(BaseHTTPRequestHandler):
     protocol_version='HTTP/1.1'
     def log_message(self,*args):pass
     def reply(self,status,data):
+        data['serviceVersion']='tiktok-20261109-2'
         body=json.dumps(data,ensure_ascii=False).encode('utf-8')
         self.send_response(status)
         self.send_header('Content-Type','application/json; charset=utf-8')

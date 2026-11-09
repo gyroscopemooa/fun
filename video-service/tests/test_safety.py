@@ -7,6 +7,10 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'container'))
 from safety import validate_url,public_ip,install_network_guard
 
 class SafetyTests(unittest.TestCase):
+    def test_tiktok_desktop_tracking_parameters(self):
+        canonical='https://www.tiktok.com/@s2kitty_____/video/7705713556226002197'
+        self.assertEqual(validate_url(canonical+'?is_from_webapp=1&sender_device=pc&web_id=7670216931320432144','tiktok'),canonical)
+        self.assertEqual(validate_url(canonical,'tiktok'),canonical)
     def test_invalid_payload_types(self):
         for platform in (None, [], {}, 1):
             with self.subTest(platform=platform), self.assertRaises(ValueError):

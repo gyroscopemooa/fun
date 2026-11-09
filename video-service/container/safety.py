@@ -50,6 +50,8 @@ def validate_url(value, platform):
         valid |= platform == 'youtube' and host == 'youtu.be' and bool(re.fullmatch(r'/[A-Za-z0-9_-]{11}/?',path))
     elif platform == 'tiktok':
         valid = host in ('www.tiktok.com','tiktok.com') and bool(re.fullmatch(r'/@[^/]+/video/\d+/?',path))
+        if valid:
+            value = urlunsplit(('https','www.tiktok.com',path.rstrip('/'),'',''))
         valid |= host in ('vm.tiktok.com','vt.tiktok.com') and bool(re.fullmatch(r'/[A-Za-z0-9]+/?',path))
     elif platform in ('instagram','instagram-reels'):
         kind = '(?:reel|reels)' if platform == 'instagram-reels' else '(?:p|reel|reels)'
