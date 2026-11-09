@@ -7,6 +7,9 @@ import { GUIDES } from '../lib/guides';
 import { hasTranslation, localeCodes, seoLocaleCodes } from '../lib/i18n';
 
 const paths = [
+  '/photo-to-document',
+  '/voice-to-document',
+  '/text-translator',
   '/video-download-tools',
   ...videoTools.map(tool => `/${tool.slug}`),
   '/image-converter',

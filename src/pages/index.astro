@@ -88,6 +88,9 @@ const paidServiceNotice = locale === 'ko'
     };
 
 const cardSeed = [
+  { href: '/photo-to-document', title: '사진으로 문서 만들기', desc: '사진 속 한글·영문을 TXT·Word 문서로', icon: '📄', iconClass: 'bg-teal-100 text-teal-700', category: 'tools', isNew: true },
+  { href: '/voice-to-document', title: '말해서 문서 만들기', desc: '마이크·녹음 파일을 글로 바꾸고 저장', icon: '🎙️', iconClass: 'bg-teal-100 text-teal-700', category: 'tools', isNew: true },
+  { href: '/text-translator', title: '글·음성 번역', desc: '한국어·영어 번역과 문서 저장', icon: '🌐', iconClass: 'bg-teal-100 text-teal-700', category: 'tools', isNew: true },
   { href: '/video-download-tools', title: '영상 다운로드 도구 모음', desc: '유튜브·틱톡·릴스·치지직·SOOP 링크별 도구', icon: '🎬', iconClass: 'bg-cyan-100 text-cyan-700', category: 'tools', isNew: true },
   ...videoTools.map(tool => ({ href: `/${tool.slug}`, title: tool.title, desc: tool.description, icon: tool.icon, iconClass: 'bg-cyan-100 text-cyan-700', category: 'tools', isNew: true })),
   { href: '/image-converter', title: '이미지 확장자 변경', desc: 'JPG·PNG·WebP 형식을 바꾸고 다운로드', icon: '🔄', iconClass: 'bg-emerald-100 text-emerald-700', category: 'tools', isNew: true },
