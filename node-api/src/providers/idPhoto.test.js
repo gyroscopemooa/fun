@@ -68,7 +68,7 @@ test('grooming presets, manual OFF options and passport-style identity constrain
   assert.equal(normalizeIdPhotoStyling().groomingMode, 'natural');
   assert.equal(normalizeIdPhotoStyling({ groomingMode: 'neat', hairOptions: { smoothVolume: false } }).hairOptions.smoothVolume, true);
   const custom = { groomingMode: 'custom', hairOptions: { flyaways: false, smoothVolume: false, clearForehead: false, tuckSides: false } };
-  assert.deepEqual(normalizeIdPhotoStyling(custom), custom);
+  assert.deepEqual(normalizeIdPhotoStyling(custom).hairOptions, custom.hairOptions);
   const prompt = buildPrompt('id_photo', 'current', custom);
   assert.match(prompt, /Keep the original bangs and forehead coverage/);
   assert.match(prompt, /Keep side hair placement and ear coverage unchanged/);
@@ -80,4 +80,23 @@ test('grooming presets, manual OFF options and passport-style identity constrain
   for (const invalid of [{groomingMode:'unknown'}, {hairOptions:null}, {hairOptions:[]}, {hairOptions:{flyaways:'false'}}, {hairOptions:{injected:true}}]) {
     assert.throws(() => normalizeIdPhotoStyling(invalid), {statusCode:400});
   }
+});
+
+
+test('retouch master, manual beauty flags and full-package/passport precedence', () => {
+  const off = normalizeIdPhotoStyling({beautyOptions:{skin:true,contour:true,vitality:true,makeup:true}});
+  assert.equal(off.retouchEnabled,false);
+  assert.deepEqual(off.beautyOptions,{skin:false,contour:false,vitality:false,makeup:false});
+  const manual = normalizeIdPhotoStyling({retouchEnabled:true,beautyOptions:{skin:false,contour:true,vitality:false,makeup:false}});
+  assert.deepEqual(manual.beautyOptions,{skin:false,contour:true,vitality:false,makeup:false});
+  const full = normalizeIdPhotoStyling({fullPackage:true});
+  assert.equal(full.groomingMode,'neat');assert.equal(full.retouchEnabled,true);
+  assert.deepEqual(full.beautyOptions,{skin:true,contour:true,vitality:true,makeup:true});
+  const passport = normalizeIdPhotoStyling({groomingMode:'passport',fullPackage:true,retouchEnabled:true});
+  assert.equal(passport.fullPackage,false);assert.equal(passport.retouchEnabled,false);
+  const fullPrompt=buildPrompt('id_photo','current',{fullPackage:true});
+  assert.match(fullPrompt,/business suit jacket/);assert.match(fullPrompt,/RETOUCH ON/);assert.match(fullPrompt,/Subtly refine the jawline/);
+  assert.doesNotMatch(fullPrompt,/Do not beautify|exact face shape/);
+  assert.match(buildPrompt('id_photo','suit',passport),/RETOUCH OFF/);
+  for(const args of [{retouchEnabled:'yes'},{fullPackage:1},{beautyOptions:[]},{beautyOptions:{makeup:'true'}},{beautyOptions:{unknown:true}}]) assert.throws(()=>normalizeIdPhotoStyling(args),{statusCode:400});
 });

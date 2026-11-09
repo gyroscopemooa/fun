@@ -42,9 +42,20 @@ try {
  await page.reload({waitUntil:'domcontentloaded'});
  assert.equal(await page.locator('#grooming-mode').inputValue(),'custom');assert.equal(await page.locator('#hair-volume').isChecked(),false);assert.equal(await page.locator('#hair-forehead').isChecked(),true);
  await page.locator('#file-input').setInputFiles({name:'portrait.webp',mimeType:'image/webp',buffer:sample});await page.locator('#generate:enabled').waitFor();
+ await page.locator('#retouch-enabled').check();await page.locator('#beauty-contour').check();
+ const beforePackage = await page.evaluate(() => ({outfit:document.querySelector('#outfit').checked,groom:document.querySelector('#grooming-mode').value,makeup:document.querySelector('#beauty-makeup').checked}));
+ await page.locator('#full-package').check();
+ assert.equal(await page.locator('#outfit').isChecked(),true);assert.equal(await page.locator('#grooming-mode').inputValue(),'neat');assert.equal(await page.locator('#beauty-makeup').isChecked(),true);
+ await page.locator('#generate').click();await page.waitForFunction(()=>!document.querySelector('#generate').disabled);assert.equal(styling.fullPackage,true);assert.equal(styling.retouchEnabled,true);assert.equal(styling.beautyOptions.contour,true);
+ await page.locator('#full-package').uncheck();assert.equal(await page.locator('#grooming-mode').inputValue(),beforePackage.groom);assert.equal(await page.locator('#beauty-makeup').isChecked(),beforePackage.makeup);
+ await page.locator('#retouch-enabled').uncheck();assert.equal(await page.locator('#beauty-contour').isDisabled(),true);
+ await page.locator('#grooming-mode').selectOption('passport');assert.equal(await page.locator('#retouch-enabled').isChecked(),false);assert.equal(await page.locator('#retouch-enabled').isDisabled(),true);
+ await page.locator('#grooming-mode').selectOption('natural');
+ await page.locator('[data-example="man"]').click();assert.match(await page.locator('[data-hero-after]').getAttribute('src'),/man-after/);
+ assert.equal(await page.locator('.studio-example-card').count(),2);
  await page.screenshot({path:'C:/3.manytool/tmp/id-hair-mobile.png',fullPage:true});
  fail=true;await page.locator('#generate').click();await page.waitForFunction(()=>document.querySelector('#generate')?.disabled===false);assert.equal(await page.locator('#candidate-grid button').count(),0);
  ready=false;await page.reload({waitUntil:'domcontentloaded'});await page.waitForTimeout(200);assert.equal(await page.locator('#generate').isDisabled(),true);
  assert.deepEqual(errors,[]);
- console.log('PASS: grooming presets/manual payload and persistence, mobile ON/OFF payload, async results, failed generation without fallback, readiness and no maintenance popup');
+ console.log('PASS: beauty/full-package restoration/passport lock, real sample tabs, grooming presets/manual payload and persistence, mobile ON/OFF payload, async results, failed generation without fallback, readiness and no maintenance popup');
 }finally{await browser.close();}

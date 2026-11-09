@@ -11,6 +11,9 @@ AI 증명사진 MVP를 위한 로컬 Node API입니다.
 - `groomingMode`: `natural`(가볍게), `neat`(완전 단정), `passport`(여권 스타일), `custom`(직접 선택). `/config.idPhotoGroomingModes`에 지원 모드를 제공합니다.
 - 수동 `hairOptions`는 `flyaways`, `smoothVolume`, `clearForehead`, `tuckSides`의 boolean입니다. OFF는 해당 부분을 유지하라는 지시로 전달되며 프리셋에서는 수동 값 대신 프리셋 설정을 사용합니다. 알 수 없는 모드·옵션은 결제 실행 전에 400으로 거부합니다.
 - 여권 스타일은 정면·무표정·머리 정리 프리셋이며 공식 제출 적합 판정이 아닙니다. 얼굴·피부 미용 보정은 요청하지 않습니다.
+- `retouchEnabled`는 뽀샵 ON/OFF이며, OFF이면 `beautyOptions`와 무관하게 피부·윤곽·생기·메이크업 보정을 모두 끕니다. 세부 boolean 키는 `skin`, `contour`, `vitality`, `makeup`이고 `/config.idPhotoBeautyOptions`에 노출합니다.
+- `fullPackage=true`는 정장·완전 단정·모든 미용 옵션을 켭니다. `passport`는 풀패키지보다 우선하며 미용 보정을 끕니다. UI에서 풀패키지를 끄면 켜기 전 선택을 복원합니다.
+- 공개 비포·애프터는 제공자의 처리·공개 동의를 받은 사진과 실제 API 결과입니다. 생성 설정과 파일 해시는 `docs/id-photo-sample-provenance.json`에 기록합니다.
 - 증명사진 `/generate`는 결제 검증 뒤 `202 {jobId,status:processing}`를 반환합니다. `/job/:id`를 조회해 `done`과 후보 3장을 받습니다. 실패는 `failed`로 반환됩니다.
 - 동일 주문의 중복 실행을 차단합니다. 크레딧은 작업 완료 시 사용 완료 처리하며 생성 실패 시 반환합니다.
 - 검증: `node --test src/providers/idPhoto.test.js src/providers/idPhotoHttp.test.js src/credits/credits.test.js`.
