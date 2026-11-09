@@ -7,6 +7,23 @@ from urllib.parse import urlsplit
 import urllib.request
 from safety import MAX_BYTES, MAX_DURATION, install_network_guard, validate_url
 
+# Resolution refers to the shorter edge: portrait 720x1280 is also 720p.
+FORMAT_SELECTOR = 'bv[height<=720][ext=mp4]+ba[ext=m4a]/bv[width<=720][ext=mp4]+ba[ext=m4a]/b[height<=720][ext=mp4]/b[width<=720][ext=mp4]/b[height<=720]/b[width<=720]/b[height<=?720]'
+
+
+def failure_code(error):
+    message = str(error).lower()
+    for code, patterns in (
+        ('upstream_access', ('403', '429', 'sign in', 'login', 'captcha', 'blocked', 'not a bot')),
+        ('format_unavailable', ('requested format', 'no video formats', 'unsupported external downloader')),
+        ('upstream_extract', ('unable to extract', 'failed to extract', 'empty', 'json')),
+        ('unavailable', ('not available', 'unavailable', 'not found', 'private', 'removed')),
+        ('upstream_timeout', ('timed out', 'timeout')),
+        ('merge_failed', ('ffmpeg', 'ffprobe', 'postprocessing')),
+    ):
+        if any(pattern in message for pattern in patterns): return code
+    return 'upstream_error'
+
 
 def emit(value):
     print(json.dumps(value,ensure_ascii=True),flush=True)
@@ -60,7 +77,7 @@ def download_platform(url, directory):
         def error(self,*args): pass
     options={
         'outtmpl':str(directory/'video.%(ext)s'),'noplaylist':True,'playlistend':1,
-        'format':'bv[height<=720][ext=mp4]+ba[ext=m4a]/b[height<=720][ext=mp4]/b[height<=720]/b[height<=?720]',
+        'format':FORMAT_SELECTOR,
         'merge_output_format':'mp4','max_filesize':MAX_BYTES,'match_filter':policy,
         'socket_timeout':20,'retries':1,'fragment_retries':1,'extractor_retries':1,
         'concurrent_fragment_downloads':1,'hls_prefer_native':True,'fixup':'never',
@@ -101,6 +118,7 @@ if __name__=='__main__':
     except ValueError as error:
         emit({'status':'failed','message':str(error)})
         sys.exit(1)
-    except Exception:
-        emit({'status':'failed','message':'영상을 가져오지 못했습니다. 공개 여부와 링크를 확인해주세요. 원본 사이트의 로그인·지역·자동접근 제한이 있는 영상은 지원되지 않습니다.'})
+    except Exception as error:
+        code = failure_code(error)
+        emit({'status':'failed','message':f'영상을 가져오지 못했습니다. 공개 여부와 링크를 확인해주세요. 원본 사이트의 로그인·지역·자동접근 제한이 있는 영상은 지원되지 않습니다. (오류: {code})'})
         sys.exit(1)
