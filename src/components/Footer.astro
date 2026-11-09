@@ -6,10 +6,10 @@ const pathname = Astro.url.pathname;
 const locale = detectLocale(pathname);
 const t = await createTranslator(locale);
 const c = locale === 'ko'
-  ? { support:'운영 문의', family:'패밀리사이트', community:'커뮤니티', business:'사업자 정보', company:'상호', owner:'대표', registration:'사업자등록번호', mailOrder:'통신판매업신고번호', address:'주소', email:'이메일', ownerValue:'전민수', mailOrderValue:'2023-울산남구-0547', addressValue:'울산광역시 남구 번영로 124번길 21 울산비즈니스센터 307호' }
+  ? { support:'운영 문의', family:'패밀리사이트', community:'커뮤니티', business:'사업자 정보', company:'상호', owner:'대표', registration:'사업자등록번호', mailOrder:'통신판매업신고번호', address:'주소', email:'이메일', ownerValue:'전민수', mailOrderValue:'2023-울산남구-0547', addressValue:'울산광역시 남구 팔등로 41번길,9 1202' }
   : locale === 'zh'
-    ? { support:'运营咨询', family:'关联网站', community:'社区', business:'企业信息', company:'商号', owner:'负责人', registration:'营业执照编号', mailOrder:'电商备案编号', address:'地址', email:'电子邮箱', ownerValue:'Jeon Minsu', mailOrderValue:'2023-Ulsan Nam-gu-0547', addressValue:'韩国蔚山广域市南区 Beonyeong-ro 124beon-gil 21, Ulsan Business Center 307' }
-    : { support:'Support', family:'Family site', community:'Community', business:'Business information', company:'Company', owner:'Owner', registration:'Business registration', mailOrder:'E-commerce registration', address:'Address', email:'Email', ownerValue:'Jeon Minsu', mailOrderValue:'2023-Ulsan Nam-gu-0547', addressValue:'Ulsan Business Center 307, 21 Beonyeong-ro 124beon-gil, Nam-gu, Ulsan, Republic of Korea' };
+    ? { support:'运营咨询', family:'关联网站', community:'社区', business:'企业信息', company:'商号', owner:'负责人', registration:'营业执照编号', mailOrder:'电商备案编号', address:'地址', email:'电子邮箱', ownerValue:'Jeon Minsu', mailOrderValue:'2023-Ulsan Nam-gu-0547', addressValue:'韩国蔚山广域市南区 Paldeung-ro 41beon-gil 9, 1202号' }
+    : { support:'Support', family:'Family site', community:'Community', business:'Business information', company:'Company', owner:'Owner', registration:'Business registration', mailOrder:'E-commerce registration', address:'Address', email:'Email', ownerValue:'Jeon Minsu', mailOrderValue:'2023-Ulsan Nam-gu-0547', addressValue:'Unit 1202, 9 Paldeung-ro 41beon-gil, Nam-gu, Ulsan, Republic of Korea' };
 ---
 
 <footer class="mt-12 border-t border-slate-200 bg-white">
