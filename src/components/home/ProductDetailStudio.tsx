@@ -400,6 +400,11 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
     sample: { productName: '高级陶瓷马克杯', price: '$24.90 / 2种颜色', audience: '寻找精致厨房用品的顾客', sellingPoints: '保温、细腻陶瓷质感、适合作为礼物' },
     heroEyebrow: '电商销售型商品详情页', heroTitle: '快速制作适用于电商平台和品牌商城的商品详情页。', heroBody: '只需商品照片和基本信息，即可整理适用于各类电商平台的销售型详情页。', sectionTitle: '美观且更清晰的销售流程', sectionBody: '让购买理由在整个页面中更容易理解。', paletteTitle: '选择设计色调', inputTitle: '商品信息', productName: '商品名称', price: '价格 / 选项', audience: '目标顾客', pageCount: '页面数量', tierHint: '可选择5、7、10、15或20页。', selectedTier: '已选方案', selectedTierHint: '页面越多，内容通常越完整。', sellingPoints: '核心卖点', prompt: '附加要求', sellingPointsPlaceholder: '例如：三层保温、柔和配色、礼盒包装', promptPlaceholder: '例如：制作7页电商风格详情页', imageUploadTitle: '上传商品图片', imageUploadBody: '最多可上传30张图片。', chooseImages: '选择图片', noImages: '尚未上传图片。', selectedPages: '已选页数', perPageApprox: '每页', estimated: '预计金额', usdNotice: '实际以美元结算', payAndGenerate: '付款并生成', clearInputs: '清空输入', copyTextButton: '复制文案', termsNoticePrefix: '继续付款即表示您同意', terms: '使用条款', privacy: '隐私政策', refund: '退款政策', termsNoticeSuffix: '。', preview: '预览', detailPageVertical: '860px 竖版商品详情页', pages: '页', classifiedPlaceholder: '生成后将在此显示图片自动分类。', headlinePlaceholder: '生成后的标题将在此显示。', subheadlinePlaceholder: '生成的商品文案将在此显示。', renderedPlaceholder: '完整商品详情页将在此显示。', seoPlaceholder: 'SEO 标题将在此显示。', ctaPlaceholder: '行动号召文案将在此显示。'
   } : (UI_COPY[locale as keyof typeof UI_COPY] ?? UI_COPY.en);
+  const serviceDeliveryNotice = locale === 'ko'
+    ? '선택한 장수의 상세페이지 결과 1건을 제공하는 단건결제 상품입니다. 결제 확인 후 생성이 시작되며 자동갱신되지 않습니다.'
+    : locale === 'zh'
+      ? '这是一次性付款商品，提供下方实际选择页数的一份商品详情页结果。确认付款后开始生成，不会自动续费。'
+      : 'This is a one-time purchase for one detail-page result with the page count selected below. Generation starts after payment confirmation and does not auto-renew.';
   const defaultFormValues: ProductDetailFormValues = {
     productName: ui.sample.productName,
     price: ui.sample.price,
@@ -1223,6 +1228,12 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
               {isStartingCheckout ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Store className="h-4 w-4" />}
               {ui.payAndGenerate}
             </Button>
+
+            <p className="mt-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs leading-5 text-slate-600">
+              {locale === 'ko'
+                ? `선택한 ${pricingSummary.page_count}장 상세페이지 결과 1건을 제공하는 단건결제 상품입니다. 결제 확인 후 생성이 시작되며 자동갱신되지 않습니다.`
+                : serviceDeliveryNotice}
+            </p>
 
             <div className="mt-3 flex flex-wrap gap-2">
               <Button type="button" variant="outline" onClick={onClearInputs}>

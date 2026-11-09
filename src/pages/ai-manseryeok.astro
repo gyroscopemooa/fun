@@ -310,6 +310,7 @@ const l = (ko: string, zh: string, en: string) => locale === 'ko' ? ko : locale 
                 </div>
                 <div class="space-y-4">
                   <button id="saju-submit" class="w-full bg-[#e9c349] px-5 py-5 text-sm font-black uppercase tracking-[0.24em] text-[#3c2f00] transition hover:brightness-110 disabled:cursor-not-allowed disabled:brightness-75">{l('풀이 시작','开始分析','Start analysis')} ($29.88)</button>
+                  <p class="text-xs leading-5 text-white/55">{l('결제 1건당 사주 분석 리포트 1회를 제공하는 단건결제 상품입니다. 결제 확인 후 분석이 시작되며 자동갱신되지 않습니다.','每笔付款提供一份命理分析报告。确认付款后开始分析，不会自动续费。','One payment provides one Saju analysis report. Analysis starts after payment confirmation and does not auto-renew.')}</p>
                   <div id="saju-status-box" class="ledger-subpanel px-4 py-4 text-sm leading-6 text-white/70">{l('생년월일과 시간을 입력한 뒤 버튼을 누르면 결제 또는 분석이 진행됩니다.','输入出生日期和时间后即可继续付款和分析。','Enter your birth date and time to continue to payment and analysis.')}</div>
                   <div class="flex items-center justify-between text-[11px] uppercase tracking-[0.18em] text-white/40"><span id="saju-stage">입력 대기</span><span>secure archive</span></div>
                 </div>
