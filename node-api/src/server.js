@@ -23,6 +23,8 @@ import { scoreFiveGrid } from './naming/score.js';
 import { recommendNames } from './naming/recommend.js';
 import { buildFallback, getMissingStrokeSuggestion } from './naming/fallback.js';
 import { buildNameExplanation } from './naming/description.js';
+import { PACKS as CREDIT_PACKS } from './credits/pricing.js';
+import { installCreditRoutes } from './credits/routes.js';
 
 const app = express();
 const port = Number(process.env.PORT ?? 8787);
@@ -118,6 +120,52 @@ app.use(express.json({
   }
 }));
 app.use('/files', express.static(rootDir));
+
+// Credit money and login tokens must never live under the public /files mount.
+let creditStore = null;
+if (process.env.CREDITS_ENABLED === 'true' || process.env.CREDITS_DB_PATH) {
+  const { CreditStore } = await import('./credits/store.js');
+  const filename = path.resolve(process.env.CREDITS_DB_PATH || path.join(thisDir, '..', 'private-credit-data', 'wallets.sqlite'));
+  const relativeToPublic = path.relative(rootDir, filename);
+  if (!relativeToPublic.startsWith('..') && !path.isAbsolute(relativeToPublic)) throw new Error('CREDITS_DB_PATH must be outside public storage');
+  await fs.mkdir(path.dirname(filename), { recursive: true });
+  creditStore = new CreditStore(filename);
+  for (const order of creditStore.allOrders()) db.orders.set(order.id, order);
+  const originalGet = db.orders.get.bind(db.orders);
+  const originalSet = db.orders.set.bind(db.orders);
+  db.orders.get = id => creditStore.order(id) ?? originalGet(id);
+  db.orders.set = (id, value) => {
+    if (value.paymentMode === 'credits') creditStore.saveOrder(value);
+    return originalSet(id, value);
+  };
+  // Definitions below are initialized before the server starts accepting requests.
+  installCreditRoutes(app, { store: creditStore, orders: db.orders, verifyWebhook: req => verifyPolarWebhook(req) });
+  app.use((req, res, next) => {
+    const json = res.json.bind(res);
+    res.json = body => {
+      const id = req.body?.orderId || /^\/order\/([^/]+)\/detail-page$/.exec(req.path)?.[1];
+      const isGeneration = ['/generate', '/ai-calorie-calculator/analyze', '/ai-personal-color/analyze', '/ai-manseryeok/analyze', '/name-premium/analyze', '/name-premium/recommend'].includes(req.path) || /^\/order\/[^/]+\/detail-page$/.test(req.path);
+      if (req.method === 'POST' && isGeneration && id && req.creditClaimed === id) {
+        const order = creditStore.order(id);
+        const success = Boolean(order?.detailPageResult) || (res.statusCode < 400 && body?.analysis?.isFood !== false);
+        creditStore.finish(id, success);
+        if (!success && body && typeof body === 'object') body.creditRestored = true;
+      }
+      return json(body);
+    };
+    next();
+  });
+} else {
+  app.get('/credits/config', (_req, res) => res.json({ enabled: false, valueKrw: 1000, packs: CREDIT_PACKS.map(p => ({ ...p, available: false })), tools: {} }));
+}
+
+const claimCreditExecution = (req, order) => {
+  if (order?.paymentMode !== 'credits') return;
+  // A name purchase grants the existing input-locked report/recommendation bundle.
+  if (order.productType === 'ai_name_premium' && creditStore.state(order.id) === 'done') return;
+  creditStore.claim(order.id);
+  req.creditClaimed = order.id;
+};
 
 const maybeAudioUpload = (req, res, next) => {
   if (req.is('multipart/form-data')) {
@@ -839,6 +887,7 @@ const ensureNamePremiumOrder = async (orderId, requestedInput = null) => {
   const current = db.orders.get(orderId);
   let order = await refreshOrderFromPolarIfNeeded(current);
   if (!order) throw new Error('order not found');
+  order = db.orders.get(orderId) ?? order;
   if (order.productType !== 'ai_name_premium') throw new Error('invalid order product type');
   if (order.status !== 'paid') throw new Error('payment required');
   if (requestedInput) {
@@ -917,6 +966,7 @@ const runMkvToMp4Job = async (jobId) => {
     outputUrl: `/files/video/output/${path.basename(job.outputPath)}`
   };
   db.videoJobs.set(jobId, next);
+  if (creditStore?.order(job.orderId)) creditStore.finish(job.orderId, true);
 };
 
 app.post('/video/mkv-mp4/convert', largeVideoUpload.single('video'), async (req, res) => {
@@ -943,6 +993,8 @@ app.post('/video/mkv-mp4/convert', largeVideoUpload.single('video'), async (req,
       await fs.rm(file.path, { force: true }).catch(() => {});
       return res.status(400).json({ error: 'only mkv, mov, avi, and m4v uploads are allowed' });
     }
+
+    claimCreditExecution(req, order);
 
     const jobId = uuidv4();
     const outputName = `${path.parse(file.filename).name}.mp4`;
@@ -976,10 +1028,12 @@ app.post('/video/mkv-mp4/convert', largeVideoUpload.single('video'), async (req,
         error: error instanceof Error ? error.message : 'conversion failed'
       });
       await fs.rm(outputPath, { force: true }).catch(() => {});
+      if (order.paymentMode === 'credits') creditStore.finish(order.id, false);
     });
 
     return res.status(202).json({ ok: true, jobId, job: toVideoJobPayload(job) });
   } catch (error) {
+    if (req.creditClaimed) creditStore.finish(req.creditClaimed, false);
     if (req.file?.path) {
       await fs.rm(req.file.path, { force: true }).catch(() => {});
     }
@@ -1838,6 +1892,10 @@ const createPolarRefund = async ({ order, reason = 'service_disruption' }) => {
 };
 
 const autoRefundOrder = async (order, reason = 'service_disruption') => {
+  if (order?.paymentMode === 'credits') {
+    creditStore.restore(order.id);
+    return { order: creditStore.order(order.id), attempted: true, refunded: true, refundStatus: 'succeeded' };
+  }
   if (!order || order.paymentMode !== 'polar') {
     return {
       order,
@@ -2016,8 +2074,9 @@ app.post('/generate', async (req, res) => {
 
   try {
     let order = null;
-    if (paymentMode === 'polar') {
+    if (paymentMode === 'polar' || db.orders.get(orderId)?.paymentMode === 'credits') {
       order = await ensureAiPhotoOrder(orderId);
+      claimCreditExecution(req, order);
     }
     const generation = await generateCandidatesWithProvider({
       inputPath: photo.originalPath,
@@ -2107,6 +2166,10 @@ app.post('/ai-image-generator/generate', upload.single('image'), async (req, res
       if (order.status !== 'paid') {
         return res.status(402).json({ error: 'payment required', status: order.status });
       }
+      if (order.paymentMode === 'credits') {
+        if (order.productType !== 'base') return res.status(400).json({ error: 'invalid order product type' });
+        claimCreditExecution(req, order);
+      }
     }
 
     const generationId = uuidv4();
@@ -2156,13 +2219,15 @@ app.post('/ai-image-generator/generate', upload.single('image'), async (req, res
             aiImageEmailError: null
           };
           db.orders.set(order.id, nextOrder);
+          if (order.paymentMode === 'credits') creditStore.finish(order.id, true);
           await sendAiImageResultEmailIfNeeded({ order: nextOrder, job });
         }
       } catch (error) {
-        job.status = 'failed';
+        job.status = order?.paymentMode === 'credits' && job.imageUrl ? 'done' : 'failed';
         job.completedAt = new Date().toISOString();
         job.error = error instanceof Error ? error.message : 'ai image generation failed';
         if (order?.id) {
+          if (order.paymentMode === 'credits') creditStore.finish(order.id, Boolean(job.imageUrl));
           const currentOrder = db.orders.get(order.id) ?? order;
           db.orders.set(order.id, {
             ...currentOrder,
@@ -2182,6 +2247,7 @@ app.post('/ai-image-generator/generate', upload.single('image'), async (req, res
       status: 'queued'
     });
   } catch (error) {
+    if (req.creditClaimed) creditStore.finish(req.creditClaimed, false);
     return res.status(500).json({ error: `ai image generate failed: ${error.message}` });
   }
 });
@@ -2201,6 +2267,7 @@ app.post('/ai-calorie-calculator/analyze', upload.single('image'), async (req, r
 
     const orderId = typeof req.body?.orderId === 'string' ? req.body.orderId.trim() : '';
     const order = await claimCalorieOrder(orderId);
+    claimCreditExecution(req, order);
     claimedOrderId = order.id;
 
     const imageDataUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
@@ -2249,6 +2316,7 @@ app.post('/ai-personal-color/analyze', upload.single('image'), async (req, res) 
     const notes = typeof req.body?.notes === 'string' ? req.body.notes.trim() : '';
     const locale = typeof req.body?.locale === 'string' ? req.body.locale.trim().toLowerCase().slice(0, 2) : 'en';
     const order = await ensureAiPersonalColorOrder(orderId);
+    claimCreditExecution(req, order);
     orderIdForError = order.id;
     const imageDataUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
 
@@ -2318,6 +2386,7 @@ app.post('/ai-personal-color/analyze', upload.single('image'), async (req, res) 
         });
       }
     }
+    if (error?.status) return res.status(error.status).json({ error: message });
     if (message === 'orderId is required') return res.status(402).json({ error: message });
     if (message === 'order not found') return res.status(404).json({ error: message });
     if (message === 'invalid order product type') return res.status(400).json({ error: message });
@@ -2352,6 +2421,7 @@ app.post('/ai-manseryeok/analyze', async (req, res) => {
     }
 
     const order = await ensureAiManseryeokOrder(orderId);
+    claimCreditExecution(req, order);
     orderIdForError = order.id;
 
     const jobId = uuidv4();
@@ -2431,6 +2501,7 @@ app.post('/ai-manseryeok/analyze', async (req, res) => {
         });
       }
     }
+    if (error?.status) return res.status(error.status).json({ error: message });
     if (message === 'orderId is required') return res.status(402).json({ error: message });
     if (message === 'order not found') return res.status(404).json({ error: message });
     if (message === 'invalid order product type') return res.status(400).json({ error: message });
@@ -2443,6 +2514,7 @@ app.post('/ai-manseryeok/analyze', async (req, res) => {
 app.post('/name-premium/analyze', async (req, res) => {
   try {
     const order = await ensureNamePremiumOrder(req.body?.orderId ?? null, req.body?.input ?? null);
+    claimCreditExecution(req, order);
     const validation = validateNamingInput({
       surname: req.body?.surname,
       given: req.body?.given
@@ -2517,6 +2589,7 @@ app.post('/name-premium/analyze', async (req, res) => {
 app.post('/name-premium/recommend', async (req, res) => {
   try {
     const order = await ensureNamePremiumOrder(req.body?.orderId ?? null, req.body?.input ?? null);
+    claimCreditExecution(req, order);
     const validation = validateRecommendInput({
       surname: req.body?.surname,
       topK: req.body?.topK,
@@ -2753,6 +2826,7 @@ app.post('/order/:id/detail-page', async (req, res) => {
   }
 
   try {
+    claimCreditExecution(req, order);
     const result = await generateCommerceDetailPage({
       productName: String(request.productName).trim(),
       price: String(request.price ?? '').trim(),
@@ -2785,6 +2859,12 @@ app.post('/order/:id/detail-page', async (req, res) => {
     });
   } catch (error) {
     const message = error?.message ?? 'detail page generation failed';
+    if (order.paymentMode === 'credits' && !req.creditClaimed) return res.status(error.status ?? 409).json({ error: message });
+    const completedCreditOrder = order.paymentMode === 'credits' ? creditStore.order(order.id) : null;
+    if (completedCreditOrder?.detailPageResult) {
+      db.orders.set(order.id, { ...completedCreditOrder, emailStatus: 'failed', emailError: message });
+      return res.json({ ok: true, orderId: order.id, status: 'paid', result: completedCreditOrder.detailPageResult, request: completedCreditOrder.detailPageRequest, emailStatus: 'failed' });
+    }
     let failedOrder = {
       ...order,
       detailPageGenerationStatus: 'failed',
@@ -3170,6 +3250,8 @@ app.post('/payment/webhook', (req, res) => {
     return res.status(404).json({ error: 'order not found' });
   }
 
+  if (current.paymentMode === 'credits') return res.status(400).json({ error: 'credit orders cannot be changed by payment webhooks' });
+
   const status = resolvePaymentStatusFromWebhook(payload);
   const next = {
     ...current,
@@ -3194,6 +3276,7 @@ app.post('/refund', async (req, res) => {
   if (!order) {
     return res.status(404).json({ error: 'order not found' });
   }
+  if (order.paymentMode === 'credits') return res.status(400).json({ error: 'use authenticated /credits/cancel for unused credit orders' });
   if (order.status === 'refunded' || order.refundStatus === 'succeeded') {
     return res.json({
       ok: true,

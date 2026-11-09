@@ -653,7 +653,7 @@ const meta = locale === 'ko' ? { title:'AI 펫 언어 분석기 | 강아지 고�
 
       const requestPetCheckout = async () => {
         const currentUrl = window.location.href.split('?')[0];
-        const response = await fetch(`${API_BASE}/checkout`, {
+        const response = await window.manytoolCreditCheckout(`${API_BASE}/checkout`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',

@@ -1711,7 +1711,7 @@ const sizePresets = [
         throw new Error(`Polar product is not configured for add${count}`);
       }
 
-      const res = await fetch(`${API_BASE}/checkout`, {
+      const res = await window.manytoolCreditCheckout(`${API_BASE}/checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1728,7 +1728,7 @@ const sizePresets = [
       if (!isPolarProductReady('base')) {
         throw new Error('Polar base product is not configured');
       }
-      const res = await fetch(`${API_BASE}/checkout`, {
+      const res = await window.manytoolCreditCheckout(`${API_BASE}/checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

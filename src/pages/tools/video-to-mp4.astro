@@ -227,7 +227,7 @@ const apiBase = rawApiBase.replace(/\/+$/, '');
 
       const requestCheckout = async () => {
         const currentUrl = window.location.href.split('?')[0];
-        const response = await fetch(`${API_BASE}/checkout`, {
+        const response = await window.manytoolCreditCheckout(`${API_BASE}/checkout`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

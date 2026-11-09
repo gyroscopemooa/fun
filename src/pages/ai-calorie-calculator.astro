@@ -246,7 +246,7 @@ const c = locale === 'ko' ? { title:'AI 칼로리 계산기', desc:'음식 사�
 
       const requestBaseCheckout = async () => {
         const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
-        const response = await fetch(`${API_BASE}/checkout`, {
+        const response = await window.manytoolCreditCheckout(`${API_BASE}/checkout`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -305,6 +305,7 @@ const c = locale === 'ko' ? { title:'AI 칼로리 계산기', desc:'음식 사�
           if (payload.analysis.isFood === false) {
             // The server keeps the order open for a retake, so the same payment covers the next photo.
             setStatus(tr('음식을 찾지 못했어요. 같은 결제로 다른 사진을 다시 분석할 수 있어요.','未识别到食物，您可以使用同一笔付款换一张照片重试。','No food was detected. You can retry with another photo using the same payment.'));
+            if (payload.creditRestored) { setOrderId(null); setStatus('음식을 찾지 못해 크레딧을 복구했습니다. 다른 사진으로 다시 시도해주세요.'); }
           } else {
             setOrderId(null);
             setStatus(tr('분석이 완료되었습니다. 아래 리포트를 확인해주세요.','分析完成，请查看下方报告。','Analysis complete. See the report below.'));

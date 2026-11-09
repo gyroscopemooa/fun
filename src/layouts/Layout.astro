@@ -294,6 +294,7 @@ const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.r
 <!doctype html>
 <html lang={htmlLang} dir={textDirection} suppressHydrationWarning>
   <head>
+    <script is:inline src="/credit-checkout.js"></script>
     <script is:inline data-cfasync="false" src="https://cmp.gatekeeperconsent.com/min.js"></script>
     <script is:inline data-cfasync="false" src="https://the.gatekeeperconsent.com/cmp.min.js"></script>
     <script is:inline async src="//www.ezojs.com/ezoic/sa.min.js"></script>
@@ -578,6 +579,7 @@ const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.r
         var AI_PAGE = /^\/(?:[a-z]{2,3}(?:-[A-Za-z]+)?\/)?(?:ai-(?:calorie-calculator|headshot|id-photo|image-generator|manseryeok|model-cut|passport-photo|personal-color|pet-translator|photoshop)|name-premium|tools\/product-detail-studio|product-detail-studio)(?:\/|$)/;
         var AI_ENDPOINT = /\/(?:checkout|upload|generate|analyze|recommend|refund|api\/pet|pet-access\/request-link)(?:\/|$|\?)/;
         if (!AI_PAGE.test(location.pathname)) return;
+        window.manytoolAiUnavailable = true;
         var lang = (document.documentElement.lang || 'ko').slice(0, 2);
         var copy = {
           ko: ['AI 기능 준비 중', '현재 AI 기능을 준비하고 있습니다. 더 안정적인 상태로 곧 다시 열어드릴게요.', '확인'],

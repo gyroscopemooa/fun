@@ -984,7 +984,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
 
   const requestBaseCheckout = async () => {
     const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
-    const response = await fetch(`${API_BASE}/checkout`, {
+    const response = await (window.manytoolCreditCheckout ?? fetch)(`${API_BASE}/checkout`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

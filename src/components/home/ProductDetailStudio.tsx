@@ -615,7 +615,7 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
     try {
       const requestUrl = `${API_BASE}${DETAIL_PAGE_REQUEST_PATH}`;
       console.info('[ProductDetailStudio] detail page request URL:', requestUrl);
-      const response = await fetch(requestUrl, {
+      const response = await (window.manytoolCreditCheckout ?? fetch)(requestUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
