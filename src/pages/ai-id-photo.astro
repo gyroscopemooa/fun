@@ -213,7 +213,7 @@ const sizePresets = [
     </section>
 
     <IdPhotoShowcase variant="gallery" />
-    <section id="personal-comparison" class="hidden mt-8 rounded-2xl border border-slate-200 bg-white p-5">
+    <section id="personal-comparison" hidden class="hidden mt-8 rounded-2xl border border-slate-200 bg-white p-5">
       <h2 class="text-2xl font-black tracking-tight text-slate-900">내 사진 전후 비교</h2>
       <p class="mt-2 text-sm text-slate-600">슬라이더로 원본과 생성 결과 차이를 확인하세요.</p>
       <div class="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-3">
@@ -356,6 +356,31 @@ const sizePresets = [
     const compareAfterWrapEl = document.getElementById('compare-after-wrap');
     const compareSliderEl = document.getElementById('compare-slider');
     const compareHelpEl = document.getElementById('compare-help');
+    const comparisonEl = document.getElementById('personal-comparison');
+    const syncComparisonVisibility = () => {
+      const ready = [compareBeforeEl, compareAfterEl].every((el) =>
+        el instanceof HTMLImageElement && Boolean(el.getAttribute('src')) && el.complete && el.naturalWidth > 0
+      );
+      if (comparisonEl instanceof HTMLElement) {
+        comparisonEl.hidden = !ready;
+        comparisonEl.classList.toggle('hidden', !ready);
+      }
+      if (compareSliderEl instanceof HTMLInputElement) compareSliderEl.disabled = !ready;
+    };
+    const setComparisonImage = (el, url) => {
+      if (!(el instanceof HTMLImageElement)) return;
+      if (url) {
+        if (el.getAttribute('src') !== url) el.src = url;
+      } else el.removeAttribute('src');
+      syncComparisonVisibility();
+    };
+    [compareBeforeEl, compareAfterEl].forEach((el) => {
+      el?.addEventListener('load', syncComparisonVisibility);
+      el?.addEventListener('error', () => {
+        el.removeAttribute('src');
+        syncComparisonVisibility();
+      });
+    });
     const candidateSectionEl = document.getElementById('candidate-section');
     const mobileDownloadBarEl = document.getElementById('mobile-download-bar');
     const mobileSelectionStatusEl = document.getElementById('mobile-selection-status');
@@ -1195,8 +1220,8 @@ const sizePresets = [
       }
       if (sourceEmpty instanceof HTMLElement) sourceEmpty.classList.add('hidden');
       updateGenerateAvailability();
-      if (compareBeforeEl instanceof HTMLImageElement) compareBeforeEl.src = dataUrl;
-      if (compareAfterEl instanceof HTMLImageElement) compareAfterEl.src = '';
+      setComparisonImage(compareBeforeEl, dataUrl);
+      setComparisonImage(compareAfterEl, '');
       if (compareHelpEl instanceof HTMLElement) compareHelpEl.textContent = '후보 생성 후 결과 비교가 활성화됩니다.';
       if (compareSliderEl instanceof HTMLInputElement) {
         compareSliderEl.value = '50';
@@ -1240,8 +1265,8 @@ const sizePresets = [
       if (fileInput instanceof HTMLInputElement) fileInput.value = '';
       updateGenerateAvailability();
       if (downloadBtn instanceof HTMLButtonElement) downloadBtn.disabled = true;
-      if (compareBeforeEl instanceof HTMLImageElement) compareBeforeEl.src = '';
-      if (compareAfterEl instanceof HTMLImageElement) compareAfterEl.src = '';
+      setComparisonImage(compareBeforeEl, '');
+      setComparisonImage(compareAfterEl, '');
       if (compareAfterWrapEl instanceof HTMLElement) compareAfterWrapEl.style.width = '50%';
       if (compareSliderEl instanceof HTMLInputElement) {
         compareSliderEl.value = '50';
@@ -1278,7 +1303,7 @@ const sizePresets = [
     };
 
     const renderCandidates = () => {
-      document.getElementById('personal-comparison')?.classList.toggle('hidden', candidates.length === 0);
+      setComparisonImage(compareAfterEl, candidates.find((item) => item.selected)?.url || candidates[0]?.url || '');
       if (!(gridEl instanceof HTMLElement)) return;
       gridEl.innerHTML = '';
       candidates.forEach((item, idx) => {
@@ -1369,7 +1394,7 @@ const sizePresets = [
             }));
           ensureRecommendedSelection();
           renderCandidates();
-          if (compareAfterEl instanceof HTMLImageElement) compareAfterEl.src = candidates[0].url;
+          setComparisonImage(compareAfterEl, candidates[0].url);
           if (compareHelpEl instanceof HTMLElement) compareHelpEl.textContent = '이전 생성 결과를 복원했습니다.';
           setStatus('이전 후보 결과를 복원했습니다. 필요하면 다시 생성할 수 있습니다.');
         }
@@ -1476,8 +1501,8 @@ const sizePresets = [
         sourcePreview.src = adjusted.dataUrl;
         sourcePreview.classList.remove('hidden');
       }
-      if (compareBeforeEl instanceof HTMLImageElement) compareBeforeEl.src = adjusted.dataUrl;
-      if (compareAfterEl instanceof HTMLImageElement) compareAfterEl.src = '';
+      setComparisonImage(compareBeforeEl, adjusted.dataUrl);
+      setComparisonImage(compareAfterEl, '');
       if (compareHelpEl instanceof HTMLElement) compareHelpEl.textContent = '후보 생성 후 결과 비교가 활성화됩니다.';
       if (compareSliderEl instanceof HTMLInputElement) {
         compareSliderEl.value = '50';
@@ -1650,9 +1675,9 @@ const sizePresets = [
         }
       }
       finally {
-        if (compareAfterEl instanceof HTMLImageElement) compareAfterEl.src = candidates[0]?.url ?? '';
+        setComparisonImage(compareAfterEl, candidates[0]?.url ?? '');
         if (compareHelpEl instanceof HTMLElement) compareHelpEl.textContent = '슬라이더를 움직여 전/후 변화를 비교하세요.';
-        if (compareSliderEl instanceof HTMLInputElement) compareSliderEl.disabled = false;
+        syncComparisonVisibility();
         renderCandidates();
         setBusy(false);
         if (candidates.length > 0) {

@@ -26,10 +26,14 @@ try {
  });
  await page.goto(base+'/ai-id-photo/',{waitUntil:'domcontentloaded'});
  assert.equal(await page.evaluate(()=>Boolean(window.manytoolAiUnavailable)),false);
+ assert.equal(await page.locator('#personal-comparison').isVisible(),false);
  const toggle=page.getByRole('switch',{name:'정장 입히기'});await toggle.waitFor();assert.equal(await toggle.isChecked(),false);
  await page.locator('#file-input').setInputFiles({name:'portrait.webp',mimeType:'image/webp',buffer:sample});
  await page.locator('#generate:enabled').waitFor({timeout:15000});
  await page.locator('#generate').click();await page.locator('#candidate-grid button').first().waitFor({timeout:15000});assert.equal(outfit,'current');assert.equal(styling.groomingMode,'natural');
+ await page.locator('#personal-comparison').waitFor({state:'visible'});
+ await page.locator('#compare-after').evaluate(el=>el.src='https://api.manytool.net/missing-image');
+ await page.locator('#personal-comparison').waitFor({state:'hidden'});
  await page.locator('#grooming-mode').selectOption('neat');
  await toggle.check();await page.locator('#generate').click();await page.waitForFunction(()=>document.querySelector('#generate')?.disabled===false);assert.equal(outfit,'suit');assert.equal(styling.groomingMode,'neat');
  assert.equal(await page.locator('#candidate-grid button').count(),3);
@@ -40,6 +44,7 @@ try {
  await page.locator('#generate').click();await page.waitForFunction(()=>!document.querySelector('#generate').disabled);
  assert.equal(styling.groomingMode,'custom');assert.deepEqual(styling.hairOptions,{flyaways:true,smoothVolume:false,clearForehead:true,tuckSides:false});
  await page.reload({waitUntil:'domcontentloaded'});
+ assert.equal(await page.locator('#personal-comparison').isVisible(),false);
  assert.equal(await page.locator('#grooming-mode').inputValue(),'custom');assert.equal(await page.locator('#hair-volume').isChecked(),false);assert.equal(await page.locator('#hair-forehead').isChecked(),true);
  await page.locator('#file-input').setInputFiles({name:'portrait.webp',mimeType:'image/webp',buffer:sample});await page.locator('#generate:enabled').waitFor();
  await page.locator('#retouch-enabled').check();await page.locator('#beauty-contour').check();
