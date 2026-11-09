@@ -6,3 +6,4 @@ __pycache__
 .env*
 .dev.vars*
 worker-configuration.d.ts
+tmp/
