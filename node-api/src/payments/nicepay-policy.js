@@ -1,7 +1,7 @@
 import { REFUND_POLICY_VERSION } from '../credits/refunds.js';
 // Merchant contract review is separate from technical integration readiness.
 // This module does not activate payment routes or change any prices.
-const CATEGORIES = ['credit_topup', 'direct'];
+const CATEGORIES = ['credit_topup', 'direct', 'donation'];
 const VARIANTS = ['legacy', 'rest-server'];
 const error = message => { throw new Error(message); };
 export function readNicepayPolicy(raw = '') {

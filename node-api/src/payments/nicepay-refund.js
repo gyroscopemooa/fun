@@ -19,7 +19,7 @@ export function reserveNicepayFullRefund(wallet,orderId,owner){
   }else if(intent.category==='direct'){
    const changed=wallet.db.prepare("UPDATE nice_entitlements SET state='refund_hold' WHERE order_id=? AND owner=? AND state='ready'").run(orderId,owner);
    if(changed.changes!==1)throw Error('Only unused direct entitlements can be refunded');
-  }else throw Error('Unknown refund category');
+  }else if(intent.category!=='donation')throw Error('Unknown refund category');
   if(prior){wallet.db.prepare('INSERT INTO nice_refund_history VALUES(?,?,?)').run(prior.cancel_id,orderId,JSON.stringify(prior));wallet.db.prepare('DELETE FROM nice_refunds WHERE order_id=?').run(orderId);}
   wallet.db.prepare('INSERT INTO nice_refunds VALUES(?,?,?,?,?,?,?,?)').run(orderId,cancelId,owner,intent.category,credits,intent.amount,'reserved',Date.now());
   return wallet.db.prepare('SELECT * FROM nice_refunds WHERE order_id=?').get(orderId);
@@ -29,7 +29,7 @@ export function releaseUnsentNicepayRefund(wallet,orderId,owner){
  init(wallet);return wallet.tx(()=>{
   const row=wallet.db.prepare("SELECT * FROM nice_refunds WHERE order_id=? AND owner=? AND state='reserved'").get(orderId,owner);if(!row)throw Error('Only unsent refunds can be released');
   if(row.category==='credit_topup'){wallet.change(`nice-refund-release:${row.cancel_id}`,owner,row.credits,'NICEPAY 환불 접수 취소');wallet.db.prepare("UPDATE topups SET status='paid' WHERE id=?").run(`nicepay:${orderId}`);}
-  else wallet.db.prepare("UPDATE nice_entitlements SET state='ready' WHERE order_id=? AND state='refund_hold'").run(orderId);
+  else if(row.category==='direct')wallet.db.prepare("UPDATE nice_entitlements SET state='ready' WHERE order_id=? AND state='refund_hold'").run(orderId);
   wallet.db.prepare("UPDATE nice_refunds SET state='released',updated=? WHERE order_id=?").run(Date.now(),orderId);
  });
 }
@@ -41,7 +41,7 @@ function applyCancelled(wallet,orderId,receipt){
   if(row.state==='cancelled')return false;
   if(!['sending','uncertain'].includes(row.state))throw Error('Refund not dispatched');
   if(row.category==='credit_topup')wallet.db.prepare("UPDATE topups SET status='refunded',refunded=credits WHERE id=? AND status='refund_hold'").run(`nicepay:${orderId}`);
-  else wallet.db.prepare("UPDATE nice_entitlements SET state='refunded' WHERE order_id=? AND state='refund_hold'").run(orderId);
+  else if(row.category==='direct')wallet.db.prepare("UPDATE nice_entitlements SET state='refunded' WHERE order_id=? AND state='refund_hold'").run(orderId);
   wallet.db.prepare("UPDATE nice_refunds SET state='cancelled',updated=? WHERE order_id=?").run(Date.now(),orderId);
   wallet.db.prepare("UPDATE nice_orders SET state='refunded',updated=? WHERE id=?").run(Date.now(),orderId);return true;
  });

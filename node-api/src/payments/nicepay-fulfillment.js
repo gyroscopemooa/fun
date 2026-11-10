@@ -18,7 +18,7 @@ export function fulfillNicepayOrder(creditStore, orderId) {
       creditStore.change(`topup:${id}`,row.owner,intent.credits,'NICEPAY 충전');
     }else if(intent.category==='direct'){
       db.prepare("INSERT INTO nice_entitlements VALUES(?,?,?,'ready')").run(orderId,row.owner,intent.productId);
-    }else throw new Error('Unknown NICEPAY fulfillment category');
+    }else if(intent.category!=='donation')throw new Error('Unknown NICEPAY fulfillment category');
     db.prepare('INSERT INTO nice_fulfillments VALUES(?,?,?)').run(orderId,intent.category,Date.now());return true;
   });
 }

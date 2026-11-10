@@ -26,14 +26,14 @@ export function createNicepayStagingRouter({enabled=false,store,creditStore,conf
       res.type('html').send(renderNicepayPgForm(order,config,timestamp()));
     }catch{res.status(400).json({error:'NICEPAY checkout unavailable'});}
   });
-  router.post('/execute',express.json({limit:'16kb'}),async(req,res)=>{
+  router.post('/execute',express.json({limit:'24mb'}),async(req,res)=>{
     try{
       if(req.headers.origin!==origin)return res.status(403).json({error:'Origin rejected'});
       const owner=await authenticate(req),order=store.owned(req.body?.orderId,owner);
       if(order.category!=='direct'||!Object.hasOwn(toolAdapters,order.productId))throw Error('Tool integration unavailable');
       const adapter=toolAdapters[order.productId];
       // Validation must run before entitlement claim and before any paid tool work.
-      const input=await adapter.validate(req.body?.input);
+      const input=await adapter.validate(req.body?.input,{orderId:order.id,owner});
       const result=await executeNicepayTool({creditStore,orderId:order.id,owner,product:order.productId,
         runner:()=>adapter.execute(input,{orderId:order.id,owner})});
       res.json({result});
