@@ -1,3 +1,4 @@
+import { isNicepayExecutionDeferred } from './nicepay-preflight.js';
 import { createHash } from 'node:crypto';
 
 const COUNTS = Object.freeze({ base: 3, add2: 2, add3: 3, add7: 7 });
@@ -105,6 +106,11 @@ export function createNicepayPhotoAdapters({ enabled = false, creditStore, resol
         db.prepare("UPDATE nice_photo_jobs SET state='done',result=? WHERE order_id=? AND state='running'").run(JSON.stringify(result), orderId);
         return result;
       } catch (error) {
+        if (isNicepayExecutionDeferred(error)) {
+          const removed = db.prepare("DELETE FROM nice_photo_jobs WHERE order_id=? AND owner=? AND state='running'").run(orderId, owner);
+          if (removed.changes !== 1) throw Error('Photo preflight recovery requires reconciliation');
+          throw error;
+        }
         db.prepare("UPDATE nice_photo_jobs SET state='uncertain' WHERE order_id=? AND state='running'").run(orderId);
         // Do not propagate untrusted provider retry hints to the payment wrapper.
         throw Error('Photo generation requires reconciliation', { cause: error });

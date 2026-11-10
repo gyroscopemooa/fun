@@ -64,3 +64,21 @@ test('invalid pet output is quarantined instead of repeated',async t=>{
   await assert.rejects(api.pet(args),/encoding/);
   await assert.rejects(api.pet({...args,requestId:'second'}),/reconciliation/);
 });
+test('storage quota rejects before paid work and owner removal frees space',async t=>{
+  const f=fixture(t);let calls=0;
+  const api=createNicepayBundleRunners({enabled:true,creditStore:f.creditStore,clock:()=>start,ownerQuotaBytes:20*1024*1024,analyzePetAudio:async()=>{calls++;return {audio:Buffer.alloc(100).toString('base64'),mimeType:'audio/mpeg'};}});
+  const args={...f.args,input:{mode:'command',textInput:'hello'}};
+  const first=await api.pet(args);
+  await assert.rejects(api.pet({...args,requestId:'next'}),/quota/);assert.equal(calls,1);
+  assert.throws(()=>api.removeArtifact({artifactId:first.artifact.id,owner:'other'}),/unavailable/);
+  api.removeArtifact({artifactId:first.artifact.id,owner:'owner'});
+  await api.pet({...args,requestId:'next'});assert.equal(calls,2);
+});
+test('stale recovery quarantines late completion without rerunning or deleting output',async t=>{
+  const f=fixture(t);let release;
+  const api=createNicepayBundleRunners({enabled:true,creditStore:f.creditStore,clock:()=>start,analyzePetAudio:async()=>{await new Promise(r=>{release=r;});return {text:'hello'};}});
+  const pending=api.pet(f.args);
+  assert.equal(api.recover(start+31*60000).length,1);
+  release();await assert.rejects(pending,/reconciliation/);
+  await assert.rejects(api.pet({...f.args,requestId:'another'}),/reconciliation/);
+});

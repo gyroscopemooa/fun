@@ -24,7 +24,7 @@ export function createNicepayBundleAccess({enabled = false, creditStore, clock =
     return row;
   }
 
-  async function execute({orderId, owner, requestId, product, operation, input, lock, runner}) {
+  async function execute({orderId, owner, requestId, product, operation, input, lock, runner, beforeStart}) {
     if (typeof requestId !== 'string' || !/^[a-zA-Z0-9_-]{1,128}$/.test(requestId)) throw Error('Stable request id required');
     if (typeof runner !== 'function') throw Error('Trusted bundle runner required');
     const fingerprint = createHash('sha256').update(JSON.stringify({operation, input, lock})).digest('hex');
@@ -46,6 +46,7 @@ export function createNicepayBundleAccess({enabled = false, creditStore, clock =
       if (db.prepare("SELECT 1 FROM nice_bundle_runs WHERE order_id=? AND state!='done'").get(orderId)) {
         throw Error('Bundle execution needs reconciliation');
       }
+      beforeStart?.();
       db.prepare("UPDATE nice_entitlements SET state='claimed' WHERE order_id=?").run(orderId);
       db.prepare("INSERT INTO nice_bundle_runs VALUES(?,?,?,'running',NULL,?)").run(orderId, requestId, fingerprint, clock());
       return {cached: false};
@@ -55,8 +56,9 @@ export function createNicepayBundleAccess({enabled = false, creditStore, clock =
       const result = await runner(input);
       const encoded = JSON.stringify(result);
       if (!encoded || Buffer.byteLength(encoded) > 65536) throw Error('Private artifact reference required');
-      db.prepare("UPDATE nice_bundle_runs SET state='done',result=?,updated=? WHERE order_id=? AND request_id=? AND state='running'")
+      const saved=db.prepare("UPDATE nice_bundle_runs SET state='done',result=?,updated=? WHERE order_id=? AND request_id=? AND state='running'")
         .run(encoded, clock(), orderId, requestId);
+      if (saved.changes!==1) throw Error('Bundle result needs reconciliation');
       return result;
     } catch (error) {
       // No automatic re-execution or refund after an uncertain paid operation.
@@ -72,9 +74,9 @@ export function createNicepayBundleAccess({enabled = false, creditStore, clock =
       return {startsAt: row.paid_at, expiresAt: row.paid_at + PET_PERIOD_MS, autoRenew: false,
         analyze: true, command: true, text: true, audio: true};
     },
-    async executePet({orderId, owner, requestId, input, runner}) {
+    async executePet({orderId, owner, requestId, input, runner, beforeStart}) {
       const normalized = validatePetInput(input);
-      return execute({orderId, owner, requestId, product: 'ai_pet_translator', operation: normalized.mode, input: normalized, runner});
+      return execute({orderId, owner, requestId, product: 'ai_pet_translator', operation: normalized.mode, input: normalized, runner, beforeStart});
     },
     async executeName({orderId, owner, requestId, operation, input, options = {}, runner}) {
       if (!['analyze', 'recommend'].includes(operation)) throw Error('Invalid name bundle operation');

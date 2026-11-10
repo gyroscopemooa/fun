@@ -9,16 +9,25 @@ import {recommendNames} from '../naming/recommend.js';
 // Private SQLite blobs avoid public /files paths and survive a service restart.
 // No HTTP route is mounted here. The caller must derive owner from server authentication.
 export function createNicepayBundleRunners({enabled=false, creditStore, clock=Date.now,
-  analyzePetAudio, namingDataset=getNamingDataset}={}) {
+  analyzePetAudio, namingDataset=getNamingDataset, ownerQuotaBytes=200*1024*1024, totalQuotaBytes=1024*1024*1024}={}) {
   if (!enabled) return {};
+  if (![ownerQuotaBytes,totalQuotaBytes].every(n=>Number.isSafeInteger(n)&&n>=20*1024*1024)) throw Error('Invalid artifact quota');
   const access=createNicepayBundleAccess({enabled,creditStore,clock});
   const db=creditStore.db;
   db.exec(`CREATE TABLE IF NOT EXISTS nice_bundle_artifacts(id TEXT PRIMARY KEY, order_id TEXT NOT NULL,
-    owner TEXT NOT NULL, mime TEXT NOT NULL, bytes BLOB NOT NULL, digest TEXT NOT NULL);`);
+    owner TEXT NOT NULL, mime TEXT NOT NULL, bytes BLOB NOT NULL, digest TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS nice_bundle_reservations(order_id TEXT NOT NULL, request_id TEXT NOT NULL, owner TEXT NOT NULL, created INTEGER NOT NULL, PRIMARY KEY(order_id,request_id));`);
   return {
     petStatus: access.petStatus,
     async pet(args) {
-      return access.executePet({...args, runner:async input=>{
+      return access.executePet({...args, beforeStart:()=>{
+        if (args.input?.mode!=='command') return;
+        const usage=owner=>db.prepare('SELECT COALESCE(SUM(length(bytes)),0) AS n FROM nice_bundle_artifacts'+(owner?' WHERE owner=?':'')).get(...(owner?[owner]:[])).n;
+        const reserved=owner=>db.prepare('SELECT count(*) AS n FROM nice_bundle_reservations'+(owner?' WHERE owner=?':'')).get(...(owner?[owner]:[])).n*20*1024*1024;
+        if (usage(args.owner)+reserved(args.owner)+20*1024*1024>ownerQuotaBytes || usage()+reserved()+20*1024*1024>totalQuotaBytes) throw Error('Private artifact storage quota reached');
+        db.prepare('INSERT INTO nice_bundle_reservations VALUES(?,?,?,?)').run(args.orderId,args.requestId,args.owner,clock());
+      }, runner:async input=>{
+        try {
         const run=analyzePetAudio ?? (await import('../commerce/petTranslator.js')).analyzePetAudio;
         const result=await run(input);
         if (input.mode!=='command') return result;
@@ -29,6 +38,7 @@ export function createNicepayBundleRunners({enabled=false, creditStore, clock=Da
         db.prepare('INSERT INTO nice_bundle_artifacts VALUES(?,?,?,?,?,?)').run(id,args.orderId,args.owner,'audio/mpeg',bytes,digest);
         const {audio,...metadata}=result;
         return {...metadata,artifact:{id,mimeType:'audio/mpeg',size:bytes.length}};
+        } finally { db.prepare('DELETE FROM nice_bundle_reservations WHERE order_id=? AND request_id=?').run(args.orderId,args.requestId); }
       }});
     },
     async name(args) {
@@ -53,6 +63,21 @@ export function createNicepayBundleRunners({enabled=false, creditStore, clock=Da
         return {ok:true,orderLock,input:{surname,given},grids,score:scoreResult.score,grade:scoreResult.grade,details:scoreResult.details,
           explanation:report.summary,report,parts:[surname,...given].map(hanja=>({hanja,strokes:dataset.strokeMap.get(hanja),meta:dataset.metaMap.get(hanja)??dataset.surnameMap.get(hanja)??null}))};
       }});
+    },
+    removeArtifact({artifactId,owner}) {
+      const removed=db.prepare('DELETE FROM nice_bundle_artifacts WHERE id=? AND owner=?').run(artifactId,owner);
+      if (removed.changes!==1) throw Error('Owned artifact unavailable');
+      return {removed:true};
+    },
+    // Read-only retention inventory: successful outputs never silently expire.
+    retentionCandidates({olderThan=clock()-30*86400000}={}) {
+      return db.prepare(`SELECT a.id,a.order_id,a.owner,length(a.bytes) AS size FROM nice_bundle_artifacts a
+        WHERE NOT EXISTS(SELECT 1 FROM nice_bundle_runs r WHERE r.order_id=a.order_id AND (r.state='running' OR r.updated>=?))`).all(olderThan);
+    },
+    recover(now=clock()) {
+      db.prepare("UPDATE nice_bundle_runs SET state='uncertain',updated=? WHERE state='running' AND updated<?").run(now,now-30*60000);
+      // No automatic retries or releasing reservations: the provider may still finish.
+      return db.prepare("SELECT order_id,request_id,state FROM nice_bundle_runs WHERE state='uncertain'").all();
     },
     readArtifact({artifactId,owner}) {
       const row=db.prepare(`SELECT a.* FROM nice_bundle_artifacts a JOIN nice_entitlements e ON e.order_id=a.order_id

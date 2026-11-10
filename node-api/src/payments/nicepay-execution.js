@@ -1,3 +1,4 @@
+import { isNicepayExecutionDeferred } from './nicepay-preflight.js';
 // Internal execution adapter only. Existing production tool routes are not modified.
 export async function executeNicepayTool({creditStore,orderId,owner,product,runner,now=Date.now()}){
  if(typeof runner!=='function')throw Error('Tool adapter missing');
@@ -19,8 +20,10 @@ export async function executeNicepayTool({creditStore,orderId,owner,product,runn
  catch(error){
    creditStore.tx(()=>{
      // Only a trusted adapter which proves no tool work began may restore the entitlement.
-     const retry=error?.executionNotStarted===true;
+     const deferred=isNicepayExecutionDeferred(error);
+     const retry=deferred||error?.executionNotStarted===true;
      db.prepare('UPDATE nice_tool_jobs SET state=?,updated=? WHERE order_id=?').run(retry?'retryable':'uncertain',Date.now(),orderId);
+     if(deferred)db.prepare('UPDATE nice_tool_jobs SET attempts=MAX(0,attempts-1) WHERE order_id=?').run(orderId);
      if(retry)db.prepare("UPDATE nice_entitlements SET state='ready' WHERE order_id=?").run(orderId);
    });throw error;
  }
