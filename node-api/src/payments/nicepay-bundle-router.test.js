@@ -33,6 +33,8 @@ test('staging HTTP authenticates, rejects owner spoofing and delivers private au
   const response=await fetch(base+'/bundle/pet',{method:'POST',headers,body});assert.equal(response.status,200);
   const {artifact}=await response.json();
   assert.equal((await fetch(base+`/bundle/artifact/${artifact.id}`,{headers:{...headers,'x-test-user':'other'}})).status,404);
+  assert.equal(await (await fetch(base+`/bundle/artifact/${artifact.id}`,{method:'POST',headers})).text(),'private audio');
+  assert.equal((await fetch(base+`/bundle/artifact/${artifact.id}`,{method:'POST',headers:{...headers,Origin:'https://evil.invalid'}})).status,403);
   const download=await fetch(base+`/bundle/artifact/${artifact.id}`,{headers});assert.equal(await download.text(),'private audio');assert.equal(download.headers.get('cache-control'),'no-store');
   assert.equal((await fetch(base+`/bundle/artifact/${artifact.id}`,{method:'DELETE',headers})).status,200);
   assert.equal((await fetch(base+`/bundle/artifact/${artifact.id}`,{headers})).status,404);

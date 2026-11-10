@@ -38,10 +38,11 @@ export function createNicepayBundleRouter({enabled=false,authenticate,origin,...
       operation:req.params.operation,input:req.body?.input,options:req.body?.options}));}
     catch {res.status(409).json({error:'Name request unavailable; check input, access or pending execution'});}
   });
-  router.get('/artifact/:id',(req,res)=>{
+  router.route('/artifact/:id').get(readArtifact).post(readArtifact);
+  function readArtifact(req,res){
     try {const artifact=service.readArtifact({artifactId:req.params.id,owner:res.locals.owner});res.set('Content-Disposition','attachment; filename="pet-command.mp3"').type(artifact.mimeType).send(artifact.bytes);}
     catch {res.status(404).json({error:'Artifact unavailable'});}
-  });
+  }
   router.delete('/artifact/:id',(req,res)=>{
     try {res.json(service.removeArtifact({artifactId:req.params.id,owner:res.locals.owner}));}
     catch {res.status(404).json({error:'Artifact unavailable'});}
