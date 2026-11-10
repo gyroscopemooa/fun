@@ -23,6 +23,7 @@ export function createNicepayPhotoCustomer({ enabled = false, store, creditStore
     const surface = surfaces[choice.group], product = surface?.catalog?.[choice.productId];
     if (!ident(choice.id) || options.has(choice.id) || !['photo','image'].includes(choice.group) || typeof choice.label !== 'string'
       || !product || product.category !== 'direct' || product.currency !== 'KRW' || product.recurring !== false || !Number.isSafeInteger(product.amount) || product.amount <= 0
+      || (choice.sourcePaths!==undefined&&(!Array.isArray(choice.sourcePaths)||choice.sourcePaths.some(p=>!['/ai-id-photo','/ai-passport-photo','/ai-headshot','/ai-photoshop','/ai-image-generator','/ai-model-cut'].includes(p))))
       || ![undefined,true,false].includes(choice.allowPrompt) || ![undefined,true,false].includes(choice.needsParent)
       || !surface.runtime?.adapters?.[choice.productId] || !surface.storage || !surface.config || !surface.policy
       || (choice.needsParent === true && (choice.group !== 'photo' || !['add2','add3','add7'].includes(choice.productId)))
@@ -58,10 +59,11 @@ export function createNicepayPhotoCustomer({ enabled = false, store, creditStore
       ...(job?.state === 'done' ? { result: JSON.parse(job.result) } : {}) };
   }
   router.get('/', (req,res) => {
+    const preferred=[...options.values()].find(c=>c.sourcePaths?.includes(req.query.source))?.id;
     res.set('Content-Security-Policy',"default-src 'none'; script-src 'self'; connect-src 'self'; img-src blob:; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'");
     const recent=db.prepare('SELECT c.order_id,o.state FROM nice_photo_customer_orders c JOIN nice_orders o ON o.id=c.order_id WHERE c.owner=? ORDER BY o.created DESC LIMIT 10').all(res.locals.owner);
     res.type('html').send(`<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Manytool 사진·이미지</title><style>body{font:16px system-ui;max-width:720px;margin:40px auto;padding:0 20px;line-height:1.7}label{display:block;margin:16px 0}input,select,button,textarea{font:inherit;max-width:100%}button,a{margin:8px 8px 8px 0}img{max-width:100%}[hidden]{display:none!important}</style><body data-session="${hash([res.locals.owner,req.baseUrl]).slice(0,24)}"><h1>사진·이미지 만들기</h1><p>테스트 환경입니다. 결제와 생성은 각각 버튼을 눌러야 진행됩니다.</p>
-<form id="purchase"><label>서비스 <select id="choice">${[...options.values()].map(c=>`<option value="${esc(c.id)}" data-prompt="${c.allowPrompt===true}" data-parent="${c.needsParent===true}" data-group="${esc(c.group)}">${esc(c.label)} · ${surfaces[c.group].catalog[c.productId].amount.toLocaleString('ko-KR')}원</option>`).join('')}</select></label>
+<form id="purchase"><label>서비스 <select id="choice">${[...options.values()].map(c=>`<option value="${esc(c.id)}"${c.id===preferred?' selected':''} data-prompt="${c.allowPrompt===true}" data-parent="${c.needsParent===true}" data-group="${esc(c.group)}">${esc(c.label)} · ${surfaces[c.group].catalog[c.productId].amount.toLocaleString('ko-KR')}원</option>`).join('')}</select></label>
 <label id="source-label">원본 사진 <input id="source" type="file" accept="image/png,image/jpeg,image/webp" required></label><p>PNG/JPEG/WebP 한 장, 20MB 이하. 사진은 로그인한 계정에만 연결됩니다.</p><label id="prompt-label" hidden>추가 요청 <textarea id="prompt" maxlength="50"></textarea></label><label id="parent-label" hidden>기본 사진 주문 번호 <input id="parent" maxlength="128"></label><button id="prepare"${options.size?'':' disabled'}>입력 확인 후 결제 준비</button></form>
 <p id="message" role="status">${options.size?'사진과 서비스를 선택해 주세요.':'설정된 사진 상품이 없습니다.'}</p><a id="pay" target="_blank" rel="noopener" hidden>결제창 열기</a><button id="status" hidden>결제·처리 상태 확인</button><button id="execute" hidden>이미지 생성 시작</button><button id="cancel" hidden>결제 전 요청 취소</button><button id="new" hidden>새 작업 시작</button><section id="results" aria-live="polite"></section><h2>최근 주문 이어하기</h2><ul>${recent.map(row=>`<li><a href="?order=${esc(row.order_id)}">${esc(row.order_id)} · ${esc(row.state)}</a></li>`).join('')}</ul><script src="${esc(req.baseUrl)}/client.js"></script></body></html>`);
   });

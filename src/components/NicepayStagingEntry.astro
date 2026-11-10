@@ -1,0 +1,19 @@
+---
+import { nicepayStagingEntry } from '../lib/nicepay-staging-entry.mjs';
+interface Props { pathname: string; }
+const entry = nicepayStagingEntry({
+  enabled: import.meta.env.PUBLIC_NICE_CUSTOMER_STAGING_ENABLED,
+  basePath: import.meta.env.PUBLIC_NICE_CUSTOMER_STAGING_BASE_PATH,
+  pathname: Astro.props.pathname
+});
+---
+{entry && (
+  <aside aria-label="결제 테스트 환경" class="mx-auto my-4 max-w-5xl rounded-xl border border-amber-300 bg-amber-50 p-4 text-slate-900" data-nicepay-staging-entry>
+    <p class="font-semibold">결제 테스트 환경</p>
+    <p class="mt-1 text-sm">{entry.description}</p>
+    <div class="mt-3 flex flex-wrap gap-3">
+      <a href={entry.href} class="rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white">{entry.label}</a>
+      <a href={entry.loginHref} class="rounded-lg border border-slate-400 px-4 py-2">로그인</a>
+    </div>
+  </aside>
+)}

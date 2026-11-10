@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import NicepayStagingEntry from '../components/NicepayStagingEntry.astro';
 import AdSense from '../components/AdSense.astro';
 import EzoicPlacements from '../components/ads/EzoicPlacements.astro';
 import SiteProviders from '../components/providers/SiteProviders';
@@ -472,6 +473,7 @@ const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.r
         </div>
       )}
       <AdSense slotName="글로벌 본문 상단" />
+      <NicepayStagingEntry pathname={stripLocale(Astro.url.pathname)} />
       <slot />
       <AdSense slotName="글로벌 본문 하단" />
       <EzoicPlacements />

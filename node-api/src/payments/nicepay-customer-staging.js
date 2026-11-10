@@ -21,10 +21,12 @@ export function createNicepayCustomerStaging({enabled=false,store,creditStore,au
   if(!binding||!products.some(([key])=>key===order.productId))throw Error('Unavailable order');return {order,binding};
  };
  router.get('/',(req,res)=>{
+  const sourceProducts={'/ai-manseryeok':'ai_manseryeok','/ai-calorie-calculator':'calorie','/ai-personal-color':'ai_personal_color'};
+  const preferred=sourceProducts[req.query.source]??(req.query.source==='/tools/product-detail-studio'?products.find(([id])=>id.startsWith('detail_page_'))?.[0]:null);
   res.set('Content-Security-Policy',"default-src 'none'; script-src 'self'; connect-src 'self'; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'");
   res.type('html').send(`<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Manytool 도구 이용</title><body>
   <h1>Manytool 도구 이용</h1><p>테스트 환경입니다. 결제와 AI 작업은 버튼을 눌러야 진행됩니다.</p>
-  <form id="purchase"><label>도구 <select id="product">${products.map(([id,p])=>`<option value="${esc(id)}">${esc(p.goodsName)} · ${p.amount.toLocaleString('ko-KR')}원</option>`).join('')}</select></label>
+  <form id="purchase"><label>도구 <select id="product">${products.map(([id,p])=>`<option value="${esc(id)}"${id===preferred?' selected':''}>${esc(p.goodsName)} · ${p.amount.toLocaleString('ko-KR')}원</option>`).join('')}</select></label>
   <fieldset data-tool="ai_manseryeok"><legend>생년월일 정보</legend><label>이름 <input name="name" maxlength="80"></label><label>생일 <input name="birthDate" type="date"></label><label>출생시간 <input name="birthTime" type="time" value="12:00"></label><label>달력 <select name="calendarType"><option value="solar">양력</option><option value="lunar">음력</option></select></label><label><input name="isLeapMonth" type="checkbox">윤달</label><label><input name="timeUnknown" type="checkbox">시간 모름</label></fieldset>
   <fieldset data-tool="images"><legend>이미지 선택</legend><input id="images" type="file" accept="image/png,image/jpeg,image/webp" multiple><p>이미지마다 550KB 이하, PNG/JPEG/WebP. 상세페이지는 최대 30장입니다.</p></fieldset>
   <fieldset data-tool="calorie"><legend>식단 목표</legend><select name="goal"><option value="maintain">유지</option><option value="lose">감량</option><option value="gain">증량</option></select></fieldset>

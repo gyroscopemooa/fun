@@ -23,7 +23,7 @@ async function fixture(t) {
  const image=await createNicepayImageStaging({...common,catalog:{base:product},resolveCheckoutRights:createNicepayImageRightsPolicy({figure:{tool:'ai_image',mode:'figure',provider:'openai'}}),provider:async args=>{generations++;const filePath=path.join(args.outputDir,'image.png');await fs.writeFile(filePath,png);return {filePath,mode:args.mode,provider:args.provider};}});
  const photo=await createNicepayPhotoStaging({...common,catalog:{base:product,add2:product},resolveCheckoutRights:async({input})=>({photoId:input.photoId,toolType:'headshot',options:{provider:'openai_image',outfitType:'current'},...(input.parentOrderId?{parentOrderId:input.parentOrderId}:{})}),provider:async args=>{generations++;const generated=[];for(let i=0;i<args.candidateCount;i++){const filePath=path.join(args.storageDir,`photo-${i}.png`);await fs.writeFile(filePath,png);generated.push({filePath});}return {generated};}});
  const surfaces={image:{...image,config,policy,catalog:{base:product}},photo:{...photo,config,policy,catalog:{base:product,add2:product}}};
- const choices=[{id:'figure',label:'AI 이미지',group:'image',productId:'base',input:{variant:'figure'},allowPrompt:true},{id:'headshot',label:'AI Photoshop',group:'photo',productId:'base',input:{}},{id:'extra2',label:'후보 2장 추가',group:'photo',productId:'add2',input:{},needsParent:true}];
+ const choices=[{id:'figure',label:'AI 이미지',group:'image',productId:'base',input:{variant:'figure'},allowPrompt:true},{id:'headshot',sourcePaths:['/ai-photoshop'],label:'AI Photoshop',group:'photo',productId:'base',input:{}},{id:'extra2',label:'후보 2장 추가',group:'photo',productId:'add2',input:{},needsParent:true}];
  const app=express();app.use('/image',image.router);app.use('/photo',photo.router);app.use('/customer',createNicepayPhotoCustomer({...common,surfaces,choices}));app.use('/disabled',createNicepayPhotoCustomer());
  const server=app.listen(0,'127.0.0.1');await new Promise(resolve=>server.once('listening',resolve));t.after(()=>new Promise(resolve=>server.close(resolve)));
  const url=`http://127.0.0.1:${server.address().port}`;
@@ -34,7 +34,7 @@ async function fixture(t) {
 }
 test('customer form creates one resumable bound order, preserves price, executes once and downloads privately',async t=>{
  const f=await fixture(t);assert.equal((await fetch(f.url+'/disabled')).status,503);assert.equal((await fetch(f.url+'/customer')).status,401);
- const page=await fetch(f.url+'/customer',{headers:{'x-owner':'owner'}});assert.equal(page.status,200);assert.match(await page.text(),/AI Photoshop/);
+ const page=await fetch(f.url+'/customer?source=%2Fai-photoshop',{headers:{'x-owner':'owner'}});assert.equal(page.status,200);const html=await page.text();assert.match(html,/AI Photoshop/);assert.match(html,/<option value="headshot" selected/);
  const photoId=await f.upload(),request={choice:'figure',photoId,userInput:'studio',requestKey:'customer_request_001'};
  const first=await f.post('/prepare',request);assert.equal(first.status,200);const prepared=await first.json();assert.equal(prepared.amount,1000);
  assert.equal((await (await f.post('/prepare',request)).json()).orderId,prepared.orderId);

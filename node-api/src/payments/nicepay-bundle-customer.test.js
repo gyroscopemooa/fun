@@ -43,8 +43,8 @@ test('customer form router is opt-in and requires authenticated session',async t
   const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));t.after(()=>new Promise(r=>server.close(r)));
   const base=`http://127.0.0.1:${server.address().port}`;
   assert.equal((await fetch(base+'/off')).status,503);assert.equal((await fetch(base+'/nice/customer-bundles')).status,401);
-  const page=await fetch(base+'/nice/customer-bundles',{headers:{'x-test-user':'owner'}});const html=await page.text();
-  assert.match(html,/30일/);assert.match(html,/분석과 추천/);assert.match(html,/이미 결제한 주문/);assert.match(page.headers.get('content-security-policy'),/media-src blob:/);
+  const page=await fetch(base+'/nice/customer-bundles?source=%2Fname-premium',{headers:{'x-test-user':'owner'}});const html=await page.text();
+  assert.match(html,/<option value="name" selected>/);assert.match(html,/30일/);assert.match(html,/분석과 추천/);assert.match(html,/이미 결제한 주문/);assert.match(page.headers.get('content-security-policy'),/media-src blob:/);
   const code=await fetch(base+'/nice/customer-bundles/client.js',{headers:{'x-test-user':'owner'}});new Script(await code.text());
 });
 test('customer approved checkout preparation is repeat-safe and preview is owned',async t=>{

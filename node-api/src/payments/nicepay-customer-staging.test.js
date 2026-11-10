@@ -1,4 +1,5 @@
 import {executeNicepayTool} from './nicepay-execution.js';
+import {nicepayStagingEntry} from '../../../src/lib/nicepay-staging-entry.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';import express from 'express';
 import {mkdtempSync,rmSync} from 'node:fs';import {join} from 'node:path';import {tmpdir} from 'node:os';
 import {createHash} from 'node:crypto';import {Script,createContext} from 'node:vm';
@@ -22,7 +23,8 @@ test('customer form -> retry-safe order -> fake approval -> one paid-tool result
  const post=(url,body,custom=headers)=>fetch(base+url,{method:'POST',headers:custom,body:JSON.stringify(body)});
  assert.equal((await fetch(base+'/off/customer/',{headers})).status,503);
  assert.equal((await fetch(base+'/nice/customer/')).status,401);
- const page=await fetch(base+'/nice/customer/',{headers});assert.match(await page.text(),/생년월일 정보/);
+ const entry=nicepayStagingEntry({enabled:'true',basePath:'/nice',pathname:'/ai-manseryeok'});
+ const page=await fetch(base+entry.href,{headers});const html=await page.text();assert.match(html,/생년월일 정보/);assert.match(html,/<option value="ai_manseryeok" selected>/);
  const clientCode=await (await fetch(base+'/nice/customer/client.js',{headers})).text();new Script(clientCode);await checkClientRecovery(clientCode);
  const input={name:'홍길동',birthDate:'1995-01-02',birthTime:'12:00',calendarType:'solar',isLeapMonth:false,timeUnknown:false,locale:'ko'};
  const request={productId:'ai_manseryeok',input,requestKey:'customer-request-123456'};
