@@ -1,5 +1,5 @@
 ---
-import Layout from '../layouts/Layout.astro';
+import Layout from '../layouts/PrivateToolLayout.astro';
 import Header from './Header.astro';
 import Footer from './Footer.astro';
 import DocumentWorkshop from './DocumentWorkshop';
@@ -12,7 +12,7 @@ const content = {
 }[mode];
 ---
 <Layout title={`${content[0]} | 무료 문서 도구 | ManyTool`} description={content[1]}>
-  <Header />
+
   <main class="mx-auto max-w-6xl px-4 py-10">
     <a href="/tools" class="text-sm font-bold text-teal-800">← 온라인 도구 모음</a>
     <section class="mt-5 rounded-[28px] bg-[#eaf3ed] p-7 sm:p-10">
@@ -24,5 +24,5 @@ const content = {
     <DocumentWorkshop mode={mode} client:load />
     <noscript><p class="mt-6">이 도구를 사용하려면 브라우저에서 JavaScript를 켜 주세요.</p></noscript>
   </main>
-  <Footer />
+
 </Layout>

@@ -21,6 +21,72 @@ export class CreditStore {
       CREATE TABLE IF NOT EXISTS refund_receipts(topup_id TEXT NOT NULL, amount INTEGER NOT NULL, payload TEXT NOT NULL, PRIMARY KEY(topup_id,amount));`);
   }
   close() { this.db.close(); }
+  initPlayStore() {
+    this.db.exec(`CREATE TABLE IF NOT EXISTS play_jobs(token_hash TEXT PRIMARY KEY, sealed_token TEXT NOT NULL, attempts INTEGER NOT NULL DEFAULT 0, next_attempt INTEGER NOT NULL DEFAULT 0);
+      CREATE TABLE IF NOT EXISTS play_voids(token_hash TEXT PRIMARY KEY, package TEXT NOT NULL, created INTEGER NOT NULL);
+      CREATE TABLE IF NOT EXISTS play_sync(package TEXT PRIMARY KEY, completed INTEGER NOT NULL);
+      CREATE TABLE IF NOT EXISTS play_receipts(token_hash TEXT PRIMARY KEY, email TEXT NOT NULL, product TEXT NOT NULL, package TEXT NOT NULL, credits INTEGER NOT NULL, order_id TEXT UNIQUE, consumed INTEGER NOT NULL DEFAULT 0, created INTEGER NOT NULL);`);
+  }
+  playReceipt(tokenHash) { this.initPlayStore(); return this.db.prepare('SELECT * FROM play_receipts WHERE token_hash=?').get(tokenHash); }
+  applyPlayPurchase({ tokenHash, email, productId, packageName, credits, orderId, sealedToken }) {
+    this.initPlayStore();
+    return this.tx(() => {
+      if (this.isPlayVoided(tokenHash, packageName)) fail('Play purchase was voided');
+      const prior = this.playReceipt(tokenHash);
+      if (prior) {
+        if (prior.email !== email || prior.product !== productId || prior.package !== packageName) fail('Play purchase binding mismatch');
+        return;
+      }
+      if (!sealedToken) fail('Durable Play recovery unavailable', 503);
+      this.queuePlayConsume(tokenHash, sealedToken);
+      if (!Number.isSafeInteger(credits) || credits <= 0) fail('Invalid Play credits', 400);
+      const id = `play:${tokenHash}`;
+      this.db.prepare('INSERT INTO play_receipts(token_hash,email,product,package,credits,order_id,created) VALUES(?,?,?,?,?,?,?)').run(tokenHash, email, productId, packageName, credits, orderId, Date.now());
+      // Play prices/refunds belong to Google. Do not invent a KRW amount or apply Polar refund terms.
+      this.db.prepare("INSERT INTO topups(id,email,credits,amount,currency,product,provider_order,status) VALUES(?,?,?,0,'play',?,?,'paid')").run(id, email, credits, productId, orderId ? `google-play:${orderId}` : null);
+      this.change(`topup:${id}`, email, credits, 'Google Play 충전');
+    });
+  }
+  markPlayConsumed(tokenHash) {
+    this.tx(() => { this.db.prepare('UPDATE play_receipts SET consumed=1 WHERE token_hash=?').run(tokenHash);
+      this.db.prepare('DELETE FROM play_jobs WHERE token_hash=?').run(tokenHash); });
+  }
+  queuePlayConsume(tokenHash, sealedToken) {
+    this.initPlayStore();
+    this.db.prepare('INSERT INTO play_jobs(token_hash,sealed_token) VALUES(?,?) ON CONFLICT(token_hash) DO UPDATE SET sealed_token=excluded.sealed_token').run(tokenHash,sealedToken);
+  }
+  pendingPlayConsumes(now, limit=100) {
+    this.initPlayStore();
+    return this.db.prepare('SELECT j.*,r.email,r.product,r.package FROM play_jobs j JOIN play_receipts r USING(token_hash) WHERE j.next_attempt<=? ORDER BY j.next_attempt LIMIT ?').all(now,limit);
+  }
+  retryPlayConsume(tokenHash, now) {
+    this.db.prepare('UPDATE play_jobs SET attempts=attempts+1,next_attempt=? + MIN(3600000,60000 * (1 << MIN(attempts,6))) WHERE token_hash=?').run(now,tokenHash);
+  }
+  isPlayVoided(tokenHash, packageName) {
+    this.initPlayStore();
+    const row=this.db.prepare('SELECT package FROM play_voids WHERE token_hash=?').get(tokenHash);
+    if (row && row.package!==packageName) fail('Play package mismatch');
+    return Boolean(row);
+  }
+  voidPlayPurchase(tokenHash, packageName, now=Date.now()) {
+    this.initPlayStore();
+    return this.tx(() => {
+      const receipt=this.playReceipt(tokenHash);
+      if(receipt && receipt.package!==packageName) fail('Play package mismatch');
+      this.db.prepare('INSERT OR IGNORE INTO play_voids VALUES(?,?,?)').run(tokenHash,packageName,now);
+      if(receipt) {
+        // Full reversal also creates debt if credits have already been spent.
+        this.change(`play-void:${tokenHash}`,receipt.email,-receipt.credits,'Google Play 환불 회수');
+        this.db.prepare("UPDATE topups SET status='refunded',refunded=credits WHERE id=?").run(`play:${tokenHash}`);
+      }
+      this.db.prepare('DELETE FROM play_jobs WHERE token_hash=?').run(tokenHash);
+    });
+  }
+  oldestPlayReceipt(packageName) { this.initPlayStore(); return this.db.prepare('SELECT MIN(created) AS created FROM play_receipts WHERE package=?').get(packageName)?.created ?? 0; }
+  playSyncTime(packageName) { this.initPlayStore(); return this.db.prepare('SELECT completed FROM play_sync WHERE package=?').get(packageName)?.completed ?? 0; }
+  markPlaySynced(packageName, now) { this.initPlayStore(); this.db.prepare('INSERT INTO play_sync VALUES(?,?) ON CONFLICT(package) DO UPDATE SET completed=excluded.completed').run(packageName,now); }
+
+
   tx(fn) {
     this.db.exec('BEGIN IMMEDIATE');
     try { const value = fn(); this.db.exec('COMMIT'); return value; }
@@ -190,6 +256,7 @@ export class CreditStore {
   refundQuote(email, id) {
     const row = this.topup(id);
     if (!row || row.email !== email) fail('충전 주문을 찾을 수 없습니다.', 404);
+    if (row.currency === 'play') fail('Google Play 구매 환불은 Google Play 절차를 이용해주세요.');
     if (row.status !== 'paid' || row.refunded) fail('이미 환불되었거나 결제 확인 전인 주문입니다.');
     if (this.db.prepare('SELECT id FROM refund_requests WHERE topup_id=?').get(id)) fail('이미 환불을 접수한 주문입니다.');
     const terms = this.db.prepare('SELECT * FROM topup_terms WHERE topup_id=?').get(id);
@@ -216,7 +283,7 @@ export class CreditStore {
     });
   }
   topupHistory(email) {
-    return this.db.prepare(`SELECT t.id,t.credits,t.amount,t.status,r.status refundStatus,r.amount refundAmount
-      FROM topups t LEFT JOIN refund_requests r ON r.topup_id=t.id WHERE t.email=? AND t.status!='pending' ORDER BY t.rowid DESC LIMIT 50`).all(email);
+    return this.db.prepare(`SELECT t.id,t.credits,t.amount,t.currency,t.status,r.status refundStatus,r.amount refundAmount
+      FROM topups t LEFT JOIN refund_requests r ON r.topup_id=t.id WHERE t.email=? AND t.status!='pending' ORDER BY t.rowid DESC LIMIT 50`).all(email).map(row => ({ ...row, provider: row.currency === 'play' ? 'google_play' : 'polar', amount: row.currency === 'play' ? null : row.amount }));
   }
 }

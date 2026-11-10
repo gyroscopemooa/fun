@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "매니툴 · 선택하고 바로 쓰는 도구",
+  "version": "0.1.0",
+  "description": "영역 캡처, 선택 글 검색, 매니툴 OCR·번역·영상 도구 연결. 사용자가 실행한 내용만 처리합니다.",
+  "minimum_chrome_version": "116",
+  "permissions": ["activeTab", "scripting", "contextMenus", "storage", "alarms"],
+  "optional_host_permissions": ["https://manytool.net/*"],
+  "background": {"service_worker": "background.js", "type": "module"},
+  "action": {"default_title": "매니툴 열기", "default_popup": "popup.html"},
+  "commands": {"capture-region": {"suggested_key": {"default": "Alt+Shift+S"}, "description": "현재 페이지 영역 캡처"}},
+  "content_security_policy": {"extension_pages": "script-src 'self'; object-src 'none'; base-uri 'none'; connect-src 'none'"}
+}

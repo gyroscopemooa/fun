@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';
+test('private local tool layout does not load analytics or advertisements',()=>{const source=readFileSync('src/layouts/PrivateToolLayout.astro','utf8');for(const marker of ['googletagmanager','clarity.ms','AdSense','Ezoic','SiteProviders','<script'])assert.equal(source.includes(marker),false);});
+test('native file selection enforces current page and bounded document',()=>{const source=readFileSync('mobile/android/app/src/main/java/net/manytool/app/MainActivity.java','utf8');for(const marker of ['uploadNavigation==navigation','"content".equals(uri.getScheme())','file.getStatSize()>=0','file.getStatSize()<=32L*1024*1024'])assert.ok(source.includes(marker));});

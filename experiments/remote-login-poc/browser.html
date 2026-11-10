@@ -1,0 +1,10 @@
+<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>매니툴 직접 로그인 실험</title>
+<style>body{font:16px system-ui;background:#f4f6fa;color:#182238;margin:0;padding:24px}main{max-width:680px;margin:auto;background:white;padding:24px;border-radius:18px}h1{font-size:24px}p{line-height:1.6}.notice{padding:16px;background:#fff3cf;border-radius:12px}button,input{font:inherit;padding:12px;border-radius:8px;border:1px solid #aab4c4;margin:6px 0;box-sizing:border-box}input{width:100%}button{background:#2257ce;color:white;cursor:pointer}button:disabled{opacity:.5;cursor:default}#close{background:#394154}#status{min-height:50px;overflow-wrap:anywhere}small{display:block;color:#536176}</style>
+<main><h1>로그인 후 주소로 다운로드</h1><p class="notice"><strong>실브라우저 연결 실험입니다.</strong><br>실제 인스타그램·X와 연결되지 않습니다. 비밀번호나 쿠키를 입력하지 마세요. 다운로드 결과는 내장된 1초 테스트 영상이며 외부 사이트 영상이 아닙니다.</p>
+<p>브라우저 시작 → 아래 화면 안의 모의 로그인 클릭 → 테스트 주소 입력 → 결과 저장</p>
+<button id="start">개인 세션 시작</button> <button id="login" disabled hidden>사용하지 않음</button><p>서버 브라우저 화면 (클릭·터치 지원, 약 1초마다 갱신)</p><img id="screen" alt="세션 시작 후 원격 브라우저 화면이 표시됩니다." width="390" height="640" style="display:block;max-width:100%;height:auto;border:1px solid #aaa;touch-action:manipulation">
+<label for="url">모의 영상 또는 스토리 주소</label><input id="url" value="https://media.example.test/stories/demo-story" autocomplete="off" spellcheck="false">
+<small>지원 예시: https://media.example.test/videos/demo-video</small>
+<button id="download" disabled>테스트 결과 다운로드</button> <button id="close" disabled>종료 및 세션 삭제</button>
+<p id="status" role="status" aria-live="polite">시작 전입니다. 세션은 최대 5분 후 자동 삭제됩니다.</p>
+<p><small>별도 Chromium 프로세스 화면을 전송합니다. 내장된 모의 사이트만 열 수 있으며 실제 서비스 로그인은 지원하지 않습니다. 운영용 컨테이너 격리와 외부 통신 방화벽은 아직 없습니다. 다른 탭이나 앱의 로그인은 자동 공유되지 않습니다.</small></p></main><script src="/app.js"></script></html>

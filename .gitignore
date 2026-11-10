@@ -51,3 +51,6 @@ tmp/pdfs/
 # Isolated home release verification output
 tmp/home-cards-dist/
 tmp/release-home-dist/
+
+# Browser extension development packages
+tmp/extension/

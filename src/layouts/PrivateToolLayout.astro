@@ -1,0 +1,7 @@
+---
+import '../styles/global.css';
+interface Props { title: string; description?: string; }
+const { title, description = '브라우저에서 처리하는 매니툴 도구' } = Astro.props;
+---
+<!doctype html>
+<html lang="ko"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>{title}</title><meta name="description" content={description} /><meta name="robots" content="noindex,follow" /><meta name="referrer" content="no-referrer" /><link rel="icon" href="/favicon.svg" /></head><body class="bg-white text-slate-900"><header class="border-b px-4 py-4"><nav class="mx-auto flex max-w-5xl gap-5" aria-label="도구 탐색"><a href="/" class="font-black">ManyTool</a><a href="/platform-tools/">새 도구 모음</a><a href="/privacy/">개인정보</a></nav></header><slot /><footer class="border-t px-4 py-6 text-center text-sm text-slate-600">이 페이지는 사이트 공통 광고·분석 스크립트를 불러오지 않습니다.</footer></body></html>

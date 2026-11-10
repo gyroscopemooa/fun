@@ -1,0 +1,7 @@
+---
+import PrivateToolLayout from '../layouts/PrivateToolLayout.astro';
+import TextCompare from '../components/TextCompare';
+---
+<PrivateToolLayout title="문서 비교 | ManyTool" description="두 글의 추가·삭제·변경을 브라우저에서 무료로 비교합니다.">
+<main class="mx-auto max-w-5xl px-4 py-10"><a href="/platform-tools/" class="font-bold text-teal-800">← 매니툴 도구</a><h1 class="mt-5 text-3xl font-black">문서 비교</h1><TextCompare client:load/><noscript>이 도구는 JavaScript가 필요합니다.</noscript></main>
+</PrivateToolLayout>

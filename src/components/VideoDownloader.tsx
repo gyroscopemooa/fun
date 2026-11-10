@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { listenForExtensionImport } from '../lib/extension/import';
 import type { VideoPlatform } from '../data/video-tools';
 type Job = {id?:string;state:string;title?:string;size?:number;extension?:string;duration?:number;message?:string;expiresAt?:number};
 export default function VideoDownloader({ platform, placeholder }: {platform:VideoPlatform;placeholder:string}) {
@@ -9,6 +10,7 @@ export default function VideoDownloader({ platform, placeholder }: {platform:Vid
   const [ready,setReady]=useState<boolean|null>(null);
   const [expired,setExpired]=useState(false);
   const controller=useRef<AbortController|null>(null);
+  const extensionImported=useRef(false);
   const api='/api/video';
   useEffect(()=>{
     const abort=new AbortController();
@@ -21,6 +23,10 @@ export default function VideoDownloader({ platform, placeholder }: {platform:Vid
     const timer=setTimeout(()=>setExpired(true),Math.max(0,job.expiresAt-Date.now()));
     return ()=>clearTimeout(timer);
   },[job]);
+  useEffect(()=>{if(extensionImported.current)return;return listenForExtensionImport('video',payload=>{
+    if(extensionImported.current||payload.kind!=='video'||busy||url||job)return false;
+    extensionImported.current=true;setUrl(payload.url);return true;
+  });},[busy,url,job]);
   async function start(e:React.FormEvent) {
     e.preventDefault();setError('');setJob(null);setExpired(false);
     let parsed:URL;

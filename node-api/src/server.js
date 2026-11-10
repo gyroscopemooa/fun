@@ -26,6 +26,7 @@ import { buildFallback, getMissingStrokeSuggestion } from './naming/fallback.js'
 import { buildNameExplanation } from './naming/description.js';
 import { PACKS as CREDIT_PACKS } from './credits/pricing.js';
 import { installCreditRoutes } from './credits/routes.js';
+import { installPlayCreditRoutes } from './credits/play.js';
 
 const app = express();
 const port = Number(process.env.PORT ?? 8787);
@@ -141,6 +142,7 @@ if (process.env.CREDITS_ENABLED === 'true' || process.env.CREDITS_DB_PATH) {
   };
   // Definitions below are initialized before the server starts accepting requests.
   installCreditRoutes(app, { store: creditStore, orders: db.orders, verifyWebhook: req => verifyPolarWebhook(req) });
+  installPlayCreditRoutes(app, { store: creditStore });
   app.use((req, res, next) => {
     const json = res.json.bind(res);
     res.json = body => {

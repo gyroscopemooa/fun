@@ -1,0 +1,20 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'net.manytool.app'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'net.manytool.app'
+        minSdk 26
+        targetSdk 35
+        versionCode 1
+        versionName '0.1.0-dev'
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+    buildTypes { release { minifyEnabled false } }
+}
+
+dependencies {
+    implementation 'com.android.billingclient:billing:8.0.0'
+    implementation 'androidx.webkit:webkit:1.12.1'
+}

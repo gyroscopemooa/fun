@@ -2,11 +2,16 @@ import { useEffect, useRef, useState } from 'react';
 import { MAX_TEXT } from '../lib/document-tools/text';
 import { saveDocument } from '../lib/document-tools/export';
 import './document-workshop.css';
+import { nativeCapabilities, saveTextWithNative, shareTextWithNative, type NativeCapabilities } from '../lib/manytool-native';
+import { captureFile, listenForExtensionImport } from '../lib/extension/import';
 
 type Mode = 'photo' | 'voice' | 'translate';
 const modes = [ ['photo', '/photo-to-document', '사진으로 문서 만들기'], ['voice', '/voice-to-document', '말해서 문서 만들기'], ['translate', '/text-translator', '글·음성 번역'] ] as const;
 
 export default function DocumentWorkshop({ mode }: { mode: Mode }) {
+  const [native, setNative] = useState<NativeCapabilities | null>(null);
+  const [nativeBusy, setNativeBusy] = useState(false);
+  useEffect(() => { let live = true; void nativeCapabilities().then(value => { if (live) setNative(value); }); return () => { live = false; }; }, []);
   const [source, setSource] = useState('');
   const [result, setResult] = useState('');
   const [title, setTitle] = useState('매니툴 문서');
@@ -25,6 +30,7 @@ export default function DocumentWorkshop({ mode }: { mode: Mode }) {
   const generation = useRef(0);
   const active = useRef(false);
   const mounted = useRef(true);
+  const extensionImported = useRef(false);
 
   const stopTracks = () => { stream.current?.getTracks().forEach(track => track.stop()); stream.current = null; if (timer.current) clearInterval(timer.current); timer.current = null; };
   useEffect(() => {
@@ -41,6 +47,22 @@ export default function DocumentWorkshop({ mode }: { mode: Mode }) {
     window.addEventListener('beforeunload', warn);
     return () => window.removeEventListener('beforeunload', warn);
   }, [source, result, recording, busy]);
+
+  useEffect(() => {
+    if (mode === 'voice' || extensionImported.current) return;
+    return listenForExtensionImport(mode === 'photo' ? 'image' : 'text', payload => {
+      // Never replace work already entered, or start processing automatically.
+      if (extensionImported.current || active.current || busy || recording || source || result || file) return false;
+      try {
+        if (mode === 'photo' && payload.kind === 'image') setFile(captureFile(payload.dataUrl));
+        else if (mode === 'translate' && payload.kind === 'text') setSource(payload.text);
+        else return false;
+        extensionImported.current = true;
+        setMessage('매니툴 확장에서 가져왔습니다. 내용을 확인하고 실행 버튼을 눌러 주세요.');
+        return true;
+      } catch { return false; }
+    });
+  }, [mode, busy, recording, source, result, file]);
 
   function cancel() {
     generation.current++;
@@ -156,6 +178,19 @@ export default function DocumentWorkshop({ mode }: { mode: Mode }) {
     try { setError(''); await saveDocument(result, title, format); setMessage('다운로드를 시작했습니다.'); }
     catch { setError('파일을 저장하지 못했습니다. 글을 복사하거나 다시 시도해 주세요.'); }
   }
+  async function nativeExport(share: boolean) {
+    if (nativeBusy) return;
+    setNativeBusy(true); setError('');
+    try {
+      await (share ? shareTextWithNative(result) : saveTextWithNative(result));
+      if (mounted.current) setMessage(share ? '공유창을 열었습니다. 받을 앱과 대상을 선택해 주세요.' : '저장창을 열었습니다. 저장 위치를 선택해 주세요.');
+    } catch (e) {
+      if (mounted.current) {
+        if (e instanceof Error && e.message === 'cancelled') setMessage('취소했습니다.');
+        else setError('앱 연결을 완료하지 못했습니다. 다시 시도하거나 TXT 저장을 이용해 주세요.');
+      }
+    } finally { if (mounted.current) setNativeBusy(false); }
+  }
   const locked = busy || recording;
   return <div className="document-workshop">
     <nav aria-label="문서 도구" className="dw-tabs">{modes.map(([key, href, label]) => <a key={key} href={href} aria-current={mode === key ? 'page' : undefined}>{label}</a>)}</nav>
@@ -194,6 +229,7 @@ export default function DocumentWorkshop({ mode }: { mode: Mode }) {
         <label className="dw-label">{mode === 'translate' ? '번역 결과' : '문서 내용'}<textarea aria-label={mode === 'translate' ? '번역 결과' : '문서 내용'} value={result} disabled={busy} onChange={e => setResult(e.target.value)} rows={16} placeholder="결과가 여기에 나타납니다. 직접 글을 입력해서 문서로 저장할 수도 있어요." /></label>
         <p className="dw-note">{result.length.toLocaleString()}자 · 자동 변환 결과는 틀릴 수 있으니 저장 전에 확인하세요.</p>
         <div className="dw-actions"><button disabled={!result.trim() || busy} onClick={() => void download('txt')}>TXT 저장</button><button className="dw-primary" disabled={!result.trim() || busy} onClick={() => void download('docx')}>Word 저장 (.docx)</button><button disabled={!result.trim() || busy} onClick={async () => { try { await navigator.clipboard.writeText(result); setMessage('글을 복사했습니다.'); } catch { setError('복사할 글을 직접 선택한 뒤 복사해 주세요.'); } }}>복사</button></div>
+        {native && <div className="dw-actions">{native.saveText && <button disabled={!result.trim() || result.length > 64000 || busy || nativeBusy} onClick={() => void nativeExport(false)}>앱에서 텍스트 저장</button>}{native.shareText && <button disabled={!result.trim() || result.length > 64000 || busy || nativeBusy} onClick={() => void nativeExport(true)}>앱으로 텍스트 공유</button>}</div>}
         <p className="dw-note">한글에서는 DOCX 파일을 열어 필요한 형식으로 다시 저장할 수 있습니다. HWP·HWPX 직접 저장은 아직 지원하지 않습니다.</p>
         <p className="dw-note">사진과 음성, 입력한 글은 이 도구의 서버로 보내지 않고 기기에서 처리합니다. 필요한 파일은 외부 배포처에서 내려받습니다. 작업 내용은 자동 저장되지 않으므로 페이지를 떠나기 전에 내려받으세요.</p>
       </section>

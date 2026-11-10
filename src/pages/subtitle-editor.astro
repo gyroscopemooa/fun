@@ -1,0 +1,7 @@
+---
+import PrivateToolLayout from '../layouts/PrivateToolLayout.astro';
+import SubtitleEditor from '../components/SubtitleEditor';
+---
+<PrivateToolLayout title="자막 편집·변환 | ManyTool" description="SRT/VTT 자막 편집, 시간 이동과 형식 변환을 브라우저에서 처리합니다.">
+<main class="mx-auto max-w-5xl px-4 py-10"><a href="/platform-tools/" class="font-bold text-teal-800">← 매니툴 도구</a><h1 class="mt-5 text-3xl font-black">자막 편집·변환</h1><SubtitleEditor client:load/><noscript>이 도구는 JavaScript가 필요합니다.</noscript></main>
+</PrivateToolLayout>
