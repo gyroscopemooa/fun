@@ -142,6 +142,7 @@ export class CreditStore {
     return this.tx(() => {
       const row = this.topup(id ?? '');
       if (!row) fail('Unknown credit top-up', 404);
+      if (row.id.startsWith('nicepay:')) fail('Wrong payment provider', 400);
       if (!['order.paid', 'order.refunded'].includes(event.type)) return;
       // Verify the paid, tax-exclusive amount, product, currency and immutable checkout binding.
       if (!data.id || data.product_id !== row.product || data.currency !== row.currency ||
@@ -257,6 +258,7 @@ export class CreditStore {
     const row = this.topup(id);
     if (!row || row.email !== email) fail('충전 주문을 찾을 수 없습니다.', 404);
     if (row.currency === 'play') fail('Google Play 구매 환불은 Google Play 절차를 이용해주세요.');
+    if (row.id.startsWith('nicepay:')) fail('NICEPAY 환불 연동은 준비 중입니다. 고객지원으로 문의해주세요.');
     if (row.status !== 'paid' || row.refunded) fail('이미 환불되었거나 결제 확인 전인 주문입니다.');
     if (this.db.prepare('SELECT id FROM refund_requests WHERE topup_id=?').get(id)) fail('이미 환불을 접수한 주문입니다.');
     const terms = this.db.prepare('SELECT * FROM topup_terms WHERE topup_id=?').get(id);
@@ -284,6 +286,6 @@ export class CreditStore {
   }
   topupHistory(email) {
     return this.db.prepare(`SELECT t.id,t.credits,t.amount,t.currency,t.status,r.status refundStatus,r.amount refundAmount
-      FROM topups t LEFT JOIN refund_requests r ON r.topup_id=t.id WHERE t.email=? AND t.status!='pending' ORDER BY t.rowid DESC LIMIT 50`).all(email).map(row => ({ ...row, provider: row.currency === 'play' ? 'google_play' : 'polar', amount: row.currency === 'play' ? null : row.amount }));
+      FROM topups t LEFT JOIN refund_requests r ON r.topup_id=t.id WHERE t.email=? AND t.status!='pending' ORDER BY t.rowid DESC LIMIT 50`).all(email).map(row => ({ ...row, provider: row.id.startsWith('nicepay:') ? 'nicepay' : row.currency === 'play' ? 'google_play' : 'polar', amount: row.currency === 'play' ? null : row.amount }));
   }
 }

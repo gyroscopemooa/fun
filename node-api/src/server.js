@@ -27,6 +27,7 @@ import { buildNameExplanation } from './naming/description.js';
 import { PACKS as CREDIT_PACKS } from './credits/pricing.js';
 import { installCreditRoutes } from './credits/routes.js';
 import { installPlayCreditRoutes } from './credits/play.js';
+import { installDisabledNicepayPgRoutes } from './payments/nicepay-pg.js';
 
 const app = express();
 const port = Number(process.env.PORT ?? 8787);
@@ -122,6 +123,7 @@ app.use(express.json({
   }
 }));
 app.use('/files', express.static(rootDir));
+installDisabledNicepayPgRoutes(app);
 
 // Credit money and login tokens must never live under the public /files mount.
 let creditStore = null;
