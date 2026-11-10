@@ -11,8 +11,11 @@ export function createPhotoQuota({ creditStore, policy = {}, now = Date.now }) {
   // Existing durable artifacts remain accounted for and never silently expire at migration.
   db.prepare(`INSERT OR IGNORE INTO nice_photo_storage_quota SELECT id,owner,kind,bytes,'active',? FROM nice_photo_artifacts`).run(now());
   function referenced(id) {
-    if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='nice_photo_purchases'").get()) return false;
-    return Boolean(db.prepare("SELECT 1 FROM nice_photo_purchases WHERE json_extract(spec,'$.photoId')=? LIMIT 1").get(id));
+    for (const table of ['nice_photo_purchases', 'nice_image_purchases']) {
+      if (db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?").get(table)
+        && db.prepare(`SELECT 1 FROM ${table} WHERE json_extract(spec,'$.photoId')=? LIMIT 1`).get(id)) return true;
+    }
+    return false;
   }
   function reserveOne({ id, owner, kind }) {
         const own = db.prepare("SELECT count(*) files,coalesce(sum(bytes),0) bytes FROM nice_photo_storage_quota WHERE owner=? AND state!='removed'").get(owner);

@@ -1,3 +1,5 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
+const imageExecutionPolicy = new AsyncLocalStorage();
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import OpenAI, { toFile } from 'openai';
@@ -287,6 +289,7 @@ const decodeImageResult = async (result, label) => {
   const generated = result?.data?.[0];
   const b64 = generated?.b64_json;
   if (typeof b64 === 'string' && b64) {
+    if (imageExecutionPolicy.getStore() && b64.length > 28_000_000) throw Error('Image output too large');
     return {
       buffer: Buffer.from(b64, 'base64'),
       revisedPrompt: generated?.revised_prompt ?? null
@@ -295,6 +298,7 @@ const decodeImageResult = async (result, label) => {
 
   const url = generated?.url;
   if (typeof url === 'string' && url) {
+    if (imageExecutionPolicy.getStore()) throw Error('Inline image output required for private staging');
     const response = await fetch(url);
     await ensureOk(response, `${label} image download`);
     const arrayBuffer = await response.arrayBuffer();
@@ -407,7 +411,7 @@ const editWithOpenAi = async ({ imageBuffer, mimeType, fileName, prompt }) => {
     background: 'opaque',
     // Only the gpt-image-1 family accepts input_fidelity; newer models reject it.
     ...(/^gpt-image-1(\.|$|-)/.test(OPENAI_IMAGE_MODEL) ? { input_fidelity: 'high' } : {})
-  });
+  }, imageExecutionPolicy.getStore() ? { maxRetries: 0, timeout: 240000 } : undefined);
   return decodeImageResult(response, 'OpenAI image edit');
 };
 
@@ -419,13 +423,14 @@ const generateWithOpenAi = async ({ prompt }) => {
     quality: 'high',
     output_format: 'png',
     background: 'opaque'
-  });
+  }, imageExecutionPolicy.getStore() ? { maxRetries: 0, timeout: 240000 } : undefined);
   return decodeImageResult(response, 'OpenAI image generate');
 };
 
 const editWithXai = async ({ imageBuffer, mimeType, prompt }) => {
   const response = await fetch('https://api.x.ai/v1/images/edits', {
     method: 'POST',
+    ...(imageExecutionPolicy.getStore() ? { signal: AbortSignal.timeout(240000) } : {}),
     headers: {
       Authorization: `Bearer ${process.env.XAI_API_KEY?.trim()}`,
       'Content-Type': 'application/json'
@@ -559,6 +564,7 @@ export const generateAiImage = async ({
         filePath: outputPath
       };
     } catch (error) {
+      if (imageExecutionPolicy.getStore()) throw error;
       // Fall back to the original edit pipeline when text-to-image fails or produces no usable asset.
     }
   }
@@ -578,7 +584,7 @@ export const generateAiImage = async ({
     portraitBuffer: stageOne.buffer,
     portraitMimeType: stageOne.mimeType ?? 'image/png',
     userInput: safeUserInput,
-    retryCount: 1
+    retryCount: imageExecutionPolicy.getStore() ? 0 : 1
   });
 
   const outputFileName = `${id}-${safeProvider}-${safeMode}.png`;
@@ -598,3 +604,6 @@ export const generateAiImage = async ({
     filePath: outputPath
   };
 };
+
+// Existing calls keep their behavior; private payment execution never automatically retries an unknown provider outcome.
+export const generateAiImageOnce = input => imageExecutionPolicy.run(true, () => generateAiImage(input));

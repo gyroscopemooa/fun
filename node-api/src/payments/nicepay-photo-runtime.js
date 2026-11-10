@@ -27,6 +27,11 @@ export async function createPrivatePhotoStorage({ creditStore, root, publicRoots
     if (relative === '' || (!relative.startsWith(`..${path.sep}`) && relative !== '..' && !path.isAbsolute(relative))) throw Error('Photo storage must not be publicly served');
   }
   const db = creditStore.db;
+  db.exec('CREATE TABLE IF NOT EXISTS nice_photo_storage_config(singleton INTEGER PRIMARY KEY CHECK(singleton=1),root TEXT NOT NULL)');
+  creditStore.tx(() => {
+    db.prepare('INSERT OR IGNORE INTO nice_photo_storage_config VALUES(1,?)').run(realRoot);
+    if (db.prepare('SELECT root FROM nice_photo_storage_config WHERE singleton=1').get().root !== realRoot) throw Error('One private artifact root per wallet database required');
+  });
   db.exec(`CREATE TABLE IF NOT EXISTS nice_photo_artifacts(id TEXT PRIMARY KEY,owner TEXT NOT NULL,kind TEXT NOT NULL,
     order_id TEXT,sha256 TEXT NOT NULL,bytes INTEGER NOT NULL);`);
   db.exec('CREATE TABLE IF NOT EXISTS nice_photo_workspaces(id TEXT PRIMARY KEY,owner TEXT NOT NULL,directory TEXT NOT NULL,created INTEGER NOT NULL)');
@@ -73,7 +78,7 @@ export async function createPrivatePhotoStorage({ creditStore, root, publicRoots
     },
     async prepareGeneration({ owner, count }) {
       ownerRequired(owner);
-      if (![2, 3, 7].includes(count)) throw Error('Invalid generation allowance');
+      if (![1, 2, 3, 7].includes(count)) throw Error('Invalid generation allowance');
       const outputIds = Array.from({ length: count }, () => randomUUID());
       const workspaceId = randomUUID(), copyId = randomUUID();
       // Reserve outputs plus source/copy working space before any provider request.
@@ -140,6 +145,8 @@ export function createPhotoPurchaseSnapshots({ creditStore, storage }) {
         storage.assertActive(photoId); // Atomic with retention deletion claim.
         const order = db.prepare('SELECT * FROM nice_orders WHERE id=? AND owner=?').get(orderId, owner);
         if (!order || order.state !== 'created' || order.expires <= Date.now()) throw Error('Unpaid owned order required');
+        if (db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='nice_image_purchases'").get()
+          && db.prepare('SELECT 1 FROM nice_image_purchases WHERE order_id=?').get(orderId)) throw Error('Order already bound to AI image');
         const intent = JSON.parse(order.intent), product = intent.productId;
         if (intent.category !== 'direct' || !['base', 'add2', 'add3', 'add7'].includes(product)) throw Error('Photo product not supported');
         if (product !== 'base') {
