@@ -1,12 +1,17 @@
+import {createHash} from 'node:crypto';
 import { isNicepayExecutionDeferred } from './nicepay-preflight.js';
 // Internal execution adapter only. Existing production tool routes are not modified.
-export async function executeNicepayTool({creditStore,orderId,owner,product,runner,now=Date.now()}){
+export async function executeNicepayTool({creditStore,orderId,owner,product,runner,validatedInput,now=Date.now()}){
  if(typeof runner!=='function')throw Error('Tool adapter missing');
  const db=creditStore.db;
  db.exec('CREATE TABLE IF NOT EXISTS nice_tool_jobs(order_id TEXT PRIMARY KEY,state TEXT NOT NULL,attempts INTEGER NOT NULL,result TEXT,updated INTEGER NOT NULL)');
  const prior=creditStore.tx(()=>{
    const entitlement=db.prepare('SELECT * FROM nice_entitlements WHERE order_id=? AND owner=? AND product=?').get(orderId,owner,product);
    if(!entitlement)throw Error('NICEPAY entitlement unavailable');
+   if(db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='nice_customer_orders'").get()){
+    const binding=db.prepare('SELECT input_hash FROM nice_customer_orders WHERE order_id=? AND owner=?').get(orderId,owner);
+    if(binding&&(validatedInput===undefined||createHash('sha256').update(JSON.stringify(validatedInput)).digest('hex')!==binding.input_hash))throw Error('Purchased input mismatch');
+   }
    const job=db.prepare('SELECT * FROM nice_tool_jobs WHERE order_id=?').get(orderId);
    if(job?.state==='done')return JSON.parse(job.result);
    if(entitlement.state!=='ready'||(job&&job.state!=='retryable')||(job?.attempts??0)>=2)throw Error('NICEPAY execution needs reconciliation');

@@ -37,7 +37,7 @@ export function createNicepayStagingRouter({enabled=false,store,creditStore,conf
       const adapter=toolAdapters[order.productId];
       // Validation must run before entitlement claim and before any paid tool work.
       const input=await adapter.validate(req.body?.input,{orderId:order.id,owner});
-      const result=await executeNicepayTool({creditStore,orderId:order.id,owner,product:order.productId,
+      const result=await executeNicepayTool({creditStore,orderId:order.id,owner,product:order.productId,validatedInput:input,
         runner:()=>adapter.execute(input,{orderId:order.id,owner})});
       res.json({result});
     }catch{res.status(409).json({error:'Tool execution unavailable or needs verification'});}

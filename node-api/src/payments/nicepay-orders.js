@@ -1,5 +1,5 @@
 import { DatabaseSync } from 'node:sqlite';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHash } from 'node:crypto';
 import { verifyNicepayAuthentication, verifyNicepayApproval } from './nicepay.js';
 import { prepareNicepayIntent } from './nicepay-policy.js';
 const fail=()=>{throw new Error('Invalid NICEPAY order transition');};
@@ -11,6 +11,7 @@ export class NicepayOrderStore {
       CREATE TABLE IF NOT EXISTS nice_orders(id TEXT PRIMARY KEY, owner TEXT NOT NULL, intent TEXT NOT NULL,
         state TEXT NOT NULL, tid TEXT UNIQUE, created INTEGER NOT NULL, expires INTEGER NOT NULL, updated INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS nice_receipts(order_id TEXT PRIMARY KEY, tid TEXT UNIQUE NOT NULL, amount INTEGER NOT NULL, created INTEGER NOT NULL);
+      CREATE TABLE IF NOT EXISTS nice_checkout_keys(owner TEXT NOT NULL,request_key TEXT NOT NULL,order_id TEXT NOT NULL,fingerprint TEXT NOT NULL,PRIMARY KEY(owner,request_key));
       CREATE TABLE IF NOT EXISTS nice_events(id INTEGER PRIMARY KEY, order_id TEXT NOT NULL, state TEXT NOT NULL, created INTEGER NOT NULL);`);
   }
   close(){this.db.close();}
@@ -19,10 +20,22 @@ export class NicepayOrderStore {
   owned(id,owner){const order=this.get(id);if(!order||order.ownerId!==owner)fail();return order;}
   create(request,catalog,policy,merchantId,now=Date.now()){
     if(typeof merchantId!=='string'||!/^[a-zA-Z0-9]{10}$/.test(merchantId))fail();
-    const intent={...prepareNicepayIntent(request,catalog,policy),merchantId},id=randomUUID();
-    this.transaction(()=>{this.db.prepare('INSERT INTO nice_orders VALUES(?,?,?,?,?,?,?,?)').run(id,intent.ownerId,JSON.stringify(intent),'created',null,now,now+15*60000,now);
-      this.event(id,'created',now);});return this.get(id);
+    const intent={...prepareNicepayIntent(request,catalog,policy),merchantId};
+    const key=request.requestKey;
+    if(key!==undefined&&(typeof key!=='string'||!/^[a-zA-Z0-9_-]{16,100}$/.test(key)||typeof request.inputHash!=='string'||!/^[a-f0-9]{64}$/.test(request.inputHash)))fail();
+    const fingerprint=createHash('sha256').update(JSON.stringify([intent,request.inputHash??null])).digest('hex');
+    const id=this.transaction(()=>{
+      if(key!==undefined){
+        const prior=this.db.prepare('SELECT order_id,fingerprint FROM nice_checkout_keys WHERE owner=? AND request_key=?').get(intent.ownerId,key);
+        if(prior){if(prior.fingerprint!==fingerprint)fail();return prior.order_id;}
+      }
+      const id=randomUUID();
+      this.db.prepare('INSERT INTO nice_orders VALUES(?,?,?,?,?,?,?,?)').run(id,intent.ownerId,JSON.stringify(intent),'created',null,now,now+15*60000,now);
+      if(key!==undefined)this.db.prepare('INSERT INTO nice_checkout_keys VALUES(?,?,?,?)').run(intent.ownerId,key,id,fingerprint);
+      this.event(id,'created',now);return id;
+    });return this.get(id);
   }
+
   rejectCreated(id,owner,now=Date.now()){
     return this.transaction(()=>{const changed=this.db.prepare("UPDATE nice_orders SET state='abandoned',updated=? WHERE id=? AND owner=? AND state='created'").run(now,id,owner);if(changed.changes)this.event(id,'abandoned',now);});
   }
