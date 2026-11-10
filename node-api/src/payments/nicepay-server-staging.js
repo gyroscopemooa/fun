@@ -1,4 +1,7 @@
 import express from 'express';
+import {createNicepayPhotoCustomer} from './nicepay-photo-customer.js';
+import {createNicepayBundleCustomer} from './nicepay-bundle-customer.js';
+import {createNicepayVideoCustomer} from './nicepay-video-customer.js';
 import {createNicepayCustomerStaging} from './nicepay-customer-staging.js';
 import {createNicepayStagingUi,createNicepayCheckoutPreview} from './nicepay-staging-ui.js';
 import {createNicepayImageStaging} from './nicepay-image-staging.js';
@@ -26,7 +29,7 @@ export function createNicepayWalletAuthenticator(creditStore) {
  * Payment configuration/catalog/clients must be supplied by the staging operator.
  */
 export async function createNicepayServerStaging({enabled=false,store,creditStore,origin,
-  payment,photo,image,bundles,video,tools,allowPaidTools=false,operators=[],customerEnabled=false}={}) {
+  payment,photo,image,bundles,video,tools,allowPaidTools=false,operators=[],customerEnabled=false,customerPhotoChoices=[]}={}) {
   const router=express.Router();
   if(!enabled){
     router.use((_req,res)=>res.status(503).set('Cache-Control','no-store').json({error:'NICE staging disabled'}));
@@ -80,6 +83,12 @@ export async function createNicepayServerStaging({enabled=false,store,creditStor
   }
   if(video)router.use('/video',await createNicepayVideoRouter({...video,...common,wallet:creditStore}));
   router.use('/customer',createNicepayCustomerStaging({...common,enabled:customerEnabled,payment,toolAdapters}));
+  router.use('/customer-video',createNicepayVideoCustomer({...common,enabled:customerEnabled&&Boolean(video),payment}));
+  router.use('/customer-bundles',createNicepayBundleCustomer({...common,enabled:customerEnabled&&Boolean(bundles),payment}));
+  const customerSurfaces={};
+  if(photoRuntime)customerSurfaces.photo={...photo,...photoRuntime};
+  if(imageRuntime)customerSurfaces.image={...image,...imageRuntime};
+  router.use('/customer-photo',createNicepayPhotoCustomer({...common,enabled:customerEnabled,surfaces:customerSurfaces,choices:customerPhotoChoices}));
   const uiOptions={store,authenticate,origin,payment,photo,image,operators};
   router.use('/checkout-preview',createNicepayCheckoutPreview(uiOptions));
   router.use('/ui',createNicepayStagingUi(uiOptions));

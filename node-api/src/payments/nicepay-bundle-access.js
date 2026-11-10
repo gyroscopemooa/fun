@@ -1,5 +1,7 @@
 import {createHash} from 'node:crypto';
 
+export class BundleInputError extends Error {}
+
 const PET_PERIOD_MS = 30 * 24 * 60 * 60 * 1000;
 // Separate from the single-use adapter registry: these products grant ongoing rights.
 // Not mounted by server.js; enabling this internal helper never enables checkout.
@@ -19,7 +21,7 @@ export function createNicepayBundleAccess({enabled = false, creditStore, clock =
       AND o.state='verified' AND o.tid=r.tid`).get(orderId, owner, product);
     if (!row || !['ready', 'claimed'].includes(row.state)) throw Error('NICEPAY bundle unavailable');
     if (product === 'ai_pet_translator' && (clock() < row.paid_at || clock() >= row.paid_at + PET_PERIOD_MS)) {
-      throw Error('Pet pass expired');
+      throw new BundleInputError('Pet pass expired');
     }
     return row;
   }
@@ -33,7 +35,7 @@ export function createNicepayBundleAccess({enabled = false, creditStore, clock =
       if (lock) {
         const encoded = JSON.stringify(lock);
         const old = db.prepare('SELECT input FROM nice_bundle_locks WHERE order_id=?').get(orderId);
-        if (old && old.input !== encoded) throw Error('Name premium input changed');
+        if (old && old.input !== encoded) throw new BundleInputError('Name premium input changed');
         if (!old) db.prepare('INSERT INTO nice_bundle_locks VALUES(?,?)').run(orderId, encoded);
       }
       const run = db.prepare('SELECT * FROM nice_bundle_runs WHERE order_id=? AND request_id=?').get(orderId, requestId);
@@ -79,11 +81,12 @@ export function createNicepayBundleAccess({enabled = false, creditStore, clock =
       return execute({orderId, owner, requestId, product: 'ai_pet_translator', operation: normalized.mode, input: normalized, runner, beforeStart});
     },
     async executeName({orderId, owner, requestId, operation, input, options = {}, runner}) {
-      if (!['analyze', 'recommend'].includes(operation)) throw Error('Invalid name bundle operation');
+      if (!['analyze', 'recommend'].includes(operation)) throw new BundleInputError('Invalid name bundle operation');
       const lock = normalizeNameInput(input);
       // Options vary within the bundle; identity remains locked across both operations.
+      if(!options||typeof options!=='object'||Array.isArray(options))throw new BundleInputError('Invalid name recommendation options');
       const topK = options.topK ?? 5, givenLength = options.givenLength ?? 2;
-      if (!Number.isInteger(topK) || topK < 1 || topK > 20 || ![1,2].includes(givenLength)) throw Error('Invalid name recommendation options');
+      if (!Number.isInteger(topK) || topK < 1 || topK > 20 || ![1,2].includes(givenLength)) throw new BundleInputError('Invalid name recommendation options');
       const payload = operation === 'recommend' ? {...lock, topK, givenLength} : lock;
       return execute({orderId, owner, requestId, product: 'ai_name_premium', operation, input: payload, lock, runner});
     }
@@ -91,9 +94,9 @@ export function createNicepayBundleAccess({enabled = false, creditStore, clock =
 }
 
 function normalizeNameInput(input) {
-  if (!input || typeof input !== 'object' || Array.isArray(input)) throw Error('Name input required');
+  if (!input || typeof input !== 'object' || Array.isArray(input)) throw new BundleInputError('Name input required');
   const text = (value, max = 80) => {
-    if (typeof value !== 'string' || value.length > max) throw Error('Invalid name input');
+    if (typeof value !== 'string' || value.length > max) throw new BundleInputError('Invalid name input');
     return value.trim();
   };
   const displayName = text(input.displayName ?? '');
@@ -101,22 +104,23 @@ function normalizeNameInput(input) {
   const birthDate = text(input.birthDate ?? '', 10);
   const surname = text(input.surname ?? hanjaName.slice(0, 1));
   const given = (input.given ?? hanjaName.slice(1).split(''));
-  if (!Array.isArray(given) || given.length < 1 || given.length > 2 || surname.length !== 1) throw Error('Invalid name characters');
+  if (!Array.isArray(given) || given.length < 1 || given.length > 2 || surname.length !== 1) throw new BundleInputError('Invalid name characters');
   const normalizedGiven = given.map(value => text(value));
-  if (normalizedGiven.some(value => value.length !== 1)) throw Error('Invalid name characters');
-  if (hanjaName && hanjaName !== surname + normalizedGiven.join('')) throw Error('Name identity mismatch');
-  if (input.gender !== undefined && !['male', 'female'].includes(input.gender)) throw Error('Invalid gender');
-  if (input.calendarType !== undefined && !['solar', 'lunar'].includes(input.calendarType)) throw Error('Invalid calendar');
+  if (normalizedGiven.some(value => value.length !== 1)) throw new BundleInputError('Invalid name characters');
+  if (hanjaName && hanjaName !== surname + normalizedGiven.join('')) throw new BundleInputError('Name identity mismatch');
+  if (input.gender !== undefined && !['male', 'female'].includes(input.gender)) throw new BundleInputError('Invalid gender');
+  if (input.calendarType !== undefined && !['solar', 'lunar'].includes(input.calendarType)) throw new BundleInputError('Invalid calendar');
   return {displayName, hanjaName, birthDate, gender: input.gender === 'male' ? 'male' : 'female',
     calendarType: input.calendarType === 'lunar' ? 'lunar' : 'solar', surname, given: normalizedGiven};
 }
 
 function validatePetInput(input = {}) {
+  if(!input||typeof input!=='object'||Array.isArray(input))throw new BundleInputError('Invalid pet input');
   const {animal = 'dog', mode = 'analyze', textInput = '', audioInput = null, locale = 'en'} = input;
-  if (!['dog', 'cat'].includes(animal) || !['analyze', 'command'].includes(mode)) throw Error('Invalid pet mode');
-  if (typeof textInput !== 'string' || !['ko','en','ja','zh','es','de','fr','pt','vi','id'].includes(locale)) throw Error('Invalid pet input');
-  if (audioInput && (!Buffer.isBuffer(audioInput.buffer) || !audioInput.buffer.length || audioInput.buffer.length > 10 * 1024 * 1024)) throw Error('Invalid pet audio');
-  if (!textInput.trim() && !audioInput) throw Error('Pet text or audio required');
+  if (!['dog', 'cat'].includes(animal) || !['analyze', 'command'].includes(mode)) throw new BundleInputError('Invalid pet mode');
+  if (typeof textInput !== 'string' || !['ko','en','ja','zh','es','de','fr','pt','vi','id'].includes(locale)) throw new BundleInputError('Invalid pet input');
+  if (audioInput && (!Buffer.isBuffer(audioInput.buffer) || !audioInput.buffer.length || audioInput.buffer.length > 10 * 1024 * 1024)) throw new BundleInputError('Invalid pet audio');
+  if (!textInput.trim() && !audioInput) throw new BundleInputError('Pet text or audio required');
   // Only trusted upload handling supplies audioInput. Voice output must use private artifact storage.
   return {animal, mode, textInput: textInput.trim(), audioInput, locale};
 }

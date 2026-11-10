@@ -1,10 +1,18 @@
 import express from 'express';
+import {BundleInputError} from './nicepay-bundle-access.js';
 import {createNicepayBundleRunners} from './nicepay-bundle-runners.js';
 
 // Unmounted staging assembly. authenticate is supplied by the trusted server, not request JSON.
 export function createNicepayBundleRouter({enabled=false,authenticate,origin,...options}={}) {
   const router=express.Router();
   if (enabled && (typeof authenticate!=='function' || new URL(origin).origin!==origin || new URL(origin).protocol!=='https:')) throw Error('Verified bundle configuration required');
+  function editable(error,req,res){
+    if(!(error instanceof BundleInputError))return false;
+    const db=options.creditStore.db;
+    const owned=db.prepare('SELECT 1 FROM nice_entitlements WHERE order_id=? AND owner=?').get(req.body?.orderId??'',res.locals.owner);
+    if(!owned)return false;
+    return !db.prepare("SELECT 1 FROM nice_bundle_runs WHERE order_id=? AND (request_id=? OR state!='done')").get(req.body?.orderId??'',req.body?.requestId??'');
+  }
   const service=enabled?createNicepayBundleRunners({...options,enabled:true}):null;
   router.use(async(req,res,next)=>{
     res.set('Cache-Control','no-store');res.set('X-Content-Type-Options','nosniff');
@@ -13,10 +21,11 @@ export function createNicepayBundleRouter({enabled=false,authenticate,origin,...
     try {const owner=await authenticate(req);if (typeof owner!=='string'||!owner) throw Error();res.locals.owner=owner;next();}
     catch {res.status(401).json({error:'Authentication required'});}
   });
-  router.get('/pet/:orderId',(req,res)=>{
+  router.route('/pet/:orderId').get(petStatus).post(petStatus);
+  function petStatus(req,res){
     try {res.json(service.petStatus({orderId:req.params.orderId,owner:res.locals.owner}));}
     catch {res.status(404).json({error:'Pet pass unavailable'});}
-  });
+  }
   router.post('/pet',express.json({limit:'15mb'}),async(req,res)=>{
     try {
       const body=req.body??{}, supplied=body.input??{};
@@ -24,19 +33,19 @@ export function createNicepayBundleRouter({enabled=false,authenticate,origin,...
       const input={animal:supplied.animal,mode:supplied.mode,textInput:supplied.textInput,locale:supplied.locale};
       if (supplied.audio!==undefined) {
         const mime=supplied.audioMimeType??'audio/webm';
-        if (!['audio/webm','audio/wav','audio/mpeg','audio/mp4','audio/ogg'].includes(mime) || typeof supplied.audio!=='string' || supplied.audio.length>14*1024*1024) throw Error();
+        if (!['audio/webm','audio/wav','audio/mpeg','audio/mp4','audio/ogg'].includes(mime) || typeof supplied.audio!=='string' || supplied.audio.length>14*1024*1024) throw new BundleInputError('Invalid pet audio');
         const buffer=Buffer.from(supplied.audio,'base64');
-        if (!buffer.length||buffer.length>10*1024*1024||buffer.toString('base64')!==supplied.audio) throw Error();
+        if (!buffer.length||buffer.length>10*1024*1024||buffer.toString('base64')!==supplied.audio) throw new BundleInputError('Invalid pet audio');
         const extension={'audio/webm':'webm','audio/wav':'wav','audio/mpeg':'mp3','audio/mp4':'m4a','audio/ogg':'ogg'}[mime];
         input.audioInput={buffer,mimeType:mime,filename:`pet-input.${extension}`};
       }
       res.json(await service.pet({orderId:body.orderId,requestId:body.requestId,owner:res.locals.owner,input}));
-    } catch {res.status(409).json({error:'Pet request unavailable; check input, access, storage or pending execution'});}
+    } catch(error) {const canEdit=editable(error,req,res);res.status(canEdit?422:409).json({editable:canEdit,error:'Pet request unavailable; check input, access, storage or pending execution'});}
   });
   router.post('/name/:operation',express.json({limit:'8kb'}),async(req,res)=>{
     try {res.json(await service.name({orderId:req.body?.orderId,requestId:req.body?.requestId,owner:res.locals.owner,
       operation:req.params.operation,input:req.body?.input,options:req.body?.options}));}
-    catch {res.status(409).json({error:'Name request unavailable; check input, access or pending execution'});}
+    catch(error) {const canEdit=editable(error,req,res);res.status(canEdit?422:409).json({editable:canEdit,error:'Name request unavailable; check input, access or pending execution'});}
   });
   router.route('/artifact/:id').get(readArtifact).post(readArtifact);
   function readArtifact(req,res){

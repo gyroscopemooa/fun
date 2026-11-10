@@ -36,6 +36,12 @@ export function createNicepayVideoService({wallet,inputRoot,outputRoot,enabled=f
  async function start({orderId,owner,uploadId}){
   const [root,out]=await requireRoots(),upload=wallet.db.prepare('SELECT * FROM nice_video_uploads WHERE id=? AND owner=?').get(uploadId,owner);if(!upload||!inside(root,await fs.realpath(upload.file)))throw Error('Owned upload required');
   const id=wallet.tx(()=>{
+   // Recheck after filesystem awaits against concurrent upload removal.
+   if(!wallet.db.prepare('SELECT 1 FROM nice_video_uploads WHERE id=? AND owner=?').get(uploadId,owner))throw Error('Upload removed');
+   if(wallet.db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='nice_video_reservations'").get()){
+    const reservation=wallet.db.prepare('SELECT state FROM nice_video_reservations WHERE upload_id=?').get(uploadId);
+    if(reservation&&reservation.state!=='complete')throw Error('Upload removal in progress');
+   }
    const entitlement=wallet.db.prepare("SELECT * FROM nice_entitlements WHERE order_id=? AND owner=? AND product='video_mkv_mp4'").get(orderId,owner);if(!entitlement)throw Error('Video entitlement required');
    const prior=wallet.db.prepare('SELECT * FROM nice_video_jobs WHERE order_id=?').get(orderId);
    if(prior&&['queued','processing','done'].includes(prior.state))return prior.id;

@@ -38,3 +38,10 @@ test('retry-first denies concurrent deletion and preserves completed output',asy
  assert.equal((await finish(f.service,'retry')).state,'done');
  assert.ok(await f.service.downloadPath('retry','buyer'));
 });
+test('upload removal claim prevents retry after filesystem validation',async t=>{
+ let calls=0;const f=await failedJob(t,async()=>{calls++;});
+ f.wallet.db.exec('CREATE TABLE nice_video_reservations(upload_id TEXT,state TEXT)');
+ f.wallet.db.prepare("INSERT INTO nice_video_reservations VALUES(?,'removing')").run(f.uploadId);
+ await assert.rejects(f.service.start({owner:'buyer',orderId:'o',uploadId:f.uploadId}),/removal/);
+ assert.equal(calls,0);assert.equal(f.service.status('retry','buyer').state,'failed');
+});

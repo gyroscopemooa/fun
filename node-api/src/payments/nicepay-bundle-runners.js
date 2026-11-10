@@ -1,5 +1,5 @@
 import {randomUUID, createHash} from 'node:crypto';
-import {createNicepayBundleAccess} from './nicepay-bundle-access.js';
+import {createNicepayBundleAccess,BundleInputError} from './nicepay-bundle-access.js';
 import {getNamingDataset} from '../naming/repository.js';
 import {calculateFiveGrid} from '../naming/fiveGrid.js';
 import {scoreFiveGrid} from '../naming/score.js';
@@ -46,7 +46,7 @@ export function createNicepayBundleRunners({enabled=false, creditStore, clock=Da
       const dataset=await namingDataset();
       const surname=typeof args.input?.surname==='string'?args.input.surname.trim():args.input?.hanjaName?.trim().slice(0,1);
       const given=args.input?.given??args.input?.hanjaName?.trim().slice(1).split('')??[];
-      if (!dataset.strokeMap.has(surname) || (args.operation==='analyze' && (!Array.isArray(given) || given.some(c=>typeof c!=='string'||!dataset.strokeMap.has(c.trim()))))) throw Error('Name stroke data unavailable');
+      if (!dataset.strokeMap.has(surname) || (args.operation==='analyze' && (!Array.isArray(given) || given.some(c=>typeof c!=='string'||!dataset.strokeMap.has(c.trim()))))) throw new BundleInputError('Name stroke data unavailable');
       return access.executeName({...args,runner:async input=>{
         const {surname,given,topK,givenLength,...identity}=input;
         const orderLock={...identity,surname,given};

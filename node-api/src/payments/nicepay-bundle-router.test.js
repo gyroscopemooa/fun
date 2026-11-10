@@ -44,6 +44,16 @@ test('name HTTP uses actual dataset and rejects changed identity',async t=>{
   const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));t.after(()=>new Promise(r=>server.close(r)));
   const base=`http://127.0.0.1:${server.address().port}`,headers={Origin:'https://manytool.net','Content-Type':'application/json'};
   const send=(operation,input=identity)=>fetch(base+'/name/'+operation,{method:'POST',headers,body:JSON.stringify({orderId:'o',requestId:operation,input})});
+  const invalid=await send('analyze',{...identity,surname:'X',hanjaName:'X民秀'});assert.equal(invalid.status,422);assert.equal((await invalid.json()).editable,true);
   assert.equal((await send('analyze')).status,200);assert.equal((await send('recommend')).status,200);
   assert.equal((await send('analyze',{...identity,displayName:'changed'})).status,409);
+});
+test('provider cannot impersonate safe preflight failure after work begins',async t=>{
+  const {BundleInputError}=await import('./nicepay-bundle-access.js');const f=fixture(t);const app=express();
+  app.use(createNicepayBundleRouter({enabled:true,creditStore:f.creditStore,clock:()=>start,origin:'https://manytool.net',authenticate:async()=> 'owner',analyzePetAudio:async()=>{throw new BundleInputError('provider uncertainty');}}));
+  const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));t.after(()=>new Promise(r=>server.close(r)));
+  const base=`http://127.0.0.1:${server.address().port}`,headers={Origin:'https://manytool.net','Content-Type':'application/json'};
+  const send=input=>fetch(base+'/pet',{method:'POST',headers,body:JSON.stringify({orderId:'o',requestId:'same-request',input})});
+  const first=await send({textInput:'hello'});assert.equal(first.status,409);assert.equal((await first.json()).editable,false);
+  const invalid=await send({textInput:''});assert.equal(invalid.status,409);assert.equal((await invalid.json()).editable,false);
 });
