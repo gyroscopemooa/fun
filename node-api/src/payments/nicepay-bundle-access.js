@@ -76,11 +76,14 @@ export function createNicepayBundleAccess({enabled = false, creditStore, clock =
       const normalized = validatePetInput(input);
       return execute({orderId, owner, requestId, product: 'ai_pet_translator', operation: normalized.mode, input: normalized, runner});
     },
-    async executeName({orderId, owner, requestId, operation, input, runner}) {
+    async executeName({orderId, owner, requestId, operation, input, options = {}, runner}) {
       if (!['analyze', 'recommend'].includes(operation)) throw Error('Invalid name bundle operation');
       const lock = normalizeNameInput(input);
-      // Runners receive only the locked identity, never a conflicting surname/given payload.
-      return execute({orderId, owner, requestId, product: 'ai_name_premium', operation, input: lock, lock, runner});
+      // Options vary within the bundle; identity remains locked across both operations.
+      const topK = options.topK ?? 5, givenLength = options.givenLength ?? 2;
+      if (!Number.isInteger(topK) || topK < 1 || topK > 20 || ![1,2].includes(givenLength)) throw Error('Invalid name recommendation options');
+      const payload = operation === 'recommend' ? {...lock, topK, givenLength} : lock;
+      return execute({orderId, owner, requestId, product: 'ai_name_premium', operation, input: payload, lock, runner});
     }
   };
 }

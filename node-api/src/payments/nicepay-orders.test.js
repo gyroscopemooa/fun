@@ -51,3 +51,8 @@ test('crashed approving orders enter reconciliation queue without replay',t=>{
  const store=new NicepayOrderStore(':memory:');t.after(()=>store.close());const order=create(store,100000);store.claim(order.id,tid,100001);
  assert.equal(store.recoverStale(160002),1);assert.equal(store.pendingReconciliation()[0].state,'uncertain');assert.throws(()=>store.claim(order.id,tid,160003));
 });
+test('rejected checkout snapshot abandons only created owned order',t=>{
+ const store=new NicepayOrderStore(':memory:');t.after(()=>store.close());const order=create(store);
+ store.rejectCreated(order.id,'other');assert.equal(store.get(order.id).state,'created');
+ store.rejectCreated(order.id,'verified-owner');assert.equal(store.get(order.id).state,'abandoned');assert.throws(()=>store.claim(order.id,tid));
+});

@@ -48,3 +48,16 @@ Photo `nicepay-photo-adapters.js` and pet/name `nicepay-bundle-access.js` are no
 - Public routes, Supabase account mapping, browser/real provider validation and live activation remain unresolved. Passing the combined offline suite is not evidence that the public site supports NICE checkout for these tools.
 
 Video recovery review correction: the stale threshold is 65 minutes, beyond the default copy+fallback pipeline's two 30-minute timeouts. Completion checks the state-update result; a job already quarantined retains its output for reconciliation and does not silently return its entitlement. Injected conversion runners must honor the documented per-phase time budget.
+
+## Private MP4 staging HTTP and local recovery update
+
+`nicepay-video-router.js` now implements disabled-by-default authenticated upload, conversion submission, job status and download endpoints. Authentication and same-origin checks run before multipart parsing; files have server-generated names and restricted permissions, filename extension and size are bounded (media bytes are interpreted only during FFmpeg conversion), public-storage roots are rejected and download access checks the owner. The router is **not mounted in server.js**. Tests exercise HTTP upload through private download using a synthetic file and fake conversion, including missing authentication, wrong Origin, oversized input and another user's access.
+
+`runNicepayLocalRecovery` provides an explicit no-network maintenance pass for stale approvals, pending wallet fulfillment, refund holds and tool execution states (optionally video jobs). It requires the same persistent wallet/order file and does not schedule itself or trigger a payment/refund request. Production scheduling, upload storage quotas/rate limits/retention, disk/resource isolation, and abandoned-artifact cleanup still need deployment-specific implementation and review. No hosted UI or production site was updated.
+
+
+## Upload quota/entitlement review correction
+
+MP4 uploads now require a ready owned `video_mkv_mp4` entitlement via `X-Manytool-Order` before multipart parsing. Each upload reserves the maximum file bytes atomically; default limits are two retained orders/uploads per owner, six upload attempts/hour, 3 GiB input bytes per owner and 20 GiB globally, plus globally bounded retained output slots. Conversion requires the exact order bound to that reservation. Owners can remove completed/failed input/output artifacts; active/uncertain jobs cannot be removed. Removed reservations retain rate-limit history. An explicit cleanup method identifies abandoned reservations older than one hour and unused/terminal uploads older than one day; deployment must schedule it. Uploads have a ten-minute request timeout.
+
+FFmpeg is restricted to one codec thread and a 2 GiB output cap per job; outputs near the cap are rejected rather than reported as complete. These application safeguards do not replace OS/container CPU/memory/disk isolation. Public mounting, cleanup scheduling and load tests remain disabled/pending.

@@ -17,6 +17,12 @@
 
 ## Still missing before activation
 
-Public checkout and authenticated route wiring, real provider/output tests, paid-plan quota policy review, production receipt-time reconciliation, explicit stale-operation recovery tooling, renewal UI and private artifact storage are not implemented here. Voice output often exceeds the existing 64 KB durable JSON bound: runners must persist private output and return an owned artifact reference rather than inline audio. Name dataset/report/recommendation orchestration and recommendation options must be connected and tested separately; no existing feature is replaced by this helper. Owner identity and clock come from trusted server context, never browser JSON.
+Public checkout and authenticated route wiring, real paid provider tests, paid-plan quota policy review, production receipt-time reconciliation, explicit stale-operation recovery tooling and renewal UI remain unimplemented. Owner identity and clock come from trusted server context, never browser JSON. Existing email delivery is not triggered by these internal runners.
+
+## Actual internal runners
+
+`nicepay-bundle-runners.js` connects pet execution to the existing `analyzePetAudio` implementation (lazy import). Command audio is persisted as private SQLite blobs, up to 20 MB each, with random artifact IDs and SHA-256 integrity checks; bounded result metadata references the artifact. Retrieval verifies owner, product, order/entitlement state and a completed execution containing that artifact ID. No public file path or URL is produced. Operational storage quotas/retention and authenticated HTTP delivery must be added before activation.
+
+Name execution uses the real existing CSV dataset, five-grid score/report and recommendation functions. Recommendation count (1–20) and given-name length (1–2) are fingerprinted per request without changing the identity lock. Offline tests exercise the actual dataset and both operations. Pet tests use injected fake output only; they verify persistence, replay, ownership and invalid-output quarantine, not provider quality.
 
 Run isolated offline tests: `node --test node-api/src/payments/nicepay-bundle-access.test.js`.

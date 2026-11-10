@@ -23,6 +23,9 @@ export function createNicepayStagingRouter({enabled=false,store,creditStore,conf
       const ownerId=await authenticate(req); // Must return the verified wallet email, not a browser claim/Supabase ID guess.
       const request={productId:req.body?.productId,ownerId};prepareNicepayIntent(request,catalog,policy);
       const order=store.create(request,catalog,policy,config.id);
+      const adapter=Object.hasOwn(toolAdapters,order.productId)?toolAdapters[order.productId]:null;
+      // Tool-specific upload/options rights must be frozen before exposing a payable form.
+      if(adapter?.bindCheckout){try{await adapter.bindCheckout(req.body?.input,{orderId:order.id,owner:ownerId});}catch(error){store.rejectCreated(order.id,ownerId);throw error;}}
       res.type('html').send(renderNicepayPgForm(order,config,timestamp()));
     }catch{res.status(400).json({error:'NICEPAY checkout unavailable'});}
   });

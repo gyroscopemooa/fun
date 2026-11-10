@@ -80,7 +80,8 @@ const decodeImages = async (response) => Promise.all((response?.data ?? []).map(
   throw new Error('OpenAI image edit returned no image');
 }));
 
-export async function generateWithOpenAiImage({ inputPath, storageDir, jobId, toolType, outfitType, groomingMode, hairOptions, retouchEnabled, fullPackage, beautyOptions }) {
+export async function generateWithOpenAiImage({ inputPath, storageDir, jobId, toolType, outfitType, groomingMode, hairOptions, retouchEnabled, fullPackage, beautyOptions, candidateCount = CANDIDATE_COUNT }) {
+  if (![2, 3, 7].includes(candidateCount)) throw new Error('Invalid portrait candidate count');
   const startedAt = Date.now();
   const preset = getToolPreset(toolType);
   const prompt = buildPrompt(toolType, outfitType, { groomingMode, hairOptions, retouchEnabled, fullPackage, beautyOptions });
@@ -96,7 +97,7 @@ export async function generateWithOpenAiImage({ inputPath, storageDir, jobId, to
     model: OPENAI_IMAGE_MODEL,
     image: await toFile(source, 'portrait.jpg', { type: 'image/jpeg' }),
     prompt,
-    n: CANDIDATE_COUNT,
+    n: candidateCount,
     size: OUTPUT_SIZE,
     quality: 'medium',
     output_format: 'png',
@@ -105,7 +106,7 @@ export async function generateWithOpenAiImage({ inputPath, storageDir, jobId, to
     ...(/^gpt-image-1(\.|$|-)/.test(OPENAI_IMAGE_MODEL) ? { input_fidelity: 'high' } : {})
   });
   const images = await decodeImages(response);
-  if (!images.length) throw new Error('OpenAI image edit returned no images');
+  if (images.length !== candidateCount) throw new Error('OpenAI image edit returned an unexpected candidate count');
   const generationMs = Date.now() - startedAt;
 
   const generated = [];

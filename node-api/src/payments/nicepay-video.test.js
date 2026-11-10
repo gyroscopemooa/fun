@@ -11,3 +11,30 @@ test('recovery allows both 30-minute phases before quarantining stale work',asyn
  assert.equal(f.wallet.db.prepare("SELECT state FROM nice_video_jobs WHERE id='job'").get().state,'processing');
  assert.equal(f.service.recover(now+30*60000)[0].state,'uncertain');
 });
+async function failedJob(t,run){
+ const f=await fixture(t,run),file=path.join(f.inputRoot,'retry.mkv');
+ await fs.writeFile(file,'input');
+ const {uploadId}=await f.service.registerUpload({owner:'buyer',file,originalName:'retry.mkv'});
+ f.wallet.db.prepare("INSERT INTO nice_video_jobs VALUES('retry','o','buyer',?,'failed',?,1,?)").run(uploadId,path.join(f.outputRoot,'retry.mp4'),Date.now());
+ return {...f,uploadId};
+}
+test('delete-first claims job before filesystem awaits and prevents concurrent retry',async t=>{
+ let calls=0;const f=await failedJob(t,async()=>{calls++;});
+ const deleting=f.service.removeOutput('retry','buyer');
+ assert.equal(f.service.status('retry','buyer').state,'deleting');
+ await assert.rejects(f.service.start({owner:'buyer',orderId:'o',uploadId:f.uploadId}),/unavailable/);
+ await deleting;
+ assert.equal(f.service.status('retry','buyer').state,'expired');
+ assert.equal(calls,0);
+ assert.equal(f.wallet.db.prepare("SELECT state FROM nice_entitlements WHERE order_id='o'").get().state,'ready');
+});
+test('retry-first denies concurrent deletion and preserves completed output',async t=>{
+ let release,entered;const running=new Promise(r=>{entered=r;}),gate=new Promise(r=>{release=r;});
+ const f=await failedJob(t,async args=>{entered();await gate;await fs.writeFile(args.at(-1),'output');});
+ await f.service.start({owner:'buyer',orderId:'o',uploadId:f.uploadId});
+ await running;
+ await assert.rejects(f.service.removeOutput('retry','buyer'),/Active job/);
+ release();
+ assert.equal((await finish(f.service,'retry')).state,'done');
+ assert.ok(await f.service.downloadPath('retry','buyer'));
+});

@@ -23,6 +23,9 @@ export class NicepayOrderStore {
     this.transaction(()=>{this.db.prepare('INSERT INTO nice_orders VALUES(?,?,?,?,?,?,?,?)').run(id,intent.ownerId,JSON.stringify(intent),'created',null,now,now+15*60000,now);
       this.event(id,'created',now);});return this.get(id);
   }
+  rejectCreated(id,owner,now=Date.now()){
+    return this.transaction(()=>{const changed=this.db.prepare("UPDATE nice_orders SET state='abandoned',updated=? WHERE id=? AND owner=? AND state='created'").run(now,id,owner);if(changed.changes)this.event(id,'abandoned',now);});
+  }
   event(id,state,now){this.db.prepare('INSERT INTO nice_events(order_id,state,created) VALUES(?,?,?)').run(id,state,now);}
   claim(id,tid,now=Date.now()){
     if(typeof tid!=='string'||!/^[a-zA-Z0-9]{30}$/.test(tid))fail();

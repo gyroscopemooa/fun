@@ -21,10 +21,10 @@ export function createNicepayVideoService({wallet,inputRoot,outputRoot,enabled=f
   const changed=wallet.db.prepare("UPDATE nice_video_jobs SET state='processing',updated=? WHERE id=? AND state='queued'").run(Date.now(),jobId);if(changed.changes!==1)return;
   try{
    const [root,out]=await requireRoots();if(!inside(root,await fs.realpath(upload.file))||!inside(out,job.output))throw Error('Private video path changed');
-   const common=['-nostdin','-y','-protocol_whitelist','file,pipe','-format_whitelist','matroska,webm,mov,avi','-i',upload.file];
-   try{await run([...common,'-c','copy','-movflags','+faststart',job.output]);}
-   catch{await fs.rm(job.output,{force:true});await run([...common,'-c:v','libx264','-preset','veryfast','-crf','23','-c:a','aac','-b:a','192k','-movflags','+faststart',job.output]);}
-   const output=await fs.stat(job.output);if(!output.isFile()||!output.size)throw Error('Missing conversion output');
+   const common=['-nostdin','-y','-threads','1','-protocol_whitelist','file,pipe','-format_whitelist','matroska,webm,mov,avi','-i',upload.file];
+   try{await run([...common,'-c','copy','-threads','1','-fs',String(2*1024**3),'-movflags','+faststart',job.output]);}
+   catch{await fs.rm(job.output,{force:true});await run([...common,'-c:v','libx264','-preset','veryfast','-crf','23','-c:a','aac','-b:a','192k','-threads','1','-fs',String(2*1024**3),'-movflags','+faststart',job.output]);}
+   const output=await fs.stat(job.output);if(!output.isFile()||!output.size||output.size>=2*1024**3-1024**2)throw Error('Missing or size-limited conversion output');
    const completed=wallet.db.prepare("UPDATE nice_video_jobs SET state='done',updated=? WHERE id=? AND state='processing'").run(Date.now(),jobId);
    // A quarantined job keeps its output for manual reconciliation, never releases allowance.
    if(completed.changes!==1)return;
@@ -49,6 +49,16 @@ export function createNicepayVideoService({wallet,inputRoot,outputRoot,enabled=f
  return {registerUpload,start,process,
   status(jobId,owner){const j=ownedJob(jobId,owner);return {jobId:j.id,state:j.state,downloadReady:j.state==='done'};},
   async downloadPath(jobId,owner){const job=ownedJob(jobId,owner);if(job.state!=='done')throw Error('Video not ready');const [,out]=await requireRoots(),real=await fs.realpath(job.output);if(!inside(out,real))throw Error('Invalid output');return real;},
+  async removeOutput(jobId,owner){
+   // Claim synchronously before filesystem awaits. A failed job cannot restart once deletion begins.
+   const job=ownedJob(jobId,owner);
+   const claimed=wallet.db.prepare("UPDATE nice_video_jobs SET state='deleting',updated=? WHERE id=? AND owner=? AND state IN ('done','failed','expired','deleting')").run(Date.now(),jobId,owner);
+   if(claimed.changes!==1)throw Error('Active job cannot be removed');
+   const [,out]=await requireRoots();if(!inside(out,job.output))throw Error('Invalid output');
+   // On I/O failure retain deleting: retry deletion, never restart a potentially removed output.
+   await fs.rm(job.output,{force:true});
+   wallet.db.prepare("UPDATE nice_video_jobs SET state='expired',updated=? WHERE id=? AND state='deleting'").run(Date.now(),jobId);
+  },
   recover(now=Date.now()){wallet.db.prepare("UPDATE nice_video_jobs SET state='uncertain',updated=? WHERE state='processing' AND updated<?").run(now,now-65*60000);return wallet.db.prepare("SELECT id,state FROM nice_video_jobs WHERE state IN ('queued','uncertain')").all();}
  };
 }
