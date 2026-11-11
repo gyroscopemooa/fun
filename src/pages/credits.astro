@@ -97,6 +97,8 @@ const apiBase = (import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787'
             const text = document.createElement('p'); text.className = 'break-all'; text.textContent = `${topup.credits}개 · ${topup.provider === 'google_play' ? 'Google Play 구매 (금액은 Play 영수증 확인)' : `${topup.amount.toLocaleString()}원 충전`} · 주문 ${topup.id}`; card.append(text);
             if (topup.provider === 'google_play') {
               const notice = document.createElement('p'); notice.className = 'mt-2 text-sm'; notice.textContent = 'Google Play 구매의 결제 금액과 환불은 Google Play 주문 내역에서 확인해주세요.'; card.append(notice);
+            } else if (topup.provider === 'nicepay') {
+              const notice = document.createElement('p'); notice.className = 'mt-2 text-sm'; notice.textContent = 'NICEPAY 충전 환불은 현재 고객지원에서 결제·사용 내역을 확인한 후 처리합니다.'; card.append(notice);
             } else if (topup.refundStatus) {
               const state = document.createElement('p'); state.className = 'mt-2 text-sm';
               const names = { requested: '환불 검토 대기', completed: '환불 완료', review: '환불 내역 확인 중' };

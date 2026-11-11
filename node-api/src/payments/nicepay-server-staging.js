@@ -1,4 +1,5 @@
 import express from 'express';
+import {createNicepayCreditCustomer} from './nicepay-credit-customer.js';
 import {createNicepayPhotoCustomer} from './nicepay-photo-customer.js';
 import {createNicepayBundleCustomer} from './nicepay-bundle-customer.js';
 import {createNicepayVideoCustomer} from './nicepay-video-customer.js';
@@ -89,6 +90,7 @@ export async function createNicepayServerStaging({enabled=false,store,creditStor
   if(photoRuntime)customerSurfaces.photo={...photo,...photoRuntime};
   if(imageRuntime)customerSurfaces.image={...image,...imageRuntime};
   router.use('/customer-photo',createNicepayPhotoCustomer({...common,enabled:customerEnabled,surfaces:customerSurfaces,choices:customerPhotoChoices}));
+  router.use('/customer-credits',createNicepayCreditCustomer({...common,enabled:customerEnabled,payment}));
   const uiOptions={store,authenticate,origin,payment,photo,image,operators};
   router.use('/checkout-preview',createNicepayCheckoutPreview(uiOptions));
   router.use('/ui',createNicepayStagingUi(uiOptions));

@@ -1,5 +1,6 @@
 // Build-time opt-in links only. Never intercept existing Polar/credits fetches.
 const paths=Object.freeze({
+ '/credits':'customer-credits',
  '/ai-manseryeok':'customer','/ai-calorie-calculator':'customer','/ai-personal-color':'customer',
  '/tools/product-detail-studio':'customer',
  '/ai-id-photo':'customer-photo','/ai-passport-photo':'customer-photo','/ai-headshot':'customer-photo','/ai-photoshop':'customer-photo',
