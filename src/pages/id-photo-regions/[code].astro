@@ -1,0 +1,27 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import data from '../../data/photo-regions.json';
+export function getStaticPaths(){return data.regions.flatMap(r=>r.districts.map(d=>({params:{code:d.code},props:{region:r,district:d}})));}
+const {region,district}=Astro.props;
+const name=`${region.name} ${district.name}`;
+---
+<Layout title={`${name} 온라인 증명사진 준비 안내 | ManyTool`} description={`${name}에서 증명사진 파일이 필요할 때 확인할 온라인 이용 안내. 방문 촬영·인화 매장 서비스와의 차이, 파일 준비와 제출 전 확인사항을 안내합니다.`}>
+ <Header />
+ <main class="mx-auto max-w-4xl px-5 py-10">
+  <a href="/id-photo-regions/" class="text-sm underline">전국 지역 안내</a>
+  <h1 class="mt-5 text-3xl font-bold">{name} 온라인 증명사진 준비</h1>
+  <p class="mt-5 leading-7">{name} 사진관을 찾고 계신가요? 방문 촬영과 종이 사진이 필요하면 실제 사진관의 촬영·인화 서비스를 확인하세요. ManyTool은 사진 파일을 웹에서 준비하는 온라인 도구로, {name}에 방문 매장이나 제휴 출력 지점을 운영하지 않습니다.</p>
+  <a href="/ai-id-photo" class="my-6 inline-block rounded-xl bg-slate-900 px-5 py-3 text-white">온라인 증명사진 도구 확인</a>
+  <h2 class="mt-5 text-xl font-bold">파일 준비부터 출력까지</h2>
+  <ol class="mt-4 list-decimal space-y-3 pl-5 leading-7"><li>제출 기관에서 사진 크기·배경·파일 용량과 보정 허용 범위를 확인합니다.</li><li>얼굴이 선명한 원본을 준비하고 도구 화면의 이용 가능 상태와 가격을 확인합니다.</li><li>결과 파일을 확인한 뒤 다운로드합니다. 인화가 필요하면 출력 업체에 실제 크기와 자동 보정 여부를 확인합니다.</li></ol>
+  <p class="mt-5 leading-7">AI로 외모를 변경한 사진은 신분증·여권 등 제출 기준에 맞지 않을 수 있습니다. 규격 변환이나 생성 결과가 접수를 보장하지 않습니다. 원본을 보관하고 제출처 기준을 우선하세요.</p>
+  <h2 class="mt-8 text-xl font-bold">{district.name} 내 지역명 찾아보기</h2>
+  <p class="mt-2 text-sm">아래는 지역명 참고 목록이며 방문 매장 목록이 아닙니다.</p>
+  <ul class="mt-4 grid grid-cols-3 gap-2 text-sm">{district.towns.map(t=><li>{t}</li>)}</ul>
+  <nav aria-label="관련 안내" class="my-8 flex flex-wrap gap-5 underline"><a href="/ai-passport-photo">여권사진</a><a href="/ai-photoshop">프로필사진</a><a href="/refund-policy">환불 안내</a><a href="/contact">문의</a></nav>
+  <p class="text-sm text-slate-500">지역 자료 기준일: {data.asOf.slice(0,10)}. 이후 행정구역 개편은 반영되지 않을 수 있습니다.</p>
+ </main>
+ <Footer />
+</Layout>

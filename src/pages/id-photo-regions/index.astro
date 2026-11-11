@@ -1,0 +1,17 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import data from '../../data/photo-regions.json';
+---
+<Layout title="전국 지역별 온라인 증명사진 안내 | ManyTool" description="전국 시·도와 시·군·구별 온라인 증명사진 이용 안내. 방문 사진관과 온라인 파일 생성의 차이를 확인하세요.">
+  <Header />
+  <main class="mx-auto max-w-5xl px-5 py-10">
+    <h1 class="text-3xl font-bold">전국 지역별 온라인 증명사진 안내</h1>
+    <p class="mt-4 leading-7">거주 지역을 선택해 온라인 증명사진 준비 방법을 확인하세요. ManyTool은 방문 사진관·인화 매장이 아닌 온라인 도구입니다. 지역별 매장을 운영하지 않습니다.</p>
+    <a href="/ai-id-photo" class="my-5 inline-block underline">증명사진 도구 이용 가능 상태 확인</a>
+    {data.regions.map(region=><section class="my-6 rounded-xl border border-slate-200 p-5"><h2 class="text-xl font-bold">{region.name}</h2><ul class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">{region.districts.map(d=><li><a class="underline" href={`/id-photo-regions/${d.code}/`}>{region.name} {d.name}</a></li>)}</ul></section>)}
+    <p class="text-sm text-slate-500">지역 목록은 {data.asOf.slice(0,10)} 공개 행정구역 자료 기준입니다. 이후 개편된 지명은 다를 수 있습니다.</p>
+  </main>
+  <Footer />
+</Layout>
