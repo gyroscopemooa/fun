@@ -10,6 +10,7 @@ export default defineConfig({
   site: 'https://manytool.net',
   integrations: [react()],
   vite: {
+    server: { fs: { allow: [fileURLToPath(new URL('.', import.meta.url)), fileURLToPath(new URL('../../node_modules', import.meta.url))] } },
     plugins: [tailwindcss()],
     // The AVIF encoder and ffmpeg.wasm load their wasm/workers via import.meta.url, which pre-bundling breaks.
     optimizeDeps: { exclude: ['@jsquash/avif', '@ffmpeg/ffmpeg', '@ffmpeg/util'] },

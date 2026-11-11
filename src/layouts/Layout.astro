@@ -575,8 +575,10 @@ const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.r
     <script>
       import '../scripts/file-input-enhancer';
     </script>
-    <script is:inline>
+    <script is:inline define:vars={{ localPaymentReview: import.meta.env.DEV && import.meta.env.PUBLIC_LOCAL_PAYMENT_REVIEW === 'true' }}>
       (function () {
+        // Explicit development-only review; production maintenance stays enabled.
+        if (localPaymentReview && /^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return;
         // AI 도구는 서비스 점검 동안 실행 요청만 막고 "준비 중" 팝업을 보여준다. 페이지 자체는 그대로 노출한다.
         var AI_PAGE = /^\/(?:[a-z]{2,3}(?:-[A-Za-z]+)?\/)?(?:ai-(?:calorie-calculator|headshot|id-photo|image-generator|manseryeok|model-cut|passport-photo|personal-color|pet-translator|photoshop)|name-premium|tools\/product-detail-studio|product-detail-studio)(?:\/|$)/;
         var AI_ENDPOINT = /\/(?:checkout|upload|generate|analyze|recommend|refund|api\/pet|pet-access\/request-link)(?:\/|$|\?)/;
