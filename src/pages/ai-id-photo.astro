@@ -1,5 +1,6 @@
 ﻿---
 import IdPhotoShowcase from '../components/IdPhotoShowcase.astro';
+import IdPhotoOnlineGuide from '../components/IdPhotoOnlineGuide.astro';
 import '../styles/id-photo-studio.css';
 import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
@@ -247,6 +248,7 @@ const sizePresets = [
       </button>
     </div>
   </div>
+  <IdPhotoOnlineGuide />
   <Footer />
 
   <script define:vars={{ apiBase, isDevServer: import.meta.env.DEV }} is:inline>
