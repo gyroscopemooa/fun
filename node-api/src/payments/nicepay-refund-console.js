@@ -35,7 +35,7 @@ export function createNicepayRefundConsole({enabled=false,store,creditStore,auth
    const order=store.get(orderId),row=creditStore.db.prepare('SELECT * FROM nice_refunds WHERE order_id=?').get(orderId);
    if(confirmed!==true||!row||row.state!=='reserved'||row.cancel_id!==cancelId||row.amount!==amount||order?.merchantId!==refundOperations.config?.id)throw Error('Attempt confirmation mismatch');
    const timestamp=new Date(Date.now()+9*3600000).toISOString().replace(/\D/g,'').slice(0,14);
-   await dispatchNicepayFullRefund({wallet:creditStore,store,orderId,client:refundOperations.client,timestamp});
+   await dispatchNicepayFullRefund({wallet:creditStore,store,orderId,client:refundOperations.client,timestamp,expectedCancelId:cancelId,expectedAmount:amount});
    res.json({state:'cancelled'});
   }catch{res.status(409).json({error:'Inspect refund state before any further action; dispatch is never automatically retried'});}
  });

@@ -29,3 +29,17 @@ test('re-reservation rechecks spending after withdrawal without losing released 
  assert.throws(()=>reserveNicepayFullRefund(f.wallet,f.orderId,'owner'));assert.equal(f.wallet.balance('owner'),9);
  const row=f.wallet.db.prepare('SELECT * FROM nice_refunds WHERE order_id=?').get(f.orderId);assert.equal(row.state,'released');assert.equal(row.cancel_id,first.cancel_id);
 });
+
+test('sending claim rejects attempt replaced through another SQLite connection after operator confirmation',async t=>{
+ const f=fixture(t),first=reserveNicepayFullRefund(f.wallet,f.orderId,'owner');
+ const file=f.wallet.db.prepare('PRAGMA database_list').all().find(r=>r.name==='main').file;
+ const secondWallet=new CreditStore(file);t.after(()=>secondWallet.close());
+ // A second worker withdraws and renews after the operator read, before sending claim.
+ releaseUnsentNicepayRefund(secondWallet,f.orderId,'owner',first.cancel_id);
+ const next=reserveNicepayFullRefund(secondWallet,f.orderId,'owner',first.cancel_id);let calls=0;
+ const client={fullCancel:async(order,timestamp,cancelId)=>{calls++;return {orderId:order.id,tid,cancelOrderId:cancelId,amount:order.amount,cancelled:true};}};
+ await assert.rejects(dispatchNicepayFullRefund({...f,client,expectedCancelId:first.cancel_id,expectedAmount:first.amount}),/attempt changed/);
+ await assert.rejects(dispatchNicepayFullRefund({...f,client,expectedCancelId:next.cancel_id,expectedAmount:1}),/attempt changed/);
+ assert.equal(calls,0);assert.equal(secondWallet.db.prepare('SELECT state FROM nice_refunds WHERE order_id=?').get(f.orderId).state,'reserved');
+ await dispatchNicepayFullRefund({...f,client,expectedCancelId:next.cancel_id,expectedAmount:next.amount});assert.equal(calls,1);
+});

@@ -46,8 +46,8 @@ function applyCancelled(wallet,orderId,receipt){
   wallet.db.prepare("UPDATE nice_orders SET state='refunded',updated=? WHERE id=?").run(Date.now(),orderId);return true;
  });
 }
-export async function dispatchNicepayFullRefund({wallet,store,orderId,client,timestamp}){
- init(wallet);const row=wallet.tx(()=>{const r=wallet.db.prepare("SELECT * FROM nice_refunds WHERE order_id=? AND state='reserved'").get(orderId);if(!r)throw Error('Refund already sent or unavailable');wallet.db.prepare("UPDATE nice_refunds SET state='sending',updated=? WHERE order_id=?").run(Date.now(),orderId);return r;});
+export async function dispatchNicepayFullRefund({wallet,store,orderId,client,timestamp,expectedCancelId,expectedAmount}){
+ init(wallet);const row=wallet.tx(()=>{const r=wallet.db.prepare("SELECT * FROM nice_refunds WHERE order_id=? AND state='reserved'").get(orderId);if(!r)throw Error('Refund already sent or unavailable');if(expectedCancelId!==undefined&&(r.cancel_id!==expectedCancelId||r.amount!==expectedAmount))throw Error('Confirmed refund attempt changed');wallet.db.prepare("UPDATE nice_refunds SET state='sending',updated=? WHERE order_id=?").run(Date.now(),orderId);return r;});
  try{const receipt=await client.fullCancel(store.get(orderId),timestamp,row.cancel_id);return applyCancelled(wallet,orderId,receipt);}
  catch(error){wallet.db.prepare("UPDATE nice_refunds SET state='uncertain',updated=? WHERE order_id=? AND state='sending'").run(Date.now(),orderId);throw error;}
 }
