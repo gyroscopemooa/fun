@@ -2,8 +2,8 @@ import express from 'express';
 import {renderNicepayPgForm} from './nicepay-pg.js';
 const groups=['payment','photo','image'];
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const operator=(authenticate,operators,req)=>{
- const owner=authenticate(req);
+const operator=async(authenticate,operators,req)=>{
+ const owner=await authenticate(req);
  if(!Array.isArray(operators)||!operators.includes(owner))throw Error('Operator access required');
  return owner;
 };
@@ -12,9 +12,9 @@ const now=()=>new Date(Date.now()+9*3600000).toISOString().replace(/\D/g,'').sli
 // Operator staging UI only; no catalog defaults, payment auto-submit or live provider creation.
 export function createNicepayStagingUi({store,authenticate,origin,payment,photo,image,operators=[]}){
  const options={payment,photo,image},router=express.Router();
- router.use((req,res,next)=>{
+ router.use(async(req,res,next)=>{
   res.set('Cache-Control','no-store').set('X-Content-Type-Options','nosniff').set('Referrer-Policy','no-referrer');
-  try{res.locals.owner=operator(authenticate,operators,req);next();}catch{res.status(401).send('An explicitly allowed staging operator session is required.');}
+  try{res.locals.owner=await operator(authenticate,operators,req);next();}catch{res.status(401).send('An explicitly allowed staging operator session is required.');}
  });
  router.get('/',(req,res)=>{
   res.set('Content-Security-Policy',"default-src 'none'; script-src 'self'; connect-src 'self'; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'");
@@ -38,8 +38,8 @@ export function createNicepayStagingUi({store,authenticate,origin,payment,photo,
   const products=groups.flatMap(group=>Object.entries(options[group]?.catalog??{}).map(([id,p])=>({group,id,label:p.goodsName,amount:p.amount,currency:p.currency,category:p.category})));
   res.json({products});
  });
- router.post('/status',express.json({limit:'2kb'}),(req,res)=>{
-  try{const order=store.owned(req.body?.orderId,res.locals.owner);res.json({orderId:order.id,state:order.state,productId:order.productId,category:order.category});}
+ router.post('/status',express.json({limit:'2kb'}),async(req,res)=>{
+  try{const order=await store.owned(req.body?.orderId,res.locals.owner);res.json({orderId:order.id,state:order.state,productId:order.productId,category:order.category});}
   catch{res.status(404).json({error:'Order unavailable'});}
  });
  // Navigation to the PG form does not send Origin; its own route remains owner authenticated.
@@ -49,12 +49,12 @@ export function createNicepayStagingUi({store,authenticate,origin,payment,photo,
 
 export function createNicepayCheckoutPreview({store,authenticate,payment,photo,image,operators=[]}){
  const router=express.Router(),options={payment,photo,image};
- router.get('/:group/:id',(req,res)=>{
+ router.get('/:group/:id',async(req,res)=>{
   res.set('Cache-Control','no-store').set('X-Content-Type-Options','nosniff').set('Referrer-Policy','no-referrer');
   res.set('Content-Security-Policy',"default-src 'none'; script-src 'unsafe-inline' https://pg-web.nicepay.co.kr; connect-src https://*.nicepay.co.kr; frame-src https://*.nicepay.co.kr; img-src https://*.nicepay.co.kr data:; style-src 'unsafe-inline'; form-action https:; base-uri 'none'; frame-ancestors 'none'");
   try{
    if(!groups.includes(req.params.group))throw Error();
-   const settings=options[req.params.group],order=store.owned(req.params.id,operator(authenticate,operators,req));
+   const settings=options[req.params.group],order=await store.owned(req.params.id,await operator(authenticate,operators,req));
    if(!settings||!Object.hasOwn(settings.catalog,order.productId)||order.state!=='created'||order.expires<=Date.now()||order.merchantId!==settings.config.id)throw Error();
    // Photo/image orders are created only after immutable binding in their checkout route.
    if(req.params.group!=='payment'){
