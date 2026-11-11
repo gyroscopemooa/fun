@@ -17,10 +17,12 @@ export async function withPaymentTransaction(pool, callback, { readOnly = false 
     began = true;
     await client.query("SET LOCAL lock_timeout = '5s'");
     await client.query("SET LOCAL idle_in_transaction_session_timeout = '15s'");
-    await client.query('SET LOCAL search_path = manytool_payments, pg_catalog');
+    const schema=pool.paymentSchema??'manytool_payments';
+    if(schema!=='manytool_payments'&&!/^manytool_payment_test_[a-f0-9]{32}$/.test(schema))throw Error('Invalid payment schema');
+    await client.query(`SET LOCAL search_path = ${schema}, pg_catalog`);
     if (!readOnly) await client.query('SELECT pg_advisory_xact_lock($1, $2)', PAYMENT_LOCK);
     const result = await callback(client);
-    try { await client.query('COMMIT'); } catch (error) { discard = true; throw error; }
+    try { await client.query('COMMIT'); } catch (error) { discard = true; error.paymentCommitUncertain=true; throw error; }
     began = false;
     return result;
   } catch (error) {
@@ -35,7 +37,8 @@ export async function withPaymentTransaction(pool, callback, { readOnly = false 
   }
 }
 
-export function createPaymentPool(raw) {
+export function createPaymentPool(raw,{schema='manytool_payments',allowTestSchema=false}={}) {
+  if(schema!=='manytool_payments'&&!(allowTestSchema&&/^manytool_payment_test_[a-f0-9]{32}$/.test(schema)))throw Error('Unexpected payment schema');
   const config = paymentDatabaseConfig(raw);
   // Database timestamps and money use bigint. Reject values outside JS's exact range.
   const types = new pg.TypeOverrides();
@@ -44,5 +47,10 @@ export function createPaymentPool(raw) {
     if (!Number.isSafeInteger(number)) throw new Error('Database integer outside safe range');
     return number;
   });
-  return new pg.Pool({ ...config, types, max: 3, idleTimeoutMillis: 10000 });
+  const pool=new pg.Pool({ ...config, types, max: 3, idleTimeoutMillis: 10000 });
+  pool.paymentSchema=schema;
+  // pg discards failed idle clients; do not let an idle socket error become an
+  // uncaught EventEmitter exception or log credentials from provider errors.
+  pool.on('error',()=>console.error('[payment-db] Idle database connection closed; subsequent requests reconnect.'));
+  return pool;
 }

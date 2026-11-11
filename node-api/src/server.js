@@ -26,10 +26,12 @@ import { buildFallback, getMissingStrokeSuggestion } from './naming/fallback.js'
 import { buildNameExplanation } from './naming/description.js';
 import { PACKS as CREDIT_PACKS } from './credits/pricing.js';
 import { installCreditRoutes } from './credits/routes.js';
+import {createCreditOrderAccess,creditResponseSettlement,forwardAsyncRouteErrors,lockCachedNameInput,claimCachedPhotoJob,markCreditSettlementPending,observeCreditBackground} from './credits/runtime.js';
 import { installPlayCreditRoutes } from './credits/play.js';
 import { installDisabledNicepayPgRoutes } from './payments/nicepay-pg.js';
 
 const app = express();
+forwardAsyncRouteErrors(app);
 const port = Number(process.env.PORT ?? 8787);
 const IMAGE_MAX_BYTES = 12 * 1024 * 1024;
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: IMAGE_MAX_BYTES } });
@@ -127,48 +129,42 @@ installDisabledNicepayPgRoutes(app);
 
 // Credit money and login tokens must never live under the public /files mount.
 let creditStore = null;
-if (process.env.CREDITS_ENABLED === 'true' || process.env.CREDITS_DB_PATH) {
-  const { CreditStore } = await import('./credits/store.js');
-  const filename = path.resolve(process.env.CREDITS_DB_PATH || path.join(thisDir, '..', 'private-credit-data', 'wallets.sqlite'));
-  const relativeToPublic = path.relative(rootDir, filename);
-  if (!relativeToPublic.startsWith('..') && !path.isAbsolute(relativeToPublic)) throw new Error('CREDITS_DB_PATH must be outside public storage');
-  await fs.mkdir(path.dirname(filename), { recursive: true });
-  creditStore = new CreditStore(filename);
-  for (const order of creditStore.allOrders()) db.orders.set(order.id, order);
-  const originalGet = db.orders.get.bind(db.orders);
-  const originalSet = db.orders.set.bind(db.orders);
-  db.orders.get = id => creditStore.order(id) ?? originalGet(id);
-  db.orders.set = (id, value) => {
-    if (value.paymentMode === 'credits') creditStore.saveOrder(value);
-    return originalSet(id, value);
-  };
-  // Definitions below are initialized before the server starts accepting requests.
-  installCreditRoutes(app, { store: creditStore, orders: db.orders, verifyWebhook: req => verifyPolarWebhook(req) });
+let creditPool = null;
+if (process.env.CREDITS_ENABLED === 'true' || process.env.CREDITS_DB_PATH || process.env.CREDITS_STORAGE === 'postgres') {
+  if(process.env.CREDITS_STORAGE === 'postgres') {
+    if(process.env.CREDITS_MIGRATION_CONFIRMED !== 'true' || process.env.CREDITS_DB_PATH) throw new Error('Explicit reconciled PostgreSQL cutover required; SQLite dual-write is not supported');
+    const {createPaymentPool}=await import('./payments/postgres.js');
+    const {PostgresCreditStore}=await import('./credits/postgres-store.js');
+    creditPool=createPaymentPool(process.env.MANYTOOL_DATABASE_URL,{schema:process.env.CREDITS_DATABASE_SCHEMA||'manytool_payments',allowTestSchema:process.env.NODE_ENV==='test'});
+    creditStore=new PostgresCreditStore(creditPool);
+  } else {
+    if(process.env.CREDITS_STORAGE && process.env.CREDITS_STORAGE!=='sqlite')throw new Error('Unknown credit storage backend');
+    const { CreditStore } = await import('./credits/store.js');
+    const filename = path.resolve(process.env.CREDITS_DB_PATH || path.join(thisDir, '..', 'private-credit-data', 'wallets.sqlite'));
+    const relativeToPublic = path.relative(rootDir, filename);
+    if (!relativeToPublic.startsWith('..') && !path.isAbsolute(relativeToPublic)) throw new Error('CREDITS_DB_PATH must be outside public storage');
+    await fs.mkdir(path.dirname(filename), { recursive: true });
+    creditStore = new CreditStore(filename);
+  }
+  // Startup reads the initialized target before any request is accepted; no DDL
+  // or automatic empty-wallet fallback is performed by the production server.
+  for (const order of await creditStore.allOrders()) db.orders.set(order.id, order);
+}
+const creditOrders=createCreditOrderAccess(db.orders,creditStore);
+const loadOrder=id=>creditOrders.get(id);
+const persistOrder=(id,value)=>creditOrders.set(id,value);
+if(creditStore) {
+  installCreditRoutes(app, { store: creditStore, orders: creditOrders, verifyWebhook: req => verifyPolarWebhook(req) });
   installPlayCreditRoutes(app, { store: creditStore });
-  app.use((req, res, next) => {
-    const json = res.json.bind(res);
-    res.json = body => {
-      const id = req.body?.orderId || /^\/order\/([^/]+)\/detail-page$/.exec(req.path)?.[1];
-      const isGeneration = ['/generate', '/ai-calorie-calculator/analyze', '/ai-personal-color/analyze', '/ai-manseryeok/analyze', '/name-premium/analyze', '/name-premium/recommend'].includes(req.path) || /^\/order\/[^/]+\/detail-page$/.test(req.path);
-      if (req.method === 'POST' && isGeneration && id && req.creditClaimed === id && !req.creditAsync) {
-        const order = creditStore.order(id);
-        const success = Boolean(order?.detailPageResult) || (res.statusCode < 400 && body?.analysis?.isFood !== false);
-        creditStore.finish(id, success);
-        if (!success && body && typeof body === 'object') body.creditRestored = true;
-      }
-      return json(body);
-    };
-    next();
-  });
+  app.use(creditResponseSettlement(creditStore));
 } else {
   app.get('/credits/config', (_req, res) => res.json({ enabled: false, valueKrw: 1000, packs: CREDIT_PACKS.map(p => ({ ...p, available: false })), tools: {} }));
 }
 
-const claimCreditExecution = (req, order) => {
+const claimCreditExecution = async (req, order) => {
   if (order?.paymentMode !== 'credits') return;
-  // A name purchase grants the existing input-locked report/recommendation bundle.
-  if (order.productType === 'ai_name_premium' && creditStore.state(order.id) === 'done') return;
-  creditStore.claim(order.id);
+  if (order.productType === 'ai_name_premium' && await creditStore.state(order.id) === 'done') return;
+  await creditStore.claim(order.id);
   req.creditClaimed = order.id;
 };
 
@@ -376,13 +372,15 @@ const resolveCustomerEmail = (payload) => (
   ?? null
 );
 
-const findPetTranslatorSubscriptionByEmail = (email) => {
+const findPetTranslatorSubscriptionByEmail = async (email) => {
   const normalized = normalizeEmail(email);
   if (!normalized) return null;
 
   const now = Date.now();
   let matchedOrder = null;
-  for (const order of db.orders.values()) {
+  const currentOrders=new Map(db.orders);
+  if(creditStore)for(const order of await creditStore.allOrders())currentOrders.set(order.id,order);
+  for (const order of currentOrders.values()) {
     if (order?.productType !== 'ai_pet_translator') continue;
     if (order?.status !== 'paid') continue;
     if (normalizeEmail(order?.customerEmail) !== normalized) continue;
@@ -426,7 +424,7 @@ const createPetTranslatorSession = (email) => {
   return session;
 };
 
-const getPetTranslatorSession = (req) => {
+const getPetTranslatorSession = async (req) => {
   cleanupExpiredPetAccessState();
   const token = parseCookies(req.headers.cookie ?? '')[PET_SESSION_COOKIE] ?? '';
   if (!token) return null;
@@ -437,7 +435,7 @@ const getPetTranslatorSession = (req) => {
     db.petTranslatorSessions.delete(token);
     return null;
   }
-  const subscriptionOrder = findPetTranslatorSubscriptionByEmail(session.email);
+  const subscriptionOrder = await findPetTranslatorSubscriptionByEmail(session.email);
   if (!subscriptionOrder) return null;
   return { ...session, subscriptionOrder };
 };
@@ -567,7 +565,7 @@ const handlePetTranslator = async (req, res) => {
       audio: req.body?.audio,
       audioMimeType: req.body?.audioMimeType
     });
-    const petSession = getPetTranslatorSession(req);
+    const petSession = await getPetTranslatorSession(req);
 
     let tokenState = null;
     let paidOrder = null;
@@ -589,7 +587,7 @@ const handlePetTranslator = async (req, res) => {
 
     const usage = tokenState ? commitPetTranslatorUsage(tokenState) : null;
     if (paidOrder) {
-      db.orders.set(paidOrder.id, {
+      await persistOrder(paidOrder.id, {
         ...paidOrder,
         petTranslatorUsedAt: new Date().toISOString(),
         petTranslatorMode: mode,
@@ -660,8 +658,8 @@ const handlePetTranslator = async (req, res) => {
 app.post('/pet', maybeAudioUpload, handlePetTranslator);
 app.post('/api/pet', maybeAudioUpload, handlePetTranslator);
 
-app.get('/pet-access/status', (req, res) => {
-  const session = getPetTranslatorSession(req);
+app.get('/pet-access/status', async (req, res) => {
+  const session = await getPetTranslatorSession(req);
   res.json({
     ok: true,
     authenticated: Boolean(session),
@@ -674,7 +672,7 @@ app.post('/pet-access/request-link', async (req, res) => {
   try {
     const email = normalizeEmail(req.body?.email);
     if (!email) return res.status(400).json({ error: 'valid email is required' });
-    const subscriptionOrder = findPetTranslatorSubscriptionByEmail(email);
+    const subscriptionOrder = await findPetTranslatorSubscriptionByEmail(email);
     if (!subscriptionOrder) return res.status(404).json({ error: 'active subscription not found for this email' });
 
     cleanupExpiredPetAccessState();
@@ -695,7 +693,7 @@ app.post('/pet-access/request-link', async (req, res) => {
   }
 });
 
-app.get('/pet-access/verify', (req, res) => {
+app.get('/pet-access/verify', async (req, res) => {
   cleanupExpiredPetAccessState();
   const token = typeof req.query?.token === 'string' ? req.query.token.trim() : '';
   const record = db.petTranslatorAccessLinks.get(token);
@@ -711,7 +709,7 @@ app.get('/pet-access/verify', (req, res) => {
     return res.redirect(`${redirectUrl}?petLogin=expired`);
   }
 
-  const subscriptionOrder = findPetTranslatorSubscriptionByEmail(record.email);
+  const subscriptionOrder = await findPetTranslatorSubscriptionByEmail(record.email);
   if (!subscriptionOrder) {
     db.petTranslatorAccessLinks.delete(token);
     return res.redirect(`${redirectUrl}?petLogin=inactive`);
@@ -747,7 +745,7 @@ app.post('/pet-access/logout', (req, res) => {
 
 const ensurePetTranslatorOrder = async (orderId) => {
   if (!orderId) throw new Error('orderId is required');
-  const current = db.orders.get(orderId);
+  const current = (await loadOrder(orderId));
   const order = await refreshOrderFromPolarIfNeeded(current);
   if (!order) throw new Error('order not found');
   if (order.productType !== 'ai_pet_translator') throw new Error('invalid order product type');
@@ -760,7 +758,7 @@ const ensurePetTranslatorOrder = async (orderId) => {
 
 const ensureVideoOrder = async (orderId) => {
   if (!orderId) throw new Error('orderId is required');
-  const current = db.orders.get(orderId);
+  const current = (await loadOrder(orderId));
   const order = await refreshOrderFromPolarIfNeeded(current);
   if (!order) throw new Error('order not found');
   if (order.productType !== 'video_mkv_mp4') throw new Error('invalid order product type');
@@ -776,7 +774,7 @@ const ensureVideoOrder = async (orderId) => {
 
 const ensureAiPersonalColorOrder = async (orderId) => {
   if (!orderId) throw new Error('orderId is required');
-  const current = db.orders.get(orderId);
+  const current = (await loadOrder(orderId));
   const order = await refreshOrderFromPolarIfNeeded(current);
   if (!order) throw new Error('order not found');
   if (order.productType !== 'ai_personal_color') throw new Error('invalid order product type');
@@ -795,7 +793,7 @@ const orderError = (message, status) => Object.assign(new Error(message), { stat
 // Calorie orders are single-use: the order is claimed before the OpenAI call and released again if it fails.
 const claimCalorieOrder = async (orderId) => {
   if (!orderId) throw orderError('orderId is required', 402);
-  const order = await refreshOrderFromPolarIfNeeded(db.orders.get(orderId));
+  const order = await refreshOrderFromPolarIfNeeded((await loadOrder(orderId)));
   if (!order) throw orderError('order not found', 402);
   if (order.productType !== 'calorie') throw orderError('invalid order product type', 402);
   if (order.status !== 'paid') throw orderError('payment required', 402);
@@ -805,13 +803,13 @@ const claimCalorieOrder = async (orderId) => {
     throw orderError('this order has already been used', 409);
   }
   const claimed = { ...latest, calorieStatus: 'processing', calorieClaimedAt: new Date().toISOString() };
-  db.orders.set(orderId, claimed);
+  await persistOrder(orderId, claimed);
   return claimed;
 };
 
 const ensureAiManseryeokOrder = async (orderId) => {
   if (!orderId) throw new Error('orderId is required');
-  const current = db.orders.get(orderId);
+  const current = (await loadOrder(orderId));
   const order = await refreshOrderFromPolarIfNeeded(current);
   if (!order) throw new Error('order not found');
   if (order.productType !== 'ai_manseryeok') throw new Error('invalid order product type');
@@ -827,7 +825,7 @@ const ensureAiManseryeokOrder = async (orderId) => {
 
 const ensureAiPhotoOrder = async (orderId) => {
   if (!orderId) throw new Error('orderId is required');
-  const current = db.orders.get(orderId);
+  const current = (await loadOrder(orderId));
   const order = await refreshOrderFromPolarIfNeeded(current);
   if (!order) {
     logSecurityEvent('ai_photo_order_not_found', { orderId });
@@ -888,30 +886,18 @@ const normalizeNamePremiumLockInput = (input = {}) => {
   };
 };
 
-const serializeNamePremiumLockInput = (input = {}) => JSON.stringify(normalizeNamePremiumLockInput(input));
-
 const ensureNamePremiumOrder = async (orderId, requestedInput = null) => {
   if (!orderId) throw new Error('orderId is required');
-  const current = db.orders.get(orderId);
+  const current = (await loadOrder(orderId));
   let order = await refreshOrderFromPolarIfNeeded(current);
   if (!order) throw new Error('order not found');
-  order = db.orders.get(orderId) ?? order;
+  order = (await loadOrder(orderId)) ?? order;
   if (order.productType !== 'ai_name_premium') throw new Error('invalid order product type');
   if (order.status !== 'paid') throw new Error('payment required');
   if (requestedInput) {
     const normalizedInput = normalizeNamePremiumLockInput(requestedInput);
-    if (order.namePremiumLock) {
-      if (serializeNamePremiumLockInput(order.namePremiumLock) !== serializeNamePremiumLockInput(normalizedInput)) {
-        throw new Error('name premium input changed');
-      }
-    } else {
-      order = {
-        ...order,
-        namePremiumLock: normalizedInput,
-        namePremiumLockedAt: new Date().toISOString()
-      };
-      db.orders.set(order.id, order);
-    }
+    if(order.paymentMode==='credits')return await creditStore.lockNameInput(order.id,normalizedInput);
+    return lockCachedNameInput(db.orders,order.id,normalizedInput);
   }
   return order;
 };
@@ -927,6 +913,7 @@ const toVideoJobPayload = (job) => ({
   inputSize: job.inputSize,
   outputUrl: job.outputUrl ?? null,
   outputName: job.outputName ?? null,
+  creditSettlementPending: Boolean(job.creditSettlementPending),
   error: job.error ?? null
 });
 
@@ -967,6 +954,9 @@ const runMkvToMp4Job = async (jobId) => {
     await waitForFfmpeg(reencodeArgs);
   }
 
+  // Preserve the produced artifact if only the following settlement fails.
+  job.outputUrl = `/files/video/output/${path.basename(job.outputPath)}`;
+  if ((creditStore && await creditStore.order(job.orderId))) await creditStore.finish(job.orderId, true);
   const next = {
     ...job,
     status: 'done',
@@ -974,7 +964,6 @@ const runMkvToMp4Job = async (jobId) => {
     outputUrl: `/files/video/output/${path.basename(job.outputPath)}`
   };
   db.videoJobs.set(jobId, next);
-  if (creditStore?.order(job.orderId)) creditStore.finish(job.orderId, true);
 };
 
 app.post('/video/mkv-mp4/convert', largeVideoUpload.single('video'), async (req, res) => {
@@ -1002,7 +991,7 @@ app.post('/video/mkv-mp4/convert', largeVideoUpload.single('video'), async (req,
       return res.status(400).json({ error: 'only mkv, mov, avi, and m4v uploads are allowed' });
     }
 
-    claimCreditExecution(req, order);
+    await claimCreditExecution(req, order);
 
     const jobId = uuidv4();
     const outputName = `${path.parse(file.filename).name}.mp4`;
@@ -1024,11 +1013,12 @@ app.post('/video/mkv-mp4/convert', largeVideoUpload.single('video'), async (req,
     };
 
     db.videoJobs.set(jobId, job);
-    db.orders.set(order.id, { ...order, videoJobId: jobId });
+    await persistOrder(order.id, { ...order, videoJobId: jobId });
 
-    void runMkvToMp4Job(jobId).catch(async (error) => {
+    void observeCreditBackground(runMkvToMp4Job(jobId).catch(async (error) => {
       const current = db.videoJobs.get(jobId);
       if (!current) return;
+      if(current.outputUrl){markCreditSettlementPending(current);return;}
       db.videoJobs.set(jobId, {
         ...current,
         status: 'failed',
@@ -1036,12 +1026,12 @@ app.post('/video/mkv-mp4/convert', largeVideoUpload.single('video'), async (req,
         error: error instanceof Error ? error.message : 'conversion failed'
       });
       await fs.rm(outputPath, { force: true }).catch(() => {});
-      if (order.paymentMode === 'credits') creditStore.finish(order.id, false);
-    });
+      if (order.paymentMode === 'credits') await creditStore.finish(order.id, false);
+    }),()=>db.videoJobs.get(jobId));
 
     return res.status(202).json({ ok: true, jobId, job: toVideoJobPayload(job) });
   } catch (error) {
-    if (req.creditClaimed) creditStore.finish(req.creditClaimed, false);
+    if (req.creditClaimed) await creditStore.finish(req.creditClaimed, false);
     if (req.file?.path) {
       await fs.rm(req.file.path, { force: true }).catch(() => {});
     }
@@ -1312,6 +1302,7 @@ const getAiImageJobPayload = (job) => {
     startedAt: job.startedAt ?? null,
     completedAt: job.completedAt ?? null,
     imageUrl: job.imageUrl ?? null,
+    creditSettlementPending: Boolean(job.creditSettlementPending),
     prompt: job.prompt ?? null,
     revisedPrompt: job.revisedPrompt ?? null,
     error: job.error ?? null
@@ -1421,7 +1412,7 @@ const sendDetailPageResultEmailIfNeeded = async (order) => {
     emailError: null,
     emailPayload
   };
-  db.orders.set(order.id, nextOrder);
+  await persistOrder(order.id, nextOrder);
   return nextOrder;
 };
 
@@ -1505,7 +1496,7 @@ const sendAiImageResultEmailIfNeeded = async ({ order, job }) => {
     aiImageEmailError: null,
     aiImageEmailPayload: emailPayload
   };
-  db.orders.set(order.id, nextOrder);
+  await persistOrder(order.id, nextOrder);
   return nextOrder;
 };
 
@@ -1623,7 +1614,7 @@ const sendAiPersonalColorResultEmailIfNeeded = async ({ order, job }) => {
     aiPersonalColorEmailError: null,
     aiPersonalColorEmailPayload: emailPayload
   };
-  db.orders.set(order.id, nextOrder);
+  await persistOrder(order.id, nextOrder);
   return nextOrder;
 };
 
@@ -1682,7 +1673,7 @@ const sendAiManseryeokResultEmailIfNeeded = async ({ order, job }) => {
     aiManseryeokEmailError: null,
     aiManseryeokEmailPayload: emailPayload
   };
-  db.orders.set(order.id, nextOrder);
+  await persistOrder(order.id, nextOrder);
   return nextOrder;
 };
 
@@ -1757,7 +1748,7 @@ const sendNamePremiumResultEmailIfNeeded = async ({ order, currentName, recommen
     aiNamePremiumEmailError: null,
     aiNamePremiumEmailPayload: emailPayload
   };
-  db.orders.set(order.id, nextOrder);
+  await persistOrder(order.id, nextOrder);
   return nextOrder;
 };
 
@@ -1901,8 +1892,8 @@ const createPolarRefund = async ({ order, reason = 'service_disruption' }) => {
 
 const autoRefundOrder = async (order, reason = 'service_disruption') => {
   if (order?.paymentMode === 'credits') {
-    creditStore.restore(order.id);
-    return { order: creditStore.order(order.id), attempted: true, refunded: true, refundStatus: 'succeeded' };
+    await creditStore.restore(order.id);
+    return { order: (await creditStore.order(order.id)), attempted: true, refunded: true, refundStatus: 'succeeded' };
   }
   if (!order || order.paymentMode !== 'polar') {
     return {
@@ -1940,7 +1931,7 @@ const autoRefundOrder = async (order, reason = 'service_disruption') => {
     refundPayload: refund,
     refundError: null
   };
-  db.orders.set(order.id, nextOrder);
+  await persistOrder(order.id, nextOrder);
   return {
     order: nextOrder,
     attempted: true,
@@ -2000,7 +1991,7 @@ const refreshOrderFromPolarIfNeeded = async (order) => {
       paidAt: nextStatus === 'paid' ? order.paidAt ?? new Date().toISOString() : order.paidAt ?? null,
       polarCheckoutPayload: checkout
     };
-    db.orders.set(order.id, refreshed);
+    await persistOrder(order.id, refreshed);
     return refreshed;
   } catch {
     return order;
@@ -2091,14 +2082,16 @@ app.post('/generate', async (req, res) => {
 
   try {
     let order = null;
-    if (paymentMode === 'polar' || db.orders.get(orderId)?.paymentMode === 'credits') {
+    if (paymentMode === 'polar' || (await loadOrder(orderId))?.paymentMode === 'credits') {
       order = await ensureAiPhotoOrder(orderId);
-      claimCreditExecution(req, order);
+      await claimCreditExecution(req, order);
     }
     if (order?.id) {
-      const active = db.jobs.get(db.orders.get(order.id)?.aiPhotoJobId);
-      if (active && active.status !== 'failed') throw Object.assign(new Error('this order has already been used'), { statusCode: 409 });
-      db.orders.set(order.id, { ...order, aiPhotoJobId: jobId });
+      if(order.paymentMode==='credits'){
+        const active = db.jobs.get(order.aiPhotoJobId);
+        if (active && active.status !== 'failed') throw Object.assign(new Error('this order has already been used'), { statusCode: 409 });
+        await persistOrder(order.id, { ...order, aiPhotoJobId: jobId });
+      }else order=claimCachedPhotoJob(db.orders,db.jobs,order.id,jobId);
     }
     if (toolType === 'id_photo') {
       await persistJobSnapshot(job);
@@ -2128,21 +2121,21 @@ app.post('/generate', async (req, res) => {
       recommended: index === 0
     }));
 
-    job.status = 'done';
+    job.status = 'processing';
     job.candidates = candidates;
     job.pipelineReport = generation?.pipelineReport ?? null;
     job.completedAt = new Date().toISOString();
     job.originalUrl = `/files/originals/${path.basename(photo.originalPath)}`;
     if (order?.id) {
-      db.orders.set(order.id, {
+      await persistOrder(order.id, {
         ...order,
         aiPhotoJobId: jobId,
         aiPhotoUsedAt: new Date().toISOString()
       });
     }
+    if (req.creditAsync) await creditStore.finish(req.creditClaimed, true);
+    job.status = 'done';
     await persistJobSnapshot(job);
-
-    if (req.creditAsync) creditStore.finish(req.creditClaimed, true);
     if (res.headersSent) return;
     return res.status(201).json({
       jobId,
@@ -2154,10 +2147,11 @@ app.post('/generate', async (req, res) => {
     });
   } catch (error) {
     if (req.creditAsync) {
-      creditStore.finish(req.creditClaimed, false);
-      job.creditRefunded = true;
+      const produced=Boolean(job.candidates?.length);
+      try{await creditStore.finish(req.creditClaimed, produced);job.creditRefunded=!produced;}
+      catch{markCreditSettlementPending(job);job.status='processing';await persistJobSnapshot(job).catch(()=>{});if(res.headersSent)return;return res.status(503).json({error:'처리 결과를 확인 중입니다. 다시 실행하지 마세요.'});}
     }
-    job.status = 'failed';
+    job.status = job.candidates?.length?'done':'failed';
     job.error = error.message;
     job.originalUrl = `/files/originals/${path.basename(photo.originalPath)}`;
     await persistJobSnapshot(job);
@@ -2194,7 +2188,7 @@ app.post('/ai-image-generator/generate', upload.single('image'), async (req, res
     let order = null;
 
     if (orderId) {
-      order = await refreshOrderFromPolarIfNeeded(db.orders.get(orderId));
+      order = await refreshOrderFromPolarIfNeeded((await loadOrder(orderId)));
       if (!order) {
         return res.status(404).json({ error: 'order not found' });
       }
@@ -2203,7 +2197,7 @@ app.post('/ai-image-generator/generate', upload.single('image'), async (req, res
       }
       if (order.paymentMode === 'credits') {
         if (order.productType !== 'base') return res.status(400).json({ error: 'invalid order product type' });
-        claimCreditExecution(req, order);
+        await claimCreditExecution(req, order);
       }
     }
 
@@ -2225,7 +2219,7 @@ app.post('/ai-image-generator/generate', upload.single('image'), async (req, res
     };
     db.aiImageJobs.set(generationId, job);
 
-    void (async () => {
+    void observeCreditBackground((async () => {
       job.status = 'processing';
       job.startedAt = new Date().toISOString();
       try {
@@ -2239,7 +2233,7 @@ app.post('/ai-image-generator/generate', upload.single('image'), async (req, res
           originalFilename: req.file.originalname,
           outputDir: generatedDir
         });
-        job.status = 'done';
+        job.status = 'processing';
         job.completedAt = new Date().toISOString();
         job.provider = generated.provider;
         job.userInput = generated.userInput;
@@ -2253,26 +2247,29 @@ app.post('/ai-image-generator/generate', upload.single('image'), async (req, res
             aiImageEmailStatus: order.aiImageEmailStatus === 'sent' ? 'sent' : 'pending',
             aiImageEmailError: null
           };
-          db.orders.set(order.id, nextOrder);
-          if (order.paymentMode === 'credits') creditStore.finish(order.id, true);
+          await persistOrder(order.id, nextOrder);
+          if (order.paymentMode === 'credits') await creditStore.finish(order.id, true);
+          job.status = 'done';
           await sendAiImageResultEmailIfNeeded({ order: nextOrder, job });
         }
+        job.status = 'done';
       } catch (error) {
-        job.status = order?.paymentMode === 'credits' && job.imageUrl ? 'done' : 'failed';
+        job.status = 'processing';
         job.completedAt = new Date().toISOString();
         job.error = error instanceof Error ? error.message : 'ai image generation failed';
         if (order?.id) {
-          if (order.paymentMode === 'credits') creditStore.finish(order.id, Boolean(job.imageUrl));
-          const currentOrder = db.orders.get(order.id) ?? order;
-          db.orders.set(order.id, {
+          if (order.paymentMode === 'credits') await creditStore.finish(order.id, Boolean(job.imageUrl));
+          const currentOrder = (await loadOrder(order.id)) ?? order;
+          await persistOrder(order.id, {
             ...currentOrder,
             aiImageJobId: generationId,
             aiImageEmailStatus: 'failed',
             aiImageEmailError: job.error
           });
         }
+        job.status = order?.paymentMode === 'credits' && job.imageUrl ? 'done' : 'failed';
       }
-    })();
+    })(),()=>job);
 
     return res.status(202).json({
       ok: true,
@@ -2282,7 +2279,7 @@ app.post('/ai-image-generator/generate', upload.single('image'), async (req, res
       status: 'queued'
     });
   } catch (error) {
-    if (req.creditClaimed) creditStore.finish(req.creditClaimed, false);
+    if (req.creditClaimed) await creditStore.finish(req.creditClaimed, false);
     return res.status(500).json({ error: `ai image generate failed: ${error.message}` });
   }
 });
@@ -2302,7 +2299,7 @@ app.post('/ai-calorie-calculator/analyze', upload.single('image'), async (req, r
 
     const orderId = typeof req.body?.orderId === 'string' ? req.body.orderId.trim() : '';
     const order = await claimCalorieOrder(orderId);
-    claimCreditExecution(req, order);
+    await claimCreditExecution(req, order);
     claimedOrderId = order.id;
 
     const imageDataUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
@@ -2311,8 +2308,8 @@ app.post('/ai-calorie-calculator/analyze', upload.single('image'), async (req, r
     const analysis = await analyzeMealCalories({ imageDataUrl, goal, locale });
 
     // A photo with no food gives the buyer nothing, so the order stays usable for a retake.
-    db.orders.set(order.id, {
-      ...db.orders.get(order.id),
+    await persistOrder(order.id, {
+      ...(await loadOrder(order.id)),
       calorieStatus: analysis.isFood === false ? 'retake' : 'done',
       calorieCompletedAt: new Date().toISOString()
     });
@@ -2324,7 +2321,7 @@ app.post('/ai-calorie-calculator/analyze', upload.single('image'), async (req, r
     });
   } catch (error) {
     if (claimedOrderId) {
-      db.orders.set(claimedOrderId, { ...db.orders.get(claimedOrderId), calorieStatus: 'failed', calorieError: error.message || 'analysis failed' });
+      await persistOrder(claimedOrderId, { ...(await loadOrder(claimedOrderId)), calorieStatus: 'failed', calorieError: error.message || 'analysis failed' });
     }
     if (error?.status) {
       logSecurityEvent('calorie_order_rejected', { reason: error.message, ip: req.ip ?? null });
@@ -2351,7 +2348,7 @@ app.post('/ai-personal-color/analyze', upload.single('image'), async (req, res) 
     const notes = typeof req.body?.notes === 'string' ? req.body.notes.trim() : '';
     const locale = typeof req.body?.locale === 'string' ? req.body.locale.trim().toLowerCase().slice(0, 2) : 'en';
     const order = await ensureAiPersonalColorOrder(orderId);
-    claimCreditExecution(req, order);
+    await claimCreditExecution(req, order);
     orderIdForError = order.id;
     const imageDataUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
 
@@ -2380,11 +2377,11 @@ app.post('/ai-personal-color/analyze', upload.single('image'), async (req, res) 
       aiPersonalColorEmailStatus: order.aiPersonalColorEmailStatus === 'sent' ? 'sent' : 'pending',
       aiPersonalColorEmailError: null
     };
-    db.orders.set(order.id, nextOrder);
+    await persistOrder(order.id, nextOrder);
     try {
       await sendAiPersonalColorResultEmailIfNeeded({ order: nextOrder, job });
     } catch (emailError) {
-      db.orders.set(order.id, {
+      await persistOrder(order.id, {
         ...nextOrder,
         aiPersonalColorEmailStatus: 'failed',
         aiPersonalColorEmailError: emailError instanceof Error ? emailError.message : 'email send failed'
@@ -2411,9 +2408,9 @@ app.post('/ai-personal-color/analyze', upload.single('image'), async (req, res) 
       job.error = message;
     }
     if (orderIdForError) {
-      const currentOrder = db.orders.get(orderIdForError);
+      const currentOrder = (await loadOrder(orderIdForError));
       if (currentOrder) {
-        db.orders.set(orderIdForError, {
+        await persistOrder(orderIdForError, {
           ...currentOrder,
           aiPersonalColorJobId: job?.id ?? currentOrder.aiPersonalColorJobId ?? null,
           aiPersonalColorEmailStatus: currentOrder.aiPersonalColorEmailStatus ?? 'failed',
@@ -2456,7 +2453,7 @@ app.post('/ai-manseryeok/analyze', async (req, res) => {
     }
 
     const order = await ensureAiManseryeokOrder(orderId);
-    claimCreditExecution(req, order);
+    await claimCreditExecution(req, order);
     orderIdForError = order.id;
 
     const jobId = uuidv4();
@@ -2493,12 +2490,12 @@ app.post('/ai-manseryeok/analyze', async (req, res) => {
       aiManseryeokEmailStatus: order.aiManseryeokEmailStatus === 'sent' ? 'sent' : 'pending',
       aiManseryeokEmailError: null
     };
-    db.orders.set(order.id, nextOrder);
+    await persistOrder(order.id, nextOrder);
 
     try {
       await sendAiManseryeokResultEmailIfNeeded({ order: nextOrder, job });
     } catch (emailError) {
-      db.orders.set(order.id, {
+      await persistOrder(order.id, {
         ...nextOrder,
         aiManseryeokEmailStatus: 'failed',
         aiManseryeokEmailError: emailError instanceof Error ? emailError.message : 'email send failed'
@@ -2526,9 +2523,9 @@ app.post('/ai-manseryeok/analyze', async (req, res) => {
       await persistAiManseryeokJob(job);
     }
     if (orderIdForError) {
-      const currentOrder = db.orders.get(orderIdForError);
+      const currentOrder = (await loadOrder(orderIdForError));
       if (currentOrder) {
-        db.orders.set(orderIdForError, {
+        await persistOrder(orderIdForError, {
           ...currentOrder,
           aiManseryeokJobId: job?.id ?? currentOrder.aiManseryeokJobId ?? null,
           aiManseryeokEmailStatus: currentOrder.aiManseryeokEmailStatus ?? 'failed',
@@ -2549,7 +2546,7 @@ app.post('/ai-manseryeok/analyze', async (req, res) => {
 app.post('/name-premium/analyze', async (req, res) => {
   try {
     const order = await ensureNamePremiumOrder(req.body?.orderId ?? null, req.body?.input ?? null);
-    claimCreditExecution(req, order);
+    await claimCreditExecution(req, order);
     const validation = validateNamingInput({
       surname: req.body?.surname,
       given: req.body?.given
@@ -2624,7 +2621,7 @@ app.post('/name-premium/analyze', async (req, res) => {
 app.post('/name-premium/recommend', async (req, res) => {
   try {
     const order = await ensureNamePremiumOrder(req.body?.orderId ?? null, req.body?.input ?? null);
-    claimCreditExecution(req, order);
+    await claimCreditExecution(req, order);
     const validation = validateRecommendInput({
       surname: req.body?.surname,
       topK: req.body?.topK,
@@ -2676,7 +2673,7 @@ app.post('/name-premium/recommend', async (req, res) => {
         aiNamePremiumEmailStatus: 'failed',
         aiNamePremiumEmailError: emailError instanceof Error ? emailError.message : 'email send failed'
       };
-      db.orders.set(order.id, mailedOrder);
+      await persistOrder(order.id, mailedOrder);
     }
 
     return res.json({
@@ -2835,7 +2832,7 @@ app.post('/commerce/detail-page/generate', async (req, res) => {
 });
 
 app.post('/order/:id/detail-page', async (req, res) => {
-  const order = await refreshOrderFromPolarIfNeeded(db.orders.get(req.params.id));
+  const order = await refreshOrderFromPolarIfNeeded((await loadOrder(req.params.id)));
   if (!order) return res.status(404).json({ error: 'order not found' });
   if (order.productType !== 'detail_page') {
     return res.status(400).json({ error: 'order is not for detail_page' });
@@ -2861,7 +2858,7 @@ app.post('/order/:id/detail-page', async (req, res) => {
   }
 
   try {
-    claimCreditExecution(req, order);
+    await claimCreditExecution(req, order);
     const result = await generateCommerceDetailPage({
       productName: String(request.productName).trim(),
       price: String(request.price ?? '').trim(),
@@ -2881,7 +2878,7 @@ app.post('/order/:id/detail-page', async (req, res) => {
       detailPageResult: result,
       detailPageGeneratedAt: new Date().toISOString()
     };
-    db.orders.set(order.id, nextOrder);
+    await persistOrder(order.id, nextOrder);
     const mailedOrder = await sendDetailPageResultEmailIfNeeded(nextOrder);
 
     return res.json({
@@ -2895,9 +2892,9 @@ app.post('/order/:id/detail-page', async (req, res) => {
   } catch (error) {
     const message = error?.message ?? 'detail page generation failed';
     if (order.paymentMode === 'credits' && !req.creditClaimed) return res.status(error.status ?? 409).json({ error: message });
-    const completedCreditOrder = order.paymentMode === 'credits' ? creditStore.order(order.id) : null;
+    const completedCreditOrder = order.paymentMode === 'credits' ? (await creditStore.order(order.id)) : null;
     if (completedCreditOrder?.detailPageResult) {
-      db.orders.set(order.id, { ...completedCreditOrder, emailStatus: 'failed', emailError: message });
+      await persistOrder(order.id, { ...completedCreditOrder, emailStatus: 'failed', emailError: message });
       return res.json({ ok: true, orderId: order.id, status: 'paid', result: completedCreditOrder.detailPageResult, request: completedCreditOrder.detailPageRequest, emailStatus: 'failed' });
     }
     let failedOrder = {
@@ -2905,7 +2902,7 @@ app.post('/order/:id/detail-page', async (req, res) => {
       detailPageGenerationStatus: 'failed',
       detailPageGenerationError: message
     };
-    db.orders.set(order.id, failedOrder);
+    await persistOrder(order.id, failedOrder);
 
     try {
       const refund = await autoRefundOrder(failedOrder, 'service_disruption');
@@ -2914,7 +2911,7 @@ app.post('/order/:id/detail-page', async (req, res) => {
         detailPageGenerationStatus: 'failed',
         detailPageGenerationError: message
       };
-      db.orders.set(order.id, failedOrder);
+      await persistOrder(order.id, failedOrder);
       return res.status(500).json({
         ok: false,
         error: {
@@ -2932,7 +2929,7 @@ app.post('/order/:id/detail-page', async (req, res) => {
         refundStatus: 'failed',
         refundError: refundMessage
       };
-      db.orders.set(order.id, failedOrder);
+      await persistOrder(order.id, failedOrder);
       return res.status(500).json({
         ok: false,
         error: {
@@ -3228,7 +3225,7 @@ app.post('/checkout', async (req, res) => {
     refundPayload: null,
     refundError: null
   };
-  db.orders.set(orderId, order);
+  await persistOrder(orderId, order);
 
   try {
     if (paymentMode === 'polar') {
@@ -3239,7 +3236,7 @@ app.post('/checkout', async (req, res) => {
       order.polarCheckoutId = polarCheckout.checkoutId;
       order.checkoutUrl = polarCheckout.checkoutUrl;
       order.status = 'pending';
-      db.orders.set(orderId, order);
+      await persistOrder(orderId, order);
     }
 
     return res.status(201).json({
@@ -3254,12 +3251,12 @@ app.post('/checkout', async (req, res) => {
   } catch (error) {
     order.status = 'failed';
     order.error = error.message;
-    db.orders.set(orderId, order);
+    await persistOrder(orderId, order);
     return res.status(500).json({ error: error.message, orderId: order.id, status: order.status });
   }
 });
 
-app.post('/payment/webhook', (req, res) => {
+app.post('/payment/webhook', async (req, res) => {
   try {
     verifyPolarWebhook(req);
   } catch {
@@ -3280,7 +3277,7 @@ app.post('/payment/webhook', (req, res) => {
     return res.status(400).json({ error: 'order_id is missing in webhook payload metadata' });
   }
 
-  const current = db.orders.get(orderId);
+  const current = (await loadOrder(orderId));
   if (!current) {
     return res.status(404).json({ error: 'order not found' });
   }
@@ -3297,7 +3294,7 @@ app.post('/payment/webhook', (req, res) => {
     refundedAt: status === 'refunded' ? new Date().toISOString() : current.refundedAt ?? null,
     payload
   };
-  db.orders.set(orderId, next);
+  await persistOrder(orderId, next);
   return res.json({ ok: true, orderId, status });
 });
 
@@ -3307,7 +3304,7 @@ app.post('/refund', async (req, res) => {
     return res.status(400).json({ error: 'orderId is required' });
   }
 
-  const order = db.orders.get(orderId);
+  const order = (await loadOrder(orderId));
   if (!order) {
     return res.status(404).json({ error: 'order not found' });
   }
@@ -3336,7 +3333,7 @@ app.post('/refund', async (req, res) => {
       refundStatus,
       refundPayload: refund
     };
-    db.orders.set(orderId, next);
+    await persistOrder(orderId, next);
     return res.json({
       ok: true,
       orderId,
@@ -3350,13 +3347,13 @@ app.post('/refund', async (req, res) => {
       refundStatus: 'failed',
       refundError: error.message
     };
-    db.orders.set(orderId, next);
+    await persistOrder(orderId, next);
     return res.status(500).json({ error: error.message, orderId, refundStatus: 'failed' });
   }
 });
 
 app.get('/order/:id', async (req, res) => {
-  const current = db.orders.get(req.params.id);
+  const current = (await loadOrder(req.params.id));
   const order = await refreshOrderFromPolarIfNeeded(current);
   if (!order) return res.status(404).json({ error: 'order not found' });
   return res.json(order);
@@ -3375,6 +3372,7 @@ app.get('/download/:candidateId', (req, res) => {
 });
 
 app.use((err, req, res, _next) => {
+  if(res.headersSent)return _next(err);
   if (err?.code === 'LIMIT_FILE_SIZE') {
     const isVideo = req.path.startsWith('/video/');
     const maxMb = Math.round((isVideo ? VIDEO_MAX_BYTES : IMAGE_MAX_BYTES) / (1024 * 1024));

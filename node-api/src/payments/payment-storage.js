@@ -5,6 +5,7 @@ export const isPostgresPaymentStore=store=>store instanceof PostgresPaymentLedge
 export function assertSharedPaymentStorage(store,wallet){
   if(isPostgresPaymentStore(store)||isPostgresPaymentStore(wallet)){
     if(!isPostgresPaymentStore(store)||!isPostgresPaymentStore(wallet)||store.pool!==wallet.pool)throw Error('Shared PostgreSQL payment pool required');
+    if(store.claim!==PostgresPaymentLedger.prototype.claim)throw Error('Separate NICE approval store and credit execution store required');
     return;
   }
   const file=db=>db?.prepare('PRAGMA database_list').all().find(r=>r.name==='main')?.file;

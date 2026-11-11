@@ -8,12 +8,17 @@ export const PAYMENT_TABLES = `
 CREATE TABLE wallets(email text PRIMARY KEY,balance bigint NOT NULL DEFAULT 0);
 CREATE TABLE tokens(hash text PRIMARY KEY,email text NOT NULL,kind text NOT NULL,expires bigint NOT NULL);
 CREATE TABLE limits(key text PRIMARY KEY,count bigint NOT NULL,expires bigint NOT NULL);
-CREATE TABLE ledger(id text PRIMARY KEY,email text NOT NULL,delta bigint NOT NULL,kind text NOT NULL,created bigint NOT NULL);
+CREATE TABLE ledger(id text PRIMARY KEY,email text NOT NULL,delta bigint NOT NULL,kind text NOT NULL,created bigint NOT NULL,position bigint GENERATED ALWAYS AS IDENTITY);
 CREATE TABLE topups(id text PRIMARY KEY,email text NOT NULL,credits bigint NOT NULL,amount bigint NOT NULL,currency text NOT NULL,product text NOT NULL,checkout text,provider_order text UNIQUE,status text NOT NULL DEFAULT 'pending',refunded bigint NOT NULL DEFAULT 0,url text,position bigint GENERATED ALWAYS AS IDENTITY);
 CREATE TABLE topup_terms(topup_id text PRIMARY KEY,unit_krw bigint NOT NULL,policy text NOT NULL);
 CREATE TABLE purchases(id text PRIMARY KEY,email text NOT NULL,request_key text NOT NULL,fingerprint text NOT NULL,credits bigint NOT NULL,state text NOT NULL DEFAULT 'ready',data text NOT NULL,UNIQUE(email,request_key));
 CREATE TABLE allocations(purchase_id text NOT NULL,topup_id text NOT NULL,credits bigint NOT NULL,PRIMARY KEY(purchase_id,topup_id));
 CREATE TABLE refund_requests(id text PRIMARY KEY,topup_id text UNIQUE NOT NULL,email text NOT NULL,credits bigint NOT NULL,amount bigint NOT NULL,quote text NOT NULL,status text NOT NULL,created bigint NOT NULL);
+CREATE TABLE refund_receipts(topup_id text NOT NULL,amount bigint NOT NULL,payload text NOT NULL,PRIMARY KEY(topup_id,amount));
+CREATE TABLE play_jobs(token_hash text PRIMARY KEY,sealed_token text NOT NULL,attempts bigint NOT NULL DEFAULT 0,next_attempt bigint NOT NULL DEFAULT 0);
+CREATE TABLE play_voids(token_hash text PRIMARY KEY,package text NOT NULL,created bigint NOT NULL);
+CREATE TABLE play_sync(package text PRIMARY KEY,completed bigint NOT NULL);
+CREATE TABLE play_receipts(token_hash text PRIMARY KEY,email text NOT NULL,product text NOT NULL,package text NOT NULL,credits bigint NOT NULL,order_id text UNIQUE,consumed bigint NOT NULL DEFAULT 0,created bigint NOT NULL);
 CREATE TABLE nice_orders(id text PRIMARY KEY,owner text NOT NULL,intent text NOT NULL,state text NOT NULL,tid text UNIQUE,created bigint NOT NULL,expires bigint NOT NULL,updated bigint NOT NULL);
 CREATE TABLE nice_receipts(order_id text PRIMARY KEY,tid text UNIQUE NOT NULL,amount bigint NOT NULL,created bigint NOT NULL);
 CREATE TABLE nice_checkout_keys(owner text NOT NULL,request_key text NOT NULL,order_id text NOT NULL,fingerprint text NOT NULL,PRIMARY KEY(owner,request_key));
@@ -24,13 +29,13 @@ CREATE TABLE nice_refunds(order_id text PRIMARY KEY,cancel_id text UNIQUE NOT NU
 CREATE TABLE nice_refund_history(cancel_id text PRIMARY KEY,order_id text NOT NULL,snapshot text NOT NULL);
 `;
 const one=async(c,sql,args=[]) => (await c.query(sql,args)).rows[0];
-const fail=message=>{throw new Error(message);};
+const fail=(message,status=409)=>{throw Object.assign(new Error(message),{status});};
 const orderFrom=row=>row?{...JSON.parse(row.intent),id:row.id,state:row.state,tid:row.tid,created:row.created,expires:row.expires}:null;
 const getOrder=async(c,id)=>orderFrom(await one(c,'SELECT * FROM nice_orders WHERE id=$1',[id]));
 const balance=async(c,email)=>(await one(c,'SELECT balance FROM wallets WHERE email=$1',[email]))?.balance??0;
 async function change(c,id,email,delta,kind){
   if(!Number.isSafeInteger(delta))fail('Invalid credit amount');
-  const inserted=await c.query('INSERT INTO ledger VALUES($1,$2,$3,$4,$5) ON CONFLICT(id) DO NOTHING RETURNING id',[id,email,delta,kind,Date.now()]);
+  const inserted=await c.query('INSERT INTO ledger(id,email,delta,kind,created) VALUES($1,$2,$3,$4,$5) ON CONFLICT(id) DO NOTHING RETURNING id',[id,email,delta,kind,Date.now()]);
   if(!inserted.rowCount)return false;
   await c.query('INSERT INTO wallets VALUES($1,$2) ON CONFLICT(email) DO UPDATE SET balance=wallets.balance+excluded.balance',[email,delta]);
   if(!Number.isSafeInteger(await balance(c,email)))fail('Wallet outside safe range');
@@ -45,8 +50,8 @@ export class PostgresPaymentLedger {
   get(id){return this.read(c=>getOrder(c,id));}
   balance(email){return this.read(c=>balance(c,email));}
   token(email,kind,ttl){return this.tx(async c=>{const raw=randomBytes(32).toString('hex');await c.query('DELETE FROM tokens WHERE expires<$1',[Date.now()]);await c.query('INSERT INTO tokens VALUES($1,$2,$3,$4)',[createHash('sha256').update(raw).digest('hex'),email,kind,Date.now()+ttl]);return raw;});}
-  authenticate(raw,kind='session',consume=false){return this.tx(async c=>{const hash=createHash('sha256').update(String(raw)).digest('hex');const row=await one(c,'SELECT * FROM tokens WHERE hash=$1 AND kind=$2 AND expires>$3',[hash,kind,Date.now()]);if(!row)fail('Wallet session required');if(consume)await c.query('DELETE FROM tokens WHERE hash=$1',[hash]);return row.email;});}
-  rateLimit(key,maximum,duration){return this.tx(async c=>{const now=Date.now();await c.query('DELETE FROM limits WHERE expires<$1',[now]);const row=await one(c,'SELECT count FROM limits WHERE key=$1',[key]);if(row?.count>=maximum)fail('Rate limit exceeded');await c.query('INSERT INTO limits VALUES($1,1,$2) ON CONFLICT(key) DO UPDATE SET count=limits.count+1',[key,now+duration]);});}
+  authenticate(raw,kind='session',consume=false){return this.tx(async c=>{const hash=createHash('sha256').update(String(raw)).digest('hex');const row=await one(c,'SELECT * FROM tokens WHERE hash=$1 AND kind=$2 AND expires>$3',[hash,kind,Date.now()]);if(!row)fail('이메일 로그인이 필요합니다.',401);if(consume)await c.query('DELETE FROM tokens WHERE hash=$1',[hash]);return row.email;});}
+  rateLimit(key,maximum,duration){return this.tx(async c=>{const now=Date.now();await c.query('DELETE FROM limits WHERE expires<$1',[now]);const row=await one(c,'SELECT count FROM limits WHERE key=$1',[key]);if(row?.count>=maximum)fail('잠시 후 다시 시도해주세요.',429);await c.query('INSERT INTO limits VALUES($1,1,$2) ON CONFLICT(key) DO UPDATE SET count=limits.count+1',[key,now+duration]);});}
   topup(id){return this.read(c=>one(c,'SELECT * FROM topups WHERE id=$1',[id]));}
   creditOrders(owner,merchant){return this.read(async c=>(await c.query("SELECT * FROM nice_orders WHERE owner=$1 AND intent::jsonb->>'category'='credit_topup' AND intent::jsonb->>'merchantId'=$2 ORDER BY created DESC LIMIT 30",[owner,merchant])).rows.map(orderFrom));}
   refundRecord(id){return this.read(c=>one(c,'SELECT * FROM nice_refunds WHERE order_id=$1',[id]));}
@@ -105,12 +110,12 @@ export class PostgresPaymentLedger {
     await c.query('INSERT INTO nice_fulfillments VALUES($1,$2,$3)',[orderId,intent.category,Date.now()]);return true;
   });}
   purchase(email,key,fingerprint,credits,order){
-    if(typeof key!=='string'||!/^[a-zA-Z0-9_-]{16,100}$/.test(key)||!Number.isSafeInteger(credits)||credits<=0)fail('Invalid debit');
+    if(typeof key!=='string'||!/^[a-zA-Z0-9_-]{16,100}$/.test(key)||!Number.isSafeInteger(credits)||credits<=0)fail('Invalid debit',400);
     return this.tx(async c=>{
       const prior=await one(c,'SELECT * FROM purchases WHERE email=$1 AND request_key=$2',[email,key]);
       if(prior){if(prior.fingerprint!==fingerprint)fail('Purchase fingerprint mismatch');return JSON.parse(prior.data);}
       if(await one(c,"SELECT 1 FROM refund_requests WHERE email=$1 AND status='review'",[email]))fail('Refund requires review');
-      if(await balance(c,email)<credits)fail('Insufficient credits');
+      if(await balance(c,email)<credits)fail('크레딧 잔액이 부족합니다.',402);
       const lots=(await c.query(`SELECT t.*,COALESCE((SELECT SUM(a.credits) FROM allocations a JOIN purchases p ON p.id=a.purchase_id WHERE a.topup_id=t.id AND p.state!='refunded'),0)::bigint AS allocated FROM topups t WHERE email=$1 AND status IN ('paid','refunded') AND NOT EXISTS(SELECT 1 FROM refund_requests r WHERE r.topup_id=t.id) ORDER BY position`,[email])).rows;
       let remaining=credits;
       for(const lot of lots){const count=Math.min(remaining,Math.max(0,lot.credits-lot.refunded-lot.allocated));if(count){await c.query('INSERT INTO allocations VALUES($1,$2,$3)',[order.id,lot.id,count]);remaining-=count;}if(!remaining)break;}
@@ -165,3 +170,4 @@ export class PostgresPaymentLedger {
     await c.query("UPDATE nice_orders SET state='refunded',updated=$1 WHERE id=$2",[Date.now(),orderId]);return true;
   });}
 }
+export {change as changePostgresCredits};

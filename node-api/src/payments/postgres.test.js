@@ -71,7 +71,7 @@ test('callback rejection rolls back and never commits', async () => {
 test('uncertain commit destroys connection and never retries callback', async () => {
   const fixture = fakePool(sql=>sql==='COMMIT');
   let attempts=0;
-  await assert.rejects(withPaymentTransaction(fixture.pool,async()=>{attempts++;}),/injected/);
+  await assert.rejects(withPaymentTransaction(fixture.pool,async()=>{attempts++;}),error=>error.message==='injected failure'&&error.paymentCommitUncertain===true);
   assert.equal(attempts,1);
   assert.deepEqual(fixture.releases,[true]);
 });

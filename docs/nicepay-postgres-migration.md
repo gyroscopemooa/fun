@@ -1,5 +1,54 @@
 # NICEPAY PostgreSQL migration status
 
+## Wallet and main-server implementation (2026-11-11, third checkpoint)
+
+The native wallet now supports existing Polar and Play receipt handling,
+sessions, allocated purchases, execution claims, refunds and recovery. Existing
+prices and the default SQLite backend are preserved. Main-server callers await
+durable writes before publishing successful responses or completed jobs.
+PostgreSQL selection requires both `CREDITS_STORAGE=postgres` and
+`CREDITS_MIGRATION_CONFIRMED=true`, an initialized schema and no SQLite path.
+There is no automatic schema creation or fallback. Production settings have not
+been changed; production NICEPAY routes remain disabled.
+
+Independent review found four async-port defects: stale saves could erase name
+input locks, cached Polar name/photo claims could race, and a rejected background
+settlement could become unhandled. All four were fixed and independently
+rechecked. Regression tests cover immutable locks, refunded-state preservation,
+atomic cached claims and settlement failures. Generated artifacts remain available
+for reconciliation when settlement fails; completion is published after settlement.
+
+Final local regression: 96 tests passed, zero failures. Real PostgreSQL tests
+also passed wallet migration/reconciliation, import rollback after inserts and
+identity resets, existing credit HTTP routes, and the actual main-server purchase
+and failed-execution recovery path. Test data uses random private schemas and
+fake payment/AI providers. No actual payment, email or paid AI call is performed.
+
+Additional commands (from `node-api`):
+
+```powershell
+node scripts/test-postgres-wallet-migration.mjs
+node scripts/test-postgres-credit-routes.mjs
+node scripts/test-postgres-server.mjs
+node scripts/inspect-payment-snapshot.mjs <backup-path>
+node scripts/migrate-payment-database.mjs --source <backup-path>
+```
+
+Migration defaults to read-only dry-run. Applying requires a consistent source
+backup, frozen source writers, `--apply --source-writes-frozen --digest <digest>`
+and an absent destination schema. Unknown tables/columns, unbalanced ledgers,
+unsafe numbers and nonempty destinations are rejected. Import and exact row
+reconciliation occur in one transaction, including identity sequence resets.
+The apply command restricts schema grants and enables table RLS. An uncertain
+commit must be inspected, never blindly retried.
+
+**Production cutover remains incomplete.** No consistent production SQLite
+backup has been obtained, so an empty source must not be assumed from disabled
+credit configuration. No production payment schema/import/deployment has been
+performed. Direct NICEPAY tool execution/private media persistence and real
+merchant checkout/cancellation verification remain outstanding. Staging credit
+tests are not evidence that those remaining flows are ready for activation.
+
 ## Credit staging implementation (2026-11-11, second checkpoint)
 
 `PostgresPaymentLedger` now implements native awaited SQL for checkout keys,
@@ -12,7 +61,8 @@ The existing credit customer, callback and refund routers support either backend
 The explicit staging factory accepts the PostgreSQL store only for credit-topup
 catalogs. Photo/image/video/bundles/tool configuration is rejected before routing;
 the old synchronous tool stores cannot accidentally be used with PostgreSQL.
-The production server still does not select or instantiate this new backend.
+At this checkpoint the production server did not select this backend; the third
+checkpoint above adds an explicitly gated selector, without enabling it.
 
 The native dispatch UPDATE requires order ID, cancellation ID, expected amount
 and `reserved` state together inside the writer transaction. Commit completes
@@ -58,7 +108,7 @@ scope. A broader SQLite staging test still hits the previously observed Windows
 private-photo-root POSIX permission guard; the guard was not weakened. This is
 not a claim that the full suite or real NICEPAY checkout has passed.
 
-Still missing before production: full Polar/Play and tool-spend/refund/restore
+At this checkpoint, missing before production were full Polar/Play and tool-spend/refund/restore
 callers, production login/session migration, a consistent existing wallet/order
 backup and reconciled import, private media storage, production schema ownership
 and grants, real merchant/payment/cancel verification. None of these may be

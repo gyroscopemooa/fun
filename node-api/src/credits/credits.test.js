@@ -20,6 +20,18 @@ const payment = (row, extra = {}) => ({ type: 'order.paid', data: {
 const fund = (store, pack = PACKS[0]) => { const row = store.createTopup(email, pack, 'product'); store.checkout(row.id, `checkout-${row.id}`, 'https://example.com'); store.applyPayment(payment(row)); return row; };
 const order = id => ({ id, paymentMode: 'credits', productType: 'calorie', status: 'paid' });
 
+test('delayed purchase replay cannot erase immutable name input or revive a refunded order',()=>{
+  const store=new CreditStore(':memory:');
+  try{
+    fund(store);const stale=store.purchase(email,'name-lock-request-123','fp',2,{...order('name-lock'),productType:'ai_name_premium'});
+    store.lockNameInput(stale.id,{given:['A'],gender:'female'});
+    store.saveOrder(stale);assert.deepEqual(store.order(stale.id).namePremiumLock,{given:['A'],gender:'female'});
+    assert.throws(()=>store.lockNameInput(stale.id,{given:['B'],gender:'female'}));
+    assert.doesNotThrow(()=>store.lockNameInput(stale.id,{gender:'female',given:['A']}));
+    store.cancel(email,stale.id);store.saveOrder(stale);assert.equal(store.order(stale.id).status,'refunded');
+  }finally{store.close();}
+});
+
 test('packs have a fixed 1,000 KRW unit price without volume discounts', () => {
   assert.deepEqual(PACKS.map(p => [p.credits, p.amount]), [[10, 10000], [50, 50000], [300, 300000]]);
 });

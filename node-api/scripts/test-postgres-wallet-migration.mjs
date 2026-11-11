@@ -1,0 +1,72 @@
+import assert from 'node:assert/strict';
+import {mkdtemp,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {createPostgresTestFixture} from './postgres-test-fixture.mjs';
+import {PostgresCreditStore} from '../src/credits/postgres-store.js';
+import {CreditStore} from '../src/credits/store.js';
+import {NicepayOrderStore} from '../src/payments/nicepay-orders.js';
+import {fulfillNicepayOrder} from '../src/payments/nicepay-fulfillment.js';
+import {readPaymentSnapshot,paymentSnapshotDigest,importPaymentSnapshot} from '../src/payments/payment-snapshot.js';
+import {PACKS} from '../src/credits/pricing.js';
+import {verifyPlayCredit,playAccountBinding,playTokenHash,retryPlayConsumes,reconcilePlayVoids} from '../src/credits/play.js';
+
+const dir=await mkdtemp(join(tmpdir(),'manytool-migration-')),file=join(dir,'wallet.sqlite');
+let sqlite,nice,fixture;
+const passed=[];
+const event=(row,extra={})=>({type:'order.paid',data:{id:'polar-'+row.id,paid:true,product_id:row.product,currency:'krw',net_amount:row.amount,discount_amount:0,checkout_id:'checkout-'+row.id,metadata:{credit_topup_id:row.id},...extra}});
+try{
+  sqlite=new CreditStore(file);nice=new NicepayOrderStore(file);sqlite.initPlayStore();
+  const owner='migration@example.invalid',row=sqlite.createTopup(owner,PACKS[0],'fake-product');
+  sqlite.checkout(row.id,'checkout-'+row.id,'https://example.invalid');sqlite.applyPayment(event(row));
+  sqlite.purchase(owner,'migration-purchase-123','fp',2,{id:'pending-imported',paymentMode:'credits',productType:'calorie',status:'paid'});
+  const login=sqlite.token(owner,'login',600000);
+  const policy={enabled:true,apiConfirmed:true,variant:'legacy',categories:{credit_topup:{approved:true,methods:['card'],maxAmountKrw:10000}}};
+  const catalog={pack:{category:'credit_topup',amount:10000,credits:10,currency:'KRW',recurring:false,goodsName:'Fake credits'}};
+  const order=nice.create({productId:'pack',ownerId:'nice-migration@example.invalid'},catalog,policy,'fake00000m');nice.claim(order.id,'m'.repeat(30));nice.recordVerified({orderId:order.id,tid:'m'.repeat(30),amount:10000,currency:'KRW',verified:true});fulfillNicepayOrder(sqlite,order.id);
+  const snapshot=readPaymentSnapshot(file),digest=paymentSnapshotDigest(snapshot);
+  fixture=await createPostgresTestFixture();const wallet=new PostgresCreditStore(fixture.pool);
+  await assert.rejects(importPaymentSnapshot(wallet,snapshot,'wrong'));
+  // Fail after inserts and row comparisons, while identity sequences are reset.
+  // The importer must leave every table empty and permit a clean retry.
+  const failing={tx:fn=>wallet.tx(c=>fn({query:(sql,args)=>{if(sql.startsWith('ALTER TABLE "topups"'))throw Error('Injected sequence restart failure');return c.query(sql,args);}}))};
+  await assert.rejects(importPaymentSnapshot(failing,snapshot,digest));
+  assert.equal(await wallet.balance(owner),0);assert.equal((await wallet.allOrders()).length,0);
+  const result=await importPaymentSnapshot(wallet,snapshot,digest);assert.equal(result.digest,digest);
+  assert.equal(await wallet.balance(owner),8);assert.equal(await wallet.balance('nice-migration@example.invalid'),10);
+  assert.equal((await wallet.order('pending-imported')).productType,'calorie');
+  assert.equal((await fixture.store.get(order.id)).tid,'m'.repeat(30));
+  const nextOrder=await fixture.store.create({productId:'pack',ownerId:'identity-test'},catalog,policy,'fake00000m');assert.ok(nextOrder.id);
+  assert.equal(await wallet.authenticate(login,'login',true),owner);await assert.rejects(wallet.authenticate(login,'login',true));
+  await assert.rejects(importPaymentSnapshot(wallet,snapshot,digest));passed.push('all snapshot rows match; balances, pending order, NICE receipt, FIFO and one-use login preserved; nonempty import refused');
+  await assert.rejects(wallet.cancel('other@example.invalid','pending-imported'));
+  await wallet.cancel(owner,'pending-imported');assert.equal(await wallet.balance(owner),10);
+  await wallet.purchase(owner,'native-purchase-12345','fp',6,{id:'native-failure',paymentMode:'credits',productType:'calorie',status:'paid'});
+  const claims=await Promise.allSettled([wallet.claim('native-failure'),wallet.claim('native-failure')]);assert.equal(claims.filter(r=>r.status==='fulfilled').length,1);
+  await wallet.finish('native-failure',false);await wallet.finish('native-failure',false);assert.equal(await wallet.balance(owner),10);assert.equal((await wallet.order('native-failure')).status,'refunded');
+  await wallet.purchase(owner,'native-success-12345','fp',2,{id:'native-success',paymentMode:'credits',productType:'calorie',status:'paid'});await wallet.claim('native-success');await wallet.finish('native-success',true);await wallet.restore('native-success');assert.equal(await wallet.balance(owner),8);
+  const quote=await wallet.refundQuote(owner,row.id);assert.equal(quote.remainingCredits,8);
+  await assert.rejects(wallet.requestRefund(owner,row.id,{...quote,usedCredits:0}));
+  await wallet.requestRefund(owner,row.id,quote);assert.equal(await wallet.balance(owner),0);
+  const refund={...event(row,{refunded_amount:quote.refundAmount}),type:'order.refunded'};
+  await wallet.applyPayment(refund);await wallet.applyPayment(refund);assert.equal(await wallet.balance(owner),0);assert.equal((await wallet.topupHistory(owner))[0].refundStatus,'completed');
+  passed.push('atomic execution claim; failure restores once; completed use cannot restore; refund quote/hold/webhook settlement');
+  const early=await wallet.createTopup('early@example.invalid',PACKS[0],'fake-product');await wallet.checkout(early.id,'checkout-'+early.id,'https://example.invalid');
+  await assert.rejects(wallet.applyPayment(event(early,{net_amount:1})));assert.equal(await wallet.balance('early@example.invalid'),0);
+  await wallet.applyPayment({...event(early,{refunded_amount:early.amount}),type:'order.refunded'});await wallet.applyPayment(event(early));assert.equal(await wallet.balance('early@example.invalid'),0);passed.push('Polar price mismatch rejected and refund-before-paid never resurrects credit');
+  const config={enabled:true,recoveryAvailable:true,products:{credits10:10},packageName:'app.manytool.test',bindingSecret:'fake-binding-secret-32-characters-only',tokenKey:'a'.repeat(64)};
+  const playOwner='play@example.invalid',purchaseToken='fake-purchase-token-123',tokenHash=playTokenHash(purchaseToken);
+  await wallet.markPlaySynced(config.packageName,Date.now());let consumeFails=true,consumeCalls=0;
+  const publisher={async get(){return {purchaseState:0,consumptionState:0,obfuscatedExternalAccountId:playAccountBinding(playOwner,config.bindingSecret),productId:'credits10',quantity:1,orderId:'fake-google-order'};},async consume(){consumeCalls++;if(consumeFails)throw Error('fake timeout');},async listVoided(){return {voidedPurchases:[{purchaseToken,voidedQuantity:1}]};}};
+  assert.equal((await verifyPlayCredit({store:wallet,config,publisher,email:playOwner,productId:'credits10',purchaseToken})).consumptionPending,true);assert.equal(await wallet.balance(playOwner),10);
+  await wallet.retryPlayConsume(tokenHash,Date.now());
+  assert.equal((await wallet.pendingPlayConsumes(Date.now()+120000)).length,1);
+  consumeFails=false;await retryPlayConsumes({store:wallet,config,publisher,now:Date.now()+120000});assert.equal((await wallet.playReceipt(tokenHash)).consumed,1);assert.equal((await wallet.pendingPlayConsumes(Date.now()+120000)).length,0);assert.equal(await wallet.balance(playOwner),10);
+  await wallet.purchase(playOwner,'play-spend-request-123','fp',3,{id:'play-spend',productType:'calorie'});
+  await reconcilePlayVoids({store:wallet,config,publisher});assert.equal(await wallet.balance(playOwner),-3);
+  await reconcilePlayVoids({store:wallet,config,publisher});assert.equal(await wallet.balance(playOwner),-3);
+  await assert.rejects(verifyPlayCredit({store:wallet,config,publisher,email:playOwner,productId:'credits10',purchaseToken}));
+  assert.ok(consumeCalls>=2);passed.push('Play encrypted recovery queue, backoff, consume retry and void-to-debt without duplicate grant');
+  console.log(JSON.stringify({ok:true,passed,externalProviderCalls:0,productionDataChanged:false}));
+}catch(error){process.exitCode=1;console.error(JSON.stringify({ok:false,passed,code:/^[A-Z0-9_]{2,40}$/.test(error.code??'')?error.code:'WALLET_MIGRATION_TEST_FAILED'}));}
+finally{nice?.close();sqlite?.close();await fixture?.close();await rm(dir,{recursive:true,force:true});}

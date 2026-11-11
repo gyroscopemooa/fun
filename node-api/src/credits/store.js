@@ -1,5 +1,6 @@
 import { DatabaseSync } from 'node:sqlite';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { isDeepStrictEqual } from 'node:util';
 import { calculateRefund, REFUND_POLICY_VERSION } from './refunds.js';
 
 const hash = value => createHash('sha256').update(value).digest('hex');
@@ -215,7 +216,22 @@ export class CreditStore {
   order(id) { const row = this.db.prepare('SELECT data FROM purchases WHERE id=?').get(id); return row ? JSON.parse(row.data) : null; }
   allOrders() { return this.db.prepare('SELECT data FROM purchases').all().map(row => JSON.parse(row.data)); }
   state(id) { return this.db.prepare('SELECT state FROM purchases WHERE id=?').get(id)?.state; }
-  saveOrder(order) { this.db.prepare('UPDATE purchases SET data=? WHERE id=?').run(JSON.stringify(order), order.id); }
+  saveOrder(order) { return this.tx(()=>{
+    const row=this.db.prepare('SELECT state,data FROM purchases WHERE id=?').get(order.id);
+    if(!row||(row.state==='refunded'&&order.status!=='refunded'))return;
+    const current=JSON.parse(row.data);
+    if(current.namePremiumLock)order={...order,namePremiumLock:current.namePremiumLock,namePremiumLockedAt:current.namePremiumLockedAt};
+    this.db.prepare('UPDATE purchases SET data=? WHERE id=?').run(JSON.stringify(order),order.id);
+  }); }
+  lockNameInput(id,input) {
+    return this.tx(()=>{
+      const order=this.order(id);
+      if(!order||order.productType!=='ai_name_premium'||order.status!=='paid')fail('Paid name order required');
+      if(order.namePremiumLock&&!isDeepStrictEqual(order.namePremiumLock,input))fail('name premium input changed');
+      if(!order.namePremiumLock){order.namePremiumLock=input;order.namePremiumLockedAt=new Date().toISOString();this.db.prepare('UPDATE purchases SET data=? WHERE id=?').run(JSON.stringify(order),id);}
+      return order;
+    });
+  }
   claim(id) {
     const result = this.db.prepare("UPDATE purchases SET state='processing' WHERE id=? AND state='ready'").run(id);
     if (!result.changes) fail('이미 사용했거나 처리 중인 크레딧 주문입니다.');

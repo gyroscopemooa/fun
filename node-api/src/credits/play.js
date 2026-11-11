@@ -61,33 +61,33 @@ export function createPlayPublisher({ credentialFile, fetcher = fetch, now = () 
 export async function verifyPlayCredit({ store, config, publisher, email, productId, purchaseToken }) {
   if (typeof productId !== 'string' || !/^[a-z0-9][a-z0-9_.]{0,99}$/.test(productId) || typeof purchaseToken !== 'string' || purchaseToken.length < 8 || purchaseToken.length > 4096 || /[\x00-\x20]/.test(purchaseToken)) fail('Invalid Play purchase');
   const tokenHash = playTokenHash(purchaseToken);
-  if (store.isPlayVoided(tokenHash, config.packageName)) fail('Play purchase was voided',409);
-  const previous = store.playReceipt(tokenHash);
+  if (await store.isPlayVoided(tokenHash, config.packageName)) fail('Play purchase was voided',409);
+  const previous = await store.playReceipt(tokenHash);
   if (previous && (previous.email !== email || previous.product !== productId || previous.package !== config.packageName)) fail('Purchase belongs to another account', 409);
   if (previous) {
     if (!config.recoveryAvailable) fail('Play 구매 복구를 사용할 수 없습니다.', 503);
   } else {
-    if (Date.now()-store.playSyncTime(config.packageName)>900000) fail('Play refund synchronization is stale',503);
+    if (Date.now()-await store.playSyncTime(config.packageName)>900000) fail('Play refund synchronization is stale',503);
     if (!config.enabled) fail('Play 크레딧 충전은 준비 중입니다.', 503);
     if (!Object.hasOwn(config.products, productId)) fail('Invalid Play purchase');
   }
   // Even retries recheck Google: cancelled/revoked purchases must never be newly granted.
   const purchase = await publisher.get(config.packageName, productId, purchaseToken);
-  if (previous && purchase.purchaseState === 1) store.voidPlayPurchase(tokenHash,config.packageName);
+  if (previous && purchase.purchaseState === 1) await store.voidPlayPurchase(tokenHash,config.packageName);
   if (purchase.purchaseState !== 0 || purchase.obfuscatedExternalAccountId !== playAccountBinding(email, config.bindingSecret)
       || (purchase.productId && purchase.productId !== productId) || (purchase.quantity ?? 1) !== 1) fail('Play purchase is not eligible');
   if (![0, 1].includes(purchase.consumptionState)) fail('Invalid Play consumption state');
   if (purchase.consumptionState === 1 && !previous) fail('Purchase was already consumed', 409);
-  if (!previous && Date.now()-store.playSyncTime(config.packageName)>900000) fail('Play refund synchronization is stale',503);
-  if (!previous) store.applyPlayPurchase({ tokenHash, email, productId, packageName: config.packageName, credits: config.products[productId], orderId: purchase.orderId || null, sealedToken: sealPlayToken(purchaseToken,tokenHash,config.tokenKey) });
-  else if (purchase.consumptionState === 0) store.queuePlayConsume(tokenHash,sealPlayToken(purchaseToken,tokenHash,config.tokenKey));
-  if(store.isPlayVoided(tokenHash,config.packageName)) fail('Play purchase was voided',409);
+  if (!previous && Date.now()-await store.playSyncTime(config.packageName)>900000) fail('Play refund synchronization is stale',503);
+  if (!previous) await store.applyPlayPurchase({ tokenHash, email, productId, packageName: config.packageName, credits: config.products[productId], orderId: purchase.orderId || null, sealedToken: sealPlayToken(purchaseToken,tokenHash,config.tokenKey) });
+  else if (purchase.consumptionState === 0) await store.queuePlayConsume(tokenHash,sealPlayToken(purchaseToken,tokenHash,config.tokenKey));
+  if(await store.isPlayVoided(tokenHash,config.packageName)) fail('Play purchase was voided',409);
   let consumptionPending = false;
   if (purchase.consumptionState === 0) {
-    try { await publisher.consume(config.packageName, productId, purchaseToken); store.markPlayConsumed(tokenHash); }
+    try { await publisher.consume(config.packageName, productId, purchaseToken); await store.markPlayConsumed(tokenHash); }
     catch { consumptionPending = true; } // Durable grant exists; retry verification, never grant twice.
-  } else store.markPlayConsumed(tokenHash);
-  return { credited: true, consumptionPending, balance: store.balance(email) };
+  } else await store.markPlayConsumed(tokenHash);
+  return { credited: true, consumptionPending, balance: await store.balance(email) };
 }
 
 export function installPlayCreditRoutes(app, { store, env = process.env, publisher }) {
@@ -97,15 +97,15 @@ export function installPlayCreditRoutes(app, { store, env = process.env, publish
   const origin = new URL(env.PUBLIC_WEB_BASE_URL || 'https://manytool.net').origin;
   const auth = req => store.authenticate(/(?:^|;\s*)manytool_credit_session=([a-f0-9]+)/.exec(req.headers.cookie ?? '')?.[1] || '');
   const wrap = fn => async (req, res) => { res.setHeader('Cache-Control', 'no-store'); try { await fn(req, res); } catch (e) { res.status(e.status || 500).json({ error: e.status ? e.message : 'Play 요청을 처리하지 못했습니다.' }); } };
-  app.get('/credits/play/catalog', wrap((req, res) => {
-    const email = auth(req);
-    const enabled=config.enabled && Date.now()-store.playSyncTime(config.packageName)<=900000;
+  app.get('/credits/play/catalog', wrap(async (req, res) => {
+    const email = await auth(req);
+    const enabled=config.enabled && Date.now()-await store.playSyncTime(config.packageName)<=900000;
     res.json({ enabled, recoveryAvailable: config.recoveryAvailable, accountBinding: config.recoveryAvailable ? playAccountBinding(email, config.bindingSecret) : null,
       products: enabled ? Object.entries(config.products).map(([productId, credits]) => ({ productId, credits })) : [] });
   }));
   app.post('/credits/play/verify', wrap(async (req, res) => {
     if (req.headers.origin !== origin) fail('허용되지 않은 요청입니다.', 403);
-    const email = auth(req); store.rateLimit(`play:${email}`, 30, 600000);
+    const email = await auth(req); await store.rateLimit(`play:${email}`, 30, 600000);
     res.json(await verifyPlayCredit({ store, config, publisher, email, productId: req.body?.productId, purchaseToken: req.body?.purchaseToken }));
   }));
   return stopWorker;
@@ -124,9 +124,9 @@ export function openPlayToken(sealed, hash, key) {
   return Buffer.concat([decipher.update(bytes.subarray(12,-16)),decipher.final()]).toString('utf8');
 }
 export async function reconcilePlayVoids({store,config,publisher,now=Date.now()}) {
-  const day=86400000, previous=store.playSyncTime(config.packageName);
+  const day=86400000, previous=await store.playSyncTime(config.packageName);
   // A missed history window must be investigated, not silently called synchronized.
-  const oldest=store.oldestPlayReceipt(config.packageName);
+  const oldest=await store.oldestPlayReceipt(config.packageName);
   if((previous && now-previous>29*day) || (!previous && oldest && now-oldest>29*day)) fail('Play refund history gap requires reconciliation',503);
   const startTime=previous ? Math.max(now-29*day,previous-day) : now-29*day;
   let pageToken; const seen=new Set(); let pages=0;
@@ -139,29 +139,29 @@ export async function reconcilePlayVoids({store,config,publisher,now=Date.now()}
       if(typeof purchase.purchaseToken!=='string' || purchase.purchaseToken.length<8 || purchase.purchaseToken.length>4096) fail('Invalid Play void token',503);
       // Only quantity-one purchases are granted, so a refunded quantity of one is full reversal.
       if(purchase.voidedQuantity!==undefined && Number(purchase.voidedQuantity)!==1) fail('Unsupported Play refund quantity requires review',503);
-      store.voidPlayPurchase(playTokenHash(purchase.purchaseToken),config.packageName,now);
+      await store.voidPlayPurchase(playTokenHash(purchase.purchaseToken),config.packageName,now);
     }
     pageToken=page.tokenPagination?.nextPageToken;
     if(pageToken!==undefined && typeof pageToken!=='string') fail('Invalid Play refund pagination',503);
   } while(pageToken);
-  store.markPlaySynced(config.packageName,now);
+  await store.markPlaySynced(config.packageName,now);
 }
 export async function retryPlayConsumes({store,config,publisher,now=Date.now()}) {
   let completed=0, pending=0;
-  for(const job of store.pendingPlayConsumes(now)) {
+  for(const job of await store.pendingPlayConsumes(now)) {
     if(job.package!==config.packageName) continue;
     try {
       const token=openPlayToken(job.sealed_token,job.token_hash,config.tokenKey);
       if(playTokenHash(token)!==job.token_hash) throw Error('token mismatch');
-      if(store.isPlayVoided(job.token_hash,job.package)) continue;
+      if(await store.isPlayVoided(job.token_hash,job.package)) continue;
       const purchase=await publisher.get(job.package,job.product,token);
-      if(purchase.purchaseState===1) {store.voidPlayPurchase(job.token_hash,job.package,now);continue;}
+      if(purchase.purchaseState===1) {await store.voidPlayPurchase(job.token_hash,job.package,now);continue;}
       if(purchase.purchaseState!==0 || purchase.obfuscatedExternalAccountId!==playAccountBinding(job.email,config.bindingSecret)
         || (purchase.productId && purchase.productId!==job.product) || (purchase.quantity??1)!==1 || ![0,1].includes(purchase.consumptionState)) throw Error('ineligible');
-      if(store.isPlayVoided(job.token_hash,job.package)) continue;
+      if(await store.isPlayVoided(job.token_hash,job.package)) continue;
       if(purchase.consumptionState===0) await publisher.consume(job.package,job.product,token);
-      store.markPlayConsumed(job.token_hash); completed++;
-    } catch {store.retryPlayConsume(job.token_hash,now);pending++;}
+      await store.markPlayConsumed(job.token_hash); completed++;
+    } catch {await store.retryPlayConsume(job.token_hash,now);pending++;}
   }
   return {completed,pending};
 }
