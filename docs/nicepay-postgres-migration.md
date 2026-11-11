@@ -1,5 +1,69 @@
 # NICEPAY PostgreSQL migration status
 
+## Credit staging implementation (2026-11-11, second checkpoint)
+
+`PostgresPaymentLedger` now implements native awaited SQL for checkout keys,
+approval claims/receipts, wallet fulfillment, allocated debits, refund holds,
+withdrawal, dispatch claims and cancellation application. Existing intent,
+authentication-signature and cancellation-signature verification functions are
+reused. Existing SQLite stores and production Polar routes remain in place.
+
+The existing credit customer, callback and refund routers support either backend.
+The explicit staging factory accepts the PostgreSQL store only for credit-topup
+catalogs. Photo/image/video/bundles/tool configuration is rejected before routing;
+the old synchronous tool stores cannot accidentally be used with PostgreSQL.
+The production server still does not select or instantiate this new backend.
+
+The native dispatch UPDATE requires order ID, cancellation ID, expected amount
+and `reserved` state together inside the writer transaction. Commit completes
+before the fake/real transport is called. Unknown outcomes stay held for signed
+reconciliation; duplicate dispatch never calls the transport again.
+
+Additional verification commands (from `node-api`):
+
+```powershell
+node scripts/test-postgres-ledger.mjs
+node scripts/test-postgres-http.mjs
+```
+
+These explicitly create a random private `manytool_payment_test_<uuid>` schema
+containing only fictional data, then drop that exact schema in cleanup. They do
+not initialize the production `manytool_payments` schema or import real balances.
+The actual PostgreSQL tests cover competing checkout/approval/fulfillment,
+allocated debit replay, insufficient funds, spent-lot rejection, owner mismatch,
+withdraw/re-reserve from another connection, stale dispatch ID/amount, duplicate
+dispatch, uncertain cancellation and competing debit/refund. The HTTP test uses
+the actual shared routers and cryptographic verification with fake merchant keys;
+the fake approval/cancel clients never send an external request.
+
+From the repository root, the same real-browser regression runs on either
+backend (Edge is used on this Windows host):
+
+```powershell
+$env:NICEPAY_TEST_BROWSER_CHANNEL='msedge'
+$env:NICEPAY_TEST_DATABASE='postgres'
+node scripts/test-nicepay-credit-browser.mjs
+Remove-Item Env:NICEPAY_TEST_DATABASE
+node scripts/test-nicepay-credit-browser.mjs
+```
+
+Both PostgreSQL and SQLite browser runs passed balance, prepare/reload/retry,
+refund hold/withdrawal, mobile controls, unauthenticated access and default-off
+checks. Browser/provider external traffic is blocked; database traffic is the
+explicit authenticated test connection. Route handlers are drained before
+closing the browser so cleanup completes without in-flight request exceptions.
+
+Independent read-only review found no actionable defect in this staging credit
+scope. A broader SQLite staging test still hits the previously observed Windows
+private-photo-root POSIX permission guard; the guard was not weakened. This is
+not a claim that the full suite or real NICEPAY checkout has passed.
+
+Still missing before production: full Polar/Play and tool-spend/refund/restore
+callers, production login/session migration, a consistent existing wallet/order
+backup and reconciled import, private media storage, production schema ownership
+and grants, real merchant/payment/cancel verification. None of these may be
+inferred from passing isolated native credit tests.
+
 ## Verified on 2026-11-11
 
 The existing Manytool Supabase project (`pzqlzomrvondxikyafvy`, Singapore) accepts
@@ -21,7 +85,7 @@ The first command is read-only. The last command explicitly uses two database
 sessions, transaction advisory locks and a temporary table. It rolls back every
 test mutation and disconnects both sessions; it makes no payment-provider calls.
 It checks PostgreSQL primitives, **not the application's migrated refund flow**.
-The actual NICEPAY/credit store classes still use SQLite.
+The production NICEPAY/credit store selection still uses SQLite.
 
 Results: 8/8 local unit tests; live verified TLS/read-only query, cross-session
 writer serialization/release, conditional claim with stale ID/amount rejection,

@@ -1,6 +1,7 @@
 // NICE orders and CreditStore MUST use the same private SQLite file.
 // Receipt verification is durable first; this transaction is safely replayable after a crash.
 export function fulfillNicepayOrder(creditStore, orderId) {
+  if(typeof creditStore.fulfill==='function')return creditStore.fulfill(orderId);
   const db=creditStore.db;
   db.exec(`CREATE TABLE IF NOT EXISTS nice_fulfillments(order_id TEXT PRIMARY KEY, category TEXT NOT NULL, created INTEGER NOT NULL);
     CREATE TABLE IF NOT EXISTS nice_entitlements(order_id TEXT PRIMARY KEY, owner TEXT NOT NULL, product TEXT NOT NULL, state TEXT NOT NULL);`);

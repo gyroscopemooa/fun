@@ -2,6 +2,7 @@ import {randomUUID} from 'node:crypto';
 import {verifyPgFullCancel} from './nicepay-operations.js';
 function init(wallet){wallet.db.exec(`CREATE TABLE IF NOT EXISTS nice_refunds(order_id TEXT PRIMARY KEY,cancel_id TEXT UNIQUE NOT NULL,owner TEXT NOT NULL,category TEXT NOT NULL,credits INTEGER NOT NULL,amount INTEGER NOT NULL,state TEXT NOT NULL,updated INTEGER NOT NULL); CREATE TABLE IF NOT EXISTS nice_refund_history(cancel_id TEXT PRIMARY KEY,order_id TEXT NOT NULL,snapshot TEXT NOT NULL)`);}
 export function reserveNicepayFullRefund(wallet,orderId,owner,expectedCancelId=undefined){
+ if(typeof wallet.reserveRefund==='function')return wallet.reserveRefund(orderId,owner,expectedCancelId);
  init(wallet);return wallet.tx(()=>{
   const row=wallet.db.prepare("SELECT * FROM nice_orders WHERE id=? AND owner=? AND state='verified'").get(orderId,owner);
   if(!row)throw Error('Verified owned NICE order required');
@@ -26,6 +27,7 @@ export function reserveNicepayFullRefund(wallet,orderId,owner,expectedCancelId=u
  });
 }
 export function releaseUnsentNicepayRefund(wallet,orderId,owner,expectedCancelId=undefined){
+ if(typeof wallet.releaseRefund==='function')return wallet.releaseRefund(orderId,owner,expectedCancelId);
  init(wallet);return wallet.tx(()=>{
   const row=wallet.db.prepare("SELECT * FROM nice_refunds WHERE order_id=? AND owner=? AND state='reserved'").get(orderId,owner);if(!row)throw Error('Only unsent refunds can be released');if(expectedCancelId!==undefined&&row.cancel_id!==expectedCancelId)throw Error('Refund attempt changed');
   if(row.category==='credit_topup'){wallet.change(`nice-refund-release:${row.cancel_id}`,owner,row.credits,'NICEPAY 환불 접수 취소');wallet.db.prepare("UPDATE topups SET status='paid' WHERE id=?").run(`nicepay:${orderId}`);}
@@ -47,15 +49,18 @@ function applyCancelled(wallet,orderId,receipt){
  });
 }
 export async function dispatchNicepayFullRefund({wallet,store,orderId,client,timestamp,expectedCancelId,expectedAmount}){
- init(wallet);const row=wallet.tx(()=>{const r=wallet.db.prepare("SELECT * FROM nice_refunds WHERE order_id=? AND state='reserved'").get(orderId);if(!r)throw Error('Refund already sent or unavailable');if(expectedCancelId!==undefined&&(r.cancel_id!==expectedCancelId||r.amount!==expectedAmount))throw Error('Confirmed refund attempt changed');wallet.db.prepare("UPDATE nice_refunds SET state='sending',updated=? WHERE order_id=?").run(Date.now(),orderId);return r;});
- try{const receipt=await client.fullCancel(store.get(orderId),timestamp,row.cancel_id);return applyCancelled(wallet,orderId,receipt);}
- catch(error){wallet.db.prepare("UPDATE nice_refunds SET state='uncertain',updated=? WHERE order_id=? AND state='sending'").run(Date.now(),orderId);throw error;}
+ const asyncStore=typeof wallet.claimRefund==='function';
+ if(!asyncStore)init(wallet);
+ const row=asyncStore?await wallet.claimRefund(orderId,expectedCancelId,expectedAmount):wallet.tx(()=>{const r=wallet.db.prepare("SELECT * FROM nice_refunds WHERE order_id=? AND state='reserved'").get(orderId);if(!r)throw Error('Refund already sent or unavailable');if(expectedCancelId!==undefined&&(r.cancel_id!==expectedCancelId||r.amount!==expectedAmount))throw Error('Confirmed refund attempt changed');wallet.db.prepare("UPDATE nice_refunds SET state='sending',updated=? WHERE order_id=?").run(Date.now(),orderId);return r;});
+ try{const receipt=await client.fullCancel(await store.get(orderId),timestamp,row.cancel_id);return await (asyncStore?wallet.applyCancelled(orderId,receipt):applyCancelled(wallet,orderId,receipt));}
+ catch(error){if(asyncStore)await wallet.markRefundUncertain(orderId,row.cancel_id);else wallet.db.prepare("UPDATE nice_refunds SET state='uncertain',updated=? WHERE order_id=? AND state='sending'").run(Date.now(),orderId);throw error;}
 }
 export function recoverNicepayRefunds(wallet,now=Date.now()){
  init(wallet);wallet.db.prepare("UPDATE nice_refunds SET state='uncertain',updated=? WHERE state='sending' AND updated<?").run(now,now-60000);
  return wallet.db.prepare("SELECT order_id,cancel_id,state FROM nice_refunds WHERE state='uncertain'").all();
 }
 export function reconcileNicepayFullRefund({wallet,store,orderId,body,config}){
+ if(typeof wallet.refundRecord==='function')return (async()=>{const row=await wallet.refundRecord(orderId);if(!row)throw Error('Unknown refund');const receipt=verifyPgFullCancel(body,await store.get(orderId),config,row.cancel_id);return wallet.applyCancelled(orderId,receipt);})();
  init(wallet);const row=wallet.db.prepare('SELECT * FROM nice_refunds WHERE order_id=?').get(orderId);if(!row)throw Error('Unknown refund');
  const receipt=verifyPgFullCancel(body,store.get(orderId),config,row.cancel_id);return applyCancelled(wallet,orderId,receipt);
 }

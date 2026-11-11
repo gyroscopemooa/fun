@@ -1,5 +1,6 @@
 import {createNicepayRefundConsole} from './nicepay-refund-console.js';
 import express from 'express';
+import {isPostgresPaymentStore,assertSharedPaymentStorage} from './payment-storage.js';
 import {createNicepayCreditCustomer} from './nicepay-credit-customer.js';
 import {createNicepayPhotoCustomer} from './nicepay-photo-customer.js';
 import {createNicepayBundleCustomer} from './nicepay-bundle-customer.js';
@@ -38,6 +39,16 @@ export async function createNicepayServerStaging({enabled=false,store,creditStor
     return {router};
   }
   if(new URL(origin).origin!==origin||new URL(origin).protocol!=='https:')throw Error('Exact HTTPS origin required');
+  if(isPostgresPaymentStore(store)||isPostgresPaymentStore(creditStore)){
+    assertSharedPaymentStorage(store,creditStore);
+    if(photo||image||bundles||video||tools||allowPaidTools||Object.values(payment?.catalog??{}).some(p=>p.category!=='credit_topup'))throw Error('PostgreSQL staging is limited to credit topups until tool storage is migrated');
+    const authenticate=createNicepayWalletAuthenticator(creditStore);
+    const common={enabled:true,store,creditStore,origin,authenticate};
+    router.use('/payment',createNicepayStagingRouter({...payment,...common}));
+    router.use('/customer-credits',createNicepayCreditCustomer({...common,enabled:customerEnabled,payment}));
+    router.use('/refunds',createNicepayRefundConsole({...common,enabled:customerEnabled,operators,refundOperations}));
+    return {router};
+  }
   // Photo checkout must always use the private snapshot-binding route, never a second generic path.
   const photoProducts=new Set(['base','add2','add3','add7','passport_addon','headshot_addon']);
   if(Object.keys(payment?.catalog??{}).some(id=>photoProducts.has(id)))throw Error('Photo products require the dedicated photo checkout');

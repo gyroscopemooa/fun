@@ -70,21 +70,26 @@ export class NicepayOrderStore {
   pendingReconciliation(){return this.db.prepare("SELECT id,tid,state,updated FROM nice_orders WHERE state IN ('approving','uncertain') ORDER BY updated").all();}
 }
 export async function processPgAuthentication({body,store,config,client,timestamp,now=Date.now()}){
-  const order=store.get(body?.Moid);
+  const order=await store.get(body?.Moid);
   if(!order||order.variant!=='legacy'||config.variant!=='legacy'||order.merchantId!==config.id)fail();
   if(order.category==='credit_topup'&&(!Number.isSafeInteger(order.credits)||order.credits<1||order.amount!==order.credits*1000))fail();
   const auth=verifyNicepayAuthentication(body,order,config);
   if(order.state==='verified'&&order.tid===auth.tid)return order;
   // Persist the unique transaction claim BEFORE any network request; duplicates never reapprove.
-  store.claim(order.id,auth.tid,now);
+  await store.claim(order.id,auth.tid,now);
   try{
     const receipt=await client.approve(body,order,timestamp);
-    store.recordVerified(receipt);return store.get(order.id);
-  }catch(error){store.markUncertain(order.id);throw error;}
+    await store.recordVerified(receipt);return await store.get(order.id);
+  }catch(error){await store.markUncertain(order.id);throw error;}
 }
 // Reconcile a provider response without sending a second approval or trusting browser status.
 export function reconcilePgApproval({body,orderId,store,config}){
-  const order=store.get(orderId);if(!order||order.variant!=='legacy'||!order.tid||config.variant!=='legacy'||order.merchantId!==config.id)fail();
-  const receipt=verifyNicepayApproval(body,order,{authenticated:true,orderId,amount:order.amount,tid:order.tid},config);
-  store.recordVerified(receipt);return store.get(orderId);
+  const reconcile=order=>{
+    if(!order||order.variant!=='legacy'||!order.tid||config.variant!=='legacy'||order.merchantId!==config.id)fail();
+    const receipt=verifyNicepayApproval(body,order,{authenticated:true,orderId,amount:order.amount,tid:order.tid},config);
+    const saved=store.recordVerified(receipt);
+    return saved instanceof Promise?saved.then(()=>store.get(orderId)):store.get(orderId);
+  };
+  // Preserve the synchronous SQLite API while awaiting the PostgreSQL receipt.
+  const order=store.get(orderId);return order instanceof Promise?order.then(reconcile):reconcile(order);
 }
