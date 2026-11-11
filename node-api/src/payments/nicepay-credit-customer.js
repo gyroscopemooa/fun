@@ -29,7 +29,7 @@ export function createNicepayCreditCustomer({enabled=false,store,creditStore,aut
  }
  router.get('/',(req,res)=>{
   res.set('Content-Security-Policy',"default-src 'none'; script-src 'self'; connect-src 'self'; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'");
-  res.type('html').send(`<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Manytool 크레딧 충전</title><body data-account="${hash(res.locals.owner).slice(0,24)}"><h1>크레딧 충전</h1><p>테스트 환경입니다. 이메일 계정에 잔액이 보관됩니다. 실제 서비스 개방 전에는 승인된 테스트 결제만 사용하세요.</p>
+  res.type('html').send(`<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Manytool 크레딧 충전</title><body data-account="${hash(res.locals.owner).slice(0,24)}"><h1>크레딧 충전</h1><p><a href="${escape(req.baseUrl.replace(/\/customer-credits$/,'/refunds/'))}">환불 접수·처리 상태</a></p><p>테스트 환경입니다. 이메일 계정에 잔액이 보관됩니다. 실제 서비스 개방 전에는 승인된 테스트 결제만 사용하세요.</p>
   <p>현재 잔액 <strong id="balance">확인 중</strong> 크레딧</p><label>충전 상품 <select id="pack">${products.map(([id,p])=>`<option value="${escape(id)}">${p.credits} 크레딧 · ${p.amount.toLocaleString('ko-KR')}원</option>`).join('')}</select></label>
   <p>사용한 크레딧은 환불 계산에서 차감됩니다. 결제 취소·환불 접수는 아직 이 화면에서 처리하지 않으며 고객지원 확인이 필요합니다. 기존 환불 정책 버전: ${escape(REFUND_POLICY_VERSION)}</p>
   <label><input id="consent" type="checkbox">충전 금액과 크레딧 수, 사용분 차감 및 환불 안내를 확인했습니다.</label><button id="prepare">충전 주문 준비</button><a id="pay" hidden target="_blank" rel="noopener">카드 결제창 열기</a>

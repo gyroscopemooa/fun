@@ -1,11 +1,11 @@
 import {randomUUID} from 'node:crypto';
 import {verifyPgFullCancel} from './nicepay-operations.js';
 function init(wallet){wallet.db.exec(`CREATE TABLE IF NOT EXISTS nice_refunds(order_id TEXT PRIMARY KEY,cancel_id TEXT UNIQUE NOT NULL,owner TEXT NOT NULL,category TEXT NOT NULL,credits INTEGER NOT NULL,amount INTEGER NOT NULL,state TEXT NOT NULL,updated INTEGER NOT NULL); CREATE TABLE IF NOT EXISTS nice_refund_history(cancel_id TEXT PRIMARY KEY,order_id TEXT NOT NULL,snapshot TEXT NOT NULL)`);}
-export function reserveNicepayFullRefund(wallet,orderId,owner){
+export function reserveNicepayFullRefund(wallet,orderId,owner,expectedCancelId=undefined){
  init(wallet);return wallet.tx(()=>{
   const row=wallet.db.prepare("SELECT * FROM nice_orders WHERE id=? AND owner=? AND state='verified'").get(orderId,owner);
   if(!row)throw Error('Verified owned NICE order required');
-  const prior=wallet.db.prepare('SELECT * FROM nice_refunds WHERE order_id=?').get(orderId);if(prior&&prior.state!=='released')return prior;
+  const prior=wallet.db.prepare('SELECT * FROM nice_refunds WHERE order_id=?').get(orderId);if(expectedCancelId!==undefined&&(prior?.cancel_id??null)!==expectedCancelId)throw Error('Refund changed; refresh before requesting');if(prior&&prior.state!=='released')return prior;
   const cancelId=randomUUID();
   const intent=JSON.parse(row.intent);let credits=0;
   if(intent.category==='credit_topup'){
@@ -25,9 +25,9 @@ export function reserveNicepayFullRefund(wallet,orderId,owner){
   return wallet.db.prepare('SELECT * FROM nice_refunds WHERE order_id=?').get(orderId);
  });
 }
-export function releaseUnsentNicepayRefund(wallet,orderId,owner){
+export function releaseUnsentNicepayRefund(wallet,orderId,owner,expectedCancelId=undefined){
  init(wallet);return wallet.tx(()=>{
-  const row=wallet.db.prepare("SELECT * FROM nice_refunds WHERE order_id=? AND owner=? AND state='reserved'").get(orderId,owner);if(!row)throw Error('Only unsent refunds can be released');
+  const row=wallet.db.prepare("SELECT * FROM nice_refunds WHERE order_id=? AND owner=? AND state='reserved'").get(orderId,owner);if(!row)throw Error('Only unsent refunds can be released');if(expectedCancelId!==undefined&&row.cancel_id!==expectedCancelId)throw Error('Refund attempt changed');
   if(row.category==='credit_topup'){wallet.change(`nice-refund-release:${row.cancel_id}`,owner,row.credits,'NICEPAY 환불 접수 취소');wallet.db.prepare("UPDATE topups SET status='paid' WHERE id=?").run(`nicepay:${orderId}`);}
   else if(row.category==='direct')wallet.db.prepare("UPDATE nice_entitlements SET state='ready' WHERE order_id=? AND state='refund_hold'").run(orderId);
   wallet.db.prepare("UPDATE nice_refunds SET state='released',updated=? WHERE order_id=?").run(Date.now(),orderId);

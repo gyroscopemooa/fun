@@ -1,3 +1,4 @@
+import {createNicepayRefundConsole} from './nicepay-refund-console.js';
 import express from 'express';
 import {createNicepayCreditCustomer} from './nicepay-credit-customer.js';
 import {createNicepayPhotoCustomer} from './nicepay-photo-customer.js';
@@ -30,7 +31,7 @@ export function createNicepayWalletAuthenticator(creditStore) {
  * Payment configuration/catalog/clients must be supplied by the staging operator.
  */
 export async function createNicepayServerStaging({enabled=false,store,creditStore,origin,
-  payment,photo,image,bundles,video,tools,allowPaidTools=false,operators=[],customerEnabled=false,customerPhotoChoices=[]}={}) {
+  payment,photo,image,bundles,video,tools,allowPaidTools=false,operators=[],customerEnabled=false,customerPhotoChoices=[],refundOperations}={}) {
   const router=express.Router();
   if(!enabled){
     router.use((_req,res)=>res.status(503).set('Cache-Control','no-store').json({error:'NICE staging disabled'}));
@@ -90,6 +91,7 @@ export async function createNicepayServerStaging({enabled=false,store,creditStor
   if(photoRuntime)customerSurfaces.photo={...photo,...photoRuntime};
   if(imageRuntime)customerSurfaces.image={...image,...imageRuntime};
   router.use('/customer-photo',createNicepayPhotoCustomer({...common,enabled:customerEnabled,surfaces:customerSurfaces,choices:customerPhotoChoices}));
+  router.use('/refunds',createNicepayRefundConsole({...common,enabled:customerEnabled,operators,refundOperations}));
   router.use('/customer-credits',createNicepayCreditCustomer({...common,enabled:customerEnabled,payment}));
   const uiOptions={store,authenticate,origin,payment,photo,image,operators};
   router.use('/checkout-preview',createNicepayCheckoutPreview(uiOptions));
