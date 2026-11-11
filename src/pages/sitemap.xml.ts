@@ -1,4 +1,5 @@
 import { videoTools } from '../data/video-tools';
+import photoRegions from '../data/photo-regions.json';
 import { communityPosts } from '../lib/community';
 import type { APIRoute } from 'astro';
 
@@ -7,6 +8,8 @@ import { GUIDES } from '../lib/guides';
 import { hasTranslation, localeCodes, seoLocaleCodes } from '../lib/i18n';
 
 const paths = [
+  '/id-photo-regions',
+  ...photoRegions.regions.flatMap(r => r.districts.map(d => `/id-photo-regions/${d.code}`)),
   '/photo-to-document',
   '/voice-to-document',
   '/text-translator',
