@@ -32,6 +32,7 @@ cypress/videos/
 node-api/.env
 node-api/.env.local
 node-api/.env.production
+node-api/.env.nicepay-migration
 
 # macOS-specific files
 .DS_Store
