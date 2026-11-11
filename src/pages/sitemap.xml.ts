@@ -178,6 +178,8 @@ const koreanRoutes = new Set(
     .map((file) => file.replace(/^\./, '').replace(/\.astro$/, '').replace(/\/index$/, '') || '/')
 );
 const allPaths = [...new Set([
+  '/id-photo-regions',
+  ...photoRegions.regions.flatMap(r => r.districts.map(d => `/id-photo-regions/${d.code}`)),
   ...paths.filter((path) => koreanRoutes.has(path)),
   ...(indexLocalePages ? [...localePaths, ...seoLandingPaths] : []),
   ...aiImageSeoPaths.filter((path) => indexLocalePages || !path.startsWith('/en/')),
