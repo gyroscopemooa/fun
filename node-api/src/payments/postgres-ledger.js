@@ -25,6 +25,8 @@ CREATE TABLE nice_checkout_keys(owner text NOT NULL,request_key text NOT NULL,or
 CREATE TABLE nice_events(id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,order_id text NOT NULL,state text NOT NULL,created bigint NOT NULL);
 CREATE TABLE nice_fulfillments(order_id text PRIMARY KEY,category text NOT NULL,created bigint NOT NULL);
 CREATE TABLE nice_entitlements(order_id text PRIMARY KEY,owner text NOT NULL,product text NOT NULL,state text NOT NULL);
+CREATE TABLE nice_tool_jobs(order_id text PRIMARY KEY,state text NOT NULL,attempts bigint NOT NULL,result text,updated bigint NOT NULL);
+CREATE TABLE nice_customer_orders(order_id text PRIMARY KEY,owner text NOT NULL,input_hash text NOT NULL);
 CREATE TABLE nice_refunds(order_id text PRIMARY KEY,cancel_id text UNIQUE NOT NULL,owner text NOT NULL,category text NOT NULL,credits bigint NOT NULL,amount bigint NOT NULL,state text NOT NULL,updated bigint NOT NULL);
 CREATE TABLE nice_refund_history(cancel_id text PRIMARY KEY,order_id text NOT NULL,snapshot text NOT NULL);
 `;

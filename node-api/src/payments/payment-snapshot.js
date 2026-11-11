@@ -24,6 +24,8 @@ export const SNAPSHOT_COLUMNS={
   nice_events:['id','order_id','state','created'],
   nice_fulfillments:['order_id','category','created'],
   nice_entitlements:['order_id','owner','product','state'],
+  nice_tool_jobs:['order_id','state','attempts','result','updated'],
+  nice_customer_orders:['order_id','owner','input_hash'],
   nice_refunds:['order_id','cancel_id','owner','category','credits','amount','state','updated'],
   nice_refund_history:['cancel_id','order_id','snapshot'],
 };

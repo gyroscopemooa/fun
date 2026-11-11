@@ -1,8 +1,11 @@
 import {createHash} from 'node:crypto';
 import { isNicepayExecutionDeferred } from './nicepay-preflight.js';
+import {isPostgresPaymentStore} from './payment-storage.js';
+import {executePostgresNicepayTool,stalePostgresNicepayExecutions} from './postgres-execution.js';
 // Internal execution adapter only. Existing production tool routes are not modified.
 export async function executeNicepayTool({creditStore,orderId,owner,product,runner,validatedInput,now=Date.now()}){
  if(typeof runner!=='function')throw Error('Tool adapter missing');
+ if(isPostgresPaymentStore(creditStore))return executePostgresNicepayTool({creditStore,orderId,owner,product,runner,validatedInput,now});
  const db=creditStore.db;
  db.exec('CREATE TABLE IF NOT EXISTS nice_tool_jobs(order_id TEXT PRIMARY KEY,state TEXT NOT NULL,attempts INTEGER NOT NULL,result TEXT,updated INTEGER NOT NULL)');
  const prior=creditStore.tx(()=>{
@@ -40,6 +43,7 @@ export async function executeNicepayTool({creditStore,orderId,owner,product,runn
  }catch{db.prepare("UPDATE nice_tool_jobs SET state='uncertain',updated=? WHERE order_id=?").run(Date.now(),orderId);throw Error('NICEPAY result persistence needs reconciliation');}
 }
 export function staleNicepayExecutions(creditStore,now=Date.now()){
+ if(isPostgresPaymentStore(creditStore))return stalePostgresNicepayExecutions(creditStore,now);
  creditStore.db.exec('CREATE TABLE IF NOT EXISTS nice_tool_jobs(order_id TEXT PRIMARY KEY,state TEXT NOT NULL,attempts INTEGER NOT NULL,result TEXT,updated INTEGER NOT NULL)');
  return creditStore.tx(()=>{
    creditStore.db.prepare("UPDATE nice_tool_jobs SET state='uncertain',updated=? WHERE state='running' AND updated<?").run(now,now-15*60000);
