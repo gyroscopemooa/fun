@@ -1,5 +1,15 @@
 # NICEPAY integration preparation
 
+## GUI review of ef1b369 (2026-11-11)
+
+The confirmed cancellation ID and amount are rechecked inside the same `BEGIN IMMEDIATE` transaction that claims the refund for sending. The two-connection regression rejects a replaced attempt and wrong amount without invoking the cancellation client. This review preserves that implementation.
+
+Two test cleanup paths now close SQLite connections before removing their directories, including when an assertion fails. This fixes Windows EPERM failures without relaxing the private photo storage permission guard.
+
+Run the browser regression with `node scripts/test-nicepay-credit-browser.mjs` after installing frontend and node-api dependencies and Playwright Chromium. To use an already installed Edge, set `NICEPAY_TEST_BROWSER_CHANNEL=msedge`. It runs a real headless Chromium engine with an intercepted HTTPS test origin forwarded only to a loopback server. Synthetic wallet fixtures cover balance, prepare/reload/retry without duplicate orders, refund hold/withdrawal, mobile controls, disabled routes and unauthenticated access. All other browser destinations are blocked; it does not open the NICE payment window or contact a payment/provider service. This is not a deployed TLS/cookie or merchant sandbox test.
+
+On Windows / Node 24.15, the payment + credit + staging-entry suite still encounters private-photo POSIX permission failures. Do not remove those security checks to make Windows tests pass. A supported Linux run remains required before releasing photo workflows. The merchant test MID/key, confirmed non-charge test mode, approved server catalog and deployed HTTPS callback/cookie routing remain unverified in this GUI environment. Production activation and deployment are not part of this verification commit.
+
 ## Status (2026-11-10)
 
 **Disabled integration with offline-tested PG transport, not a live payment service.** Existing Polar individual purchase and credit paths are untouched. NICEPAY public routes are mounted but return disabled status/503; no public checkout UI, wallet fulfillment, external approval call, deployment or real transaction is enabled. Setting `NICEPAY_ENABLED=true` cannot enable payment.

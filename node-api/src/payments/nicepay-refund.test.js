@@ -33,7 +33,8 @@ test('re-reservation rechecks spending after withdrawal without losing released 
 test('sending claim rejects attempt replaced through another SQLite connection after operator confirmation',async t=>{
  const f=fixture(t),first=reserveNicepayFullRefund(f.wallet,f.orderId,'owner');
  const file=f.wallet.db.prepare('PRAGMA database_list').all().find(r=>r.name==='main').file;
- const secondWallet=new CreditStore(file);t.after(()=>secondWallet.close());
+ const secondWallet=new CreditStore(file);
+ try {
  // A second worker withdraws and renews after the operator read, before sending claim.
  releaseUnsentNicepayRefund(secondWallet,f.orderId,'owner',first.cancel_id);
  const next=reserveNicepayFullRefund(secondWallet,f.orderId,'owner',first.cancel_id);let calls=0;
@@ -42,4 +43,5 @@ test('sending claim rejects attempt replaced through another SQLite connection a
  await assert.rejects(dispatchNicepayFullRefund({...f,client,expectedCancelId:next.cancel_id,expectedAmount:1}),/attempt changed/);
  assert.equal(calls,0);assert.equal(secondWallet.db.prepare('SELECT state FROM nice_refunds WHERE order_id=?').get(f.orderId).state,'reserved');
  await dispatchNicepayFullRefund({...f,client,expectedCancelId:next.cancel_id,expectedAmount:next.amount});assert.equal(calls,1);
+ } finally { secondWallet.close(); }
 });

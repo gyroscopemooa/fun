@@ -79,8 +79,11 @@ test('wrong candidate counts, duplicate files and cross-owner outputs are quaran
   await assert.rejects(f.add('base')());
 });
 test('durable candidates survive database reopen without regenerating files', async t => {
-  const dir = mkdtempSync(join(tmpdir(), 'nice-photo-')); t.after(() => rmSync(dir, { recursive: true, force: true }));
-  const filename = join(dir, 'wallet.sqlite'); const f = fixture(t, filename); const result = await f.add('base')();
+  const dir = mkdtempSync(join(tmpdir(), 'nice-photo-'));
+  const filename = join(dir, 'wallet.sqlite'); const f = fixture(t, filename);
+  // after hooks run in registration order: close SQLite before deleting on Windows.
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const result = await f.add('base')();
   const reopened = new CreditStore(filename);
   try {
     createNicepayPhotoAdapters({ ...f.dependencies, creditStore: reopened });
