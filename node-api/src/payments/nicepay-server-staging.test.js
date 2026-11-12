@@ -72,7 +72,7 @@ test('assembled HTTP uses real wallet cookie and preserves disabled default with
  assert.equal((await status.json()).state,'verified');
  assert.equal(store.db.prepare('SELECT owner FROM nice_orders').get().owner,'owner@example.com');
  assert.equal((await fetch(base+'/nice/payment/checkout',{method:'POST',headers,body:JSON.stringify({productId:'ai_manseryeok'})})).status,200);
- creditStore.logout(token);assert.equal((await checkout()).status,400);
+ creditStore.logout(token);assert.equal((await checkout()).status,401);
  assert.equal(store.db.prepare('SELECT count(*) n FROM nice_orders').get().n,2);assert.equal(calls,1);
 });
 
@@ -106,4 +106,31 @@ test('session endpoint awaits an asynchronous wallet lookup and rejects failed a
  assert.deepEqual(await (await fetch(url,{headers})).json(),{authenticated:true,owner});
  creditStore.logout(token);
  assert.equal((await fetch(url,{headers})).status,401);
+});
+
+
+test('technical checkout requires an explicit operator before any order or provider work',async t=>{
+ const dir=mkdtempSync(join(tmpdir(),'nice-operator-')),file=join(dir,'db.sqlite');
+ const creditStore=new CreditStore(file),store=new NicepayOrderStore(file);
+ const original=creditStore.authenticate.bind(creditStore);
+ creditStore.authenticate=async(...args)=>original(...args);
+ const origin='https://manytool.net';
+ const config={variant:'legacy',id:'fake00000m',secret:'offline-test-not-secret',returnUrl:origin+'/nice/payment/return'};
+ const policy=readNicepayPolicy(JSON.stringify({enabled:true,apiConfirmed:true,variant:'legacy',categories:{credit_topup:{approved:true,methods:['card'],maxAmountKrw:10000}}}));
+ const payment={config,policy,catalog:{pack:{category:'credit_topup',amount:10000,credits:10,currency:'KRW',recurring:false,goodsName:'Credits'}},client:{}};
+ const app=express();
+ for(const [path,operators] of [['closed',[]],['restricted',['operator@example.com']]])app.use('/'+path,(await createNicepayServerStaging({enabled:true,store,creditStore,origin,payment,operators})).router);
+ const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));
+ t.after(async()=>{await new Promise(r=>server.close(r));store.close();creditStore.close();rmSync(dir,{recursive:true});});
+ const base='http://127.0.0.1:'+server.address().port;
+ const headers=owner=>({Origin:origin,'Content-Type':'application/json',Cookie:'manytool_credit_session='+creditStore.token(owner,'session',60000)});
+ for(const prefix of ['closed','restricted'])for(const path of ['payment/checkout','photo/payment/checkout','image/payment/checkout','PAYMENT/CHECKOUT/']){
+  const response=await fetch(base+'/'+prefix+'/'+path,{method:'POST',headers:headers('customer@example.com'),body:JSON.stringify({productId:'pack'})});
+  assert.equal(response.status,401);assert.equal(response.headers.get('cache-control'),'no-store');
+ }
+ assert.equal(store.db.prepare('SELECT count(*) n FROM nice_orders').get().n,0);
+ assert.equal((await fetch(base+'/restricted/payment/checkout',{method:'POST',headers:headers('operator@example.com'),body:JSON.stringify({productId:'pack'})})).status,200);
+ assert.equal(store.db.prepare('SELECT count(*) n FROM nice_orders').get().n,1);
+ // Callback remains reachable without wallet cookies; malformed receipts still fail closed.
+ assert.equal((await fetch(base+'/restricted/payment/return',{method:'POST',body:new URLSearchParams({})})).status,409);
 });

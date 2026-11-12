@@ -70,3 +70,22 @@ NICE에 확인할 내용(이 문서를 작성하며 문의를 발송하지는 �
 - 이 배포는 정적 웹 프리뷰다. Render API나 결제 서버 스테이징 배포가 아니며 실제 NICE 승인·취소 검증을 포함하지 않는다.
 - main 운영 웹과 Render API를 변경하지 않았다. 실제 백업·저장소 전환·가맹점 개통·실결제는 여전히 미완료다.
 - GitHub Actions 결제 잠금 해소 후 위 기존 실행을 다시 실행하고 Linux 전체 결과를 확인해야 한다.
+
+
+## Follow-up: technical checkout access restriction
+
+The assembled staging server now restricts technical checkout creation at
+`/payment/checkout`, `/photo/payment/checkout`, and `/image/payment/checkout`
+to explicitly listed operators authenticated through the wallet session. An empty
+operator list denies access. This closes a path around the separate customer
+consent and rate-limit flow. Customer routes and signed provider callbacks retain
+their existing validation. Both storage assembly branches share this restriction.
+
+Validation: 5 targeted server assembly tests and 43 existing NICE receipt,
+transport, and callback tests passed on Windows. The new regression checks denied
+customer access (including case/trailing-slash variations), zero orders on denial,
+allowed operator creation, and callback reachability without a wallet cookie.
+These are local regression checks, not a real NICE payment test or full Linux suite.
+No production API deployment, database mutation, merchant key change, or live
+payment activation was performed for this follow-up. The prior merchant/test
+eligibility, backup, and Linux CI blockers remain unresolved.

@@ -39,6 +39,18 @@ export async function createNicepayServerStaging({enabled=false,store,creditStor
     return {router};
   }
   if(new URL(origin).origin!==origin||new URL(origin).protocol!=='https:')throw Error('Exact HTTPS origin required');
+  // Technical checkout skips customer consent/rate limits: expose it only to named operators.
+  // Keep signed provider callbacks and customer checkout routes outside this guard.
+  const operatorSet=new Set(operators);
+  router.post(['/payment/checkout','/photo/payment/checkout','/image/payment/checkout'],async(req,res,next)=>{
+    res.set('Cache-Control','no-store');
+    if(req.headers.origin!==origin)return res.status(403).json({error:'Origin rejected'});
+    try {
+      const owner=await createNicepayWalletAuthenticator(creditStore)(req);
+      if(typeof owner!=='string'||!operatorSet.has(owner))throw Error('Operator required');
+      next();
+    } catch {res.status(401).json({error:'Operator authentication required'});}
+  });
   if(isPostgresPaymentStore(store)||isPostgresPaymentStore(creditStore)){
     assertSharedPaymentStorage(store,creditStore);
     if(photo||image||bundles||video||tools||allowPaidTools||Object.values(payment?.catalog??{}).some(p=>p.category!=='credit_topup'))throw Error('PostgreSQL staging is limited to credit topups until tool storage is migrated');
