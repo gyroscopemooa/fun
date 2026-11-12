@@ -7,6 +7,10 @@ const apiBase = (import.meta.env.PUBLIC_NODE_API_BASE ?? 'http://127.0.0.1:8787'
 <Layout title="크레딧 충전 | ManyTool" description="필요한 만큼 충전하고 여러 AI 도구에서 사용하세요. 1크레딧은 1,000원이며 대량 구매도 같은 단가입니다." noindex>
   <Header />
   <main class="mx-auto max-w-5xl px-4 py-10">
+    {import.meta.env.DEV && apiBase === 'http://127.0.0.1:8788' && <aside class="mb-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm" role="note">
+      <strong>로컬 로그인 테스트</strong>
+      <p class="mt-2">이메일 입력 후 <a class="font-bold underline" href="http://127.0.0.1:8788/" target="_blank" rel="noopener noreferrer">로컬 메일함</a>에서 인증 링크를 눌러주세요. 실제 메일은 발송하지 않으며 충전·결제는 비활성 상태입니다. 서버를 종료하면 테스트 계정과 내역이 초기화됩니다.</p>
+    </aside>}
     <section class="rounded-3xl bg-slate-950 p-8 text-white sm:p-12">
       <p class="text-sm font-bold tracking-widest text-cyan-300">MANYTOOL CREDITS</p>
       <h1 class="mt-3 text-3xl font-black sm:text-4xl">필요한 만큼 충전하고,<br/>쓸 때마다 간편하게.</h1>
