@@ -23,7 +23,7 @@ app.use(express.json({limit:'16kb'}));
 const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 app.get('/',(_req,res)=>res.type('html').send(`<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="referrer" content="no-referrer"><title>매니툴 로컬 메일함</title><body><h1>로컬 로그인 메일함</h1><p>이 PC에서만 사용하는 임시 계정입니다. 종료하면 계정과 메일이 사라집니다. 실제 이메일은 발송하지 않습니다.</p><p><a href="${webOrigin}/credits/">로그인·잔액 화면 열기</a> · <a href="/">메일함 새로고침</a></p><p>로그인 화면에서 이메일을 입력한 뒤 이 메일함을 새로고침하세요. 충전 및 실결제는 비활성 상태입니다.</p>${mailbox.map(m=>`<article><h2>${escape(m.email)}</h2><a href="${escape(m.url)}">이메일 인증하고 로그인</a></article>`).join('')||'<p>아직 메일이 없습니다.</p>'}</body></html>`));
 installCreditRoutes(app,{store,orders:new Map(),verifyWebhook(){throw Error('Disabled locally');},
- env:{PUBLIC_WEB_BASE_URL:webOrigin,CREDITS_ENABLED:'false',CREDITS_TOOLS_READY:'false',RESEND_API_KEY:'local-mail-sink',RESEND_FROM_EMAIL:'local@example.invalid'},
+ env:{GOOGLE_CREDIT_CLIENT_ID:process.env.GOOGLE_CREDIT_CLIENT_ID || '',PUBLIC_WEB_BASE_URL:webOrigin,CREDITS_ENABLED:'false',CREDITS_TOOLS_READY:'false',RESEND_API_KEY:'local-mail-sink',RESEND_FROM_EMAIL:'local@example.invalid'},
  fetcher:async(url,options)=>{
   if(url!=='https://api.resend.com/emails')throw Error('External requests disabled');
   const mail=JSON.parse(options.body),link=mail.text.match(/http:\/\/127\.0\.0\.1:4321\/credits\/#login=[a-f0-9]{64}/)?.[0];

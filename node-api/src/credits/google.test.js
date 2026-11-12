@@ -1,0 +1,21 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import express from 'express';
+import {CreditStore} from './store.js';
+import {installGoogleCreditRoutes} from './google.js';
+test('Google login preserves wallet and rejects wrong origin, nonce, unverified identity and replay',async t=>{
+ const store=new CreditStore(':memory:');store.change('existing','buyer@gmail.com',7,'existing');
+ const app=express();app.use(express.json());let payload={email:'buyer@gmail.com',email_verified:true,sub:'google-sub'};
+ installGoogleCreditRoutes(app,{store,env:{GOOGLE_CREDIT_CLIENT_ID:'client'},origin:'https://manytool.net',cookie:(v)=>'manytool_credit_session='+v,verify:async()=>payload});
+ const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));t.after(async()=>{await new Promise(r=>server.close(r));store.close();});
+ const base='http://127.0.0.1:'+server.address().port;
+ const post=(path,body={},headers={})=>fetch(base+'/credits/google/'+path,{method:'POST',headers:{Origin:'https://manytool.net','Content-Type':'application/json',...headers},body:JSON.stringify(body)});
+ assert.equal((await post('challenge',{}, {Origin:'https://evil.invalid'})).status,403);
+ const c=await post('challenge');const challenge=await c.json();const cookie=c.headers.get('set-cookie').split(';')[0];
+ payload.nonce='wrong';assert.equal((await post('session',{credential:'signed'},{Cookie:cookie})).status,401);
+ payload.nonce=challenge.nonce;payload.email_verified=false;assert.equal((await post('session',{credential:'signed'},{Cookie:cookie})).status,401);
+ payload.email_verified=true;payload.email='buyer@external.invalid';assert.equal((await post('session',{credential:'signed'},{Cookie:cookie})).status,403);
+ payload.email='buyer@gmail.com';const success=await post('session',{credential:'signed'},{Cookie:cookie});assert.equal(success.status,200);
+ const session=success.headers.get('set-cookie').match(/manytool_credit_session=([a-f0-9]+)/)[1];assert.equal(store.authenticate(session),'buyer@gmail.com');assert.equal(store.balance('buyer@gmail.com'),7);
+ assert.equal((await post('session',{credential:'signed'},{Cookie:cookie})).status,401);assert.equal(store.balance('buyer@gmail.com'),7);
+});

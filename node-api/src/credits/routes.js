@@ -1,3 +1,4 @@
+import { installGoogleCreditRoutes } from './google.js';
 import { createHash, randomUUID } from 'node:crypto';
 import { PACKS, readPricing, productKey } from './pricing.js';
 import { REFUND_POLICY_VERSION } from './refunds.js';
@@ -29,7 +30,9 @@ export function installCreditRoutes(app, { store, orders, verifyWebhook, env = p
     return response.json();
   };
 
-  app.get('/credits/config', (_req, res) => res.json({ enabled, walletAvailable: true, refundPolicyVersion: REFUND_POLICY_VERSION, valueKrw: 1000,
+  installGoogleCreditRoutes(app,{store,env,origin,cookie});
+
+  app.get('/credits/config', (_req, res) => res.json({ enabled, walletAvailable: true, googleClientId: env.GOOGLE_CREDIT_CLIENT_ID || null, refundPolicyVersion: REFUND_POLICY_VERSION, valueKrw: 1000,
     packs: packs.map(({ product, ...pack }) => ({ ...pack, available: enabled && Boolean(product && env.POLAR_ACCESS_TOKEN && env.POLAR_WEBHOOK_SECRET && env.RESEND_API_KEY && Object.keys(pricing).length) })),
     tools: pricing
   }));
