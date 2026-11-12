@@ -8,4 +8,14 @@ The reply requires terms to say that card cancellations are processed back to th
 
 An earlier outbound merchant reply already supplied direct-payment module URLs. Do not resend mail automatically. A later outbound message asks for merchant-admin consolidation and clarifications; it is not proof of a NICE response or additional MID issuance.
 
-Decision pending: direct-only priority with point-topup deferred, or continued domestic-card topup preparation. Actual money tests still need the user to approve the exact amount and method. No charge or production payment activation has been performed.
+User decision: prioritize direct purchases and continue domestic-card point-topup development in parallel. Do not treat this as approval of overseas cards: NICE's current response restricts overseas payments when point topups are present, and the separate-MID coexistence question remains unanswered. Commercial prices remain undecided. Actual money tests still need the user to approve the exact amount and method. No charge or production payment activation has been performed.
+
+## Live recheck on 2026-11-13
+
+- Public credit-review and refund-policy pages return HTTP 200.
+- Production API `/credits/config` returns `enabled:false`, all packs unavailable and no configured tools. Its historical numeric defaults are not approved commercial prices.
+- Production API `/payments/nicepay/config` returns HTTP 404. The prepared NICE backend has not been rolled out to production; public payment-window integration does not imply that backend deployment.
+- Existing public-flow tests: 6 passed. Existing approval, callback, cancellation and recovery regression tests: 52 passed, with no external payment calls. These do not prove a real NICE approval or refund.
+- The latest matching inbound NICE email remains the November 12 reply cited above; no subsequent topup MID issuance notice was found.
+- Whale has the NICE dashboard open and the user reports login complete. Native UI binding fails with `window id 30936538 no longer belongs to Naver_Whale; current owner is Naver_Whale`, including after resetting the tool. Merchant identity, newly issued MIDs and current review status could not be re-read. Other-service Chrome/Edge sessions were not reused.
+- Do not redeploy the existing Render API until its current wallet/order storage has a verified backup and durable storage plan. Do not replace it with an empty database or enable historic default prices.
