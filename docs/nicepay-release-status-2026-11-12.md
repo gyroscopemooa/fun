@@ -89,3 +89,29 @@ These are local regression checks, not a real NICE payment test or full Linux su
 No production API deployment, database mutation, merchant key change, or live
 payment activation was performed for this follow-up. The prior merchant/test
 eligibility, backup, and Linux CI blockers remain unresolved.
+
+
+## Correction: real merchant payment window verified
+
+On 2026-11-12, the operator authenticated the masked merchant-key view for
+Manytool MID `000000002m`. The key was transferred through a loopback-only form
+into process memory, never printed or written to source/config files. Running
+`node node-api/scripts/check-nicepay-window.mjs` reused `renderNicepayPgForm`
+and the official NICE SDK. Edge displayed the actual NICE card-selection and
+terms screen with the diagnostic label `Manytool window check` and KRW 1,000.
+This amount is solely a window check, not a product price decision.
+
+No terms were accepted, no card was selected, no card details were entered,
+and no approval/cancellation API was invoked. The diagnostic callback deliberately
+does not submit authentication results for approval. This proves payment-window
+access with the issued merchant credentials, not successful payment or cancellation.
+The script's HTTPS ReturnURL is a non-fulfilling placeholder and must not be used
+for end-to-end authentication or mobile payment tests.
+
+The prior inference that merchant status 'stopped' prevents pre-review integration
+was incorrect. NICE's November 10 email explicitly asks for module integration
+before card review. The November 11 email states a separate topup MID is being
+issued and requests a PPT of topup through product-use steps. Do not route credit
+topups through `000000002m` without confirming the category/MID assignment.
+The next work is reviewer-accessible product/payment paths and the requested
+materials, with approval/cancel testing separately gated by money authorization.

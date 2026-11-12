@@ -1,0 +1,20 @@
+import express from 'express';
+import {randomBytes} from 'node:crypto';
+import {renderNicepayPgForm} from '../src/payments/nicepay-pg.js';
+const origin='http://127.0.0.1:8790';
+const app=express();let secret='';const csrf=randomBytes(24).toString('hex');
+app.use((req,res,next)=>{res.set({'Cache-Control':'no-store','Referrer-Policy':'strict-origin-when-cross-origin','X-Content-Type-Options':'nosniff'});if(req.headers.host!=='127.0.0.1:8790'||(req.method==='POST'&&req.headers.origin!==origin))return res.sendStatus(403);next();});
+app.use(express.urlencoded({extended:false,limit:'2kb'}));
+app.get('/',(_req,res)=>res.type('html').send(`<!doctype html><meta charset="utf-8"><title>NICE 결제창 연결 확인</title><h1>매니툴 NICE 결제창 연결 확인</h1><p>MID 000000002m · 검수 표시액 1,000원. 상품 가격 아님. 카드 정보 입력·결제 완료 금지.</p><p>승인 API는 연결하지 않습니다. 키는 메모리에만 보관하며 종료하면 사라집니다.</p>${secret?'<a href="/window">실제 NICE 결제창 준비</a>':`<form method="post" action="/key"><input type="hidden" name="csrf" value="${csrf}"><label>MerchantKey <input name="key" type="password" autocomplete="off" required></label><button>로컬 메모리에 설정</button></form>`}`));
+app.post('/key',(req,res)=>{if(req.body.csrf!==csrf||secret||typeof req.body.key!=='string'||! /^[A-Za-z0-9+/]{80,100}={0,2}$/.test(req.body.key))return res.sendStatus(400);secret=req.body.key;res.redirect(303,'/');});
+app.get('/window',(_req,res)=>{
+ if(!secret)return res.redirect('/');
+ const config={variant:'legacy',id:'000000002m',secret,returnUrl:'https://manytool.net/nicepay-window-check-return'};
+ const order={id:'window_'+randomBytes(12).toString('hex'),amount:1000,currency:'KRW',goodsName:'Manytool window check'};
+ const timestamp=new Date(Date.now()+9*3600000).toISOString().replace(/\D/g,'').slice(0,14);
+ let html=renderNicepayPgForm(order,config,timestamp);
+ html=html.replace('Test integration only. Not a live checkout.','실제 NICE 결제창 연결 확인 · 표시액 1,000원 · 카드 입력 및 결제 완료 금지. 승인 API 미연결.');
+ html=html.replace('document.payForm.submit()',"document.getElementById('status').textContent='카드 인증 반환을 중단했습니다. 승인 요청은 전송하지 않습니다.'");
+ res.type('html').send(html);
+});
+app.listen(8790,'127.0.0.1',()=>console.log('NICE window review: '+origin+' (no approval transport)'));
