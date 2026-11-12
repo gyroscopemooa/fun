@@ -1,0 +1,24 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+<Layout title="결제 연동 심사 | ManyTool" description="매니툴 NICE 결제모듈 연동 확인용 페이지" noindex>
+ <main class="mx-auto max-w-3xl px-4 py-12">
+  <p class="font-bold text-amber-800">NICE 심사 전용 · 판매 개시 전</p>
+  <h1 class="mt-3 text-3xl font-black">매니툴 결제 연동 확인</h1>
+  <p class="mt-4 leading-7">실제 구매를 받지 않는 연동 확인 페이지입니다. 판매 가격과 서비스 제공기간은 확정 전이며, 결제 승인·크레딧 지급·유료 AI 실행은 처리하지 않습니다.</p>
+  <section class="mt-8 rounded-2xl border p-6">
+   <h2 class="text-xl font-bold">1. 개별 상품 직접결제</h2>
+   <p class="mt-3">AI 사진 등 개별 도구를 선택하고, 입력 내용을 확인한 뒤 해당 상품을 한 번 결제하는 방식입니다.</p>
+   <dl class="my-4 grid grid-cols-2 gap-3"><dt>판매 가격</dt><dd>미정 · 판매하지 않음</dd><dt>서비스 제공기간</dt><dd>확정 전 · 심사 보완 필요</dd><dt>결제 방식</dt><dd>신용카드 단건결제 연동 확인</dd></dl>
+   <p class="text-sm leading-6 text-slate-600">결제창에는 연동 확인용 1,000원이 표시됩니다. 판매 가격이 아니며, 카드 인증 이후에도 이 심사 경로에서는 승인 요청을 전송하지 않습니다. 카드정보 입력·결제 완료는 진행하지 마세요.</p>
+   <form method="post" action="/api/nicepay-review/window" class="mt-5"><button class="rounded-xl bg-slate-900 px-5 py-3 font-bold text-white">NICE 결제창 연결 확인</button></form>
+  </section>
+  <section class="mt-6 rounded-2xl border p-6">
+   <h2 class="text-xl font-bold">2. 크레딧 충전 후 상품 사용</h2>
+   <ol class="my-4 list-decimal space-y-2 pl-5"><li>로그인하여 본인 지갑 확인</li><li>충전 수량·금액·환불 기준 확인</li><li>충전 전용 MID로 신용카드 결제</li><li>서버 승인 확인 후 크레딧 지급</li><li>상품별 차감량 확인 후 사용</li><li>잔액·사용 내역 및 환불 확인</li></ol>
+   <p class="leading-7">위 내용은 예정된 이용 순서입니다. 충전 전용 MID와 가격·제공기간 확정 전에는 실제 충전이나 유료 사용을 제공하지 않습니다. 직접결제 MID를 충전에 사용하지 않습니다.</p>
+   <p class="mt-3 text-sm text-slate-600">충전 결제경로 자료 및 실제 상품 사용 경로는 별도 보완 대상입니다. 해외카드·간편결제·정기결제는 활성화하지 않았습니다.</p>
+  </section>
+  <p class="mt-8 text-sm">문의: <a class="underline" href="mailto:support@manytool.net">support@manytool.net</a> · <a class="underline" href="/refund-policy/">환불정책</a></p>
+ </main>
+</Layout>
