@@ -1,4 +1,5 @@
 ---
+import NicepayReviewOffer from '../components/NicepayReviewOffer.astro';
 import Layout from '../layouts/Layout.astro';
 import AdsterraBanner from '../components/ads/AdsterraBanner.astro';
 import Header from '../components/Header.astro';
@@ -434,6 +435,7 @@ const c = locale === 'ko' ? { title:'AI 칼로리 계산기', desc:'음식 사�
     </section>
 
     <Recommend />
+  <NicepayReviewOffer product="calorie" />
   </main>
   <Footer />
 </Layout>
