@@ -20,3 +20,7 @@ Validation: 17 tests passed (Google session safety plus existing credit suite). 
 ## Observed local Google sign-in
 
 2026-11-12: user completed the real Google account consent flow. Browser displayed successful Google login, account email, local wallet balance 0 and empty history. This verifies actual Google ID-token validation and issuance of the existing wallet session. Only the isolated in-memory local wallet was used; no production balances, payment approvals or database migration occurred. Production API deployment and public Google app launch remain pending.
+
+## Explicit local credit simulation
+
+Open http://127.0.0.1:8788/review/ after dev:wallet starts. This loopback-only page creates an isolated credit-review@example.invalid session. Buttons exercise the existing topup ledger, FIFO allocation, purchase, claim and finish methods: mock topup 10, spend 2, remaining 8. Repeated clicks do not double-fund or double-debit. These quantities are test fixtures, not commercial prices. The fixed payment event is generated locally; no Polar/NICE network call or paid AI request is sent. This is not evidence of actual PG approval. This script is not mounted by the production API. The in-memory state is discarded at shutdown.

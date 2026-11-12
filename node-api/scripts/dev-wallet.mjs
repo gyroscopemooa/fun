@@ -31,6 +31,32 @@ installCreditRoutes(app,{store,orders:new Map(),verifyWebhook(){throw Error('Dis
   mailbox.unshift({email:mail.to[0],url:link});mailbox.splice(20);
   return Response.json({id:'local-only'});
  }});
+
+// Explicit loopback-only simulation. No PG transport, real money or production storage.
+const reviewAccount='credit-review@example.invalid';let simulatedTopup;
+app.get('/review/',(_req,res)=>{
+ const session=store.token(reviewAccount,'session',3600000);
+ res.setHeader('Set-Cookie',`manytool_credit_session=${session}; Path=/; HttpOnly; SameSite=Strict; Max-Age=3600`);
+ res.type('html').send(`<!doctype html><html lang="ko"><meta charset="utf-8"><title>크레딧 충전·사용 모의 검수</title><style>body{font:20px sans-serif;max-width:900px;margin:40px auto;line-height:1.8}aside{background:#fff0c2;padding:20px}button{padding:15px;margin:12px;font-size:20px}strong{font-size:36px}</style><h1>크레딧 충전·사용 모의 검수</h1><aside>로컬 메모리 지갑만 사용합니다. NICE 결제·실제 금전 결제·유료 AI 실행이 아닙니다. 10개 충전·2개 차감은 검수용 예시이며 판매 가격이나 상품별 차감량을 확정하지 않습니다.</aside><p>임시 검수 계정: ${reviewAccount}</p><p>잔액 <strong id="balance">확인 중</strong> 크레딧</p><button id="topup">모의 충전 10개 (1회)</button><button id="use">모의 상품 사용 2개 (1회)</button><p id="result" role="status"></p><h2>실제 테스트 원장</h2><pre id="history"></pre><script>async function call(path){const r=await fetch('/review/'+path,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});const d=await r.json();if(!r.ok)throw Error(d.error);return d}function show(d){document.getElementById('balance').textContent=d.balance;document.getElementById('history').textContent=d.history.map(x=>x.kind+' '+(x.delta>0?'+':'')+x.delta).join('\\n')}async function refresh(){show(await call('state'))}for(const action of ['topup','use'])document.getElementById(action).onclick=async()=>{try{const d=await call(action);show(d);document.getElementById('result').textContent=d.message;}catch(e){document.getElementById('result').textContent=e.message;}};refresh();</script></html>`);
+});
+app.post('/review/:action',(req,res)=>{
+ try{
+ if(req.headers.origin!==apiOrigin)throw Error('로컬 검수 화면에서 요청해주세요.');
+ const token=/(?:^|;\s*)manytool_credit_session=([a-f0-9]+)/.exec(req.headers.cookie||'')?.[1];
+ const owner=store.authenticate(token);if(owner!==reviewAccount)throw Error('검수 계정이 필요합니다.');
+ let message='잔액 조회';
+ if(req.params.action==='topup'){
+ if(!simulatedTopup){simulatedTopup=store.createTopup(owner,{credits:10,amount:0,currency:'KRW'},'local-review-only');store.checkout(simulatedTopup.id,'local-review-checkout','https://example.invalid/local-only');store.applyPayment({type:'order.paid',data:{id:'local-review-event',paid:true,product_id:'local-review-only',currency:'krw',net_amount:0,discount_amount:0,checkout_id:'local-review-checkout',metadata:{credit_topup_id:simulatedTopup.id}}});}
+ message='모의 충전 반영: 10개. 실제 결제는 없으며 같은 충전 버튼을 눌러도 중복 지급하지 않습니다.';
+ }else if(req.params.action==='use'){
+ const order=store.purchase(owner,'local-review-use-0001','local-sample',2,{id:'local-review-use',productType:'review_sample',paymentMode:'credits',status:'paid'});
+ if(store.state(order.id)==='ready'){store.claim(order.id);store.finish(order.id,true);}
+ message='모의 상품 사용 완료: 2개 차감, 검수용 결과 표시. 실제 AI 결과가 아닙니다. 재시도해도 중복 차감하지 않습니다.';
+ }else if(req.params.action!=='state')return res.sendStatus(404);
+ res.json({balance:store.balance(owner),history:store.history(owner),message});
+ }catch(e){res.status(400).json({error:e.message});}
+});
+
 const server=app.listen(8788,'127.0.0.1',()=>{
  console.log('Wallet: '+webOrigin+'/credits/');
  console.log('Local mailbox: '+apiOrigin+'/');
