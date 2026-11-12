@@ -37,7 +37,7 @@
 
 - 이번 변경의 직접 회귀: 44개 통과, 실패 0.
 - 기존 Windows 전체 결제·지갑 테스트에는 사진 저장소의 POSIX 소유자 전용 권한 검사 실패가 남는다. 보안 검사를 제거하지 않았다.
-- Linux에서 기존 테스트를 실행하도록 NICE 작업 브랜치 전용 GitHub Actions를 추가했다. 예약 실행·실결제·운영 DB·유료 AI 호출은 포함하지 않는다. 실제 실행 결과는 후속 확인 후 기록한다.
+- Linux에서 기존 테스트를 실행하도록 NICE 작업 브랜치 전용 GitHub Actions를 추가했다. 예약 실행·실결제·운영 DB·유료 AI 호출은 포함하지 않는다. 실제 실행은 GitHub 계정 결제 문제로 시작 전에 차단됐다. 테스트 실패가 아니라 실행 환경 장애다. 오류 원문: The job was not started because your account is locked due to a billing issue. 실행: https://github.com/gyroscopemooa/fun/actions/runs/43148829081
 - 실제 NICE 결제창·인증·승인·취소: 미실행. 가맹점 테스트 자격과 무과금 여부가 확인되지 않았다.
 - 운영 DB 변경·운영 API 재배포·실결제 활성화: 미실행.
 
@@ -62,3 +62,11 @@ NICE에 확인할 내용(이 문서를 작성하며 문의를 발송하지는 �
 - https://developers.nicepay.co.kr/docs/pg/auth/authorization/
 - https://developers.nicepay.co.kr/docs/pg/auth/net-cancel/
 - https://developers.nicepay.co.kr/docs/pg/auth/payment-cancel/
+
+## 커밋·배포 확인 결과
+
+- 코드 수정과 위 점검 기록: `1caf7ceb0af25a64a7f74b99b38b9f6519f3c2c6`, 기존 `feat/nicepay-test-adapter`에 정상 fast-forward 푸시. 강제 푸시하지 않았다.
+- Cloudflare Pages 프리뷰: 2026-11-12 12:35 KST 성공, 소요 3분 42초, 배포 `25d01b0a-806b-4f8a-891b-aa2e13f49dac`. URL: https://25d01b0a.fun-7hn.pages.dev/credits/
+- 이 배포는 정적 웹 프리뷰다. Render API나 결제 서버 스테이징 배포가 아니며 실제 NICE 승인·취소 검증을 포함하지 않는다.
+- main 운영 웹과 Render API를 변경하지 않았다. 실제 백업·저장소 전환·가맹점 개통·실결제는 여전히 미완료다.
+- GitHub Actions 결제 잠금 해소 후 위 기존 실행을 다시 실행하고 Linux 전체 결과를 확인해야 한다.
