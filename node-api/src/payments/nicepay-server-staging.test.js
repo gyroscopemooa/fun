@@ -87,3 +87,23 @@ test('unconnected direct catalog fails closed before accepting payment',async()=
   await assert.rejects(createNicepayServerStaging({enabled:true,origin:'https://manytool.net',tools:{},payment:{catalog:{[id]:{category:'direct'}}}}),/no execution route/);
  }
 });
+
+
+test('session endpoint awaits an asynchronous wallet lookup and rejects failed authentication',async t=>{
+ const dir=mkdtempSync(join(tmpdir(),'nice-session-')),file=join(dir,'db.sqlite');
+ const creditStore=new CreditStore(file),store=new NicepayOrderStore(file);
+ const owner='owner@example.com',token=creditStore.token(owner,'session',60000);
+ const original=creditStore.authenticate.bind(creditStore);
+ creditStore.authenticate=async(...args)=>{await new Promise(r=>setImmediate(r));return original(...args);};
+ const origin='https://manytool.net';
+ const config={variant:'legacy',id:'fake00000m',secret:'offline-test-not-secret',returnUrl:origin+'/nice/payment/return'};
+ const policy=readNicepayPolicy(JSON.stringify({enabled:true,apiConfirmed:true,variant:'legacy',categories:{}}));
+ const app=express();app.use('/nice',(await createNicepayServerStaging({enabled:true,store,creditStore,origin,payment:{config,policy,catalog:{},client:{}}})).router);
+ const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));
+ t.after(async()=>{await new Promise(r=>server.close(r));store.close();creditStore.close();rmSync(dir,{recursive:true});});
+ const url='http://127.0.0.1:'+server.address().port+'/nice/session';
+ const headers={Origin:origin,Cookie:'manytool_credit_session='+token};
+ assert.deepEqual(await (await fetch(url,{headers})).json(),{authenticated:true,owner});
+ creditStore.logout(token);
+ assert.equal((await fetch(url,{headers})).status,401);
+});

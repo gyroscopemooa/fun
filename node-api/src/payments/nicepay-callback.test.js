@@ -48,3 +48,24 @@ test('async tool validation rejection never claims entitlement or starts paid ex
  assert.equal(response.status,409);assert.equal(validations,1);assert.equal(runs,0);
  assert.equal(creditStore.db.prepare('SELECT state FROM nice_entitlements WHERE order_id=?').get(order.id).state,'ready');
 });
+
+
+test('checkout waits for durable abandonment after input binding failure',async t=>{
+ const dir=mkdtempSync(join(tmpdir(),'nice-abandon-')),file=join(dir,'db.sqlite');
+ const creditStore=new CreditStore(file),store=new NicepayOrderStore(file);
+ const config={variant:'legacy',id:'fake00000m',secret:'offline-test-not-secret',returnUrl:'https://manytool.net/nice/return'};
+ const policy=readNicepayPolicy(JSON.stringify({enabled:true,apiConfirmed:true,variant:'legacy',categories:{direct:{approved:true,methods:['card'],maxAmountKrw:10000}}}));
+ const catalog={tool:{category:'direct',amount:10000,currency:'KRW',recurring:false,goodsName:'Tool'}};
+ let entered,release;
+ const waiting=new Promise(r=>{entered=r;});
+ const original=store.rejectCreated.bind(store);
+ store.rejectCreated=async(...args)=>{entered();await new Promise(r=>{release=r;});return original(...args);};
+ const app=express();app.use('/nice',createNicepayStagingRouter({enabled:true,store,creditStore,config,policy,catalog,authenticate:async()=> 'buyer@example.com',origin:'https://manytool.net',client:{},toolAdapters:{tool:{bindCheckout:async()=>{throw Error('invalid binding');}}}}));
+ const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));
+ t.after(async()=>{release?.();await new Promise(r=>server.close(r));store.close();creditStore.close();rmSync(dir,{recursive:true});});
+ let responded=false;
+ const response=fetch('http://127.0.0.1:'+server.address().port+'/nice/checkout',{method:'POST',headers:{Origin:'https://manytool.net','Content-Type':'application/json'},body:JSON.stringify({productId:'tool'})}).then(r=>{responded=true;return r;});
+ await waiting;await new Promise(r=>setTimeout(r,25));assert.equal(responded,false);
+ release();assert.equal((await response).status,400);
+ assert.equal(store.db.prepare('SELECT state FROM nice_orders').get().state,'abandoned');
+});

@@ -11,7 +11,7 @@ const auth={AuthResultCode:'0000',MID:config.id,Moid:order.id,Amt:'10000',AuthTo
 auth.Signature=hash(auth.AuthToken+config.id+auth.Amt+config.secret);
 const paid={ResultCode:'3001',MID:config.id,Moid:order.id,Amt:'000000010000',TID:tid,PayMethod:'CARD'};
 paid.Signature=hash(tid+config.id+paid.Amt+config.secret);
-const cancel={ResultCode:'2001',MID:config.id,CancelAmt:'000000010000',TID:tid,PayMethod:'CARD'};
+const cancel={RemainAmt:'000000000000',ResultCode:'2001',MID:config.id,CancelAmt:'000000010000',TID:tid,PayMethod:'CARD'};
 cancel.Signature=hash(tid+config.id+cancel.CancelAmt+config.secret);
 test('real PG request wire format and test form keep key private',()=>{
  const r=buildPgAuthorization(auth,order,config,timestamp), fields=new URLSearchParams(r.body);
@@ -51,4 +51,14 @@ test('public config disabled and callback/checkout return 503 without processing
  const base=`http://127.0.0.1:${server.address().port}`;
  assert.equal((await (await fetch(base+'/payments/nicepay/config')).json()).enabled,false);
  for(const path of ['checkout','return'])assert.equal((await fetch(base+'/payments/nicepay/'+path,{method:'POST'})).status,503);
+});
+
+
+test('network cancellation with a missing or nonzero remainder remains uncertain',async()=>{
+ for(const RemainAmt of [undefined,'1','000000000001',0,'-1']){
+  let calls=0;
+  const client=createNicepayPgClient({config,enabled:true,fetcher:async()=>{calls++;return Response.json({...cancel,RemainAmt});}});
+  await assert.rejects(client.networkCancel(auth,order,timestamp),e=>e.code==='NICEPAY_UNCERTAIN');
+  assert.equal(calls,1);
+ }
 });

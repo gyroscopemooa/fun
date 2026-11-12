@@ -84,6 +84,12 @@ export function verifyNicepayApproval(body, order, auth, config) {
       || (legacy ? body.PayMethod : body.payMethod) !== (legacy ? 'CARD' : 'card')) fail();
   if (legacy) {
     if (body.MID !== id) fail();
+    // CARD alone does not establish domestic, non-easy-payment scope. Quarantine
+    // explicitly unsupported receipts; missing optional fields are not proof of
+    // merchant eligibility and do not replace the launch-time MID review.
+    if (body.CardType != null && !['01','02'].includes(body.CardType)) fail();
+    if (body.ClickpayCl != null && body.ClickpayCl !== '') fail();
+    if (body.MultiCl != null && !['','0'].includes(body.MultiCl)) fail();
     equalSignature(body.Signature, hash(tid + id + amount + config.secret));
   } else {
     if (body.status !== 'paid' || body.currency !== 'KRW') fail();

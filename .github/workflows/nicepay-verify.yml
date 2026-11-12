@@ -1,0 +1,26 @@
+name: NICE payment regression
+on:
+  push:
+    branches: [feat/nicepay-test-adapter]
+    paths:
+      - 'node-api/**'
+      - '.github/workflows/nicepay-verify.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  payment-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --prefix node-api
+      - name: Existing payment and wallet regression (no merchant credentials)
+        run: node --test node-api/src/payments/*.test.js node-api/src/credits/*.test.js
+      - name: Server syntax
+        run: node --check node-api/src/server.js

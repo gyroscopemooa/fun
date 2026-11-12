@@ -57,6 +57,7 @@ export function createNicepayPgClient({config,enabled=false,fetcher=fetch,timeou
       try{
         if(result.ResultCode!=='2001'||result.MID!==config.id||result.TID!==request.auth.tid||result.PayMethod!=='CARD'
           ||typeof result.CancelAmt!=='string'||!/^\d{1,12}$/.test(result.CancelAmt)||Number(result.CancelAmt)!==order.amount
+          ||typeof result.RemainAmt!=='string'||!/^0{1,12}$/.test(result.RemainAmt)
           ||typeof result.Signature!=='string'||!/^[a-fA-F0-9]{64}$/.test(result.Signature))throw new Error();
         const expected=sha(result.TID+config.id+result.CancelAmt+config.secret);
         if(!timingSafeEqual(Buffer.from(result.Signature,'hex'),Buffer.from(expected,'hex')))throw new Error();

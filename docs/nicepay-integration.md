@@ -1,5 +1,7 @@
 # NICEPAY integration preparation
 
+Latest merchant, production and release-blocker audit: [2026-11-12 status](nicepay-release-status-2026-11-12.md). Earlier sections are historical checkpoints, not proof of current activation.
+
 ## GUI review of ef1b369 (2026-11-11)
 
 The confirmed cancellation ID and amount are rechecked inside the same `BEGIN IMMEDIATE` transaction that claims the refund for sending. The two-connection regression rejects a replaced attempt and wrong amount without invoking the cancellation client. This review preserves that implementation.

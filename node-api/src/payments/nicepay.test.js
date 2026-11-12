@@ -78,3 +78,12 @@ test('direct product label can be supplied only as safe server label', () => {
     assert.throws(() => buildNicepayRequest({...order,goodsName:'<script>'},f.config,'20261110210000'));
   }
 });
+
+
+test('signed foreign, easy and mixed card receipts cannot fulfill an unapproved method',()=>{
+ const f=fixture('legacy'),auth=verifyNicepayAuthentication(f.auth,order,f.config);
+ for(const change of [{CardType:'03'},{CardType:'unknown'},{ClickpayCl:'E004'},{MultiCl:'1'}]){
+  assert.throws(()=>verifyNicepayApproval({...f.approval,...change},order,auth,f.config));
+ }
+ assert.equal(verifyNicepayApproval({...f.approval,CardType:'01',ClickpayCl:'',MultiCl:'0'},order,auth,f.config).verified,true);
+});

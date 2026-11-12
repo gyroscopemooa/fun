@@ -73,10 +73,10 @@ export async function createNicepayServerStaging({enabled=false,store,creditStor
   const common={enabled:true,store,creditStore,origin,authenticate};
   // Also validates shared persistent database and explicit confirmed payment configuration.
   router.use('/payment',createNicepayStagingRouter({...payment,...common,toolAdapters}));
-  router.get('/session',(req,res)=>{
+  router.get('/session',async(req,res)=>{
     res.set('Cache-Control','no-store');
     if(req.headers.origin!==origin)return res.status(403).json({error:'Origin rejected'});
-    try {res.json({authenticated:true,owner:authenticate(req)});}
+    try {const owner=await authenticate(req);if(typeof owner!=='string'||!owner)throw Error('Session required');res.json({authenticated:true,owner});}
     catch {res.status(401).json({error:'Authentication required'});}
   });
   let photoRuntime;
