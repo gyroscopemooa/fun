@@ -21,3 +21,5 @@ State lives only in a signed 1-hour browser-session fixture. It is reset by logo
 Only /challenge, /session, /me, /topup, /use, /logout and /config are supported. No approval, cancellation, refund or live fulfillment route exists. All mutations require exact Origin https://manytool.net. Production API Google wallet deployment remains a separate task, and the topup MID is still required before any actual NICE topup test.
 
 PPT must identify captured public review balances as simulation, not proof of PG approval. Source: Google server ID-token validation guide and jose jwtVerify documentation.
+
+Observed on 2026-11-13: actual Google login completed on https://manytool.net/credit-review/; browser displayed test balance 0, simulated topup to 10, sample use to 8, history and disabled completed buttons. Reload preserved test balance 8. Actual PG approval remains blocked. PPT screenshots now reference this public URL, not localhost.
