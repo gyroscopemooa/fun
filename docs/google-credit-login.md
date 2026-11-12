@@ -16,3 +16,7 @@ Registered JavaScript origins: https://manytool.net, https://feat-nicepay-test-a
 Authentication rejects a wrong Origin, incorrect/expired/reused nonce, invalid signature/audience/issuer/expiry, unverified email and non-authoritative external email. Sessions reuse the existing HttpOnly credit cookie. Credit prices remain undecided on the storefront. Existing historic purchase and refund calculations are preserved.
 
 Validation: 17 tests passed (Google session safety plus existing credit suite). Production API rollout remains pending verification of durable storage and existing balances; do not replace an existing wallet with an empty store. Existing API dependencies have audit findings unrelated to google-auth-library and require a separate patch review before production rollout.
+
+## Observed local Google sign-in
+
+2026-11-12: user completed the real Google account consent flow. Browser displayed successful Google login, account email, local wallet balance 0 and empty history. This verifies actual Google ID-token validation and issuance of the existing wallet session. Only the isolated in-memory local wallet was used; no production balances, payment approvals or database migration occurred. Production API deployment and public Google app launch remain pending.
