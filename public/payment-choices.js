@@ -28,30 +28,44 @@ window.manytoolShowPaymentChoices = function () {
     const row=document.createElement('label'),check=document.createElement('input'),link=document.createElement('a');row.style.cssText='display:block;margin:6px 0';check.type='checkbox';check.name=key;check.style.cssText='vertical-align:middle;margin-right:6px';link.textContent=text;link.href=url;link.target='_blank';link.rel='noopener noreferrer';link.style.cssText='text-decoration:underline';row.append(check,link);details.append(row);checks.push(check);
   }
   expand.onclick=()=>{details.hidden=!details.hidden;expand.setAttribute('aria-expanded',String(!details.hidden));expand.textContent=details.hidden?'보기':'접기';};agreements.append(line,details);
-  const paymentButtons=[];let busy=false;
+  const choices=[['CARD','카드결제','card.svg'],['NAVER','네이버페이','naverpay.svg'],['TOSS','토스페이','tosspay.svg'],['KAKAO','카카오페이','kakaopay.svg'],['SAMSUNG','삼성페이','samsungpay.png'],['APPLE','Apple Pay','applepay.svg'],['PAYCO','PAYCO','payco.png']];
+  const paymentButtons=[];let busy=false,preparing=false,epoch=0,preparedAt=0;const prepared=new Map();
   const consentMessage=document.createElement('p');consentMessage.id='manytool-consent-message';consentMessage.setAttribute('role','status');consentMessage.style.cssText='font-size:12px;color:#b45309;margin:6px 0 0';
   agreements.append(consentMessage);
-  function syncConsent(){const count=checks.filter(c=>c.checked).length;all.checked=count===checks.length;all.indeterminate=count>0&&count<checks.length;all.disabled=busy;checks.forEach(check=>check.disabled=busy);if(count===checks.length)line.style.boxShadow='none';for(const button of paymentButtons){button.disabled=!product||busy;button.setAttribute('aria-describedby','manytool-consent-message');button.style.opacity=button.disabled?'.55':'1';}}
+  function syncConsent(){const count=checks.filter(c=>c.checked).length;all.checked=count===checks.length;all.indeterminate=count>0&&count<checks.length;all.disabled=busy;checks.forEach(check=>check.disabled=busy);if(count===checks.length)line.style.boxShadow='none';for(const button of paymentButtons){button.disabled=!product||busy||(count===checks.length&&preparing);button.setAttribute('aria-describedby','manytool-consent-message');button.style.opacity=button.disabled?'.55':'1';}}
   function nudgeConsent(){consentMessage.textContent='위 필수 약관에 동의해 주세요.';line.style.boxShadow='0 0 0 2px #f59e0b';line.style.borderRadius='6px';all.focus();if(!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)line.animate?.([{transform:'translateX(0)'},{transform:'translateX(-5px)'},{transform:'translateX(5px)'},{transform:'translateX(-3px)'},{transform:'translateX(0)'}],{duration:320});}
-  all.addEventListener('change',()=>{checks.forEach(check=>check.checked=all.checked);consentMessage.textContent='';syncConsent();});checks.forEach(check=>check.addEventListener('change',()=>{consentMessage.textContent='';syncConsent();}));
+  function consentChanged(){consentMessage.textContent='';if(checks.every(check=>check.checked))return warmup();epoch++;preparing=false;prepared.clear();syncConsent();}
+  all.addEventListener('change',()=>{checks.forEach(check=>check.checked=all.checked);return consentChanged();});checks.forEach(check=>check.addEventListener('change',consentChanged));
   function sdk(){if(typeof window.goPay==='function')return Promise.resolve();return new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='https://pg-web.nicepay.co.kr/v3/common/js/nicepay-pgweb.js';script.onload=()=>typeof window.goPay==='function'?resolve():reject(Error('결제창을 불러오지 못했습니다.'));script.onerror=()=>{script.remove();reject(Error('결제창 연결을 다시 시도해 주세요.'));};document.head.append(script);});}
-  async function openPayment(method){
-    if(busy)return;if(!checks.every(check=>check.checked)){nudgeConsent();return;}if(product?.[0]!=='image'){consentMessage.textContent='이 상품은 가격 확정 후 직접 연결할 수 있습니다.';return;}busy=true;syncConsent();consentMessage.textContent='결제창을 연결하고 있습니다.';
+  async function warmup(readyMessage=''){
+    if(product?.[0]!=='image'){syncConsent();return;}
+    const run=++epoch;preparing=true;prepared.clear();syncConsent();consentMessage.textContent='결제수단을 연결하고 있습니다.';
     try{
-      const body=new URLSearchParams({product:'image',method,consentVersion:'2026-11-13-review',terms:'1',collection:'1',sharing:'1'});
-      const [response]=await Promise.all([window.fetch('/api/nicepay-review/window',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/x-www-form-urlencoded',Accept:'application/json'},body:String(body)}),sdk()]);
-      if(!dialog.isConnected)return; // Closing the selector cancels a pending SDK launch.
-      if(!response.ok)throw Error('결제창 연결 정보를 확인하지 못했습니다.');const data=await response.json();
-      if(data.testOnly!==true||data.method!==method||data.fields?.MID!=='000000002m'||data.fields?.Amt!=='9900'||data.fields?.ReturnURL!==location.origin+'/api/nicepay-review/return')throw Error('허용된 테스트 결제 정보가 아닙니다.');
+      const [,entries]=await Promise.all([sdk(),Promise.all(choices.map(async([method])=>{
+        const body=new URLSearchParams({product:'image',method,consentVersion:'2026-11-13-review',terms:'1',collection:'1',sharing:'1'});
+        const response=await window.fetch('/api/nicepay-review/window',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/x-www-form-urlencoded',Accept:'application/json'},body:String(body)});
+        if(!response.ok)throw Error('결제창 연결 정보를 확인하지 못했습니다.');const data=await response.json().catch(()=>null);
+        if(data?.testOnly!==true||data.method!==method||data.fields?.MID!=='000000002m'||data.fields?.Amt!=='9900'||data.fields?.ReturnURL!==location.origin+'/api/nicepay-review/return')throw Error('허용된 테스트 결제 정보가 아닙니다.');return [method,data];
+      }))]);
+      if(run!==epoch||!dialog.isConnected||!checks.every(check=>check.checked))return;entries.forEach(([method,data])=>prepared.set(method,data));preparedAt=Date.now();consentMessage.textContent=readyMessage;
+    }catch(error){if(run===epoch)consentMessage.textContent=error instanceof Error?error.message:'결제창 연결을 다시 시도해 주세요.';}finally{if(run===epoch){preparing=false;syncConsent();}}
+  }
+  function openPayment(method){
+    if(busy||preparing)return;if(!checks.every(check=>check.checked)){nudgeConsent();return;}if(product?.[0]!=='image'){consentMessage.textContent='이 상품은 가격 확정 후 직접 연결할 수 있습니다.';return;}
+    const data=prepared.get(method);if(!data||Date.now()-preparedAt>120000){void warmup('연결 정보를 갱신했습니다. 결제수단을 다시 눌러 주세요.');return;}
+    busy=true;syncConsent();
+    try{
       document.getElementById('manytool-nicepay-form')?.remove();const target=document.createElement('form');target.id='manytool-nicepay-form';target.name='payForm';target.method='post';target.action='/api/nicepay-review/return';target.acceptCharset='euc-kr';target.hidden=true;
       for(const [key,value]of Object.entries(data.fields)){const input=document.createElement('input');input.type='hidden';input.name=key;input.value=String(value);target.append(input);}document.body.append(target);
       const finish=text=>{target.remove();if(!document.getElementById('manytool-payment-choices'))window.manytoolShowPaymentChoices();const message=document.getElementById('manytool-consent-message');if(message)message.textContent=text;};
       // Never submits authentication for approval. Server return/approve routes remain HTTP 409.
-      window.nicepaySubmit=()=>finish('연결 확인을 마쳤습니다. 실제 결제 승인은 처리하지 않았습니다.');window.nicepayClose=()=>finish('결제창을 닫았습니다. 실제 결제는 처리하지 않았습니다.');
+      const notice=fallback=>{const read=name=>String(target.elements?.namedItem(name)?.value||'').replace(/[\r\n]/g,' ').slice(0,180);const code=read('AuthResultCode'),message=read('AuthResultMsg');return code&&code!=='0000'?`NICE ${method} 오류 ${code}: ${message||'가맹점 또는 결제수단 설정을 확인해 주세요.'}`:fallback;};
+      window.nicepaySubmit=()=>finish(notice('연결 확인을 마쳤습니다. 실제 결제 승인은 처리하지 않았습니다.'));window.nicepayClose=()=>finish(notice('결제창을 닫았습니다. 실제 결제는 처리하지 않았습니다.'));
+      // No await here: popup-based wallets need the original payment-button activation.
       dialog.close();try{window.goPay(target);}catch{finish('결제창을 열지 못했습니다. 다시 시도해 주세요.');}
     }catch(error){consentMessage.textContent=error instanceof Error?error.message:'결제창 연결을 다시 시도해 주세요.';}finally{busy=false;syncConsent();}
   }
-  for (const [method,label,logo] of [['CARD','카드결제','card.svg'],['NAVER','네이버페이','naverpay.svg'],['TOSS','토스페이','tosspay.svg'],['KAKAO','카카오페이','kakaopay.svg'],['SAMSUNG','삼성페이','samsungpay.png'],['APPLE','Apple Pay','applepay.svg'],['PAYCO','PAYCO','payco.png']]) {
+  for (const [method,label,logo] of choices) {
     const compact=['SAMSUNG','APPLE','PAYCO'].includes(method);
     const form = document.createElement('form'); form.method = 'post'; form.action = '/api/nicepay-review/window';
     const input = document.createElement('input'); input.type = 'hidden'; input.name = 'product'; input.value = product?.[0] || '';
