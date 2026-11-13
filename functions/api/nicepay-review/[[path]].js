@@ -14,7 +14,7 @@ export async function onRequest({request,env}){
  const body=await request.text();if(body.length>2048)return html('<p>요청이 너무 큽니다.</p>',413);
  const params=new URLSearchParams(body),id=params.get('product');
  const method=params.get('method')||'CARD';
- const methods={CARD:{label:'카드결제'},NAVER:{label:'네이버페이',code:'E020'},TOSS:{label:'토스페이',code:'E025'},KAKAO:{label:'카카오페이',code:'E016'}};
+ const methods={CARD:{label:'카드결제'},NAVER:{label:'네이버페이',code:'E020'},TOSS:{label:'토스페이',code:'E025'},KAKAO:{label:'카카오페이',code:'E016'},SAMSUNG:{label:'삼성페이',code:'E021'},APPLE:{label:'Apple Pay',code:'E022'},PAYCO:{label:'PAYCO',code:'E015'}};
  if(!Object.hasOwn(methods,method))return html('<p>결제수단을 다시 선택해주세요.</p>',400);
  const selected=methods[method];
  const product=id===null?null:Object.hasOwn(NICE_REVIEW_PRODUCTS,id)?NICE_REVIEW_PRODUCTS[id]:undefined;

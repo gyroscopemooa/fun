@@ -17,12 +17,12 @@ test('review signing is fixed and matches NICE legacy signature without exposing
 });
 
 test('brand connection diagnostics use official options and require user acknowledgement without approving',async()=>{
- for(const [method,code]of [['NAVER','E020'],['TOSS','E025'],['KAKAO','E016']]){
+ for(const [method,code]of [['NAVER','E020'],['TOSS','E025'],['KAKAO','E016'],['SAMSUNG','E021'],['APPLE','E022'],['PAYCO','E015']]){
   const r=await onRequest({env,request:request('window',{method:'POST',headers:{Origin:origin},body:'product=image&method='+method})});
   assert.equal(r.status,200);const body=await r.text();
   assert.ok(body.includes('name="DirectEasyPay" value="'+code+'"'));
   assert.ok(body.includes('name="DirectShowOpt" value="CARD"'));
-  if(method!=='KAKAO')assert.ok(body.includes('name="EasyPayMethod" value="'+code+'=CARD"'));
+  if(method==='NAVER'||method==='TOSS')assert.ok(body.includes('name="EasyPayMethod" value="'+code+'=CARD"'));
   assert.ok(body.includes('id="review-consent"'));assert.ok(!body.includes(env.NICEPAY_REVIEW_MERCHANT_KEY));
   let opens=0;const pay={},consent={checked:false},status={},document={payForm:{},getElementById:id=>id==='pay'?pay:id==='review-consent'?consent:status};
   const context={document,goPay:()=>opens++};const script=[...body.matchAll(/<script>([\s\S]*?)<\/script>/g)].at(-1)[1];runInNewContext(script,context);

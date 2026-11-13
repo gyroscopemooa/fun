@@ -29,8 +29,9 @@ test('original blocked tool request opens payment choices without approval or ex
   assert.equal(form.children[0].value,'image');
   assert.ok(nodes.some(n=>n.disabled&&n.textContent==='보유 크레딧으로 결제'));
   for(const label of ['네이버페이','토스페이','카카오페이'])assert.ok(nodes.some(n=>!n.disabled&&n.textContent===label));
-  for(const method of ['CARD','NAVER','TOSS','KAKAO'])assert.ok(nodes.some(n=>n.tag==='input'&&n.name==='method'&&n.value===method));
-  assert.equal(nodes.filter(n=>n.tag==='img'&&n.src.startsWith('/payment-brands/')).length,4);
+  for(const method of ['CARD','NAVER','TOSS','KAKAO','SAMSUNG','APPLE','PAYCO'])assert.ok(nodes.some(n=>n.tag==='input'&&n.name==='method'&&n.value===method));
+  assert.equal(nodes.filter(n=>n.tag==='img'&&n.src.startsWith('/payment-brands/')).length,7);
+  assert.ok(nodes.some(n=>n['aria-label']==='추가 간편결제'&&n.children.length===3));
   context.window.manytoolShowPaymentChoices(); assert.equal(nodes.filter(n=>n.tag==='dialog').length,1);
   assert.equal(await context.window.fetch('https://api.manytool.net/config'),'read-only');
   assert.equal(networkCalls,1); dialog.close(); assert.equal(dialog.isConnected,false);
