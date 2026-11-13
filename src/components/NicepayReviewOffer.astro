@@ -6,7 +6,7 @@ const item=NICE_REVIEW_PRODUCTS[product];
 {item && <section class="mx-auto my-6 max-w-5xl rounded-2xl border border-amber-300 bg-amber-50 p-6" aria-label="상품 제공기간 및 NICE 심사">
 <h2 class="text-xl font-bold">{item.name} · 이용기간 안내</h2>
 <p class="mt-3 leading-7">{item.period}</p>
-<p class="mt-3 text-sm">{item.proposedPriceKrw ? `출시 예정가 ${item.proposedPriceKrw.toLocaleString('ko-KR')}원 · 결과 1회입니다.` : 'NICE 판매 가격은 미정입니다.'} 아래는 이 상품의 결제창 연결 확인 경로이며 실제 구매·승인·상품 실행은 처리하지 않습니다.</p>
+<p class="mt-3 text-sm">{item.proposedPriceKrw ? `출시 예정가 ${item.proposedPriceKrw.toLocaleString('ko-KR')}원 · ${item.unit||'결과 1회'}입니다.` : 'NICE 판매 가격은 미정입니다.'} 현재 실제 구매·승인·상품 실행은 처리하지 않습니다.</p>
 <form method="post" action="/api/nicepay-review/window" class="mt-4"><input type="hidden" name="product" value={product}/><button class="rounded-xl bg-slate-900 px-5 py-3 font-bold text-white">이 상품의 NICE 주문 확인</button></form>
 <p class="mt-3 text-sm"><a href="/credits/" class="underline">크레딧 잔액·충전 안내</a> · <a href="/refund-policy/" class="underline">환불정책</a></p>
 </section>}

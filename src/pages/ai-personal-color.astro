@@ -326,7 +326,7 @@ const promoSlides = await Promise.all(
         if (!response.ok) throw new Error(`config failed: ${response.status}`);
         const payload = await response.json();
         apiReady = Boolean(payload?.readiness?.aiPersonalColorReady);
-        productReady = Boolean(payload?.paymentProducts?.ai_personal_color);
+        productReady = payload?.paymentMode === 'mock' || Boolean(payload?.paymentProducts?.ai_personal_color);
       } catch {
         apiReady = false;
         productReady = false;
@@ -480,6 +480,7 @@ const promoSlides = await Promise.all(
         setStatus('먼저 사진을 준비해 주세요.', 'error');
         return;
       }
+      if(window.manytoolAiUnavailable && window.manytoolShowPaymentChoices){window.manytoolShowPaymentChoices();return;}
       if (!apiReady || !productReady) {
         setStatus('분석 서비스 연결을 확인하고 있어요.');
         if (!(await fetchConfig())) {
@@ -493,6 +494,11 @@ const promoSlides = await Promise.all(
           setStatus('결제 페이지로 이동합니다.');
           window.sessionStorage.setItem(STORAGE_PENDING_KEY, '1');
           const checkout = await requestCheckout();
+          if(checkout?.paid && checkout?.orderId){
+            currentOrderId=checkout.orderId;
+            await runAnalysis();
+            return;
+          }
           if (checkout?.checkoutUrl) {
             window.location.href = checkout.checkoutUrl;
             return;

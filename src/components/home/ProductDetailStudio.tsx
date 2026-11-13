@@ -15,6 +15,7 @@ import {
   X
 } from 'lucide-react';
 import { toast } from 'sonner';
+import {AI_PRODUCTS} from '../../../shared/ai-products.js';
 
 import { Button } from '@/components/ui/button';
 import ProductDetailSamples from '@/components/home/ProductDetailSamples';
@@ -31,8 +32,6 @@ import {
   classifyImages,
   detailPageTestScenarios,
   ensureResultIntegrity,
-  formatApproxKrw,
-  formatDetailPagePrice,
   getDetailPageTier,
   normalizeDetailPageCount,
   starterPrompts,
@@ -750,6 +749,11 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
       return;
     }
 
+    if (window.manytoolAiUnavailable && window.manytoolShowPaymentChoices) {
+      window.manytoolShowPaymentChoices();
+      return;
+    }
+
     if (!API_BASE) {
       setApiError(ui.missingApiBase);
       toast.error(ui.missingApiBase);
@@ -762,12 +766,12 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
       return;
     }
 
-    if (paymentMode !== 'polar') {
+    if (paymentMode !== 'polar' && !window.manytoolLocalAiTesting) {
       toast.message('Payment mode is currently mock.');
       return;
     }
 
-    if (!paymentProducts.detail_page) {
+    if (paymentMode === 'polar' && !paymentProducts.detail_page) {
       toast.error(ui.paymentProductMissing);
       return;
     }
@@ -776,7 +780,7 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
     try {
       const pageCount = normalizeDetailPageCount(formValues.pageCount);
       const tierEnabled = paymentProducts.detail_page_tiers?.[pageCount];
-      if (paymentProducts.detail_page_tiers && tierEnabled === false) {
+      if (paymentMode === 'polar' && paymentProducts.detail_page_tiers && tierEnabled === false) {
         throw new Error(ui.tierNotReady(pageCount));
       }
       const pricing = buildDetailPagePricing(pageCount);
@@ -1081,7 +1085,7 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
               </label>
               <div className="min-w-0 space-y-2 text-sm sm:col-span-2">
                 <span className="font-semibold">{ui.pageCount}</span>
-                <input type="hidden" {...register('pageCount', { valueAsNumber: true })} value={normalizedPageCount} />
+                <input data-ai-page-count type="hidden" {...register('pageCount', { valueAsNumber: true })} value={normalizedPageCount} />
                 <div className="grid grid-cols-5 gap-1.5 rounded-2xl bg-slate-100 p-1">
                   {DETAIL_PAGE_TIER_OPTIONS.map((option) => {
                     const selected = normalizedPageCount === option.pageCount;
@@ -1207,20 +1211,19 @@ export default function ProductDetailStudio({ locale = 'ko' }: ProductDetailStud
               </div>
               <div className="text-right">
                 <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Estimated</p>
-                {locale === 'ko' ? <p className="font-semibold text-slate-900">예상 금액: 약 {Math.round(pricingSummary.total_price * 1450).toLocaleString('ko-KR')}원</p> : null}
+                <p className="font-semibold text-slate-900">{AI_PRODUCTS[`detail_page_${normalizedPageCount}`].amount.toLocaleString('ko-KR')}원</p>
               </div>
             </div>
 
             <div className="mt-5 grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 sm:grid-cols-2">
               <div className="min-w-0">
                 <p className="font-semibold text-slate-900">{ui.selectedPages}: {pricingSummary.page_count}{locale === 'ko' ? '장' : locale === 'zh' ? '页' : ' pages'}</p>
-                <p className="text-xs text-slate-500">{ui.perPageApprox} {formatDetailPagePrice(pricingSummary.unit_price, pricingSummary.currency)}</p>
-                {locale === 'ko' ? <p className="text-xs text-slate-400">{ui.perPageApprox} {formatApproxKrw(pricingSummary.unit_price)}</p> : null}
+                <p className="text-xs text-slate-500">업로드 사진을 활용한 구성·카피 · 추가 AI 이미지 생성 별도</p>
               </div>
               <div className="min-w-0 sm:text-right">
                 <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{ui.estimated}</p>
-                <p className="text-lg font-black text-slate-900">{formatDetailPagePrice(pricingSummary.total_price, pricingSummary.currency)}</p>
-                <p className="text-xs text-slate-400">{locale === 'ko' ? `${formatApproxKrw(pricingSummary.total_price)} · ` : ''}{ui.usdNotice}</p>
+                <p className="text-lg font-black text-slate-900">{AI_PRODUCTS[`detail_page_${normalizedPageCount}`].amount.toLocaleString('ko-KR')}원</p>
+                <p className="text-xs text-slate-400">출시 예정가 · 현재 실제 결제 없음</p>
               </div>
             </div>
 

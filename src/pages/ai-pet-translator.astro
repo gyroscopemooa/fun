@@ -682,7 +682,7 @@ const meta = locale === 'ko' ? { title:'AI 펫 언어 분석기 | 강아지 고�
             clearPaidOrder();
             return false;
           }
-          if (payload.status === 'paid' && payload.productType === 'ai_pet_translator' && !payload.petTranslatorUsedAt) {
+          if (payload.status === 'paid' && payload.productType === 'ai_pet_translator' && (!payload.petTranslatorUsedAt || (window.manytoolLocalAiTesting && payload.localPetPolicy))) {
             currentOrderId = orderId;
             window.localStorage.setItem(ORDER_STORAGE_KEY, orderId);
             return true;
@@ -877,7 +877,7 @@ const meta = locale === 'ko' ? { title:'AI 펫 언어 분석기 | 강아지 고�
           refreshAvailability();
           return null;
         }
-        if (!hasPaidAccess()) {
+        if (!token && !currentOrderId && !sessionActive) {
           try {
             await persistDraftForCheckout();
             const checkout = await requestPetCheckout();

@@ -1,11 +1,15 @@
 /* The original tool request remains blocked until approval and fulfillment are deployed. */
 window.manytoolShowPaymentChoices = function () {
   if (document.getElementById('manytool-payment-choices')) return;
-  const product = {
+  const path=location.pathname.replace(/^\/[a-z]{2,3}(?:-[A-Za-z]+)?(?=\/)/,'').replace(/\/$/,'');
+  const catalog=Object.values(window.manytoolAiCatalog||{});
+  const detailCount=Number(document.querySelector?.('[data-ai-page-count]')?.value||7);
+  const configured=catalog.find(p=>p.paths?.includes(path))||(['/tools/product-detail-studio','/product-detail-studio'].includes(path)?catalog.find(p=>p.pageCount===detailCount):null);
+  const product = configured ? [configured.id,configured.name] : {
     '/ai-calorie-calculator': ['calorie', 'AI 칼로리 분석'],
     '/ai-image-generator': ['image', 'AI 이미지 생성'],
     '/ai-pet-translator': ['pet', 'AI 펫 번역기 30일 이용권']
-  }[location.pathname.replace(/\/$/, '')];
+  }[path];
   const dialog = document.createElement('dialog');
   dialog.id = 'manytool-payment-choices';
   dialog.setAttribute('aria-labelledby', 'manytool-payment-title');
@@ -14,7 +18,7 @@ window.manytoolShowPaymentChoices = function () {
   const title = document.createElement('h2'); title.id = 'manytool-payment-title'; title.textContent = '결제 방법 선택'; title.style.cssText = 'font-size:18px;font-weight:800;margin:0 0 10px';
   const summary = document.createElement('div'); summary.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 6px';
   const name = document.createElement('p'); name.textContent = product?.[1] || '선택한 AI 상품'; name.style.cssText = 'font-size:13px;color:#475569;margin:0';
-  const price = document.createElement('p'); price.textContent = product?.[0] === 'image' ? '9,900원' : '가격 확정 전'; price.style.cssText = 'font-size:18px;font-weight:800;margin:0;white-space:nowrap'; summary.append(name,price);
+  const price = document.createElement('p'); price.textContent = configured ? configured.amount.toLocaleString('ko-KR')+'원' : product?.[0] === 'image' ? '9,900원' : '가격 확정 전'; price.style.cssText = 'font-size:18px;font-weight:800;margin:0;white-space:nowrap'; summary.append(name,price);
   const note = document.createElement('p'); note.textContent = '결제창 연결 테스트 · 실제 결제 없음'; note.style.cssText = 'font-size:11px;color:#64748b;margin:0';
   const actions = document.createElement('div'); actions.style.cssText = 'display:grid;gap:8px;margin-top:14px';
   const secondary = document.createElement('div'); secondary.setAttribute('aria-label','추가 간편결제'); secondary.style.cssText = 'display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:2px';
@@ -52,7 +56,7 @@ window.manytoolShowPaymentChoices = function () {
     }catch(error){if(run===epoch)consentMessage.textContent=error instanceof Error?error.message:'결제창 연결을 다시 시도해 주세요.';}finally{if(run===epoch){preparing=false;syncConsent();}}
   }
   function openPayment(method){
-    if(busy||preparing||unavailable.has(method))return;if(!checks.every(check=>check.checked)){nudgeConsent();return;}if(product?.[0]!=='image'){consentMessage.textContent='이 상품은 가격 확정 후 직접 연결할 수 있습니다.';return;}
+    if(busy||preparing||unavailable.has(method))return;if(!checks.every(check=>check.checked)){nudgeConsent();return;}if(product?.[0]!=='image'){consentMessage.textContent='가격은 설정됐습니다. 현재 인증창 연결 테스트는 이미지 상품 9,900원만 허용돼 있으며 실제 결제는 처리하지 않습니다.';return;}
     const data=prepared.get(method);if(!data||Date.now()-preparedAt>120000){void warmup('연결 정보를 갱신했습니다. 결제수단을 다시 눌러 주세요.');return;}
     busy=true;syncConsent();
     try{
