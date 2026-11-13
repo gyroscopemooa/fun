@@ -12,13 +12,13 @@ export function createNicepayCustomerStaging({enabled=false,store,creditStore,au
  if(!enabled){router.use((_req,res)=>res.status(503).set('Cache-Control','no-store').send('결제 기능을 준비 중입니다.'));return router;}
  const products=Object.entries(payment?.catalog??{}).filter(([id,p])=>ids.includes(id)&&p.category==='direct'&&toolAdapters[id]);
  store.db.exec('CREATE TABLE IF NOT EXISTS nice_customer_orders(order_id TEXT PRIMARY KEY,owner TEXT NOT NULL,input_hash TEXT NOT NULL)');
- router.use((req,res,next)=>{
+ router.use(async(req,res,next)=>{
   res.set('Cache-Control','no-store').set('X-Content-Type-Options','nosniff').set('Referrer-Policy','no-referrer');
-  try{res.locals.owner=authenticate(req);next();}catch{res.status(401).send('먼저 Manytool 크레딧 계정으로 로그인해 주세요.');}
+  try{const owner=await authenticate(req);if(typeof owner!=='string'||!owner)throw Error('Verified account required');res.locals.owner=owner;next();}catch{res.status(401).send('먼저 Manytool 크레딧 계정으로 로그인해 주세요.');}
  });
  const owned=(id,owner)=>{
   const order=store.owned(id,owner),binding=store.db.prepare('SELECT input_hash FROM nice_customer_orders WHERE order_id=? AND owner=?').get(id,owner);
-  if(!binding||!products.some(([key])=>key===order.productId))throw Error('Unavailable order');return {order,binding};
+  if(!binding||order.merchantId!==payment.config.id||!products.some(([key])=>key===order.productId))throw Error('Unavailable order');return {order,binding};
  };
  router.get('/',(req,res)=>{
   const sourceProducts={'/ai-manseryeok':'ai_manseryeok','/ai-calorie-calculator':'calorie','/ai-personal-color':'ai_personal_color'};
@@ -35,6 +35,7 @@ export function createNicepayCustomerStaging({enabled=false,store,creditStore,au
   <button id="prepare" type="submit"${products.length?'':' disabled'}>입력 확인 후 결제 준비</button></form>
   <p id="message" role="status">${products.length?'':'이용 가능한 상품을 준비 중입니다.'}</p><a id="pay" target="_blank" rel="noopener" hidden>안전한 결제창 열기</a>
   <button id="check" hidden>결제 완료 확인</button><button id="execute" hidden>분석 시작</button><button id="new" hidden>새 분석 시작</button>
+  <section><h2>이전 결과 다시 보기</h2><select id="completed" aria-label="완료된 구매 결과"></select><button id="restore" type="button" disabled>선택한 결과 보기</button><p id="restore-message" role="status"></p></section>
   <section id="result" aria-live="polite"></section><script src="${esc(req.baseUrl)}/client.js"></script></body></html>`);
  });
  router.get('/client.js',(_req,res)=>res.type('js').send(client));
@@ -62,6 +63,27 @@ export function createNicepayCustomerStaging({enabled=false,store,creditStore,au
  router.post('/status',(req,res)=>{
   try{const {order}=owned(req.body?.orderId,res.locals.owner);const ready=order.state==='verified'&&Boolean(creditStore.db.prepare("SELECT 1 FROM nice_entitlements WHERE order_id=? AND owner=? AND state IN ('ready','claimed')").get(order.id,res.locals.owner));res.json({state:order.state,ready});}
   catch{res.status(404).json({error:'주문을 찾을 수 없습니다.'});}
+ });
+ // Restore a completed result without calling the paid provider or claiming an entitlement again.
+ // Keep the owner check before looking up the job; an order ID is not authorization.
+ router.post('/result',(req,res)=>{
+  try{
+   const {order}=owned(req.body?.orderId,res.locals.owner);
+   const hasJobs=creditStore.db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='nice_tool_jobs'").get();
+   const job=hasJobs?creditStore.db.prepare('SELECT state,result FROM nice_tool_jobs WHERE order_id=?').get(order.id):null;
+   if(order.state!=='verified'||job?.state!=='done')return res.status(409).json({error:'완료된 결과가 없습니다. 재결제하지 말고 처리 상태를 확인해 주세요.'});
+   res.json({orderId:order.id,result:JSON.parse(job.result)});
+  }catch{res.status(404).json({error:'결과를 찾을 수 없습니다.'});}
+ });
+ router.post('/history',(_req,res)=>{
+  try{
+   const db=creditStore.db;
+   if(!db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='nice_tool_jobs'").get())return res.json({orders:[]});
+   const rows=store.db.prepare("SELECT c.order_id FROM nice_customer_orders c JOIN nice_tool_jobs j ON j.order_id=c.order_id WHERE c.owner=? AND j.state='done' ORDER BY j.updated DESC LIMIT 20").all(res.locals.owner);
+   const orders=[];
+   for(const row of rows){try{const {order}=owned(row.order_id,res.locals.owner);if(order.state==='verified'&&order.merchantId===payment.config.id)orders.push({orderId:order.id,productId:order.productId});}catch{}}
+   res.json({orders});
+  }catch{res.status(400).json({error:'이전 결과 목록을 확인할 수 없습니다.'});}
  });
  router.post('/execute',async(req,res)=>{
   try{const owner=res.locals.owner,{order,binding}=owned(req.body?.orderId,owner),adapter=toolAdapters[order.productId],input=await adapter.validate(req.body?.input);
@@ -102,4 +124,7 @@ $('check').onclick=async()=>{try{const s=await api('/status',{orderId});$('execu
 function render(value,target){if(value===null||typeof value!=='object'){const p=document.createElement('p');p.textContent=String(value??'');target.append(p);return;}for(const [key,v]of Object.entries(value)){const section=document.createElement('section'),h=document.createElement('h3');h.textContent=key;section.append(h);target.append(section);render(v,section);}}
 $('execute').onclick=async()=>{$('execute').disabled=true;message('분석 중입니다. 이 창을 유지해 주세요.');try{const data=await api('/execute',{orderId,input});$('result').replaceChildren();render(data.result,$('result'));message('분석이 완료되었습니다.');$('new').hidden=false;}catch(e){message(e.message);$('execute').disabled=false;}};
 $('new').onclick=()=>{sessionStorage.removeItem('nice-customer:'+productId);location.reload();};
+async function restoreHistory(){const data=await api('/history',{});$('completed').replaceChildren();for(const order of data.orders){const option=document.createElement('option');option.value=order.orderId;option.textContent=order.productId+' · '+order.orderId.slice(0,8);$('completed').append(option);}$('restore').disabled=!data.orders.length;$('restore-message').textContent=data.orders.length?'완료된 결과는 재결제 없이 확인할 수 있습니다.':'완료된 구매 결과가 없습니다.';}
+$('restore').onclick=async()=>{const id=$('completed').value;if(!id)return;$('restore').disabled=true;try{const data=await api('/result',{orderId:id});$('result').replaceChildren();render(data.result,$('result'));$('restore-message').textContent='저장된 결과입니다. 재결제·AI 재실행 없이 복구했습니다.';}catch(e){$('restore-message').textContent=e.message;}finally{$('restore').disabled=false;}};
+restoreHistory().catch(e=>{$('restore-message').textContent=e.message;});
 `;

@@ -9,6 +9,8 @@ const hash=s=>createHash('sha256').update(s).digest('hex');
 test('customer form -> retry-safe order -> fake approval -> one paid-tool result with real cookie',async t=>{
  const dir=mkdtempSync(join(tmpdir(),'nice-customer-')),file=join(dir,'db');
  const creditStore=new CreditStore(file),store=new NicepayOrderStore(file);
+ const authenticate=creditStore.authenticate.bind(creditStore);
+ creditStore.authenticate=async(...args)=>authenticate(...args);
  const config={variant:'legacy',id:'fake00000m',secret:'offline-test-only-secret',returnUrl:'https://manytool.net/nice/payment/return'};
  const policy={enabled:true,apiConfirmed:true,variant:'legacy',categories:{direct:{approved:true,methods:['card'],maxAmountKrw:10000}}};
  const catalog={ai_manseryeok:{category:'direct',amount:10000,currency:'KRW',recurring:false,goodsName:'Saju'}};
@@ -37,6 +39,8 @@ test('customer form -> retry-safe order -> fake approval -> one paid-tool result
  assert.equal((await post('/nice/customer/prepare',{...request,input:{...input,name:'다른 사람'}})).status,400);
  assert.equal((await fetch(base+first.checkoutUrl,{headers:{Cookie:headers.Cookie}})).status,200);
  assert.equal((await post('/nice/customer/execute',{orderId,input})).status,409);assert.equal(calls,0);
+ assert.equal((await post('/nice/customer/result',{orderId})).status,409);
+ assert.deepEqual((await (await post('/nice/customer/history',{})).json()).orders,[]);
  const auth={AuthResultCode:'0000',MID:config.id,Moid:orderId,Amt:'10000',AuthToken:'fake-token',TxTid:tid,PayMethod:'CARD',NextAppURL:'https://dc1-api.nicepay.co.kr/webapi/pay_process.jsp'};auth.Signature=hash(auth.AuthToken+config.id+auth.Amt+config.secret);
  const callback=()=>fetch(base+'/nice/payment/return',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(auth)});
  assert.equal((await callback()).status,200);assert.equal((await callback()).status,200);assert.equal(approvals,1);
@@ -47,6 +51,9 @@ test('customer form -> retry-safe order -> fake approval -> one paid-tool result
  await assert.rejects(executeNicepayTool({creditStore,orderId,owner:'buyer@example.com',product:'ai_manseryeok',runner:()=>{calls++;}}),/Purchased input mismatch/);
  const result=await (await post('/nice/customer/execute',{orderId,input})).json();assert.equal(result.result.title,input.name);
  assert.equal((await post('/nice/customer/execute',{orderId,input})).status,200);assert.equal(calls,1);
+ const restored=await post('/nice/customer/result',{orderId});assert.equal(restored.status,200);
+ assert.equal((await restored.json()).result.title,input.name);assert.equal(calls,1);
+ assert.deepEqual((await (await post('/nice/customer/history',{})).json()).orders,[{orderId,productId:'ai_manseryeok'}]);
  assert.equal((await post('/nice/payment/execute',{orderId,input:{...input,name:'changed after completion'}})).status,409);
  assert.equal((await post('/nice/payment/execute',{orderId,input})).status,200);
  assert.equal(calls,1);
@@ -54,6 +61,9 @@ test('customer form -> retry-safe order -> fake approval -> one paid-tool result
  assert.equal((await (await post('/nice/customer/prepare',request)).json()).checkoutUrl,null);
  const other=creditStore.token('other@example.com','session',60000);
  assert.equal((await post('/nice/customer/status',{orderId},{...headers,Cookie:'manytool_credit_session='+other})).status,404);
+ assert.equal((await post('/nice/customer/result',{orderId},{...headers,Cookie:'manytool_credit_session='+other})).status,404);
+ assert.deepEqual((await (await post('/nice/customer/history',{},{...headers,Cookie:'manytool_credit_session='+other})).json()).orders,[]);
+ assert.equal((await post('/nice/customer/result',{orderId},{...headers,Cookie:''})).status,401);
  assert.equal((await fetch(base+first.checkoutUrl,{headers})).status,404);
 });
 
@@ -67,7 +77,7 @@ async function checkClientRecovery(code){
   const context=createContext({document:{getElementById:element,querySelectorAll:()=>[]},location:{pathname:'/nice/customer/',reload(){}},
    crypto:{randomUUID:()=> 'client-request-123456'},sessionStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},
    FormData:class{get(k){return values[k];}has(){return false;}},
-   fetch:async(_url,options)=>{requests.push(JSON.parse(options.body));if(requests.length===1){if(uncertain)throw Error('Network lost');return {ok:false,json:async()=>({editable:true,error:'Invalid birth date'})};}return {ok:true,json:async()=>({orderId:'order',checkoutUrl:'/nice/customer/pay/order',amount:10000,currency:'KRW'})};}
+   fetch:async(_url,options)=>{if(_url.endsWith('/history'))return {ok:true,json:async()=>({orders:[]})};requests.push(JSON.parse(options.body));if(requests.length===1){if(uncertain)throw Error('Network lost');return {ok:false,json:async()=>({editable:true,error:'Invalid birth date'})};}return {ok:true,json:async()=>({orderId:'order',checkoutUrl:'/nice/customer/pay/order',amount:10000,currency:'KRW'})};}
   });
   new Script(code).runInContext(context);
   await element('purchase').onsubmit({preventDefault(){}});
