@@ -1,7 +1,7 @@
 /* The original tool request remains blocked until approval and fulfillment are deployed. */
 window.manytoolShowPaymentChoices = function () {
   if (document.getElementById('manytool-payment-choices')) return;
-  const path=location.pathname.replace(/^\/[a-z]{2,3}(?:-[A-Za-z]+)?(?=\/)/,'').replace(/\/$/,'');
+  const path=location.pathname.replace(/^\/(?!ai(?:-|\/))[a-z]{2,3}(?:-[A-Za-z]{2,4})?(?=\/)/,'').replace(/\/$/,'');
   const catalog=Object.values(window.manytoolAiCatalog||{});
   const detailCount=Number(document.querySelector?.('[data-ai-page-count]')?.value||7);
   const configured=catalog.find(p=>p.paths?.includes(path))||(['/tools/product-detail-studio','/product-detail-studio'].includes(path)?catalog.find(p=>p.pageCount===detailCount):null);

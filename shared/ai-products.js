@@ -27,7 +27,7 @@ export const AI_PRODUCTS = Object.freeze({
   ...Object.fromEntries([[5,5900,300],[7,6900,350],[10,8900,450],[15,12900,700],[20,16900,900]].map(([n,amount,cost]) => [`detail_page_${n}`,row(`detail_page_${n}`,`AI 상세페이지 ${n}장`,amount,cost,[],`구성·카피 ${n}장 · 업로드 사진 활용`,{productType:`detail_page_${n}`,goodsName:`AI Detail ${n}`,pageCount:n})]))
 });
 export function aiProductForPath(pathname, pageCount = 7) {
-  const path = pathname.replace(/^\/[a-z]{2,3}(?:-[A-Za-z]+)?(?=\/)/,'').replace(/\/$/,'');
+  const path = pathname.replace(/^\/(?!ai(?:-|\/))[a-z]{2,3}(?:-[A-Za-z]{2,4})?(?=\/)/,'').replace(/\/$/,'');
   if (['/tools/product-detail-studio','/product-detail-studio'].includes(path)) return AI_PRODUCTS[`detail_page_${pageCount}`] ?? null;
   return Object.values(AI_PRODUCTS).find(p => p.paths.includes(path)) ?? null;
 }
