@@ -7,7 +7,7 @@ test('original blocked tool request opens payment choices without approval or ex
   const nodes = [];
   const make = tag => {
     const node = {tag, children: [], isConnected: true, style: {}, events: {},
-      setAttribute(k,v) {this[k]=v;}, append(...items) {this.children.push(...items);},
+      setAttribute(k,v) {this[k]=v;}, append(...items) {this.children.push(...items);}, prepend(...items) {this.children.unshift(...items);},
       addEventListener(k, fn) {this.events[k]=fn;}, focus() {},
       showModal() {this.open=true;}, close() {this.events.close?.();}, remove() {this.isConnected=false;}};
     nodes.push(node); return node;
@@ -24,11 +24,13 @@ test('original blocked tool request opens payment choices without approval or ex
   await assert.rejects(context.window.fetch('https://api.manytool.net/checkout',{method:'POST'}),{name:'AbortError'});
   assert.equal(networkCalls,0);
   const dialog=nodes.find(n=>n.id==='manytool-payment-choices'); assert.equal(dialog.open,true);
-  assert.ok(nodes.some(n=>n.textContent==='9,900원 · 결과 1회'));
+  assert.ok(nodes.some(n=>n.textContent==='9,900원'));
   const form=nodes.find(n=>n.tag==='form'); assert.equal(form.action,'/api/nicepay-review/window');
   assert.equal(form.children[0].value,'image');
   assert.ok(nodes.some(n=>n.disabled&&n.textContent==='보유 크레딧으로 결제'));
-  for(const label of ['네이버페이','토스페이','카카오페이'])assert.ok(nodes.some(n=>n.disabled&&n.textContent===label));
+  for(const label of ['네이버페이','토스페이','카카오페이'])assert.ok(nodes.some(n=>!n.disabled&&n.textContent===label));
+  for(const method of ['CARD','NAVER','TOSS','KAKAO'])assert.ok(nodes.some(n=>n.tag==='input'&&n.name==='method'&&n.value===method));
+  assert.equal(nodes.filter(n=>n.tag==='img'&&n.src.startsWith('/payment-brands/')).length,4);
   context.window.manytoolShowPaymentChoices(); assert.equal(nodes.filter(n=>n.tag==='dialog').length,1);
   assert.equal(await context.window.fetch('https://api.manytool.net/config'),'read-only');
   assert.equal(networkCalls,1); dialog.close(); assert.equal(dialog.isConnected,false);

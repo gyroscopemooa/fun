@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
+import {runInNewContext} from 'node:vm';
 import {onRequest} from '../functions/api/nicepay-review/[[path]].js';
 const origin='https://review.example.com';
 const env={NICEPAY_REVIEW_ENABLED:'true',NICEPAY_REVIEW_ORIGIN:origin,NICEPAY_REVIEW_MERCHANT_KEY:'a'.repeat(86)+'=='};
@@ -13,6 +14,22 @@ test('review signing is fixed and matches NICE legacy signature without exposing
  assert.equal(field('SignData'),createHash('sha256').update(field('EdiDate')+'000000002m100000'+env.NICEPAY_REVIEW_MERCHANT_KEY).digest('hex'));
  assert.ok(!body.includes(env.NICEPAY_REVIEW_MERCHANT_KEY));assert.ok(!body.includes('document.payForm.submit()'));
  assert.equal(field('ReturnURL'),origin+'/api/nicepay-review/return');
+});
+
+test('brand connection diagnostics use official options and require user acknowledgement without approving',async()=>{
+ for(const [method,code]of [['NAVER','E020'],['TOSS','E025'],['KAKAO','E016']]){
+  const r=await onRequest({env,request:request('window',{method:'POST',headers:{Origin:origin},body:'product=image&method='+method})});
+  assert.equal(r.status,200);const body=await r.text();
+  assert.ok(body.includes('name="DirectEasyPay" value="'+code+'"'));
+  assert.ok(body.includes('name="DirectShowOpt" value="CARD"'));
+  if(method!=='KAKAO')assert.ok(body.includes('name="EasyPayMethod" value="'+code+'=CARD"'));
+  assert.ok(body.includes('id="review-consent"'));assert.ok(!body.includes(env.NICEPAY_REVIEW_MERCHANT_KEY));
+  let opens=0;const pay={},consent={checked:false},status={},document={payForm:{},getElementById:id=>id==='pay'?pay:id==='review-consent'?consent:status};
+  const context={document,goPay:()=>opens++};const script=[...body.matchAll(/<script>([\s\S]*?)<\/script>/g)].at(-1)[1];runInNewContext(script,context);
+  pay.onclick();assert.equal(opens,0);consent.checked=true;consent.onchange();assert.equal(pay.disabled,false);pay.onclick();assert.equal(opens,1);
+  context.nicepaySubmit();assert.ok(status.textContent.includes('승인 요청을 전송하지 않습니다'));
+ }
+ assert.equal((await onRequest({env,request:request('window',{method:'POST',headers:{Origin:origin},body:'product=image&method=__proto__'})})).status,400);
 });
 test('callback and all approval paths fail closed without network or bindings',async()=>{
  const original=globalThis.fetch;let calls=0;globalThis.fetch=()=>{calls++;throw Error('network forbidden');};
