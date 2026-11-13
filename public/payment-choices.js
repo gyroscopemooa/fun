@@ -29,10 +29,11 @@ window.manytoolShowPaymentChoices = function () {
   }
   expand.onclick=()=>{details.hidden=!details.hidden;expand.setAttribute('aria-expanded',String(!details.hidden));expand.textContent=details.hidden?'보기':'접기';};agreements.append(line,details);
   const choices=[['CARD','카드결제','card.svg'],['NAVER','네이버페이','naverpay.svg'],['TOSS','토스페이','tosspay.svg'],['KAKAO','카카오페이','kakaopay.svg'],['SAMSUNG','삼성페이','samsungpay.png'],['APPLE','Apple Pay','applepay.svg'],['PAYCO','PAYCO','payco.png']];
-  const paymentButtons=[];let busy=false,preparing=false,epoch=0,preparedAt=0;const prepared=new Map();
+  const paymentButtons=[];let busy=false,preparing=false,epoch=0,preparedAt=0,launching=false;const prepared=new Map(),unavailable=new Set();
+  const retrySettings=document.createElement('button');retrySettings.type='button';retrySettings.textContent='설정 확인 후 다시 시도';retrySettings.style.cssText=style+';font-size:12px;display:none';retrySettings.hidden=true;
   const consentMessage=document.createElement('p');consentMessage.id='manytool-consent-message';consentMessage.setAttribute('role','status');consentMessage.style.cssText='font-size:12px;color:#b45309;margin:6px 0 0';
   agreements.append(consentMessage);
-  function syncConsent(){const count=checks.filter(c=>c.checked).length;all.checked=count===checks.length;all.indeterminate=count>0&&count<checks.length;all.disabled=busy;checks.forEach(check=>check.disabled=busy);if(count===checks.length)line.style.boxShadow='none';for(const button of paymentButtons){button.disabled=!product||busy||(count===checks.length&&preparing);button.setAttribute('aria-describedby','manytool-consent-message');button.style.opacity=button.disabled?'.55':'1';}}
+  function syncConsent(){const count=checks.filter(c=>c.checked).length;all.checked=count===checks.length;all.indeterminate=count>0&&count<checks.length;all.disabled=busy;checks.forEach(check=>check.disabled=busy);if(count===checks.length)line.style.boxShadow='none';for(const {button,method,title}of paymentButtons){const blocked=unavailable.has(method);button.disabled=!product||busy||blocked||(count===checks.length&&preparing);button.title=blocked?'NICE I009: 해당 MID의 결제수단 설정 확인이 필요합니다.':title;button.setAttribute('aria-describedby','manytool-consent-message');button.style.opacity=button.disabled?'.55':'1';}retrySettings.hidden=!unavailable.size;retrySettings.style.display=unavailable.size?'flex':'none';retrySettings.disabled=busy||preparing;}
   function nudgeConsent(){consentMessage.textContent='위 필수 약관에 동의해 주세요.';line.style.boxShadow='0 0 0 2px #f59e0b';line.style.borderRadius='6px';all.focus();if(!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)line.animate?.([{transform:'translateX(0)'},{transform:'translateX(-5px)'},{transform:'translateX(5px)'},{transform:'translateX(-3px)'},{transform:'translateX(0)'}],{duration:320});}
   function consentChanged(){consentMessage.textContent='';if(checks.every(check=>check.checked))return warmup();epoch++;preparing=false;prepared.clear();syncConsent();}
   all.addEventListener('change',()=>{checks.forEach(check=>check.checked=all.checked);return consentChanged();});checks.forEach(check=>check.addEventListener('change',consentChanged));
@@ -51,18 +52,18 @@ window.manytoolShowPaymentChoices = function () {
     }catch(error){if(run===epoch)consentMessage.textContent=error instanceof Error?error.message:'결제창 연결을 다시 시도해 주세요.';}finally{if(run===epoch){preparing=false;syncConsent();}}
   }
   function openPayment(method){
-    if(busy||preparing)return;if(!checks.every(check=>check.checked)){nudgeConsent();return;}if(product?.[0]!=='image'){consentMessage.textContent='이 상품은 가격 확정 후 직접 연결할 수 있습니다.';return;}
+    if(busy||preparing||unavailable.has(method))return;if(!checks.every(check=>check.checked)){nudgeConsent();return;}if(product?.[0]!=='image'){consentMessage.textContent='이 상품은 가격 확정 후 직접 연결할 수 있습니다.';return;}
     const data=prepared.get(method);if(!data||Date.now()-preparedAt>120000){void warmup('연결 정보를 갱신했습니다. 결제수단을 다시 눌러 주세요.');return;}
     busy=true;syncConsent();
     try{
       document.getElementById('manytool-nicepay-form')?.remove();const target=document.createElement('form');target.id='manytool-nicepay-form';target.name='payForm';target.method='post';target.action='/api/nicepay-review/return';target.acceptCharset='euc-kr';target.hidden=true;
       for(const [key,value]of Object.entries(data.fields)){const input=document.createElement('input');input.type='hidden';input.name=key;input.value=String(value);target.append(input);}document.body.append(target);
-      const finish=text=>{target.remove();if(!document.getElementById('manytool-payment-choices'))window.manytoolShowPaymentChoices();const message=document.getElementById('manytool-consent-message');if(message)message.textContent=text;};
+      const finish=text=>{target.remove();launching=false;busy=false;if(dialog.isConnected){if(!dialog.open)dialog.showModal();consentMessage.textContent=text;syncConsent();}else{window.manytoolShowPaymentChoices();const message=document.getElementById('manytool-consent-message');if(message)message.textContent=text;}};
       // Never submits authentication for approval. Server return/approve routes remain HTTP 409.
-      const notice=fallback=>{const read=name=>String(target.elements?.namedItem(name)?.value||'').replace(/[\r\n]/g,' ').slice(0,180);const code=read('AuthResultCode'),message=read('AuthResultMsg');return code&&code!=='0000'?`NICE ${method} 오류 ${code}: ${message||'가맹점 또는 결제수단 설정을 확인해 주세요.'}`:fallback;};
+      const notice=fallback=>{const read=name=>String(target.elements?.namedItem(name)?.value||'').replace(/[\r\n]/g,' ').slice(0,180);const code=read('AuthResultCode'),message=read('AuthResultMsg');if(code==='I009')unavailable.add(method);return code&&code!=='0000'?`NICE ${method} 오류 ${code}: ${message||'가맹점 또는 결제수단 설정을 확인해 주세요.'}${code==='I009'?' · 해당 MID의 결제수단 설정 확인이 필요합니다.':''}`:fallback;};
       window.nicepaySubmit=()=>finish(notice('연결 확인을 마쳤습니다. 실제 결제 승인은 처리하지 않았습니다.'));window.nicepayClose=()=>finish(notice('결제창을 닫았습니다. 실제 결제는 처리하지 않았습니다.'));
       // No await here: popup-based wallets need the original payment-button activation.
-      dialog.close();try{window.goPay(target);}catch{finish('결제창을 열지 못했습니다. 다시 시도해 주세요.');}
+      launching=true;dialog.close();try{window.goPay(target);}catch{finish('결제창을 열지 못했습니다. 다시 시도해 주세요.');}
     }catch(error){consentMessage.textContent=error instanceof Error?error.message:'결제창 연결을 다시 시도해 주세요.';}finally{busy=false;syncConsent();}
   }
   for (const [method,label,logo] of choices) {
@@ -76,12 +77,13 @@ window.manytoolShowPaymentChoices = function () {
     const image = document.createElement('img'); image.src = '/payment-brands/'+logo; image.alt = ''; image.width = method==='CARD'?24:64; image.height = compact?28:20; image.style.cssText = 'height:'+(compact?28:20)+'px;object-fit:contain;flex-shrink:0'; button.prepend(image);
     if(method==='KAKAO')button.style.cssText += ';background:#fee500;border-color:#fee500';
     form.append(input, selected, button); (compact?secondary:actions).append(form);
-    paymentButtons.push(button);
+    paymentButtons.push({button,method,title:button.title||''});
     form.addEventListener('submit',event=>{event.preventDefault();return openPayment(method);});
   }
   actions.append(secondary);
+  retrySettings.onclick=()=>{unavailable.clear();if(checks.every(check=>check.checked))return warmup('연결 정보를 갱신했습니다. 결제수단을 선택해 주세요.');syncConsent();};actions.append(retrySettings);
   const credit = document.createElement('button'); credit.type = 'button'; credit.disabled = true; credit.textContent = '보유 크레딧으로 결제'; credit.title = '크레딧 사용 연결 준비 중'; credit.style.cssText = style + ';margin-top:8px;opacity:.5'; actions.append(credit);
   const close = document.createElement('button'); close.type = 'button'; close.textContent = '닫기'; close.style.cssText = style + ';cursor:pointer'; close.onclick = () => dialog.close(); actions.append(close);
-  dialog.addEventListener('close', () => { dialog.remove(); if (previousFocus?.isConnected) previousFocus.focus(); });
+  dialog.addEventListener('close', () => { if(launching)return;dialog.remove(); if (previousFocus?.isConnected) previousFocus.focus(); });
   syncConsent();dialog.append(title, summary, note, agreements, actions); document.body.append(dialog); dialog.showModal();
 };

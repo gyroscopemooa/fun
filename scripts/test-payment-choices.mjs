@@ -9,7 +9,7 @@ test('original blocked tool request opens payment choices without approval or ex
     const node = {tag, children: [], isConnected: true, style: {}, events: {},
       setAttribute(k,v) {this[k]=v;}, append(...items) {this.children.push(...items);}, prepend(...items) {this.children.unshift(...items);},
       addEventListener(k, fn) {this.events[k]=fn;}, focus() {this.focused=true;}, animate() {this.animated=true;},
-      showModal() {this.open=true;}, close() {this.events.close?.();}, remove() {this.isConnected=false;this.children.forEach(child=>child.remove());}};
+      showModal() {this.open=true;}, close() {this.open=false;this.events.close?.();}, remove() {this.isConnected=false;this.children.forEach(child=>child.remove());}};
     nodes.push(node); return node;
   };
   const document = {activeElement: make('button'), documentElement: {lang:'ko'},
@@ -40,17 +40,22 @@ test('original blocked tool request opens payment choices without approval or ex
   assert.ok(nodes.some(n=>n['aria-label']==='추가 간편결제'&&n.children.length===3));
   context.window.manytoolShowPaymentChoices(); assert.equal(nodes.filter(n=>n.tag==='dialog').length,1);
   assert.equal(await context.window.fetch('https://api.manytool.net/config'),'read-only');
-  assert.equal(networkCalls,15);prevented=false;form.events.submit({preventDefault(){prevented=true;}});assert.equal(prevented,true);assert.equal(opens,1);assert.equal(dialog.isConnected,false);assert.equal(networkCalls,15);
+  assert.equal(networkCalls,15);prevented=false;form.events.submit({preventDefault(){prevented=true;}});assert.equal(prevented,true);assert.equal(opens,1);assert.equal(dialog.isConnected,true);assert.equal(dialog.open,false);assert.equal(networkCalls,15);
   assert.equal(diagnostics[0].get('consentVersion'),'2026-11-13-review');for(const key of ['terms','collection','sharing'])assert.equal(diagnostics[0].get(key),'1');
   context.window.nicepaySubmit();assert.equal(networkCalls,15);assert.equal(opens,1);assert.ok(nodes.some(n=>n.isConnected&&n.id==='manytool-consent-message'&&n.textContent.includes('실제 결제 승인은 처리하지 않았습니다')));
   assert.equal(nodes.find(n=>n.id==='manytool-nicepay-form').isConnected,false);
+  assert.equal(dialog.open,true);assert.equal(all.checked,true);
   context.window.matchMedia=()=>({matches:true});nodes.forEach(n=>n.animated=false);
-  const reopened=nodes.find(n=>n.isConnected&&n.id==='manytool-payment-choices'),again=nodes.find(n=>n.isConnected&&n.tag==='form');
+  const reopened=nodes.find(n=>n.isConnected&&n.id==='manytool-payment-choices'),again=nodes.find(n=>n.isConnected&&n.tag==='form'&&n.children.some(c=>c.name==='method'&&c.value==='NAVER'));
+  all.checked=false;all.events.change();
   await again.events.submit({preventDefault(){}});assert.equal(nodes.some(n=>n.animated),false);
   const nextAll=nodes.find(n=>n.isConnected&&n.id==='manytool-payment-agree-all');nextAll.checked=true;await nextAll.events.change();
   again.events.submit({preventDefault(){}});assert.equal(opens,2);
-  const target=nodes.find(n=>n.isConnected&&n.id==='manytool-nicepay-form');target.elements={namedItem:name=>({value:name==='AuthResultCode'?'TEST_DECLINED':name==='AuthResultMsg'?'Diagnostic merchant restriction':''})};
-  context.window.nicepayClose();assert.ok(nodes.some(n=>n.isConnected&&n.id==='manytool-consent-message'&&n.textContent.includes('TEST_DECLINED')&&n.textContent.includes('Diagnostic merchant restriction')));
+  const target=nodes.find(n=>n.isConnected&&n.id==='manytool-nicepay-form');target.elements={namedItem:name=>({value:name==='AuthResultCode'?'I009':name==='AuthResultMsg'?'Diagnostic merchant restriction':''})};
+  context.window.nicepayClose();assert.ok(nodes.some(n=>n.isConnected&&n.id==='manytool-consent-message'&&n.textContent.includes('I009')&&n.textContent.includes('Diagnostic merchant restriction')));
+  assert.equal(all.checked,true);assert.ok(nodes.some(n=>n.textContent==='네이버페이'&&n.disabled));assert.ok(nodes.some(n=>n.textContent==='카드결제'&&!n.disabled));
+  again.events.submit({preventDefault(){}});assert.equal(opens,2);
+  const retry=nodes.find(n=>n.isConnected&&n.textContent==='설정 확인 후 다시 시도');assert.equal(retry.hidden,false);await retry.onclick();assert.ok(nodes.some(n=>n.textContent==='네이버페이'&&!n.disabled));
   const cancelled=nodes.find(n=>n.isConnected&&n.id==='manytool-payment-choices'),cancelAll=nodes.find(n=>n.isConnected&&n.id==='manytool-payment-agree-all');
   const releases=[];context.window.fetch=(_url,init)=>new Promise(resolve=>releases.push(()=>resolve({ok:true,json:async()=>({testOnly:true,method:new URLSearchParams(init.body).get('method'),fields:{MID:'000000002m',Amt:'9900',ReturnURL:'https://manytool.net/api/nicepay-review/return'}})})));
   cancelAll.checked=true;const pending=cancelAll.events.change();cancelled.close();releases.forEach(release=>release());await pending;assert.equal(opens,2);
