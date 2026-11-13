@@ -19,6 +19,38 @@ window.manytoolShowPaymentChoices = function () {
   const actions = document.createElement('div'); actions.style.cssText = 'display:grid;gap:8px;margin-top:14px';
   const secondary = document.createElement('div'); secondary.setAttribute('aria-label','추가 간편결제'); secondary.style.cssText = 'display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:2px';
   const style = 'display:flex;align-items:center;justify-content:center;gap:12px;width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px;padding:11px;font-size:14px;font-weight:700;text-align:center;text-decoration:none;background:white;color:#0f172a;cursor:pointer';
+  const agreements=document.createElement('div');agreements.style.cssText='font-size:12px;margin-top:10px';
+  const line=document.createElement('div');line.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:8px';
+  const label=document.createElement('label'),all=document.createElement('input'),caption=document.createElement('span');all.type='checkbox';all.id='manytool-payment-agree-all';all.style.cssText='width:15px;height:15px;vertical-align:middle;margin-right:6px';caption.textContent='필수 약관 전체 동의';label.append(all,caption);
+  const expand=document.createElement('button');expand.type='button';expand.textContent='보기';expand.setAttribute('aria-expanded','false');expand.style.cssText='font-size:12px;color:#64748b;text-decoration:underline';line.append(label,expand);
+  const details=document.createElement('div');details.hidden=true;details.style.cssText='margin-top:8px';const checks=[];
+  for(const [key,text,url]of [['terms','전자금융거래 이용약관','https://www.nicepay.co.kr/cs/terms/policy1.do'],['collection','개인정보 수집·이용 안내','https://www.nicepay.co.kr/cs/terms/private.do'],['sharing','개인정보 제3자 제공 안내','https://www.nicepay.co.kr/cs/terms/private.do']]){
+    const row=document.createElement('label'),check=document.createElement('input'),link=document.createElement('a');row.style.cssText='display:block;margin:6px 0';check.type='checkbox';check.name=key;check.style.cssText='vertical-align:middle;margin-right:6px';link.textContent=text;link.href=url;link.target='_blank';link.rel='noopener noreferrer';link.style.cssText='text-decoration:underline';row.append(check,link);details.append(row);checks.push(check);
+  }
+  expand.onclick=()=>{details.hidden=!details.hidden;expand.setAttribute('aria-expanded',String(!details.hidden));expand.textContent=details.hidden?'보기':'접기';};agreements.append(line,details);
+  const paymentButtons=[];let busy=false;
+  const consentMessage=document.createElement('p');consentMessage.id='manytool-consent-message';consentMessage.setAttribute('role','status');consentMessage.style.cssText='font-size:12px;color:#b45309;margin:6px 0 0';
+  agreements.append(consentMessage);
+  function syncConsent(){const count=checks.filter(c=>c.checked).length;all.checked=count===checks.length;all.indeterminate=count>0&&count<checks.length;all.disabled=busy;checks.forEach(check=>check.disabled=busy);if(count===checks.length)line.style.boxShadow='none';for(const button of paymentButtons){button.disabled=!product||busy;button.setAttribute('aria-describedby','manytool-consent-message');button.style.opacity=button.disabled?'.55':'1';}}
+  function nudgeConsent(){consentMessage.textContent='위 필수 약관에 동의해 주세요.';line.style.boxShadow='0 0 0 2px #f59e0b';line.style.borderRadius='6px';all.focus();if(!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)line.animate?.([{transform:'translateX(0)'},{transform:'translateX(-5px)'},{transform:'translateX(5px)'},{transform:'translateX(-3px)'},{transform:'translateX(0)'}],{duration:320});}
+  all.addEventListener('change',()=>{checks.forEach(check=>check.checked=all.checked);consentMessage.textContent='';syncConsent();});checks.forEach(check=>check.addEventListener('change',()=>{consentMessage.textContent='';syncConsent();}));
+  function sdk(){if(typeof window.goPay==='function')return Promise.resolve();return new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='https://pg-web.nicepay.co.kr/v3/common/js/nicepay-pgweb.js';script.onload=()=>typeof window.goPay==='function'?resolve():reject(Error('결제창을 불러오지 못했습니다.'));script.onerror=()=>{script.remove();reject(Error('결제창 연결을 다시 시도해 주세요.'));};document.head.append(script);});}
+  async function openPayment(method){
+    if(busy)return;if(!checks.every(check=>check.checked)){nudgeConsent();return;}if(product?.[0]!=='image'){consentMessage.textContent='이 상품은 가격 확정 후 직접 연결할 수 있습니다.';return;}busy=true;syncConsent();consentMessage.textContent='결제창을 연결하고 있습니다.';
+    try{
+      const body=new URLSearchParams({product:'image',method,consentVersion:'2026-11-13-review',terms:'1',collection:'1',sharing:'1'});
+      const [response]=await Promise.all([window.fetch('/api/nicepay-review/window',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/x-www-form-urlencoded',Accept:'application/json'},body:String(body)}),sdk()]);
+      if(!dialog.isConnected)return; // Closing the selector cancels a pending SDK launch.
+      if(!response.ok)throw Error('결제창 연결 정보를 확인하지 못했습니다.');const data=await response.json();
+      if(data.testOnly!==true||data.method!==method||data.fields?.MID!=='000000002m'||data.fields?.Amt!=='9900'||data.fields?.ReturnURL!==location.origin+'/api/nicepay-review/return')throw Error('허용된 테스트 결제 정보가 아닙니다.');
+      document.getElementById('manytool-nicepay-form')?.remove();const target=document.createElement('form');target.id='manytool-nicepay-form';target.name='payForm';target.method='post';target.action='/api/nicepay-review/return';target.acceptCharset='euc-kr';target.hidden=true;
+      for(const [key,value]of Object.entries(data.fields)){const input=document.createElement('input');input.type='hidden';input.name=key;input.value=String(value);target.append(input);}document.body.append(target);
+      const finish=text=>{target.remove();if(!document.getElementById('manytool-payment-choices'))window.manytoolShowPaymentChoices();const message=document.getElementById('manytool-consent-message');if(message)message.textContent=text;};
+      // Never submits authentication for approval. Server return/approve routes remain HTTP 409.
+      window.nicepaySubmit=()=>finish('연결 확인을 마쳤습니다. 실제 결제 승인은 처리하지 않았습니다.');window.nicepayClose=()=>finish('결제창을 닫았습니다. 실제 결제는 처리하지 않았습니다.');
+      dialog.close();try{window.goPay(target);}catch{finish('결제창을 열지 못했습니다. 다시 시도해 주세요.');}
+    }catch(error){consentMessage.textContent=error instanceof Error?error.message:'결제창 연결을 다시 시도해 주세요.';}finally{busy=false;syncConsent();}
+  }
   for (const [method,label,logo] of [['CARD','카드결제','card.svg'],['NAVER','네이버페이','naverpay.svg'],['TOSS','토스페이','tosspay.svg'],['KAKAO','카카오페이','kakaopay.svg'],['SAMSUNG','삼성페이','samsungpay.png'],['APPLE','Apple Pay','applepay.svg'],['PAYCO','PAYCO','payco.png']]) {
     const compact=['SAMSUNG','APPLE','PAYCO'].includes(method);
     const form = document.createElement('form'); form.method = 'post'; form.action = '/api/nicepay-review/window';
@@ -30,10 +62,12 @@ window.manytoolShowPaymentChoices = function () {
     const image = document.createElement('img'); image.src = '/payment-brands/'+logo; image.alt = ''; image.width = method==='CARD'?24:64; image.height = compact?28:20; image.style.cssText = 'height:'+(compact?28:20)+'px;object-fit:contain;flex-shrink:0'; button.prepend(image);
     if(method==='KAKAO')button.style.cssText += ';background:#fee500;border-color:#fee500';
     form.append(input, selected, button); (compact?secondary:actions).append(form);
+    paymentButtons.push(button);
+    form.addEventListener('submit',event=>{event.preventDefault();return openPayment(method);});
   }
   actions.append(secondary);
   const credit = document.createElement('button'); credit.type = 'button'; credit.disabled = true; credit.textContent = '보유 크레딧으로 결제'; credit.title = '크레딧 사용 연결 준비 중'; credit.style.cssText = style + ';margin-top:8px;opacity:.5'; actions.append(credit);
   const close = document.createElement('button'); close.type = 'button'; close.textContent = '닫기'; close.style.cssText = style + ';cursor:pointer'; close.onclick = () => dialog.close(); actions.append(close);
   dialog.addEventListener('close', () => { dialog.remove(); if (previousFocus?.isConnected) previousFocus.focus(); });
-  dialog.append(title, summary, note, actions); document.body.append(dialog); dialog.showModal();
+  syncConsent();dialog.append(title, summary, note, agreements, actions); document.body.append(dialog); dialog.showModal();
 };

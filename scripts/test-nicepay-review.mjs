@@ -6,6 +6,18 @@ import {onRequest} from '../functions/api/nicepay-review/[[path]].js';
 const origin='https://review.example.com';
 const env={NICEPAY_REVIEW_ENABLED:'true',NICEPAY_REVIEW_ORIGIN:origin,NICEPAY_REVIEW_MERCHANT_KEY:'a'.repeat(86)+'=='};
 const request=(path,options={})=>new Request(origin+'/api/nicepay-review/'+path,options);
+
+test('inline diagnostics require explicit consent and remain limited to the authorized image amount',async()=>{
+ const headers={Origin:origin,Accept:'application/json'};
+ assert.equal((await onRequest({env,request:request('window',{method:'POST',headers,body:'product=image&method=NAVER'})})).status,403);
+ const consent='&consentVersion=2026-11-13-review&terms=1&collection=1&sharing=1';
+ for(const method of ['CARD','NAVER','TOSS','KAKAO','SAMSUNG','APPLE','PAYCO']){
+  const r=await onRequest({env,request:request('window',{method:'POST',headers,body:'product=image&method='+method+consent+'&Amt=1'})});assert.equal(r.status,200);
+  const data=await r.json();assert.equal(data.testOnly,true);assert.equal(data.method,method);assert.equal(data.fields.Amt,'9900');assert.equal(data.fields.MID,'000000002m');assert.equal(data.fields.ReturnURL,origin+'/api/nicepay-review/return');assert.ok(!JSON.stringify(data).includes(env.NICEPAY_REVIEW_MERCHANT_KEY));
+ }
+ assert.equal((await onRequest({env,request:request('window',{method:'POST',headers,body:'product=calorie&method=CARD'+consent})})).status,409);
+ assert.equal((await onRequest({env,request:request('window',{method:'POST',headers,body:'product=image&method=CARD'+consent.replace('sharing=1','sharing=0')})})).status,403);
+});
 test('review signing is fixed and matches NICE legacy signature without exposing key',async()=>{
  const response=await onRequest({env,request:request('window',{method:'POST',headers:{Origin:origin},body:'Amt=999999&MID=attacker'})});
  assert.equal(response.status,200);const body=await response.text();

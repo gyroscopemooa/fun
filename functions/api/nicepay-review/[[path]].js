@@ -17,8 +17,12 @@ export async function onRequest({request,env}){
  const methods={CARD:{label:'카드결제'},NAVER:{label:'네이버페이',code:'E020'},TOSS:{label:'토스페이',code:'E025'},KAKAO:{label:'카카오페이',code:'E016'},SAMSUNG:{label:'삼성페이',code:'E021'},APPLE:{label:'Apple Pay',code:'E022'},PAYCO:{label:'PAYCO',code:'E015'}};
  if(!Object.hasOwn(methods,method))return html('<p>결제수단을 다시 선택해주세요.</p>',400);
  const selected=methods[method];
+ const inline=request.headers.get('Accept')?.includes('application/json');
+ if(inline&&(params.get('consentVersion')!=='2026-11-13-review'||['terms','collection','sharing'].some(name=>params.get(name)!=='1')))return html('<p>필수 결제 안내를 확인해 주세요.</p>',403);
  const product=id===null?null:Object.hasOwn(NICE_REVIEW_PRODUCTS,id)?NICE_REVIEW_PRODUCTS[id]:undefined;
  if(product===undefined)return html('<p>상품을 다시 선택해주세요.</p>',400);
+ // User explicitly authorized the seven KRW 9,900 image authentication diagnostics only.
+ if(inline&&(id!=='image'||product.proposedPriceKrw!==9900))return html('<p>상품 가격을 먼저 확인해 주세요.</p>',409);
  const key=env.NICEPAY_REVIEW_MERCHANT_KEY;
  if(typeof key!=='string'||! /^[A-Za-z0-9+/]{80,100}={0,2}$/.test(key))return html('<h1>심사 연결 설정 대기</h1>',503);
  const timestamp=new Date(Date.now()+9*3600000).toISOString().replace(/\D/g,'').slice(0,14);
@@ -29,6 +33,7 @@ export async function onRequest({request,env}){
  const fields={MID:mid,Moid:'review_'+crypto.randomUUID().replaceAll('-',''),Amt:amount,GoodsName:product?product.name:'Manytool integration review',PayMethod:'CARD',EdiDate:timestamp,CharSet:'utf-8',ReturnURL:url.origin+'/api/nicepay-review/return',SignData:signature};
  // Official v3 direct-window options. Diagnostic only: never submits authentication for approval.
  if(selected.code){fields.DirectShowOpt='CARD';fields.DirectEasyPay=selected.code;if(method==='NAVER'||method==='TOSS')fields.EasyPayMethod=selected.code+'=CARD';}
+ if(inline)return new Response(JSON.stringify({testOnly:true,method,fields}),{headers:{...headers,'Content-Type':'application/json; charset=utf-8'}});
  const consent=selected.code?'<section><p>직접 인증창 호출 전에 NICE 안내를 확인해 주세요. 해당 MID에서 이 페이를 허용하지 않으면 연결이 제한될 수 있습니다.</p><p><a href="https://www.nicepay.co.kr/cs/terms/policy1.do" target="_blank" rel="noopener noreferrer">전자금융거래 이용약관</a> · <a href="https://www.nicepay.co.kr/cs/terms/private.do" target="_blank" rel="noopener noreferrer">개인정보 안내</a></p><label><input type="checkbox" id="review-consent">위 내용을 확인했으며, 실제 결제 없이 해당 페이 인증창 연결을 시험합니다.</label></section>':'';
  return html(`<h1>${selected.label} 연결 확인 · 실제 구매 불가</h1>${product?`<h2>${escape(product.name)}</h2><p>서비스 제공기간: ${escape(product.period)}</p><p><a href="${escape(product.path)}">상품 화면으로 돌아가기</a></p>`:''}<p>${product?.proposedPriceKrw ? `출시 예정가 ${product.proposedPriceKrw.toLocaleString('ko-KR')}원입니다.` : '판매 가격은 미정입니다.'} NICE 창의 ${Number(amount).toLocaleString('ko-KR')}원은 연결 확인용이며 현재 판매하지 않습니다.</p><p>카드정보 입력이나 결제 완료를 진행하지 마세요. 서버 승인·크레딧 지급은 차단되어 있습니다.</p>${consent}<form name="payForm" method="post" accept-charset="euc-kr" action="/api/nicepay-review/return">${Object.entries(fields).map(([k,v])=>`<input type="hidden" name="${k}" value="${escape(v)}">`).join('')}<button type="button" id="pay" ${selected.code?'disabled':''}>${selected.label} 인증창 연결 확인</button></form><p id="status" role="status"></p><a href="/payment-review/">상품 검토로 돌아가기</a><script src="https://pg-web.nicepay.co.kr/v3/common/js/nicepay-pgweb.js"></script><script>function nicepaySubmit(){document.getElementById('status').textContent='심사 전용이므로 승인 요청을 전송하지 않습니다.'}function nicepayClose(){document.getElementById('status').textContent='결제창을 닫았습니다. 결제 및 크레딧 지급은 처리하지 않았습니다.'}var consent=document.getElementById('review-consent');if(consent)consent.onchange=function(){document.getElementById('pay').disabled=!consent.checked};document.getElementById('pay').onclick=function(){if(consent&&!consent.checked)return;if(typeof goPay==='function')goPay(document.payForm);else document.getElementById('status').textContent='결제창을 불러오지 못했습니다.'}</script>`);
 }
