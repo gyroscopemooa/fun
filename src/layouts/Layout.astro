@@ -324,8 +324,9 @@ const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.r
     )}
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png?v=palm1" />
+    <link rel="icon" href="/favicon.ico?v=palm1" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <meta name="generator" content={Astro.generator} />
     <link rel="preload" as="style" href={globalCssUrl} />
     <title>{resolvedTitle}</title>
@@ -397,12 +398,22 @@ const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.r
     >
       <div class="flex items-center border-b border-slate-200 px-4 py-4">
         <div>
-          <p class="text-base font-black tracking-tight text-slate-950">{sidebarText.title}</p>
+          <p class="flex items-center gap-2 text-base font-black tracking-tight text-slate-950"><img src="/brand/manytool-96.png" width="36" height="36" alt="" class="rounded-xl" />{sidebarText.title}</p>
           <p class="mt-1 text-xs font-medium uppercase tracking-[0.18em] text-slate-400">{sidebarText.subtitle}</p>
         </div>
       </div>
 
       <nav class="flex-1 overflow-y-auto px-3 py-4">
+        <div class="mb-4 space-y-2" aria-label={locale === 'ko' ? '함께 쓰는 서비스' : 'Connected services'}>
+          <a href="https://mooaresume.com/" target="_blank" rel="noopener noreferrer" class="block rounded-2xl border border-[#dfe6e2] bg-[#eaf5ef] px-4 py-3 text-[#176b4a] transition hover:bg-[#dceee3] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#176b4a]" data-partner="mooaresume">
+            <span class="flex items-center justify-between text-sm font-bold">{locale === 'ko' ? '자기소개서 첨삭' : 'Resume review'}<span aria-hidden="true">↗</span></span>
+            <span class="mt-1 block text-xs font-medium">{locale === 'ko' ? '무아레쥬메' : 'MooaResume'}</span>
+          </a>
+          <a href="https://transtream.app/" target="_blank" rel="noopener noreferrer" class="block rounded-2xl border border-[#272a30] bg-[#090c12] px-4 py-3 text-[#b7ff3c] transition hover:bg-[#171d26] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b7ff3c]" data-partner="transtream">
+            <span class="flex items-center justify-between text-sm font-bold">{locale === 'ko' ? '스트리머 방송 번역' : 'Live stream translation'}<span aria-hidden="true">↗</span></span>
+            <span class="mt-1 block text-xs font-medium text-slate-300">TranStream · {locale === 'ko' ? '트랜스트림' : 'Live captions'}</span>
+          </a>
+        </div>
         <ul class="space-y-2">
           {sidebarText.links.map((link) => (
             <li>

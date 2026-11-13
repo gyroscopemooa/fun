@@ -35,8 +35,9 @@ const langLinks = [
 
 <header class="border-b border-slate-200 bg-white">
   <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-    <a href={localizedHrefOrOriginal(locale, '/')} class="text-xl font-bold tracking-tight">ManyTool</a>
+    <a href={localizedHrefOrOriginal(locale, '/')} class="flex shrink-0 items-center gap-2 text-xl font-bold tracking-tight"><img src="/brand/manytool-96.png" width="36" height="36" alt="" class="rounded-xl" />ManyTool</a>
     <div class="flex items-center gap-2">
+      <a href="/account/" class="shrink-0 rounded-lg border border-slate-200 px-2 py-1.5 text-xs font-semibold">{locale === 'ko' ? '로그인' : locale === 'ja' ? 'ログイン' : 'Sign in'}</a>
       <nav class="hidden items-center gap-2 text-sm md:flex">
         {navItems.map((item) => (
           <a class="rounded-md px-2 py-1 whitespace-nowrap hover:bg-slate-100" href={localizedHrefOrOriginal(locale, item.href)}>{item.label}</a>
