@@ -1,5 +1,15 @@
 # NICE merchant reply recheck — 2026-11-13
 
+## Latest reply superseding the issuance-pending status below
+
+NICE message `1a1d42965856d56a`, received 2026-11-13 18:06 KST, was independently read through Gmail. Manytool direct MID is `000000002m`; point-topup MID is now issued as `000000004m`. The issuer explicitly states that offering point topups and direct purchases on the same website does not permit overseas payments, even with distinct MIDs. MID issuance is not proof of card review approval, merchant activation or no-charge test authority. Key and settlement views still require the corresponding MID account; no authentication information is recorded here.
+
+The user previously requested direct-payment priority with continued point-topup development. A new launch-scope question is pending after this explicit overseas restriction; no credit activation or foreign-card capability should be inferred. Public credit operation remains disabled. Verify the newly issued merchant account, contract and permitted testing before configuring its key or routing topups. The UI/key binding tool for Whale remains unavailable; other services' Chrome/Edge sessions must not be substituted.
+
+Public frontend deployment `8f09aaf` was verified on manytool.net: the image product loads `/payment-choices.js`, the script exposes the choice dialog, and payment-review displays the provisional KRW 100,000 diagnostic amount. This is HTTP/script verification, not a successful real transaction or native Whale screenshot check. Backend/result-recovery changes `c39264f` remain on the NICE branch and are not deployed by that frontend release. Existing PPT captures are historical and do not show this amount or an actual credit payment.
+
+## Earlier reply and earlier live recheck
+
 Source: NICE message 1a1cf2667594427b received 2026-11-12 18:44 KST, thread 1a1bf400ea768576. No credentials are included in this record.
 
 NICE explicitly confirmed the Manytool direct-payment module was visible/connected. This is not approval of the merchant review, production approvals, or overseas cards. It said the point-topup MID would be separately announced after issuance; no later issuance message was found in the current search. It also reiterated that a point-topup business on the website restricts overseas payments and recurring billing, and that point topups require a separate operation scope.
