@@ -1014,6 +1014,13 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
       setErrorMessage('자유형 모드는 짧은 스타일 설명이 필요합니다.');
       return;
     }
+    // Open checkout before entering generation state. A payment choice is not an AI failure.
+    if (window.manytoolAiUnavailable && window.manytoolShowPaymentChoices) {
+      setIsModalOpen(false);
+      setErrorMessage('');
+      window.manytoolShowPaymentChoices();
+      return;
+    }
     if (!API_BASE) {
       setIsModalOpen(true);
       setGenerationPhase('error');

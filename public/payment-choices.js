@@ -9,7 +9,7 @@ window.manytoolShowPaymentChoices = function () {
   const dialog = document.createElement('dialog');
   dialog.id = 'manytool-payment-choices';
   dialog.setAttribute('aria-labelledby', 'manytool-payment-title');
-  dialog.style.cssText = 'border:1px solid #cbd5e1;border-radius:24px;padding:28px;max-width:460px;width:calc(100% - 32px);color:#0f172a;background:white;box-shadow:0 24px 80px #0005';
+  dialog.style.cssText = 'position:fixed;inset:0;margin:auto;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:24px;padding:28px;max-width:460px;width:calc(100% - 32px);max-height:calc(100dvh - 32px);overflow-y:auto;color:#0f172a;background:white;box-shadow:0 24px 80px #0005';
   const previousFocus = document.activeElement;
   const title = document.createElement('h2'); title.id = 'manytool-payment-title'; title.textContent = '결제 방법 선택'; title.style.cssText = 'font-size:24px;font-weight:800;margin:0 0 12px';
   const name = document.createElement('p'); name.textContent = product?.[1] || '선택한 AI 상품';
