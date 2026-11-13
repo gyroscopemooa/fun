@@ -29,7 +29,7 @@ test('disabled, unexpected origin and GET requests cannot create a payment form'
 
  test('real product orders keep server-owned name and period and reject unknown or oversized input',async()=>{
  for(const [id,name] of [['calorie','AI 칼로리 분석'],['image','AI 이미지 생성'],['pet','AI 펫 번역기 30일 이용권']]){
-  const r=await onRequest({env,request:request('window',{method:'POST',headers:{Origin:origin},body:'product='+id+'&Amt=999999&GoodsName=forged'})});const text=await r.text();assert.equal(r.status,200);assert.ok(text.includes(name));assert.ok(text.includes('서비스 제공기간'));assert.ok(text.includes('name="Amt" value="100000"'));assert.ok(!text.includes('forged'));
+  const r=await onRequest({env,request:request('window',{method:'POST',headers:{Origin:origin},body:'product='+id+'&Amt=999999&GoodsName=forged'})});const text=await r.text();assert.equal(r.status,200);assert.ok(text.includes(name));assert.ok(text.includes('서비스 제공기간'));assert.ok(text.includes(`name="Amt" value="${id==='image'?9900:100000}"`));assert.ok(!text.includes('forged'));
  }
  assert.equal((await onRequest({env,request:request('window',{method:'POST',headers:{Origin:origin},body:'product=__proto__'})})).status,400);
  assert.equal((await onRequest({env,request:request('window',{method:'POST',headers:{Origin:origin},body:'x'.repeat(2049)})})).status,413);

@@ -21,7 +21,7 @@ Validation receipt: C:/3.manytool/.codex-nice-review/public-credit-validation.js
 
 ## Still pending
 
-Topup MID/contract conditions and test credentials; actual topup approval/cancellation; commercial price and tool credit costs; actual paid-tool execution and durable production-wallet rollout. Google was verified with the registered owner test account; access for unregistered external reviewer accounts has not been independently verified.
+Topup MID 000000004m was announced by NICE on November 13; account/contract/testing authority and its separate key configuration still need verification. Actual topup approval/cancellation, tool credit costs, paid-tool execution and durable production-wallet rollout remain incomplete. Image generation now has an authorized proposed launch price of KRW 9,900; other commercial prices remain undecided. Google was verified with the registered owner test account; access for unregistered external reviewer accounts has not been independently verified.
 
 ## Price administration follow-up
 
@@ -32,5 +32,7 @@ Existing development code already calculates trusted server prices and snapshots
 안녕하세요. 매니툴 NICE 연동 진행 상황 공유드립니다.
 정식 사이트 https://manytool.net/payment-review/ 에서 실제 상품과 제공기간을 확인하고 NICE 카드 선택 창까지 연결할 수 있습니다.
 크레딧 경로는 https://manytool.net/credit-review/ 에서 Google 로그인 후 모의 충전·샘플 사용·잔액 변화를 확인할 수 있도록 준비했습니다. 해당 화면의 크레딧은 심사용 임시 테스트 상태이며 실제 NICE 승인이나 유료 상품 지급은 아닙니다.
-판매 가격은 미정이며 실제 결제 승인은 차단했습니다. 직접결제 창의 1,000원은 연결 확인용 표시액입니다. 충전 전용 MID 및 허용되는 테스트 조건 안내를 부탁드립니다.
+이미지 생성은 결과 1회 기준 출시 예정가 9,900원으로 준비 중이며 다른 상품 가격은 미정입니다. 실제 결제 승인은 차단했습니다. 발급 안내받은 충전 전용 MID는 000000004m이며 허용되는 테스트 조건 확인이 필요합니다. 크레딧은 개발·검수를 병행하지만 해외결제 정책 때문에 운영에서는 제거할 예정입니다. 실제 제거와 단건결제 해외카드 허용 범위 확인 후 최종 심사를 진행하려고 합니다. 현재 개발 상태와 제거 예정 상태를 구분하여 검토 부탁드립니다.
 첨부 자료는 실제 공개 화면과 모의 검증을 구분한 중간 확인 자료입니다. 현재 경로로 사전 확인이 가능한지와 최종 보완에 필요한 사항을 안내 부탁드립니다. 감사합니다.
+
+PPT note: the linked deck contains historical KRW 1,000 window captures and earlier MID-pending status. It has not been updated into a current launch-completion deck. Recapture after actual provider/payment validation; do not send this draft as current completed integration evidence.

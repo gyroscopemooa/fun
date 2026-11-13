@@ -24,10 +24,11 @@ test('original blocked tool request opens payment choices without approval or ex
   await assert.rejects(context.window.fetch('https://api.manytool.net/checkout',{method:'POST'}),{name:'AbortError'});
   assert.equal(networkCalls,0);
   const dialog=nodes.find(n=>n.id==='manytool-payment-choices'); assert.equal(dialog.open,true);
-  assert.ok(nodes.some(n=>n.textContent==='임시 검토 가격 100,000원'));
+  assert.ok(nodes.some(n=>n.textContent==='9,900원 · 결과 1회'));
   const form=nodes.find(n=>n.tag==='form'); assert.equal(form.action,'/api/nicepay-review/window');
   assert.equal(form.children[0].value,'image');
-  assert.ok(nodes.some(n=>n.disabled&&n.textContent.includes('크레딧')));
+  assert.ok(nodes.some(n=>n.disabled&&n.textContent==='보유 크레딧으로 결제'));
+  for(const label of ['네이버페이','토스페이','카카오페이'])assert.ok(nodes.some(n=>n.disabled&&n.textContent===label));
   context.window.manytoolShowPaymentChoices(); assert.equal(nodes.filter(n=>n.tag==='dialog').length,1);
   assert.equal(await context.window.fetch('https://api.manytool.net/config'),'read-only');
   assert.equal(networkCalls,1); dialog.close(); assert.equal(dialog.isConnected,false);
