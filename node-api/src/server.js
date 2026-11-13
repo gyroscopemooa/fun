@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import {publicAiCatalog,AI_PRODUCTS} from './commerce/ai-products.js';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -37,6 +38,8 @@ const IMAGE_MAX_BYTES = 12 * 1024 * 1024;
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: IMAGE_MAX_BYTES } });
 const paymentMode = process.env.PAYMENT_MODE ?? 'mock';
 const isProduction = process.env.NODE_ENV === 'production';
+const localAiDevelopment=!isProduction&&paymentMode==='mock'&&process.env.LOCAL_AI_DEVELOPMENT==='true'&&process.env.HOST==='127.0.0.1';
+const localPetRunning=new Set();
 const polarServer = process.env.POLAR_SERVER === 'sandbox' ? 'https://sandbox-api.polar.sh' : 'https://api.polar.sh';
 const polarCheckoutUrl = `${polarServer}/v1/checkouts`;
 const resendApiUrl = 'https://api.resend.com/emails';
@@ -66,7 +69,7 @@ const logSecurityEvent = (event, details = {}) => {
 
 const thisFile = fileURLToPath(import.meta.url);
 const thisDir = path.dirname(thisFile);
-const rootDir = path.resolve(thisDir, '..', 'node-api-storage');
+const rootDir = path.resolve(process.env.MANYTOOL_STORAGE_DIR || path.join(thisDir, '..', 'node-api-storage'));
 const originalDir = path.join(rootDir, 'originals');
 const generatedDir = path.join(rootDir, 'generated');
 const reportsDir = path.join(rootDir, 'reports');
@@ -508,6 +511,7 @@ app.get('/config', (_req, res) => {
 
   res.json({
     idPhotoGroomingModes: GROOMING_MODES,
+    aiProducts: publicAiCatalog(),
     idPhotoBeautyOptions: ['skin', 'contour', 'vitality', 'makeup'],
     imageProvider: getResolvedImageProvider(),
     configuredImageProvider: getImageProvider(),
@@ -554,6 +558,7 @@ app.get('/config', (_req, res) => {
 });
 
 const handlePetTranslator = async (req, res) => {
+  let localPetClaim=null;
   try {
     const mode = typeof req.body?.mode === 'string' ? req.body.mode.trim() : 'analyze';
     const animal = typeof req.body?.animal === 'string' ? req.body.animal.trim() : 'dog';
@@ -577,7 +582,24 @@ const handlePetTranslator = async (req, res) => {
       tokenState = getPetTranslatorTokenState(req.body?.token);
     }
 
+    let costLimits;
+    if(localAiDevelopment&&paidOrder?.localPetPolicy){
+      const policy=paidOrder.localPetPolicy,now=Date.now();
+      if(localPetRunning.has(paidOrder.id))return res.status(409).json({error:'Pet request already running'});
+      localPetRunning.add(paidOrder.id);localPetClaim=paidOrder.id;
+      const current=await loadOrder(paidOrder.id);
+      const day=new Date(now+9*3600000).toISOString().slice(0,10);
+      const usage=current.localPetUsage??{day,count:0,total:0};
+      if(usage.day!==day){usage.day=day;usage.count=0;}
+      if(now-Date.parse(current.createdAt)>=30*86400000||usage.count>=5||usage.total>=150)return res.status(429).json({error:'Pet pass usage limit reached'});
+      if(textInput.length>policy.textMaxChars)return res.status(422).json({error:'Pet text exceeds 500 characters'});
+      if(audioInput){const {assertPetAudioDuration}=await import('./commerce/petAudioLimits.js');await assertPetAudioDuration(audioInput,30);}
+      paidOrder={...current,localPetUsage:{day,count:usage.count+1,total:usage.total+1}};
+      await persistOrder(paidOrder.id,paidOrder);
+      costLimits={textMaxChars:500,audioMaxSeconds:30};
+    }
     const result = await analyzePetAudio({
+      costLimits,
       audioInput,
       mode,
       animal,
@@ -652,6 +674,8 @@ const handlePetTranslator = async (req, res) => {
       error: message,
       ...(retryAfterSeconds ? { retryAfterSeconds } : {})
     });
+  } finally {
+    if(localPetClaim)localPetRunning.delete(localPetClaim);
   }
 };
 
@@ -750,7 +774,7 @@ const ensurePetTranslatorOrder = async (orderId) => {
   if (!order) throw new Error('order not found');
   if (order.productType !== 'ai_pet_translator') throw new Error('invalid order product type');
   if (order.status !== 'paid') throw new Error('payment required');
-  if (order.petTranslatorUsedAt) {
+  if (order.petTranslatorUsedAt && !(localAiDevelopment&&order.localPetPolicy)) {
     throw new Error('this order has already been used');
   }
   return order;
@@ -3170,6 +3194,7 @@ app.post('/checkout', async (req, res) => {
   const orderId = uuidv4();
   const order = {
     id: orderId,
+    ...(localAiDevelopment&&productType==='ai_pet_translator'?{localPetPolicy:AI_PRODUCTS.pet.entitlementPolicy}:{}),
     productType,
     amount: Number(amount),
     currency,
@@ -3385,7 +3410,7 @@ app.use((err, req, res, _next) => {
   return res.status(500).json({ error: 'internal server error' });
 });
 
-app.listen(port, () => {
+app.listen(port, process.env.HOST || (isProduction ? '0.0.0.0' : '127.0.0.1'), () => {
   // eslint-disable-next-line no-console
   console.log(`[manytool-node-api] listening on http://127.0.0.1:${port}`);
 });

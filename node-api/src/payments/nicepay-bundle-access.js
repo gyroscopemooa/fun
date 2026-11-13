@@ -12,7 +12,24 @@ export function createNicepayBundleAccess({enabled = false, creditStore, clock =
   db.exec(`CREATE TABLE IF NOT EXISTS nice_bundle_locks(order_id TEXT PRIMARY KEY, input TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS nice_bundle_runs(order_id TEXT NOT NULL, request_id TEXT NOT NULL,
       fingerprint TEXT NOT NULL, state TEXT NOT NULL, result TEXT, updated INTEGER NOT NULL,
-      PRIMARY KEY(order_id, request_id));`);
+      PRIMARY KEY(order_id, request_id));
+    CREATE TABLE IF NOT EXISTS nice_pet_usage(order_id TEXT NOT NULL,request_id TEXT NOT NULL,created INTEGER NOT NULL,PRIMARY KEY(order_id,request_id));`);
+  const hasIntent=db.prepare('PRAGMA table_info(nice_orders)').all().some(column=>column.name==='intent');
+  const dayKey=now=>new Date(now+9*3600000).toISOString().slice(0,10);
+  function petPolicy(orderId){
+    if(!hasIntent)return null; // Legacy orders retain their original entitlement.
+    const snapshot=db.prepare('SELECT intent FROM nice_orders WHERE id=?').get(orderId);
+    let intent;try{intent=JSON.parse(snapshot?.intent??'{}');}catch{throw new BundleInputError('Invalid entitlement snapshot');}
+    const p=intent.entitlementPolicy;if(!p)return null;
+    if(p.version!=='2026-11-13-v1'||p.days!==30||p.dailyLimit!==5||p.totalLimit!==150||p.timeZone!=='Asia/Seoul'||p.textMaxChars!==500||p.audioMaxSeconds!==30)throw new BundleInputError('Invalid entitlement snapshot');
+    return p;
+  }
+  function petUsage(orderId){
+    const now=clock(),start=Date.parse(dayKey(now)+'T00:00:00+09:00');
+    const total=db.prepare('SELECT count(*) AS n FROM nice_pet_usage WHERE order_id=?').get(orderId).n;
+    const today=db.prepare('SELECT count(*) AS n FROM nice_pet_usage WHERE order_id=? AND created>=? AND created<?').get(orderId,start,start+86400000).n;
+    return {today,total,day:dayKey(now)};
+  }
 
   function entitlement(orderId, owner, product) {
     const row = db.prepare(`SELECT e.state, r.created AS paid_at FROM nice_entitlements e
@@ -48,7 +65,12 @@ export function createNicepayBundleAccess({enabled = false, creditStore, clock =
       if (db.prepare("SELECT 1 FROM nice_bundle_runs WHERE order_id=? AND state!='done'").get(orderId)) {
         throw Error('Bundle execution needs reconciliation');
       }
+      if(product==='ai_pet_translator'){
+        const terms=petPolicy(orderId);
+        if(terms){const used=petUsage(orderId);if(used.today>=terms.dailyLimit||used.total>=terms.totalLimit)throw new BundleInputError('Pet usage limit reached');}
+      }
       beforeStart?.();
+      if(product==='ai_pet_translator'&&petPolicy(orderId))db.prepare('INSERT INTO nice_pet_usage VALUES(?,?,?)').run(orderId,requestId,clock());
       db.prepare("UPDATE nice_entitlements SET state='claimed' WHERE order_id=?").run(orderId);
       db.prepare("INSERT INTO nice_bundle_runs VALUES(?,?,?,'running',NULL,?)").run(orderId, requestId, fingerprint, clock());
       return {cached: false};
@@ -73,11 +95,24 @@ export function createNicepayBundleAccess({enabled = false, creditStore, clock =
   return {
     petStatus({orderId, owner}) {
       const row = entitlement(orderId, owner, 'ai_pet_translator');
+      const terms=petPolicy(orderId),used=terms?petUsage(orderId):null;
       return {startsAt: row.paid_at, expiresAt: row.paid_at + PET_PERIOD_MS, autoRenew: false,
+        ...(terms?{dailyLimit:terms.dailyLimit,totalLimit:terms.totalLimit,remainingToday:Math.max(0,Math.min(terms.dailyLimit-used.today,terms.totalLimit-used.total)),timeZone:terms.timeZone}:{}),
         analyze: true, command: true, text: true, audio: true};
     },
     async executePet({orderId, owner, requestId, input, runner, beforeStart}) {
+      entitlement(orderId,owner,'ai_pet_translator');
       const normalized = validatePetInput(input);
+      const terms=petPolicy(orderId);
+      if(terms){
+        normalized.costLimits={textMaxChars:terms.textMaxChars,audioMaxSeconds:terms.audioMaxSeconds};
+        if(normalized.textInput.length>terms.textMaxChars)throw new BundleInputError('Pet text exceeds 500 characters');
+        if(normalized.audioInput){
+          const {assertPetAudioDuration}=await import('../commerce/petAudioLimits.js');
+          try{await assertPetAudioDuration(normalized.audioInput,terms.audioMaxSeconds);}
+          catch{throw new BundleInputError('Pet audio must be valid and at most 30 seconds');}
+        }
+      }
       return execute({orderId, owner, requestId, product: 'ai_pet_translator', operation: normalized.mode, input: normalized, runner, beforeStart});
     },
     async executeName({orderId, owner, requestId, operation, input, options = {}, runner}) {

@@ -36,8 +36,16 @@ export function prepareNicepayIntent({ productId, ownerId }, catalog, policy) {
       || product.amount > rule.maxAmountKrw || product.recurring !== false) error('Product outside approved payment scope');
   if (typeof product.goodsName !== 'string' || !/^[a-zA-Z0-9 _-]{1,40}$/.test(product.goodsName)) error('ASCII payment label required until encoding integration');
   if (product.category === 'credit_topup' && (!Number.isSafeInteger(product.credits) || product.credits < 1 || product.amount !== product.credits * 1000)) error('Credit quantity required');
+  let entitlementPolicy;
+  if(product.entitlementPolicy){
+    const p=product.entitlementPolicy;
+    if(product.productType!=='ai_pet_translator'||p.version!=='2026-11-13-v1'||p.days!==30||p.dailyLimit!==5||p.totalLimit!==150||p.timeZone!=='Asia/Seoul'||p.textMaxChars!==500||p.audioMaxSeconds!==30) error('Invalid pet entitlement policy');
+    entitlementPolicy=Object.freeze({...p});
+  }
   return Object.freeze({ productId, ownerId, category: product.category, amount: product.amount, currency: 'KRW',
     goodsName: product.goodsName, method: 'card', recurring: false,
     ...(product.category === 'credit_topup' ? { credits: product.credits, unitKrw: 1000, refundPolicyVersion: REFUND_POLICY_VERSION } : {}),
+    ...(product.priceVersion?{priceVersion:product.priceVersion}:{}),
+    ...(entitlementPolicy?{entitlementPolicy}:{}),
     provider: 'nicepay', variant: policy.variant, liveAvailable: false });
 }

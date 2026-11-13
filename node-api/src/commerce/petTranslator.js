@@ -38,7 +38,7 @@ let petSampleCatalog = null;
 const getClient = () => {
   const apiKey = process.env.OPENAI_API_KEY?.trim();
   if (!apiKey) throw new Error('OPENAI_API_KEY is missing');
-  client ??= new OpenAI({ apiKey });
+  client ??= new OpenAI({ apiKey, timeout: 180_000, maxRetries: 0 });
   return client;
 };
 
@@ -245,6 +245,8 @@ const languageForLocale = (locale) => ({ ko: 'Korean', en: 'English', es: 'Spani
 const generatePetTranslation = async ({ transcript, animal, mode, durationSeconds, locale = 'en' }) => {
   const completion = await getClient().chat.completions.create({
     model: DEFAULT_TEXT_MODEL,
+    max_completion_tokens: 1500,
+    ...(/^(gpt-5|o\d)/.test(DEFAULT_TEXT_MODEL)?{reasoning_effort:'low'}:{}),
     messages: [
       {
         role: 'system',
@@ -370,7 +372,8 @@ const concatPetSamples = async (samples, text) => {
   }
 };
 
-const synthesizePetCommandAudio = async ({ text, emotion, animal }) => {
+const synthesizePetCommandAudio = async ({ text, emotion, animal, maxChars }) => {
+  if(maxChars)text=String(text).slice(0,maxChars);
   const sampleSelection = await selectPetSamples({ animal, text, emotion });
   const sampleAudio = await concatPetSamples(sampleSelection, text);
   if (sampleAudio) {
@@ -396,7 +399,7 @@ const synthesizePetCommandAudio = async ({ text, emotion, animal }) => {
   };
 };
 
-export const analyzePetAudio = async ({ audioInput, animal = 'dog', mode = 'analyze', textInput = '', locale = 'en' }) => {
+export const analyzePetAudio = async ({ audioInput, animal = 'dog', mode = 'analyze', textInput = '', locale = 'en', costLimits }) => {
   if (!['dog', 'cat'].includes(animal)) {
     throw new Error('animal must be dog or cat');
   }
@@ -436,7 +439,8 @@ export const analyzePetAudio = async ({ audioInput, animal = 'dog', mode = 'anal
     const commandAudio = await synthesizePetCommandAudio({
       text: result.text,
       emotion: result.emotion,
-      animal
+      animal,
+      maxChars:costLimits?.textMaxChars
     });
     return {
       ...commandAudio,

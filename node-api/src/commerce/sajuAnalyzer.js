@@ -261,7 +261,7 @@ let client = null;
 const getClient = () => {
   const apiKey = process.env.OPENAI_API_KEY?.trim();
   if (!apiKey) throw new Error('OPENAI_API_KEY is missing');
-  client ??= new OpenAI({ apiKey });
+  client ??= new OpenAI({ apiKey, timeout: 180_000, maxRetries: 0 });
   return client;
 };
 
@@ -595,6 +595,7 @@ export const analyzeSaju = async ({ name = '', birthDate, birthTime, calendarTyp
 
   const completion = await getClient().chat.completions.create({
     model: DEFAULT_MODEL,
+    max_completion_tokens: 16000,
     messages: [
       {
         role: 'system',
