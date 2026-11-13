@@ -12,7 +12,7 @@ import {NICE_REVIEW_PRODUCTS} from '../data/nicepay-review-products.js';
    <h2 class="text-xl font-bold">1. 개별 상품 직접결제</h2>
    <p class="mt-3">AI 사진 등 개별 도구를 선택하고, 입력 내용을 확인한 뒤 해당 상품을 한 번 결제하는 방식입니다.</p>
    <dl class="my-4 grid grid-cols-2 gap-3"><dt>판매 가격</dt><dd>미정 · 판매하지 않음</dd><dt>서비스 제공기간</dt><dd>상품별 결과 1회 또는 펫 이용권 30일 · 아래 상품에서 확인</dd><dt>결제 방식</dt><dd>신용카드 단건결제 연동 확인</dd></dl>
-   <p class="text-sm leading-6 text-slate-600">결제창에는 연동 확인용 1,000원이 표시됩니다. 판매 가격이 아니며, 카드 인증 이후에도 이 심사 경로에서는 승인 요청을 전송하지 않습니다. 카드정보 입력·결제 완료는 진행하지 마세요.</p>
+   <p class="text-sm leading-6 text-slate-600">결제창에는 연동 확인용 100,000원이 표시됩니다. 판매 가격이 아니며, 카드 인증 이후에도 이 심사 경로에서는 승인 요청을 전송하지 않습니다. 카드정보 입력·결제 완료는 진행하지 마세요.</p>
    <ul class="mt-5 space-y-4">{Object.values(NICE_REVIEW_PRODUCTS).map(p=><li><a href={p.path} class="font-bold underline">{p.name} 상품에서 결제경로 확인</a><p class="mt-1 text-sm leading-6">{p.period}</p></li>)}</ul>
   </section>
   <section class="mt-6 rounded-2xl border p-6">
