@@ -52,3 +52,5 @@ draft: false
 가로·세로 픽셀과 파일 용량은 서로 다른 기준입니다. 이 도구는 PNG로 저장하므로 원래 JPG보다 용량이 커질 수도 있습니다. 업로드 제한이 KB나 MB라면 [사진 압축 순서와 표시 용량이 제한과 같아도 거절될 때 확인할 사항](/community/image-file-size/)을 확인하세요.
 
 조건을 확인했다면 [이미지 사이즈 변경기에서 가로 픽셀 조절하기](/image-resizer)로 진행하세요.
+
+저장된 PNG를 JPG나 WebP로 바꿔야 한다면 [이미지 확장자 변경 순서와 JPG 배경 주의점](/community/image-convert-png-to-jpg/)을 확인하세요.
