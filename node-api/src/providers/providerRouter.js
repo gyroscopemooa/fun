@@ -60,7 +60,7 @@ async function runProvider({ provider, inputPath, storageDir, jobId, toolType, o
 export async function generateCandidatesWithProvider({ inputPath, storageDir, jobId, toolType, outfitType, groomingMode, hairOptions, retouchEnabled, fullPackage, beautyOptions, profileOptions, faceHint, cacheKey, requestedProvider = null }) {
   const normalizedRequestedProvider = normalizeRequestedProvider(requestedProvider) ?? getImageProvider();
   const portraitEnabled = toolType === 'headshot' ? isHeadshotEnabled() : isIdPhotoEnabled();
-  const portrait = ['id_photo', 'headshot'].includes(toolType);
+  const portrait = ['id_photo', 'headshot', 'passport_photo'].includes(toolType);
   const resolved = portrait && portraitEnabled
     ? 'openai_image' : resolveImageProvider(normalizedRequestedProvider);
   // ID photos require generative editing; filters cannot correct pose or clothing.

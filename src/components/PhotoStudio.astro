@@ -30,7 +30,7 @@ const sizePresets = [
   <main class="portrait-studio" data-photo-mode={mode}>
     <nav class="mb-5 flex flex-wrap gap-2" aria-label="사진 도구 선택">{[{id:"id",href:"/ai-id-photo",label:"증명사진"},{id:"passport",href:"/ai-passport-photo",label:"여권사진"},{id:"profile",href:"/ai-headshot",label:"프로필사진"}].map(item => <a href={item.href} aria-current={mode === item.id ? "page" : undefined} class:list={["rounded-full border px-4 py-2 text-sm font-bold", mode === item.id ? "bg-slate-900 text-white" : "bg-white text-slate-700"]}>{item.label}</a>)}</nav>
     {passport && <p class="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">여권 스타일은 정면·흰 배경·머리 정리를 위한 AI 편집입니다. 미용 보정은 사용하지 않습니다. 공식 적합 판정이 아니며, 여권 발급 기관의 AI 편집 사진 허용 여부와 사진 규격을 제출 전에 확인해주세요.</p>}
-    <IdPhotoShowcase mode={mode} />
+    <IdPhotoShowcase mode={mode} hideExamples={passport} />
     <div class="studio-workspace-heading"><h2>나에게 맞게, 한 번 더 섬세하게.</h2><p>01 사진 업로드　→　02 옵션 선택　→　03 결과 다운로드</p></div>
     <section class="studio-workspace">
       <article id="candidate-section" class="studio-input-card">

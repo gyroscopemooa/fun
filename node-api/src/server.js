@@ -2048,9 +2048,8 @@ app.post('/upload', upload.single('image'), async (req, res) => {
 
 app.post('/generate', async (req, res) => {
   const { photoId, toolType = 'id_photo', outfitType: requestedOutfitType = 'current', faceHint = null, provider = null } = req.body ?? {};
-  if (toolType === 'passport_photo') return res.status(400).json({error:'여권사진은 AI 생성 대신 원본 규격 도구를 이용해주세요.'});
   let styling = {};
-  const portrait = ['id_photo','headshot'].includes(toolType);
+  const portrait = ['id_photo','headshot','passport_photo'].includes(toolType);
   if (toolType === 'headshot') {
     if (!isHeadshotEnabled()) return res.status(503).json({error:'프로필사진 서버가 준비되지 않았습니다.'});
     if (!['current','suit','smart'].includes(requestedOutfitType)) return res.status(400).json({error:'invalid outfit'});
@@ -2063,8 +2062,8 @@ app.post('/generate', async (req, res) => {
   }
   const outfitType = styling.fullPackage ? 'suit' : requestedOutfitType;
   const orderId = typeof req.body?.orderId === 'string' ? req.body.orderId.trim() : '';
-  if (toolType === 'id_photo' && !isIdPhotoEnabled()) return res.status(503).json({ error: 'ID photo AI is unavailable' });
-  if (toolType === 'id_photo' && !['current', 'suit'].includes(outfitType)) return res.status(400).json({ error: 'invalid outfit' });
+  if (['id_photo','passport_photo'].includes(toolType) && !isIdPhotoEnabled()) return res.status(503).json({ error: 'ID photo AI is unavailable' });
+  if (['id_photo','passport_photo'].includes(toolType) && !['current', 'suit'].includes(outfitType)) return res.status(400).json({ error: 'invalid outfit' });
   if (!photoId) {
     return res.status(400).json({ error: 'photoId is required' });
   }
