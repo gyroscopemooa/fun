@@ -1,15 +1,19 @@
 /* The original tool request remains blocked until approval and fulfillment are deployed. */
-window.manytoolShowPaymentChoices = function () {
+window.manytoolShowPaymentChoices = function (options = {}) {
   if (document.getElementById('manytool-payment-choices')) return;
   const path=location.pathname.replace(/^\/(?!ai(?:-|\/))[a-z]{2,3}(?:-[A-Za-z]{2,4})?(?=\/)/,'').replace(/\/$/,'');
   const catalog=Object.values(window.manytoolAiCatalog||{});
   const detailCount=Number(document.querySelector?.('[data-ai-page-count]')?.value||7);
-  const configured=catalog.find(p=>p.paths?.includes(path))||(['/tools/product-detail-studio','/product-detail-studio'].includes(path)?catalog.find(p=>p.pageCount===detailCount):null);
+  const stylistCount=Number(options.stylistCount ?? document.querySelector?.('[data-stylist-count]')?.getAttribute('data-stylist-count') ?? 1);
+  if(path==='/ai-stylist'&&(!Number.isInteger(stylistCount)||stylistCount<1||stylistCount>5))return;
+  const configured=(path==='/ai-stylist'?catalog.find(p=>p.id===`stylist_${stylistCount}`):null)||(path!=='/ai-stylist'?catalog.find(p=>p.paths?.includes(path)):null)||(['/tools/product-detail-studio','/product-detail-studio'].includes(path)?catalog.find(p=>p.pageCount===detailCount):null);
   const product = configured ? [configured.id,configured.name] : {
     '/ai-calorie-calculator': ['calorie', 'AI 칼로리 분석'],
     '/ai-image-generator': ['image', 'AI 이미지 생성'],
     '/ai-pet-translator': ['pet', 'AI 펫 번역기 30일 이용권']
   }[path];
+  const diagnosticAllowed=product?.[0]==='image'||/^stylist_[1-5]$/.test(product?.[0]||'');
+  const diagnosticAmount=String(configured?.amount ?? 9900);
   const dialog = document.createElement('dialog');
   dialog.id = 'manytool-payment-choices';
   dialog.setAttribute('aria-labelledby', 'manytool-payment-title');
@@ -43,20 +47,20 @@ window.manytoolShowPaymentChoices = function () {
   all.addEventListener('change',()=>{checks.forEach(check=>check.checked=all.checked);return consentChanged();});checks.forEach(check=>check.addEventListener('change',consentChanged));
   function sdk(){if(typeof window.goPay==='function')return Promise.resolve();return new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='https://pg-web.nicepay.co.kr/v3/common/js/nicepay-pgweb.js';script.onload=()=>typeof window.goPay==='function'?resolve():reject(Error('결제창을 불러오지 못했습니다.'));script.onerror=()=>{script.remove();reject(Error('결제창 연결을 다시 시도해 주세요.'));};document.head.append(script);});}
   async function warmup(readyMessage=''){
-    if(product?.[0]!=='image'){syncConsent();return;}
+    if(!diagnosticAllowed){syncConsent();return;}
     const run=++epoch;preparing=true;prepared.clear();syncConsent();consentMessage.textContent='결제수단을 연결하고 있습니다.';
     try{
       const [,entries]=await Promise.all([sdk(),Promise.all(choices.map(async([method])=>{
-        const body=new URLSearchParams({product:'image',method,consentVersion:'2026-11-13-review',terms:'1',collection:'1',sharing:'1'});
+        const body=new URLSearchParams({product:product[0],method,consentVersion:'2026-11-13-review',terms:'1',collection:'1',sharing:'1'});
         const response=await window.fetch('/api/nicepay-review/window',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/x-www-form-urlencoded',Accept:'application/json'},body:String(body)});
         if(!response.ok)throw Error('결제창 연결 정보를 확인하지 못했습니다.');const data=await response.json().catch(()=>null);
-        if(data?.testOnly!==true||data.method!==method||data.fields?.MID!=='000000002m'||data.fields?.Amt!=='9900'||data.fields?.ReturnURL!==location.origin+'/api/nicepay-review/return')throw Error('허용된 테스트 결제 정보가 아닙니다.');return [method,data];
+        if(data?.testOnly!==true||data.method!==method||data.fields?.MID!=='000000002m'||data.fields?.Amt!==diagnosticAmount||data.fields?.ReturnURL!==location.origin+'/api/nicepay-review/return')throw Error('허용된 테스트 결제 정보가 아닙니다.');return [method,data];
       }))]);
       if(run!==epoch||!dialog.isConnected||!checks.every(check=>check.checked))return;entries.forEach(([method,data])=>prepared.set(method,data));preparedAt=Date.now();consentMessage.textContent=readyMessage;
     }catch(error){if(run===epoch)consentMessage.textContent=error instanceof Error?error.message:'결제창 연결을 다시 시도해 주세요.';}finally{if(run===epoch){preparing=false;syncConsent();}}
   }
   function openPayment(method){
-    if(busy||preparing||unavailable.has(method))return;if(!checks.every(check=>check.checked)){nudgeConsent();return;}if(product?.[0]!=='image'){consentMessage.textContent='가격은 설정됐습니다. 현재 인증창 연결 테스트는 이미지 상품 9,900원만 허용돼 있으며 실제 결제는 처리하지 않습니다.';return;}
+    if(busy||preparing||unavailable.has(method))return;if(!checks.every(check=>check.checked)){nudgeConsent();return;}if(!diagnosticAllowed){consentMessage.textContent='가격은 설정됐습니다. 현재 이 상품의 인증창 연결은 준비 중이며 실제 결제는 처리하지 않습니다.';return;}
     const data=prepared.get(method);if(!data||Date.now()-preparedAt>120000){void warmup('연결 정보를 갱신했습니다. 결제수단을 다시 눌러 주세요.');return;}
     busy=true;syncConsent();
     try{

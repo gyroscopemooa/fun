@@ -21,8 +21,8 @@ export async function onRequest({request,env}){
  if(inline&&(params.get('consentVersion')!=='2026-11-13-review'||['terms','collection','sharing'].some(name=>params.get(name)!=='1')))return html('<p>필수 결제 안내를 확인해 주세요.</p>',403);
  const product=id===null?null:Object.hasOwn(NICE_REVIEW_PRODUCTS,id)?NICE_REVIEW_PRODUCTS[id]:undefined;
  if(product===undefined)return html('<p>상품을 다시 선택해주세요.</p>',400);
- // User explicitly authorized the seven KRW 9,900 image authentication diagnostics only.
- if(inline&&(id!=='image'||product.proposedPriceKrw!==9900))return html('<p>상품 가격을 먼저 확인해 주세요.</p>',409);
+ // Image and stylist diagnostics only; user authorized stylist review wiring, never live approval.
+ if(inline&&!((id==='image'&&product.proposedPriceKrw===9900)||/^stylist_[1-5]$/.test(id||'')))return html('<p>상품 가격을 먼저 확인해 주세요.</p>',409);
  const key=env.NICEPAY_REVIEW_MERCHANT_KEY;
  if(typeof key!=='string'||! /^[A-Za-z0-9+/]{80,100}={0,2}$/.test(key))return html('<h1>심사 연결 설정 대기</h1>',503);
  const timestamp=new Date(Date.now()+9*3600000).toISOString().replace(/\D/g,'').slice(0,14);
