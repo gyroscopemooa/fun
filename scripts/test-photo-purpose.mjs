@@ -40,6 +40,7 @@ try{
  assert.equal(await page.locator('#passport-download').isDisabled(),true);
  assert.equal(await page.locator('[data-profile-studio]').count(),0);
  assert.match(await page.locator('h1').innerText(),/있는 그대로/);
+ await page.locator('#passport-file:enabled').waitFor();
  await page.locator('#passport-file').setInputFiles({name:'original.jpg',mimeType:'image/jpeg',buffer:portrait});
  for(const box of await page.locator('[data-passport-tool] input[type=checkbox]').all())await box.check();
  await page.locator('#passport-download:enabled').waitFor();
