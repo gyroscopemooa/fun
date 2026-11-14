@@ -15,6 +15,7 @@ interface Props {
   image?: string;
   keywords?: string;
   noindex?: boolean;
+  showAiPriceNotice?: boolean;
 }
 
 const {
@@ -22,7 +23,8 @@ const {
   description = 'ManyTool은 무료 온라인 도구, 테스트, 게임, 지도, 쇼핑몰 보조 툴을 제공하는 웹 기반 툴 플랫폼입니다.',
   image = '/og-image.png',
   keywords,
-  noindex = false
+  noindex = false,
+  showAiPriceNotice = true
 } = Astro.props;
 
 const ogImage = new URL(image, Astro.site ?? Astro.url.origin).toString();
@@ -276,8 +278,8 @@ if (locale !== 'ko') {
 
 // Photo studios are available in production; the electrical simulator stays local.
 sidebarText.links.push(
-  { href: localizedHrefOrOriginal(locale, '/ai-passport-photo'), label: locale === 'ko' ? 'AI 여권사진' : locale === 'ja' ? 'AIパスポート写真' : 'AI Passport Photo' },
-  { href: localizedHrefOrOriginal(locale, '/ai-headshot'), label: locale === 'ko' ? 'AI 프로필사진' : locale === 'ja' ? 'AIプロフィール写真' : 'AI Profile Photo' }
+  { href: localizedHrefOrOriginal(locale, '/ai-passport-photo'), label: locale === 'ko' ? '여권사진 규격 맞추기 · 무료' : locale === 'ja' ? 'パスポート写真のサイズ調整' : 'Passport Photo Crop · Free' },
+  { href: localizedHrefOrOriginal(locale, '/ai-headshot'), label: locale === 'ko' ? 'AI 프로필 스튜디오' : locale === 'ja' ? 'AIプロフィール写真' : 'AI Profile Photo' }
 );
 if (import.meta.env.DEV) {
   sidebarText.links.push({ href: '/tools/electric-practical', label: '전기기능사 실기 시뮬레이터 (로컬)' });
@@ -482,7 +484,7 @@ const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.r
         </div>
       )}
       <AdSense slotName="글로벌 본문 상단" />
-      <AiPriceNotice />
+      {showAiPriceNotice && <AiPriceNotice />}
       <slot />
       <AdSense slotName="글로벌 본문 하단" />
       <EzoicPlacements />

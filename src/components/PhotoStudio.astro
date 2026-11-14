@@ -112,7 +112,7 @@ const sizePresets = [
           <select id="grooming-mode" aria-describedby="grooming-help" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-sm">
             <option value="natural">자연스럽게 — 원래 머리 유지</option>
             <option value="neat">완전 단정 · 깔끔 — 부스스한 머리까지 정리</option>
-            <option value="passport">여권 스타일 — 정면·눈썹·표정 자동 정리</option>
+            <option value="passport">정면 · 무보정 — 표정과 머리 정리</option>
             <option value="custom">수동 머리 정리 — 원하는 부분만 선택</option>
           </select>
           <p id="grooming-help" class="mt-2 text-xs leading-5 text-slate-600" aria-live="polite">원래 가르마·앞머리·볼륨을 유지하고 잔머리만 가볍게 정리합니다.</p>
@@ -134,7 +134,7 @@ const sizePresets = [
             <label><input id="beauty-vitality" type="checkbox" checked />혈색·생기</label>
             <label><input id="beauty-makeup" type="checkbox" />내추럴 메이크업</label>
           </div>
-          <p id="beauty-note" class="studio-retouch-note" aria-live="polite">본인 인상을 유지하는 자연스러운 보정을 요청합니다. 여권 스타일에서는 미용 보정이 자동으로 꺼집니다.</p>
+          <p id="beauty-note" class="studio-retouch-note" aria-live="polite">본인 인상을 유지하는 자연스러운 보정을 요청합니다. 정면·무보정 모드에서는 미용 보정이 자동으로 꺼집니다.</p>
         </fieldset>
 
         <div class="mt-4" data-dev-only>
@@ -336,7 +336,7 @@ const sizePresets = [
       const disabled = passport || !retouchEl.checked;
       beautyPanel.dataset.disabled = String(disabled);
       Object.values(beautyInputs).forEach(el => { el.disabled = disabled; });
-      beautyNote.textContent = passport ? '여권 스타일에서는 피부·얼굴선·색조·메이크업 보정을 사용하지 않습니다.' : 'ON에서는 체크한 부분만 자연스럽게 보정합니다. OFF는 원래 피부·얼굴선·색조를 유지합니다.';
+      beautyNote.textContent = passport ? '정면·무보정 모드에서는 피부·얼굴선·색조·메이크업 보정을 사용하지 않습니다.' : 'ON에서는 체크한 부분만 자연스럽게 보정합니다. OFF는 원래 피부·얼굴선·색조를 유지합니다.';
     };
     const restoreStyleControls = (style) => {
       if (!style || typeof style !== 'object') return;

@@ -7,6 +7,7 @@ const hasOpenAiKey = () => Boolean(process.env.OPENAI_API_KEY?.trim());
 
 // Dedicated launch flag: other experimental photo tools retain their existing switch.
 export const isIdPhotoEnabled = () => process.env.ID_PHOTO_ENABLED !== 'false' && hasOpenAiKey();
+export const isHeadshotEnabled = () => isIdPhotoEnabled() && process.env.HEADSHOT_ENABLED !== 'false';
 
 export function getImageProvider() {
   return process.env.IMAGE_PROVIDER ?? 'auto';
@@ -56,16 +57,20 @@ async function runProvider({ provider, inputPath, storageDir, jobId, toolType, o
   throw new Error(`unsupported IMAGE_PROVIDER: ${provider}`);
 }
 
-export async function generateCandidatesWithProvider({ inputPath, storageDir, jobId, toolType, outfitType, groomingMode, hairOptions, retouchEnabled, fullPackage, beautyOptions, faceHint, cacheKey, requestedProvider = null }) {
+export async function generateCandidatesWithProvider({ inputPath, storageDir, jobId, toolType, outfitType, groomingMode, hairOptions, retouchEnabled, fullPackage, beautyOptions, profileOptions, faceHint, cacheKey, requestedProvider = null }) {
   const normalizedRequestedProvider = normalizeRequestedProvider(requestedProvider) ?? getImageProvider();
-  const resolved = toolType === 'id_photo' && isIdPhotoEnabled()
+  const portraitEnabled = toolType === 'headshot' ? isHeadshotEnabled() : isIdPhotoEnabled();
+  const portrait = ['id_photo', 'headshot'].includes(toolType);
+  const resolved = portrait && portraitEnabled
     ? 'openai_image' : resolveImageProvider(normalizedRequestedProvider);
   // ID photos require generative editing; filters cannot correct pose or clothing.
-  if (toolType === 'id_photo' && (!isIdPhotoEnabled() || resolved !== 'openai_image')) {
+  if (portrait && (!portraitEnabled || resolved !== 'openai_image')) {
     throw Object.assign(new Error('증명사진 AI 서버가 준비되지 않았습니다. 잠시 후 다시 시도해주세요.'), { statusCode: 503 });
   }
   try {
-    const result = await runProvider({ provider: resolved, inputPath, storageDir, jobId, toolType, outfitType, groomingMode, hairOptions, retouchEnabled, fullPackage, beautyOptions, faceHint, cacheKey });
+    const result = resolved === 'openai_image'
+      ? await generateWithOpenAiImage({ inputPath, storageDir, jobId, toolType, outfitType, groomingMode, hairOptions, retouchEnabled, fullPackage, beautyOptions, profileOptions })
+      : await runProvider({ provider: resolved, inputPath, storageDir, jobId, toolType, outfitType, groomingMode, hairOptions, retouchEnabled, fullPackage, beautyOptions, faceHint, cacheKey });
     return {
       ...result,
       pipelineReport: {
@@ -76,7 +81,7 @@ export async function generateCandidatesWithProvider({ inputPath, storageDir, jo
       }
     };
   } catch (error) {
-    if (resolved === 'openai_image' || toolType === 'id_photo') throw error;
+    if (resolved === 'openai_image' || portrait) throw error;
     if (resolved !== 'local_sharp') {
       // eslint-disable-next-line no-console
       console.warn(`[provider] ${resolved} failed, fallback to local_sharp: ${error.message}`);

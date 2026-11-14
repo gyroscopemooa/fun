@@ -5,6 +5,7 @@ import OpenAI, { toFile } from 'openai';
 import { v4 as uuidv4 } from 'uuid';
 import { normalizeIdPhotoStyling, groomingPrompt, beautyPrompt } from './idPhotoStyling.js';
 import { VARIANT_PROFILES, getToolPreset } from './pipelineConfig.js';
+import { normalizeHeadshotOptions, headshotPrompt } from './headshotOptions.js';
 
 const OPENAI_IMAGE_MODEL = process.env.OPENAI_IMAGE_MODEL?.trim() || 'gpt-image-2';
 const OUTPUT_SIZE = '1024x1536';
@@ -26,7 +27,8 @@ const IDENTITY_RULES = [
 
 const OUTFIT_RULES = {
   suit: 'Dress the person in a neat, well-fitted dark navy business suit jacket over a crisp white shirt (a simple dark tie for men, an open collar blouse for women), with natural fit and folds.',
-  current: 'Keep the person\'s original clothing exactly: same garment, neckline, color and pattern. Do not add a suit, jacket, shirt, blouse or tie. Only tidy obvious wrinkles.'
+  current: 'Keep the person\'s original clothing exactly: same garment, neckline, color and pattern. Do not add a suit, jacket, shirt, blouse or tie. Only tidy obvious wrinkles.',
+  smart: 'Dress the person in understated smart casual clothing: a well-fitted solid neutral knit or simple shirt, no logos, natural fabric and fit.'
 };
 
 const TOOL_PROMPTS = {
@@ -55,6 +57,12 @@ const TOOL_PROMPTS = {
 };
 
 export const buildPrompt = (toolType, outfitType, styling = {}) => {
+  if (toolType === 'headshot') return [
+    ...IDENTITY_RULES,
+    headshotPrompt(styling.profileOptions),
+    OUTFIT_RULES[outfitType] ?? OUTFIT_RULES.current,
+    'Photorealistic portrait of this same person. No text, watermark, frame or extra people.'
+  ].join(' ');
   const normalized = toolType === 'id_photo' ? normalizeIdPhotoStyling(styling) : null;
   const passportStyle = normalized?.groomingMode === 'passport';
   const toolRules = (TOOL_PROMPTS[toolType] ?? TOOL_PROMPTS.id_photo).filter((rule) =>
@@ -80,10 +88,11 @@ const decodeImages = async (response) => Promise.all((response?.data ?? []).map(
   throw new Error('OpenAI image edit returned no image');
 }));
 
-export async function generateWithOpenAiImage({ inputPath, storageDir, jobId, toolType, outfitType, groomingMode, hairOptions, retouchEnabled, fullPackage, beautyOptions }) {
+export async function generateWithOpenAiImage({ inputPath, storageDir, jobId, toolType, outfitType, groomingMode, hairOptions, retouchEnabled, fullPackage, beautyOptions, profileOptions }) {
   const startedAt = Date.now();
-  const preset = getToolPreset(toolType);
-  const prompt = buildPrompt(toolType, outfitType, { groomingMode, hairOptions, retouchEnabled, fullPackage, beautyOptions });
+  const normalizedProfile = toolType === 'headshot' ? normalizeHeadshotOptions(profileOptions) : null;
+  const preset = {...getToolPreset(toolType), ...(normalizedProfile?.ratio === 'square' ? {outputWidth:1000,outputHeight:1000} : {})};
+  const prompt = buildPrompt(toolType, outfitType, { groomingMode, hairOptions, retouchEnabled, fullPackage, beautyOptions, profileOptions:normalizedProfile });
 
   // Normalize orientation and size before upload; phone photos are often huge and EXIF-rotated.
   const source = await sharp(await fs.readFile(inputPath))
@@ -97,7 +106,7 @@ export async function generateWithOpenAiImage({ inputPath, storageDir, jobId, to
     image: await toFile(source, 'portrait.jpg', { type: 'image/jpeg' }),
     prompt,
     n: CANDIDATE_COUNT,
-    size: OUTPUT_SIZE,
+    size: normalizedProfile?.ratio === 'square' ? '1024x1024' : OUTPUT_SIZE,
     quality: 'medium',
     output_format: 'png',
     background: 'opaque',
@@ -132,6 +141,7 @@ export async function generateWithOpenAiImage({ inputPath, storageDir, jobId, to
     pipelineReport: {
       toolType,
       outfitType,
+      ...(normalizedProfile ? {profileOptions:normalizedProfile} : {}),
       ...(toolType === 'id_photo' ? normalizeIdPhotoStyling({ groomingMode, hairOptions, retouchEnabled, fullPackage, beautyOptions }) : {}),
       engine: 'openai_image',
       model: OPENAI_IMAGE_MODEL,

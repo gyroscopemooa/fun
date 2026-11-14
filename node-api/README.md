@@ -18,6 +18,13 @@ AI 증명사진 MVP를 위한 로컬 Node API입니다.
 - 동일 주문의 중복 실행을 차단합니다. 크레딧은 작업 완료 시 사용 완료 처리하며 생성 실패 시 반환합니다.
 - 검증: `node --test src/providers/idPhoto.test.js src/providers/idPhotoHttp.test.js src/credits/credits.test.js`.
 
+## 프로필 스튜디오와 여권 원본 도구
+
+- `headshot`은 용도·배경·표정·구도·비율·보정과 의상을 고정 선택지로 검증하고 프로필 전용 프롬프트에 반영합니다. `HEADSHOT_ENABLED=false`로 중지할 수 있습니다.
+- `/config`의 `headshotOptionsVersion=2026-11-15-v1` 및 `readiness.headshotReady`를 함께 확인합니다. 프로필은 기존 base 구매를 사용하며 비동기 응답·주문 중복 실행 방지·실패 시 크레딧 반환이 적용됩니다.
+- `passport_photo` 생성 요청은 거부합니다. 공개 여권 도구는 서버에 사진을 올리지 않고 원본의 자르기·크기 변환을 브라우저 안에서 처리합니다. AI 보정 사진을 여권용으로 만들지 않습니다.
+- 상세 사양과 검증: `docs/photo-purpose-release.md` (저장소 루트).
+
 ## Endpoints
 - `GET /health`
 - `GET /config` (현재 provider/payment 모드 확인)

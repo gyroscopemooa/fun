@@ -65,31 +65,12 @@ try {
  fail=true;await page.locator('#generate').click();await page.waitForFunction(()=>document.querySelector('#generate')?.disabled===false);assert.equal(await page.locator('#candidate-grid button').count(),0);
  ready=false;await page.reload({waitUntil:'domcontentloaded'});await page.waitForTimeout(200);assert.equal(await page.locator('#generate').isDisabled(),true);
  assert.deepEqual(errors,[]);
- for (const [slug, mode] of [['ai-passport-photo','passport'],['ai-headshot','profile'],['ai-photoshop','profile']]) {
-  ready=true;fail=false;
-  await page.goto(base+'/'+slug+'/',{waitUntil:'domcontentloaded'});
-  assert.equal(await page.evaluate(()=>Boolean(window.manytoolAiUnavailable)),false);
-  assert.equal(await page.locator('[data-photo-mode]').getAttribute('data-photo-mode'),mode);
-  if(mode==='passport'){
-   assert.equal(await page.locator('#grooming-mode').inputValue(),'passport');
-   assert.equal(await page.locator('#grooming-mode').isDisabled(),true);
-   assert.equal(await page.locator('#full-package').isDisabled(),true);
-   assert.equal(await page.locator('#retouch-enabled').isDisabled(),true);
-   assert.equal(await page.locator('input[name="size-preset"]:checked').inputValue(),'id');
-  } else assert.equal(await page.locator('#grooming-mode').inputValue(),'neat');
-  await page.locator('#file-input').setInputFiles({name:'portrait.webp',mimeType:'image/webp',buffer:sample});
-  await page.locator('#generate:enabled').waitFor(); await page.locator('#generate').click();
-  await page.locator('#candidate-grid button').first().waitFor({timeout:15000});
-  if(mode==='passport'){assert.equal(styling.groomingMode,'passport');assert.equal(styling.retouchEnabled,false);assert.equal(styling.fullPackage,false);}
-  assert.equal(await page.locator('#candidate-grid button').count(),3);
-  const overflow=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,elements:[...document.querySelectorAll('*')].filter(el=>el.getBoundingClientRect().right>innerWidth+1).slice(0,8).map(el=>({tag:el.tagName,id:el.id,cls:el.className,right:el.getBoundingClientRect().right}))}));
-  assert.ok(overflow.scroll<=overflow.width,JSON.stringify({slug,...overflow}));
- }
+
  await page.goto(base+'/',{waitUntil:'domcontentloaded'});
  for(const slug of ['ai-id-photo','ai-passport-photo','ai-headshot']){
   assert.equal(await page.locator(`[data-photo-studios] a[href="/${slug}"]`).count(),1);
   assert.equal(await page.locator(`aside a[href="/${slug}"]`).count(),1);
  }
  assert.deepEqual(errors,[]);
- console.log('PASS: all photo routes, passport locks and dimensions, mobile layout, landing/sidebar links;  beauty/full-package restoration/passport lock, real sample tabs, grooming presets/manual payload and persistence, mobile ON/OFF payload, async results, failed generation without fallback, readiness and no maintenance popup');
+ console.log('PASS: ID photo options, persistence, async results, failure/readiness, mobile and home/sidebar navigation');
 }finally{await browser.close();}

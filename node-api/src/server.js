@@ -15,8 +15,9 @@ import { analyzeMealCalories } from './commerce/calorieAnalyzer.js';
 import { analyzePersonalColor } from './commerce/personalColorAnalyzer.js';
 import { analyzeSaju } from './commerce/sajuAnalyzer.js';
 import { analyzePetAudio, parsePetAudioPayload } from './commerce/petTranslator.js';
+import { normalizeHeadshotOptions, HEADSHOT_VERSION, HEADSHOT_CHOICES } from './providers/headshotOptions.js';
 import { normalizeIdPhotoStyling, GROOMING_MODES } from './providers/idPhotoStyling.js';
-import { generateCandidatesWithProvider, getImageProvider, getResolvedImageProvider, isIdPhotoEnabled, isExternalAiEnabled, normalizeRequestedProvider, resolveImageProvider } from './providers/providerRouter.js';
+import { generateCandidatesWithProvider, getImageProvider, getResolvedImageProvider, isIdPhotoEnabled, isHeadshotEnabled, isExternalAiEnabled, normalizeRequestedProvider, resolveImageProvider } from './providers/providerRouter.js';
 import { getNamingDataset } from './naming/repository.js';
 import { validateNamingInput, validateRecommendInput } from './naming/validate.js';
 import { calculateFiveGrid } from './naming/fiveGrid.js';
@@ -507,6 +508,8 @@ app.get('/config', (_req, res) => {
   const resend = getResendConfig();
 
   res.json({
+    headshotOptionsVersion: HEADSHOT_VERSION,
+    headshotChoices: HEADSHOT_CHOICES,
     idPhotoGroomingModes: GROOMING_MODES,
     idPhotoBeautyOptions: ['skin', 'contour', 'vitality', 'makeup'],
     imageProvider: getResolvedImageProvider(),
@@ -526,6 +529,7 @@ app.get('/config', (_req, res) => {
     readiness: {
       openAiReady,
       idPhotoReady: isIdPhotoEnabled(),
+      headshotReady: isHeadshotEnabled(),
       xaiReady,
       aiImageGeneratorReady: openAiReady || xaiReady,
       aiPersonalColorReady: openAiReady,
@@ -2044,7 +2048,15 @@ app.post('/upload', upload.single('image'), async (req, res) => {
 
 app.post('/generate', async (req, res) => {
   const { photoId, toolType = 'id_photo', outfitType: requestedOutfitType = 'current', faceHint = null, provider = null } = req.body ?? {};
+  if (toolType === 'passport_photo') return res.status(400).json({error:'여권사진은 AI 생성 대신 원본 규격 도구를 이용해주세요.'});
   let styling = {};
+  const portrait = ['id_photo','headshot'].includes(toolType);
+  if (toolType === 'headshot') {
+    if (!isHeadshotEnabled()) return res.status(503).json({error:'프로필사진 서버가 준비되지 않았습니다.'});
+    if (!['current','suit','smart'].includes(requestedOutfitType)) return res.status(400).json({error:'invalid outfit'});
+    try { styling = {profileOptions:normalizeHeadshotOptions(req.body?.profileOptions)}; }
+    catch (error) { return res.status(400).json({error:error.message}); }
+  }
   if (toolType === 'id_photo') {
     try { styling = normalizeIdPhotoStyling(req.body ?? {}); }
     catch (error) { return res.status(400).json({ error: error.message }); }
@@ -2098,7 +2110,7 @@ app.post('/generate', async (req, res) => {
       if (active && active.status !== 'failed') throw Object.assign(new Error('this order has already been used'), { statusCode: 409 });
       db.orders.set(order.id, { ...order, aiPhotoJobId: jobId });
     }
-    if (toolType === 'id_photo') {
+    if (portrait) {
       await persistJobSnapshot(job);
       req.creditAsync = Boolean(req.creditClaimed);
       res.status(202).json({ jobId, status: 'processing' });
