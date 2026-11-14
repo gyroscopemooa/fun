@@ -11,7 +11,7 @@ const examples = [
       <p class="studio-eyebrow"><span></span> MANYTOOL PORTRAIT STUDIO</p>
       <h1>{mode === "passport" ? <>셀카 한 장,<br /><em>여권 스타일로.</em></> : mode === "profile" ? <>나를 소개하는<br /><em>프로필 한 장.</em></> : <>사진 한 장,<br />준비된 <em>첫인상.</em></>}</h1>
       <p class="studio-intro">{mode === "passport" ? "정면·흰 배경·단정한 머리, 미용 보정 없이." : mode === "profile" ? "이력서·업무·프로필에 어울리는 단정한 사진." : "방금 찍은 셀카를 단정한 증명사진으로."}<br />{mode === "passport" ? "사진을 정리하고 규격을 선택해 다운로드하세요." : <>머리부터 정장, 자연스러운 보정까지<br class="desktop-break" /> 원하는 만큼만 선택하세요.</>}</p>
-      <div class="studio-hero-actions"><a class="studio-primary" href="#candidate-section">내 사진으로 시작하기 <span>↗</span></a><a class="studio-text-link" href="#real-samples">실제 변환 예시 보기 ↓</a></div>
+      <div class="studio-hero-actions"><a class="studio-primary" href="#candidate-section">내 사진으로 시작하기 <span>↗</span></a>{!hideExamples && <a class="studio-text-link" href="#real-samples">실제 변환 예시 보기 ↓</a>}</div>
       <div class="studio-hero-price"><strong>$9.90</strong><span>후보 3장 생성 · 최종 1장 다운로드<br />머리·정장·보정 옵션 추가 비용 없음</span></div>
     </div>
     {hideExamples ? <div class="studio-hero-preview" aria-label="생성 결과 미리보기 영역">
