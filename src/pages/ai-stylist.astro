@@ -1,0 +1,13 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import AiStylist from '../components/ai-stylist/AiStylist';
+---
+<Layout title="AI 코디 | 내 사진으로 가상 착장 · 코디 분석 | 매니툴" description="내 전신사진이나 셀카와 옷 사진을 조합해 보는 AI 코디. 옷가게 사진, 옷장 속 옷, 쇼핑몰 사진을 최대 5장까지 추가해 나만의 코디를 준비하세요.">
+  <Header />
+  <main class="mx-auto max-w-6xl px-4 py-8 md:py-12">
+    <AiStylist client:load />
+  </main>
+  <Footer />
+</Layout>

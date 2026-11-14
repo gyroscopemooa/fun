@@ -32,6 +32,7 @@ const paths = [
   '/ai-id-photo',
   '/ai-image-generator',
   '/ai-model-cut',
+  '/ai-stylist',
   '/ai-passport-photo',
   '/ai-photoshop',
   '/about',

@@ -102,6 +102,7 @@ const labelMap: Record<string, string> = {
   'ai-manseryeok': 'AI 만세력 사주팔자 정밀분석',
   'ai-pet-translator': 'AI 펫 언어 분석기',
   'ai-model-cut': 'AI 상품으로 모델 만들기',
+  'ai-stylist': 'AI 코디',
   sandbox: '샌드박스',
   'electric-practical': '전기기능사 실기 시뮬레이터',
   'species-war': '종 vs 종 샌드박스',
@@ -228,6 +229,7 @@ const sidebarText = {
   links: [
     { href: localizedHrefOrOriginal(locale, '/'), label: t('common.home') },
     { href: localizedHrefOrOriginal(locale, '/ai-image-generator'), label: t('layout.sidebar.aiImage') },
+    { href: '/ai-stylist', label: locale === 'ko' ? 'AI 코디 · 가상 착장' : locale === 'ja' ? 'AIコーデ · 試着' : 'AI Outfit · Virtual Try-On' },
     {
       href: localizedHrefOrOriginal(locale, '/ai-model-cut'),
       label: locale === 'ko' ? 'AI 상품으로 모델 만들기' : locale === 'ja' ? '商品からAIモデルを作成' : 'Create an AI Model for Your Product'
