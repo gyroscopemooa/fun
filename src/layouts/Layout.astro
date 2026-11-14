@@ -274,22 +274,15 @@ if (locale !== 'ko') {
   sidebarText.links.forEach((link, index) => { if (labels[index]) link.label = labels[index]; });
 }
 
-// 증명사진 계열은 운영에서 비활성(준비 중). 로컬 개발 서버에서는 열어서 바로 확인할 수 있게 함
+// Photo studios are available in production; the electrical simulator stays local.
+sidebarText.links.push(
+  { href: localizedHrefOrOriginal(locale, '/ai-passport-photo'), label: locale === 'ko' ? 'AI 여권사진' : locale === 'ja' ? 'AIパスポート写真' : 'AI Passport Photo' },
+  { href: localizedHrefOrOriginal(locale, '/ai-headshot'), label: locale === 'ko' ? 'AI 프로필사진' : locale === 'ja' ? 'AIプロフィール写真' : 'AI Profile Photo' }
+);
 if (import.meta.env.DEV) {
-  sidebarText.links.push(
-    {
-      href: localizedHrefOrOriginal(locale, '/ai-passport-photo'),
-      label: locale === 'ko' ? 'AI 여권사진 (로컬)' : locale === 'ja' ? 'AIパスポート写真 (ローカル)' : 'AI Passport Photo (local)'
-    },
-    {
-      href: localizedHrefOrOriginal(locale, '/ai-photoshop'),
-      label: locale === 'ko' ? 'AI 프로필사진 (로컬)' : locale === 'ja' ? 'AIプロフィール写真 (ローカル)' : 'AI Profile Photo (local)'
-    },
-    // 전기기능사 실기 시뮬레이터: 런칭 전까지 운영에서는 숨김
-    { href: '/tools/electric-practical', label: '전기기능사 실기 시뮬레이터 (로컬)' }
-  );
+  sidebarText.links.push({ href: '/tools/electric-practical', label: '전기기능사 실기 시뮬레이터 (로컬)' });
 }
-const disabledSidebarPaths = new Set(import.meta.env.DEV ? [] : ['/ai-passport-photo']);
+const disabledSidebarPaths = new Set<string>();
 // 기부하기: 운영에서는 PG 심사 전까지 숨기고, 로컬 개발 서버나 PUBLIC_SHOW_DONATE=true 일 때만 표시
 const showDonate = import.meta.env.DEV || import.meta.env.PUBLIC_SHOW_DONATE === 'true';
 const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.replace(/^\/[a-z]{2}(?=\/|$)/, '') || '/'));
@@ -598,7 +591,7 @@ const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.r
         // Production generation stays blocked until paid fulfillment is validated.
         var AI_PAGE = /^\/(?:[a-z]{2,3}(?:-[A-Za-z]+)?\/)?(?:ai-(?:calorie-calculator|headshot|id-photo|image-generator|manseryeok|model-cut|passport-photo|personal-color|pet-translator|photoshop)|name-premium|tools\/product-detail-studio|product-detail-studio)(?:\/|$)/;
         var AI_ENDPOINT = /\/(?:checkout|upload|generate|analyze|recommend|refund|api\/pet|pet-access\/request-link)(?:\/|$|\?)/;
-        if (!AI_PAGE.test(location.pathname) || /^\/ai-id-photo\/?$/.test(location.pathname)) return;
+        if (!AI_PAGE.test(location.pathname) || /^\/(?:ai-id-photo|ai-passport-photo|ai-headshot|ai-photoshop)\/?$/.test(location.pathname)) return;
         window.manytoolAiUnavailable = true;
         var lang = (document.documentElement.lang || 'ko').slice(0, 2);
         var copy = {

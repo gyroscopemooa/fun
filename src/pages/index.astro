@@ -106,8 +106,8 @@ const cardSeed = [
   { href: '/love-type-test', title: '연애 유형 테스트', desc: '12문항으로 보는 나의 연애 스타일', icon: '💘', iconClass: 'bg-rose-100 text-rose-700', category: 'etc', isNew: true },
   { href: '/office-type-test', title: '직장인 유형 테스트', desc: '12문항으로 보는 회사 속 내 캐릭터', icon: '💼', iconClass: 'bg-sky-100 text-sky-700', category: 'etc', isNew: true },
   { href: '/ai-id-photo', title: 'AI 증명사진', desc: '정면·흰 배경·머리 정리 + 정장 ON/OFF', icon: '📷', iconClass: 'bg-slate-100 text-slate-700', disabled: false, category: 'art' },
-  { href: '/ai-passport-photo', title: 'AI 여권사진', desc: '여권 규격 후보 3장 생성', icon: '🛂', iconClass: 'bg-cyan-100 text-cyan-700', disabled: true, category: 'art' },
-  { href: '/ai-headshot', title: 'AI 프로필사진', desc: '비즈니스/취업용 프로필 생성', icon: '🖌️', iconClass: 'bg-amber-100 text-amber-700', disabled: true, category: 'art' },
+  { href: '/ai-passport-photo', title: 'AI 여권사진', desc: '미용 보정 없이 정면·흰 배경·3.5×4.5cm', icon: '🛂', iconClass: 'bg-cyan-100 text-cyan-700', disabled: false, category: 'art' },
+  { href: '/ai-headshot', title: 'AI 프로필사진', desc: '비즈니스/취업용 프로필 생성', icon: '🖌️', iconClass: 'bg-amber-100 text-amber-700', disabled: false, category: 'art' },
   { href: '/animal-test', title: '동물상 테스트', desc: '사진으로 동물상 분석', icon: '🐾', iconClass: 'bg-sky-100 text-sky-700', category: 'art' },
   { href: '/pinball', title: '핀볼 게임', desc: '가볍게 즐기는 미니게임', icon: '🎮', iconClass: 'bg-emerald-100 text-emerald-700', category: 'games' },
   { href: '/personal-color', title: '퍼스널컬러 자가진단', desc: '얼굴 기반 계절 톤 빠른 확인', icon: '🎨', iconClass: 'bg-amber-100 text-amber-700', category: 'art' },
@@ -370,6 +370,15 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
 
         <AdsterraBanner placement="home" class="mt-4" />
       </section>
+
+      {locale === 'ko' && <section class="px-4 py-6 lg:px-10" aria-labelledby="photo-studios-title" data-photo-studios>
+        <div class="mb-4"><p class="text-xs font-bold tracking-widest text-sky-700">MANYTOOL PHOTO STUDIO</p><h2 id="photo-studios-title" class="mt-2 text-2xl font-black text-slate-900">사진 한 장으로 준비하는 새로운 첫인상</h2><p class="mt-2 text-sm text-slate-600">사진 업로드부터 스타일 선택, 후보 비교와 규격 다운로드까지.</p></div>
+        <div class="grid gap-4 md:grid-cols-3">{[
+          {href:'/ai-id-photo',icon:'📷',title:'AI 증명사진',desc:'정장·머리 정리·보정을 선택하고 이력서 사진을 준비하세요.',tag:'반명함 · 신분증 · 인화 시트'},
+          {href:'/ai-passport-photo',icon:'🛂',title:'AI 여권사진',desc:'미용 보정 없이 정면과 흰 배경으로 정리하세요. 제출처 규정 확인이 필요합니다.',tag:'여권 스타일 · 3.5×4.5cm'},
+          {href:'/ai-headshot',icon:'✨',title:'AI 프로필사진',desc:'취업·업무·온라인 프로필에 어울리는 단정한 사진을 만드세요.',tag:'머리 정리 · 정장 선택 · 후보 비교'}
+        ].map(tool => <a href={tool.href} class="rounded-2xl border border-sky-100 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-sky-300"><span class="text-3xl" aria-hidden="true">{tool.icon}</span><h3 class="mt-3 text-lg font-bold text-slate-900">{tool.title}</h3><p class="mt-2 text-sm leading-6 text-slate-600">{tool.desc}</p><p class="mt-4 text-xs font-semibold text-sky-700">{tool.tag}</p><span class="mt-4 block text-sm font-bold text-slate-900">사진 만들기 ↗</span></a>)}</div>
+      </section>}
 
       <HomeFamilyShowcase />
 
