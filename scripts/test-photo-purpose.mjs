@@ -39,7 +39,7 @@ try{
  assert.equal(await page.locator('aside[aria-label="AI 상품 가격"]').count(),0);
  assert.equal(await page.locator('#passport-download').isDisabled(),true);
  assert.equal(await page.locator('[data-profile-studio]').count(),0);
- assert.match(await page.locator('h1').innerText(),/있는 그대로/);
+ assert.match(await page.locator('h1').innerText(),/여권사진 규격/);
  await page.locator('#passport-file:enabled').waitFor();
  await page.locator('#passport-file').setInputFiles({name:'original.jpg',mimeType:'image/jpeg',buffer:portrait});
  for(const box of await page.locator('[data-passport-tool] input[type=checkbox]').all())await box.check();
@@ -57,7 +57,7 @@ try{
  if(process.env.PHOTO_SCREENSHOT_DIR)await page.screenshot({path:process.env.PHOTO_SCREENSHOT_DIR+'/passport-mobile.png',fullPage:true});
  for(const slug of ['online-passport-photo','free-passport-photo']){await page.goto(base+'/'+slug+'/',{waitUntil:'domcontentloaded'});await page.locator('[data-passport-tool]').waitFor();assert.equal(await page.locator('[data-profile-studio]').count(),0);}
  assert.equal(posts.length,0);
- await page.goto(base+'/ai-headshot/',{waitUntil:'domcontentloaded'});await page.locator('[data-profile-studio]').waitFor();assert.match(await page.locator('h1').innerText(),/새로운 첫인상/);assert.equal(await page.locator('aside[aria-label="AI 상품 가격"]').count(),0);assert.equal(await page.locator('[data-passport-tool]').count(),0);
+ await page.goto(base+'/ai-headshot/',{waitUntil:'domcontentloaded'});await page.locator('[data-profile-studio]').waitFor();assert.match(await page.locator('h1').innerText(),/프로필사진을 만들어보세요/);assert.equal(await page.locator('aside[aria-label="AI 상품 가격"]').count(),0);assert.equal(await page.locator('[data-passport-tool]').count(),0);
  await page.getByRole('button',{name:/SNS · 개인 프로필/}).click();await page.getByRole('button',{name:'슬레이트 블루',exact:true}).click();
  for(const name of ['스마트 캐주얼','차분한 표정','여유 있는 상반신','정사각 1:1','원래 피부 유지'])await page.getByRole('button',{name,exact:true}).click();
  await page.locator('#profile-file').setInputFiles({name:'portrait.jpg',mimeType:'image/jpeg',buffer:portrait});await page.locator('#profile-generate:enabled').waitFor();await page.locator('#profile-generate').click();
