@@ -1,7 +1,6 @@
 ---
 import NicepayReviewOffer from '../components/NicepayReviewOffer.astro';
 import AiImageGenerator from '../components/home/AiImageGenerator';
-import AdsterraBanner from '../components/ads/AdsterraBanner.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import Layout from '../layouts/Layout.astro';
@@ -26,12 +25,12 @@ const seoLinks = [
 ];
 ---
 
-<Layout
+<Layout simple
   title="AI 이미지 생성기 | 피규어, 바디프로필, 여행 배경, 인스타 스타일 | ManyTool"
   description="사진 한 장으로 AI 피규어, 바디프로필, 해외여행 배경, 유럽여행 스타일, 인스타 사진, 한복/기모노 스타일, 의상변경 이미지를 생성하세요."
   keywords="AI 이미지 생성기, AI 피규어 만들기, AI 바디프로필, AI 여행 배경, AI 유럽여행 스타일, AI 인스타 사진, AI 한복 스타일, AI 기모노 스타일, AI 의상변경"
 >
-  <Header />
+  <Header simple />
   <main>
     <section class="mx-auto max-w-6xl px-4 pt-4 sm:pt-8">
       <div class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:rounded-[2rem] sm:p-6">
@@ -46,13 +45,7 @@ const seoLinks = [
         </div>
       </div>
     </section>
-    <div class="mx-auto max-w-6xl px-4">
-      <AdsterraBanner placement="top" />
-    </div>
     <AiImageGenerator client:load locale="ko" />
-    <div class="mx-auto max-w-6xl px-4 pb-8">
-      <AdsterraBanner placement="bottom" />
-    </div>
   <NicepayReviewOffer product="image" />
   </main>
   <Footer />

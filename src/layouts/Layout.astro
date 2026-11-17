@@ -16,6 +16,7 @@ interface Props {
   keywords?: string;
   noindex?: boolean;
   showAiPriceNotice?: boolean;
+  simple?: boolean;
 }
 
 const {
@@ -24,7 +25,8 @@ const {
   image = '/og-image.png',
   keywords,
   noindex = false,
-  showAiPriceNotice = true
+  showAiPriceNotice = true,
+  simple = false
 } = Astro.props;
 
 const ogImage = new URL(image, Astro.site ?? Astro.url.origin).toString();
@@ -465,7 +467,7 @@ const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.r
     </aside>
 
     <div id="manytool-shell" class="transition-[padding] duration-300 lg:pl-[288px]">
-      {pathNoLocale !== '/' && (
+      {pathNoLocale !== '/' && !simple && (
         <nav aria-label="Breadcrumb" class="mx-auto max-w-5xl px-4 pt-3 text-xs text-slate-500">
           <ol class="flex flex-wrap items-center gap-1">
             {breadcrumbs.map((crumb, idx) => (
@@ -484,11 +486,11 @@ const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.r
           </p>
         </div>
       )}
-      <AdSense slotName="글로벌 본문 상단" />
+      {!simple && <AdSense slotName="글로벌 본문 상단" />}
       {showAiPriceNotice && <AiPriceNotice />}
       <slot />
-      <AdSense slotName="글로벌 본문 하단" />
-      <EzoicPlacements />
+      {!simple && <AdSense slotName="글로벌 본문 하단" />}
+      {!simple && <EzoicPlacements />}
     </div>
 
     <script is:inline define:vars={{ apiBase, locale, donateText: sidebarText }}>
