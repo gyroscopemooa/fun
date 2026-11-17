@@ -317,15 +317,6 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
           >
             <span aria-hidden="true">★</span>
             <span class="hidden sm:inline">{t.favoriteOnly}</span>
-        <div class="min-w-0 flex-1 lg:max-w-md">
-          <input
-            id="tool-search"
-            aria-label={t.searchPlaceholder}
-            class="w-full rounded-full border border-sky-100 bg-white px-3 py-2 text-sm outline-none focus:border-sky-400"
-            placeholder={t.searchPlaceholder}
-            type="text"
-          />
-        </div>
             <span id="favorite-filter-count" class="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-amber-700">0</span>
           </button>
           <details class="relative">

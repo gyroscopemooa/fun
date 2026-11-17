@@ -91,6 +91,8 @@ const items = [
 
 <script>
   const root = document.getElementById('ai-quickbar');
+  // The Android app has its own bottom menu bar (app-nav.js); do not stack two bars.
+  if (/ManytoolAndroid/i.test(navigator.userAgent)) root?.remove();
   const toggle = document.getElementById('aqb-toggle');
   const sheet = document.getElementById('aqb-sheet');
   const set = (open: boolean) => {
