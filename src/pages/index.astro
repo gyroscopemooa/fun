@@ -296,7 +296,7 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
   <main class="min-h-screen bg-slate-100">
     <div class="mx-auto max-w-6xl">
       <header class="flex items-center justify-between gap-2 border-b border-sky-100 px-4 py-3 lg:px-10">
-        <a href={withLocale('/')} class="flex min-w-0 items-center gap-2">
+        <a href={withLocale('/')} class="flex shrink-0 items-center gap-2">
           <img src="/favicon.svg" alt="ManyTool 로고" class="h-7 w-7 rounded-lg bg-sky-100 p-1 sm:h-8 sm:w-8" loading="eager" decoding="async" />
           <h2 class="truncate text-base font-bold tracking-tight text-slate-900 sm:text-xl">ManyTool</h2>
         </a>
@@ -308,6 +308,15 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
           >
             <span aria-hidden="true">★</span>
             <span class="hidden sm:inline">{t.favoriteOnly}</span>
+        <div class="min-w-0 flex-1 lg:max-w-md">
+          <input
+            id="tool-search"
+            aria-label={t.searchPlaceholder}
+            class="w-full rounded-full border border-sky-100 bg-white px-3 py-2 text-sm outline-none focus:border-sky-400"
+            placeholder={t.searchPlaceholder}
+            type="text"
+          />
+        </div>
             <span id="favorite-filter-count" class="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-amber-700">0</span>
           </button>
           <details class="relative">
@@ -333,29 +342,19 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
         </div>
       </header>
 
-      <section class="px-4 py-5 lg:px-10">
-        <div class="mx-auto max-w-md">
-          <input
-            id="tool-search"
-            aria-label={t.searchPlaceholder}
-            class="w-full rounded-full border border-sky-100 bg-white px-4 py-3 text-sm outline-none focus:border-sky-400"
-            placeholder={t.searchPlaceholder}
-            type="text"
-          />
-        </div>
-
-        <div class="mt-5 text-center">
+      <section class="px-4 py-3 lg:px-10 lg:py-5">
+        <div class="mt-5 hidden text-center lg:block">
           <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{t.heroTitle}</h1>
           <p class="mt-1 text-slate-500">{t.heroDesc}</p>
         </div>
 
-        <div class="mt-4 overflow-x-auto pb-2">
+        <div class="mt-3 overflow-x-auto pb-1 lg:mt-4">
           <div class="mx-auto flex w-max gap-2">
           {t.tabs.map((tab, idx) => (
             <button
               data-tab={idx === 0 ? 'all' : idx === 1 ? 'games' : idx === 2 ? 'tools' : idx === 3 ? 'art' : idx === 4 ? 'etc' : 'new'}
               class:list={[
-                'tab-chip whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition',
+                'tab-chip whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition lg:px-4 lg:py-2 lg:text-sm',
                 'whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium',
                 idx === 0
                   ? 'bg-sky-500 text-white'
@@ -368,7 +367,7 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
           </div>
         </div>
 
-        <AdsterraBanner placement="home" class="mt-4" />
+        <div class="hidden lg:block"><AdsterraBanner placement="home" class="mt-4" /></div>
       </section>
 
 
@@ -376,11 +375,10 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
 
       <!-- 양쪽 여백 광고: 도구 카드부터 운영 기준 섹션까지 스크롤을 따라 내려온다 -->
       <div class="relative">
-      <AdsterraRail side="left" />
-      <AdsterraRail side="right" />
+      <div class="hidden lg:block"><AdsterraRail side="left" /><AdsterraRail side="right" /></div>
       <div class="px-4 pb-4 lg:px-10">
         <div id="home-card-rows">
-          <div class="mb-3 flex justify-end">
+          <div class="mb-3 hidden justify-end lg:flex">
             <button id="home-motion-toggle" type="button" aria-pressed="true" data-play={locale === 'ko' ? '자동 이동 시작' : 'Play cards'} data-pause={locale === 'ko' ? '자동 이동 일시정지' : 'Pause cards'} class="rounded-full border border-sky-100 bg-white px-3 py-2 text-xs text-slate-600">{locale === 'ko' ? '자동 이동 일시정지' : 'Pause cards'}</button>
           </div>
           <section class="space-y-4" aria-label={locale === 'ko' ? '도구 카드' : 'Tool cards'}>

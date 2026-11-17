@@ -1,17 +1,23 @@
 ---
 import { familyServices } from '../data/family-services';
+import { detectLocale } from '../lib/i18n';
+
+const locale = detectLocale(Astro.url.pathname);
+const enCopies = ['Real-time captions and translation for broadcasts and meetings', 'Track workouts and routines in one place', 'A platform to introduce apps, products, and services', 'A light community for humor, issues, and the economy', 'Compare quotes from businesses and specialists', 'An easy hiring page for growing companies', 'Verified group buying that connects creators and fans', 'Learn languages with AI through films and dramas'];
+const copyOf = (service: { copy: string }, index: number) => (locale === 'ko' ? service.copy : enCopies[index] ?? service.copy);
+const goLabel = locale === 'ko' ? '바로가기' : 'Open';
 ---
 
-<section class="px-4 pb-5 lg:px-10" aria-label="live sub 패밀리 서비스 광고">
+<section class="px-4 pb-2 lg:px-10 lg:pb-5" aria-label="live sub family services">
   <div class="mx-auto max-w-[970px]">
-    <p class="mb-1.5 text-center text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">Family promotion</p>
+    <p class="mb-1.5 hidden text-center lg:block text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">Family promotion</p>
     <div class="home-family-ad" data-home-family-ad>
       {familyServices.map((service, index) => (
         <a href={service.href} target="_blank" rel="noopener noreferrer" class:list={['home-family-ad__slide', index === 0 && 'is-active']} data-home-family-slide aria-hidden={index === 0 ? 'false' : 'true'} style={`--ad-accent:${service.accent}`}>
           <span class="home-family-ad__index">{String(index + 1).padStart(2, '0')} / {String(familyServices.length).padStart(2, '0')}</span>
           <span class="home-family-ad__brand">{service.name}</span>
-          <span class="home-family-ad__copy">{service.copy}</span>
-          <span class="home-family-ad__cta">바로가기 <b aria-hidden="true">↗</b></span>
+          <span class="home-family-ad__copy">{copyOf(service, index)}</span>
+          <span class="home-family-ad__cta">{goLabel} <b aria-hidden="true">↗</b></span>
         </a>
       ))}
     </div>
@@ -53,7 +59,10 @@ import { familyServices } from '../data/family-services';
   .home-family-ad__slide:hover .home-family-ad__cta, .home-family-ad__slide:focus-visible .home-family-ad__cta { border-color: var(--ad-accent); color: var(--ad-accent); }
   .home-family-ad__slide:focus-visible { outline: 2px solid var(--ad-accent); outline-offset: -3px; }
   @media (max-width: 640px) {
-    .home-family-ad { height: 86px; }
+    .home-family-ad { height: 44px; border-radius: 12px; box-shadow: none; }
+    .home-family-ad__brand { font-size: 14px !important; }
+    .home-family-ad__cta { display: none; }
+    .home-family-ad__slide { grid-template-columns: auto minmax(0, 1fr) !important; }
     .home-family-ad__slide { grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; padding: 0 14px; }
     .home-family-ad__index { display: none; }
     .home-family-ad__brand { font-size: 17px; }
