@@ -496,6 +496,8 @@ const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.r
       {!simple && <EzoicPlacements />}
     </div>
 
+    <AiQuickBar />
+
     <script is:inline define:vars={{ apiBase, locale, donateText: sidebarText }}>
       const sidebarEl = document.getElementById('manytool-sidebar');
       const shellEl = document.getElementById('manytool-shell');
@@ -513,8 +515,6 @@ const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.r
         shellEl.classList.toggle('lg:pl-[288px]', isOpen);
         shellEl.classList.toggle('lg:pl-[28px]', !isOpen);
         toggleEl.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-    <AiQuickBar />
-
         toggleEl.setAttribute('aria-label', isOpen ? donateText.close : donateText.open);
         toggleEl.textContent = isOpen ? '‹' : '›';
       };
