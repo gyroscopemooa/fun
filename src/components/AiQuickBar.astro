@@ -1,31 +1,49 @@
 ---
 // 모바일/앱 하단 퀵바: AI 도구 버튼을 누르면 바 위로 목록이 펼쳐진다.
+const ic = {
+  home: '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
+  apps: '<rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/>',
+  tools: '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/>',
+  coin: '<circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5h4a1.8 1.8 0 0 1 0 3.5h-3a1.8 1.8 0 0 0 0 3.5h4"/>',
+  image: '<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/>',
+  brush: '<path d="M18 3l3 3-9 9-3-3z"/><path d="M9 12c-3 0-4 2-4 4s-1 3-2 4c3 1 7 0 8-3 .5-1.5 0-3-2-5"/>',
+  id: '<rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="11" r="2"/><path d="M6 16c.5-2 5.5-2 6 0M15 10h3M15 14h3"/>',
+  passport: '<rect x="5" y="3" width="14" height="18" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M9 17h6"/>',
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1-5 15-5 16 0"/>',
+  camera: '<path d="M4 8h3l2-3h6l2 3h3v12H4z"/><circle cx="12" cy="13" r="3.5"/>',
+  shirt: '<path d="M8 3l-5 4 3 3 2-1v12h8V9l2 1 3-3-5-4a4 4 0 0 1-8 0z"/>',
+  palette: '<path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 1.5-2s0-2 1.5-2h2a3 3 0 0 0 3-3c0-5-4-11-8-11z"/><circle cx="8" cy="11" r="1"/><circle cx="12" cy="7.5" r="1"/><circle cx="16" cy="11" r="1"/>',
+  paw: '<circle cx="6" cy="11" r="2"/><circle cx="10" cy="6" r="2"/><circle cx="15" cy="6" r="2"/><circle cx="19" cy="11" r="2"/><path d="M12 12c-3 0-5 3-5 5 0 2 2 3 5 2 3 1 5 0 5-2 0-2-2-5-5-5z"/>',
+  flame: '<path d="M12 3c1 4 6 6 6 11a6 6 0 0 1-12 0c0-2 1-3 2-4 0 2 1 3 2 3 0-4-1-6 2-10z"/>',
+  moon: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
+};
 const items = [
-  { href: '/ai-image-generator', label: 'AI 이미지 생성' },
-  { href: '/ai-photoshop', label: 'AI 포토샵' },
-  { href: '/ai-id-photo', label: 'AI 증명사진' },
-  { href: '/ai-passport-photo', label: 'AI 여권사진' },
-  { href: '/ai-headshot', label: 'AI 프로필 사진' },
-  { href: '/ai-model-cut', label: 'AI 모델컷' },
-  { href: '/ai-stylist', label: 'AI 스타일리스트' },
-  { href: '/ai-personal-color', label: 'AI 퍼스널컬러' },
-  { href: '/ai-pet-translator', label: 'AI 펫 번역기' },
-  { href: '/ai-calorie-calculator', label: 'AI 칼로리' },
-  { href: '/ai-manseryeok', label: 'AI 만세력' },
-  { href: '/ai-search', label: 'AI 검색' },
+  { href: '/ai-image-generator', icon: 'image', label: 'AI 이미지 생성' },
+  { href: '/ai-photoshop', icon: 'brush', label: 'AI 포토샵' },
+  { href: '/ai-id-photo', icon: 'id', label: 'AI 증명사진' },
+  { href: '/ai-passport-photo', icon: 'passport', label: 'AI 여권사진' },
+  { href: '/ai-headshot', icon: 'user', label: 'AI 프로필 사진' },
+  { href: '/ai-model-cut', icon: 'camera', label: 'AI 모델컷' },
+  { href: '/ai-stylist', icon: 'shirt', label: 'AI 스타일리스트' },
+  { href: '/ai-personal-color', icon: 'palette', label: 'AI 퍼스널컬러' },
+  { href: '/ai-pet-translator', icon: 'paw', label: 'AI 펫 번역기' },
+  { href: '/ai-calorie-calculator', icon: 'flame', label: 'AI 칼로리' },
+  { href: '/ai-manseryeok', icon: 'moon', label: 'AI 만세력' },
+  { href: '/ai-search', icon: 'search', label: 'AI 검색' },
 ];
 ---
 
 <div id="ai-quickbar" class="aqb" data-open="false">
   <button type="button" class="aqb-scrim" aria-label="닫기" tabindex="-1"></button>
   <div class="aqb-sheet" id="aqb-sheet" role="menu" aria-label="AI 도구 목록" hidden>
-    {items.map((i) => <a role="menuitem" href={i.href}>{i.label}<span aria-hidden="true">›</span></a>)}
+    {items.map((i) => <a role="menuitem" href={i.href}><i class="aqb-ic" aria-hidden="true"><svg viewBox="0 0 24 24" set:html={ic[i.icon]} /></i><em>{i.label}</em><span aria-hidden="true">›</span></a>)}
   </div>
   <nav class="aqb-bar" aria-label="빠른 메뉴">
-    <a href="/">홈</a>
-    <button type="button" id="aqb-toggle" aria-expanded="false" aria-controls="aqb-sheet" class="aqb-main">AI 도구 <b aria-hidden="true">⌃</b></button>
-    <a href="/tools">전체 도구</a>
-    <a href="/credits">크레딧</a>
+    <a href="/"><svg viewBox="0 0 24 24" aria-hidden="true" set:html={ic.home} /><small>홈</small></a>
+    <button type="button" id="aqb-toggle" aria-expanded="false" aria-controls="aqb-sheet" class="aqb-main"><svg viewBox="0 0 24 24" aria-hidden="true" set:html={ic.apps} /><small>AI 도구</small><b aria-hidden="true">⌃</b></button>
+    <a href="/tools"><svg viewBox="0 0 24 24" aria-hidden="true" set:html={ic.tools} /><small>전체 도구</small></a>
+    <a href="/credits"><svg viewBox="0 0 24 24" aria-hidden="true" set:html={ic.coin} /><small>크레딧</small></a>
   </nav>
 </div>
 
@@ -33,7 +51,7 @@ const items = [
   .aqb { display: none; }
   @media (max-width: 1023px) {
     .aqb { display: block; }
-    body { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
+    body { padding-bottom: calc(70px + env(safe-area-inset-bottom)); }
   }
   .aqb-scrim { position: fixed; inset: 0; z-index: 60; border: 0; background: rgba(15,23,42,.28); opacity: 0; pointer-events: none; transition: opacity .2s; }
   .aqb[data-open="true"] .aqb-scrim { opacity: 1; pointer-events: auto; }
@@ -45,14 +63,20 @@ const items = [
     border-top: 1px solid rgba(15,23,42,.08);
   }
   .aqb-bar a, .aqb-bar button {
-    height: 44px; border: 0; border-radius: 14px; background: transparent; color: #475569;
-    font: 600 13px/1 inherit; display: flex; align-items: center; justify-content: center; gap: 4px; text-decoration: none;
+    height: 50px; border: 0; border-radius: 14px; background: transparent; color: #475569;
+    font: 600 11px/1 inherit; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-decoration: none; position: relative;
   }
+  .aqb-bar svg, .aqb-ic svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .aqb-bar small { font-size: 11px; font-weight: 600; }
+  .aqb-bar .aqb-main b { position: absolute; top: 4px; right: 10px; }
+  .aqb-ic { width: 32px; height: 32px; border-radius: 10px; background: #eef2ff; color: #4f46e5; display: inline-flex; align-items: center; justify-content: center; margin-right: 10px; flex: none; }
+  .aqb-ic svg { width: 18px; height: 18px; }
+  .aqb-sheet a em { font-style: normal; flex: 1; }
   .aqb-bar .aqb-main { background: #0f172a; color: #fff; }
   .aqb-bar .aqb-main b { display: inline-block; transition: transform .2s; font-size: 12px; }
   .aqb[data-open="true"] .aqb-main b { transform: rotate(180deg); }
   .aqb-sheet {
-    position: fixed; left: 10px; right: 10px; bottom: calc(68px + env(safe-area-inset-bottom)); z-index: 61;
+    position: fixed; left: 10px; right: 10px; bottom: calc(74px + env(safe-area-inset-bottom)); z-index: 61;
     max-height: 60vh; overflow-y: auto; padding: 6px; border-radius: 20px;
     background: #fff; box-shadow: 0 16px 40px rgba(15,23,42,.18); border: 1px solid rgba(15,23,42,.06);
     transform-origin: bottom center; animation: aqb-up .18s ease-out;
