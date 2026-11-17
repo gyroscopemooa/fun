@@ -728,9 +728,13 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
   // English UI instead of accidentally showing Korean strings. The locale is
   // still preserved so translated dictionaries can be added incrementally.
   const modeContentMap = localizedModeContent(locale);
+  const stepCopy = locale === 'ko'
+    ? { style: '1. 스타일 선택', other: '다른 스타일 선택', upload: '2. ', prompt: '3. ', go: '4. 아래 버튼을 눌러 만들기' }
+    : { style: '1. Choose a style', other: 'More styles', upload: '2. ', prompt: '3. ', go: '4. Tap the button below to create' };
   const uiLabels = locale === 'ko' ? { mode: '모드', moreExamples: '스타일별 샘플 갤러리' } : locale === 'en' ? EN_LABELS : (LOCALIZED_UI[locale as keyof typeof LOCALIZED_UI] ?? EN_LABELS);
   const generatorCopy = ({
     en: { upload: 'Upload image', uploadHint: 'Drag or click to choose an image.', uploadPrompt: 'Upload an image', change: 'Change image', ready: 'Your final image is ready.', saveHint: 'Save the high-resolution original and share it on your profile or social media.', save: 'Save', share: 'Share' },
+    ko: { upload: '사진 올리기', uploadHint: '끌어다 놓거나 눌러서 사진을 고르세요.', uploadPrompt: '사진을 올려주세요', change: '사진 변경', ready: '결과 이미지가 완성되었습니다.', saveHint: '고해상도 원본을 저장하고 SNS에 공유하세요.', save: '저장', share: '공유' },
     zh: { upload: '上传图片', uploadHint: '拖放或点击选择图片。', uploadPrompt: '上传一张图片', change: '更换图片', ready: '最终图片已生成。', saveHint: '保存高清原图并分享到社交平台。', save: '保存', share: '分享' },
     es: { upload: 'Subir imagen', uploadHint: 'Arrastra o haz clic para elegir una imagen.', uploadPrompt: 'Sube una imagen', change: 'Cambiar imagen', ready: 'Tu imagen final está lista.', saveHint: 'Guarda el original en alta resolución y compártelo.', save: 'Guardar', share: 'Compartir' },
     it: { upload: 'Carica immagine', uploadHint: 'Trascina o fai clic per scegliere un’immagine.', uploadPrompt: 'Carica un’immagine', change: 'Cambia immagine', ready: 'La tua immagine finale è pronta.', saveHint: 'Salva l’originale ad alta risoluzione e condividilo sui social.', save: 'Salva', share: 'Condividi' },
@@ -743,7 +747,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
     th: { upload: 'อัปโหลดรูปภาพ', uploadHint: 'ลากหรือคลิกเพื่อเลือกรูปภาพ', uploadPrompt: 'อัปโหลดรูปภาพ', change: 'เปลี่ยนรูปภาพ', ready: 'รูปภาพสุดท้ายพร้อมแล้ว', saveHint: 'บันทึกต้นฉบับความละเอียดสูงและแชร์บนโซเชียล', save: 'บันทึก', share: 'แชร์' },
     sv: { upload: 'Ladda upp bild', uploadHint: 'Dra eller klicka för att välja en bild.', uploadPrompt: 'Ladda upp en bild', change: 'Byt bild', ready: 'Din färdiga bild är klar.', saveHint: 'Spara originalet i hög upplösning och dela det.', save: 'Spara', share: 'Dela' },
     uk: { upload: 'Завантажити зображення', uploadHint: 'Перетягніть або натисніть, щоб вибрати зображення.', uploadPrompt: 'Завантажте зображення', change: 'Змінити зображення', ready: 'Підсумкове зображення готове.', saveHint: 'Збережіть оригінал у високій якості та поділіться ним.', save: 'Зберегти', share: 'Поділитися' }
-  } as const)[locale as 'en' | 'zh' | 'es' | 'it' | 'nl' | 'ru' | 'ar' | 'hi' | 'tr' | 'pl' | 'th' | 'sv' | 'uk'] ?? { upload: 'Upload image', uploadHint: 'Drag and drop or click to choose an image.', uploadPrompt: 'Upload an image', change: 'Change image', ready: 'Your final result image is ready.', saveHint: 'Save the high-resolution original and share it to your profile or social media.', save: 'Save', share: 'Share' };
+  } as const)[locale as 'ko' | 'en' | 'zh' | 'es' | 'it' | 'nl' | 'ru' | 'ar' | 'hi' | 'tr' | 'pl' | 'th' | 'sv' | 'uk'] ?? { upload: 'Upload image', uploadHint: 'Drag and drop or click to choose an image.', uploadPrompt: 'Upload an image', change: 'Change image', ready: 'Your final result image is ready.', saveHint: 'Save the high-resolution original and share it to your profile or social media.', save: 'Save', share: 'Share' };
   const screenCopy = locale === 'ko' ? { changeHint:'다른 이미지를 선택하려면 클릭하거나 파일을 다시 드래그하세요.', faceHint:'얼굴이 잘 보이는 사진일수록 결과가 안정적입니다. 먼저 얼굴 품질을 보정하고 이후 최종 스타일을 적용합니다.', productHint:'옷 전체가 잘 보이는 사진을 올려주세요. 색상·패턴·로고를 살려 AI 모델에게 입혀 드립니다.', clickUpload:'클릭해서 업로드', optional:'선택 사항입니다. 짧은 추가 디테일만 입력하세요.', required:'원하는 스타일을 짧게 설명해 주세요.', preview:'예시 미리보기', how:'작동 방식', steps:['사진 업로드','얼굴 보정','스타일 완성'], howDesc:'얼굴 디테일을 먼저 보정한 뒤 최종 스타일을 적용합니다.' }
     : locale === 'zh' ? { changeHint:'点击或再次拖放文件可更换图片。', faceHint:'面部清晰的照片效果更稳定。系统会先优化面部细节，再应用最终风格。', productHint:'请上传能看清整件商品的照片。系统会保留颜色、图案和标志并应用到 AI 模特。', clickUpload:'点击上传', optional:'可选。仅添加简短的细节说明。', required:'请简短描述想要的风格。', preview:'示例预览', how:'使用方法', steps:['上传照片','优化面部','完成风格'], howDesc:'先优化面部细节，再应用最终风格。' }
     : locale === 'es' ? { changeHint:'Haz clic o arrastra otro archivo para cambiar la imagen.', faceHint:'Las fotos con el rostro visible ofrecen resultados más estables.', productHint:'Sube una foto donde se vea la prenda completa.', clickUpload:'Haz clic para subir', optional:'Opcional. Añade solo detalles breves.', required:'Describe brevemente el estilo que deseas.', preview:'Vista previa', how:'Cómo funciona', steps:['Subir foto','Mejorar rostro','Aplicar estilo'], howDesc:'Primero mejoramos el rostro y después aplicamos el estilo final.' }
@@ -1227,25 +1231,34 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
             <span className="text-xs font-medium text-slate-500">{modeContentMap[mode].tabLabel}</span>
           </div>
 
-          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 scrollbar-none sm:hidden">
-            {MODE_ORDER.map((tabMode) => {
-              const tabContent = modeContentMap[tabMode];
-              const isActive = mode === tabMode;
-              return (
-                <button
-                  key={tabMode}
-                  type="button"
-                  onClick={() => setMode(tabMode)}
-                  className={`shrink-0 rounded-full border px-4 py-2.5 text-sm font-semibold transition duration-200 ${
-                    isActive
-                      ? 'border-slate-950 bg-slate-950 text-white shadow-lg shadow-slate-950/10'
-                      : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-900'
-                  }`}
-                >
-                  {tabContent.tabLabel}
-                </button>
-              );
-            })}
+          <div className="sm:hidden">
+            <p className="mb-2 text-sm font-bold text-slate-900">{stepCopy.style}</p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setMode('figure')}
+                className={`shrink-0 rounded-full border px-4 py-2.5 text-sm font-semibold transition duration-200 ${
+                  mode === 'figure'
+                    ? 'border-slate-950 bg-slate-950 text-white shadow-lg shadow-slate-950/10'
+                    : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-900'
+                }`}
+              >
+                {modeContentMap.figure.tabLabel}
+              </button>
+              <select
+                aria-label={stepCopy.style}
+                value={mode === 'figure' ? '' : mode}
+                onChange={(event) => { if (event.target.value) setMode(event.target.value as Mode); }}
+                className={`min-w-0 flex-1 rounded-full border px-4 py-2.5 text-sm font-semibold outline-none transition ${
+                  mode !== 'figure' ? 'border-slate-950 bg-slate-950 text-white' : 'border-slate-200 bg-white text-slate-600'
+                }`}
+              >
+                <option value="" disabled>{stepCopy.other}</option>
+                {MODE_ORDER.filter((tabMode) => tabMode !== 'figure').map((tabMode) => (
+                  <option key={tabMode} value={tabMode} className="text-slate-900">{modeContentMap[tabMode].tabLabel}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="hidden gap-3 sm:grid sm:grid-cols-2 xl:grid-cols-4">
@@ -1283,7 +1296,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
           <div className="min-w-0 overflow-hidden rounded-[32px] border border-slate-200/80 bg-white p-4 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-6 lg:p-7">
             <div className="mb-5 flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-bold text-slate-950">{generatorCopy.upload}</h2>
+                <h2 className="text-xl font-bold text-slate-950"><span className="sm:hidden">{stepCopy.upload}</span>{generatorCopy.upload}</h2>
                 <p className="mt-1 text-sm text-slate-500">{generatorCopy.uploadHint}</p>
               </div>
               {uploadedImage ? (
@@ -1359,7 +1372,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
 
             <div className="mt-5 rounded-3xl border border-slate-200 bg-slate-50 p-4">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">{activeContent.inputLabel}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400"><span className="sm:hidden">{stepCopy.prompt}</span>{activeContent.inputLabel}</p>
                 <span className="text-xs font-medium text-slate-500">{activeUserInput.length}/{USER_INPUT_MAX_LENGTH}</span>
               </div>
               <input
@@ -1386,6 +1399,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
                 </p>
               ) : null}
             </div>
+            <p className="mt-4 text-center text-sm font-bold text-slate-900 sm:hidden">{stepCopy.go}</p>
           </div>
 
           <aside className="min-w-0 overflow-hidden rounded-[32px] border border-slate-200/80 bg-white p-4 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-6 lg:p-7">
@@ -1461,7 +1475,7 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
         {lockMode ? null : <AiSampleGallery title={uiLabels.moreExamples} onUseStyle={useStyleFromGallery} locale={locale} />}
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/80 bg-white/92 px-4 py-4 backdrop-blur">
+      <div className="mt-gen-bar fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/80 bg-white/92 px-4 py-4 backdrop-blur">
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 sm:flex-row">
           <button
             type="button"

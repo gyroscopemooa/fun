@@ -26,6 +26,8 @@
   var css = document.createElement('style');
   css.textContent =
     'body.mt-app{padding-bottom:calc(60px + env(safe-area-inset-bottom))!important}' +
+    // Keep page-level fixed action bars (e.g. the big generate button) visible above the app menu bar.
+    "body.mt-app .mt-gen-bar{bottom:var(--mt-nav-h,calc(56px + env(safe-area-inset-bottom)))!important;padding-top:10px!important;padding-bottom:10px!important}" +
     // Web-only NICE/single-purchase notices are never shown in the app (Google Play credits only).
     '[data-web-only]{display:none!important}' +
     '#mt-nav button.mt-pay{color:#0e7490;font-weight:800}' +
@@ -116,7 +118,7 @@
       b.addEventListener('click', it.run);
       nav.appendChild(b);
     });
-    document.body.appendChild(nav); document.body.appendChild(tip);
+    document.body.appendChild(nav); document.documentElement.style.setProperty('--mt-nav-h', nav.offsetHeight + 'px'); document.body.appendChild(tip);
   }
   if (document.body) mount(); else document.addEventListener('DOMContentLoaded', mount);
 })();
