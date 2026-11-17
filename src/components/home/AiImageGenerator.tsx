@@ -1220,9 +1220,9 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
 
   return (
     <div className="relative min-h-screen bg-[radial-gradient(circle_at_top,_rgba(251,191,36,0.14),_transparent_28%),linear-gradient(180deg,_#fffaf5_0%,_#fff_42%,_#f8fafc_100%)] pb-40 text-slate-900">
-      <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-8 px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
-        <section className={`${lockMode ? 'hidden' : ''} rounded-[28px] border border-white/70 bg-white/85 p-3 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur`}>
-          <div className="mb-3 flex items-center justify-between sm:hidden">
+      <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-4 px-4 py-3 sm:gap-8 sm:px-6 sm:py-6 lg:px-8 lg:py-10">
+        <section className={`${lockMode ? 'hidden' : ''} sm:rounded-[28px] sm:border sm:border-white/70 sm:bg-white/85 sm:p-3 sm:shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:backdrop-blur`}>
+          <div className="hidden">
             <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">{uiLabels.mode}</span>
             <span className="text-xs font-medium text-slate-500">{modeContentMap[mode].tabLabel}</span>
           </div>
@@ -1271,11 +1271,11 @@ export default function AiImageGenerator({ locale = 'ko', initialMode = 'figure'
 
         <section className="flex items-start justify-between gap-4">
           <div>
-            <p className="mb-2 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 shadow-sm">
+            <p className="mb-2 hidden items-center gap-2 rounded-full sm:inline-flex border border-slate-200 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 shadow-sm">
               {ENGINE_LABEL}
             </p>
-            <h1 className="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">{activeContent.title}</h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">{activeContent.exampleDescription}</p>
+            <h1 className="text-2xl font-black tracking-tight text-slate-950 sm:text-4xl">{activeContent.title}</h1>
+            <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600 sm:mt-3 sm:text-base">{activeContent.exampleDescription}</p>
           </div>
         </section>
 
