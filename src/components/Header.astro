@@ -1,6 +1,6 @@
 ---
 import { createTranslator, detectLocale, rolloutLocales, seoLocaleCodes, stripLocale } from '../lib/i18n';
-import { localizedHrefOrOriginal } from '../lib/locale-routes';
+import { hasLocalePage, localizedHrefOrOriginal } from '../lib/locale-routes';
 import FamilyPromo from './FamilyPromo.astro';
 
 const pathname = Astro.url.pathname;
@@ -26,9 +26,12 @@ const langLinks = [
   ...rolloutLocales.map((lang) => ({
     code: lang.code,
     name: lang.nativeName,
+    // Link to the translated page only when it exists; otherwise the language's home page (never a 404).
     href: preserveCurrentRoute ? strippedPath : lang.code === 'ko'
       ? `${strippedPath}`.replace(/\/{2,}/g, '/') || '/'
-      : `/${lang.code}${strippedPath}`.replace(/\/{2,}/g, '/') || `/${lang.code}`
+      : hasLocalePage(lang.code as any, strippedPath.replace(/\/+$/, '') || '/')
+        ? `/${lang.code}${strippedPath}`.replace(/\/{2,}/g, '/') || `/${lang.code}`
+        : `/${lang.code}/`
   }))
 ];
 ---
