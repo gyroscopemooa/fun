@@ -419,7 +419,7 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
       <p id="search-empty" class="hidden px-4 pb-4 text-sm text-slate-500 lg:px-10">{t.noResult}</p>
       <p id="favorite-empty" class="hidden px-4 pb-4 text-sm text-slate-500 lg:px-10">{t.favoriteEmpty}</p>
 
-      <div class="px-4 pb-6 lg:px-10">
+      <div class="hidden px-4 pb-6 lg:block lg:px-10">
         <AdsterraBanner placement="home" class="mt-2" />
       </div>
 
@@ -431,6 +431,8 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
           </p>
           <p class="mt-2 text-slate-700">
             {t.guideP2}
+      <details id="home-seo-fold" class="mx-4 mb-4 rounded-2xl border border-slate-200 bg-white lg:mx-0 lg:border-0 lg:bg-transparent">
+        <summary class="cursor-pointer list-none px-4 py-3 text-sm font-bold text-slate-700 lg:hidden">서비스 안내 · 자주 묻는 질문 · 운영 기준 <span aria-hidden="true">⌄</span></summary>
           </p>
           <div class:list={['mt-5 rounded-2xl bg-slate-50 p-4', !showDonate && 'hidden']}>
             <p class="text-sm text-slate-600">{t.guideDonateHint}</p>
@@ -538,14 +540,17 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
         </div>
       </section>
 
-      <AdSense slotName="Header 아래" />
-      <AdSense slotName="본문 상단" />
+      </details>
+      <script is:inline>if (matchMedia('(min-width:1024px)').matches) document.getElementById('home-seo-fold')?.setAttribute('open', '');</script>
+
+      <div class="hidden lg:block"><AdSense slotName="Header 아래" />
+      <AdSense slotName="본문 상단" /></div>
       <SponsorBanner position="본문 중간" />
-      <AdSense slotName="본문 중간" />
+      <div class="hidden lg:block"><AdSense slotName="본문 중간" /></div>
 
       <section class="px-4 pb-10 lg:px-10">
         <Recommend />
-        <AdSense slotName="추천 콘텐츠 위" />
+        <div class="hidden lg:block"><AdSense slotName="추천 콘텐츠 위" /></div>
       </section>
 
       <section class="px-4 pb-10 lg:px-10">
@@ -745,3 +750,12 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
   </script>
 
 </Layout>
+
+<style is:global>
+  @media (max-width: 1023px) {
+    body:has(#home-card-rows) section[aria-label$="광고"], body:has(#home-card-rows) section[aria-label$="広告"],
+    body:has(#home-card-rows) section[aria-label$="广告"], body:has(#home-card-rows) section[aria-label$=" AD"],
+    body:has(#home-card-rows) section[aria-label="광고"], body:has(#home-card-rows) .ezoic-ad-slot, body:has(#home-card-rows) .adsterra-banner, body:has(#home-card-rows) .adsterra-rail,
+    body:has(#home-card-rows) section[aria-label*="Adsense" i] { display: none !important; }
+  }
+</style>
