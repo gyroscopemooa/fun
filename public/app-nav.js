@@ -29,6 +29,9 @@
     // Web-only NICE/single-purchase notices are never shown in the app (Google Play credits only).
     '[data-web-only]{display:none!important}' +
     '#mt-nav button.mt-pay{color:#0e7490;font-weight:800}' +
+    '#mt-nav button.mt-charge{color:#b45309;font-weight:800}' +
+    '#mt-nav button small{font-size:10px;font-weight:800;color:#0e7490;line-height:1;margin-top:-1px}' +
+    '#mt-nav button span{white-space:nowrap}' +
     '#mt-nav button.mt-open{color:#0ea5e9}' +
     '#mt-ai-back{position:fixed;inset:0;z-index:2147482999;background:rgba(15,23,42,.35)}' +
     '#mt-ai{position:fixed;left:8px;right:8px;bottom:calc(64px + env(safe-area-inset-bottom));z-index:2147483000;max-height:60vh;overflow-y:auto;background:#fff;border-radius:18px;padding:12px;box-shadow:0 12px 40px rgba(15,23,42,.28);display:grid;grid-template-columns:1fr 1fr;gap:8px;overscroll-behavior:contain}' +
@@ -50,15 +53,17 @@
     back: '<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>',
     reload: '<svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg>',
     ai: '<svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8z"/></svg>',
-    pay: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/><path d="M7 15h3"/></svg>'
+    pay: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg>',
+    charge: '<svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><path d="M12 13v4"/><path d="M10 15h4"/></svg>'
   };
   var items = [
     { key: 'home', label: '홈', run: function () { location.href = '/'; } },
     { key: 'back', label: '뒤로', run: function () { if (history.length > 1) history.back(); } },
     { key: 'reload', label: '새로고침', run: function () { location.reload(); } },
     { key: 'ai', label: 'AI', run: function () { toggleAi(); } },
-    // Credits only: opens the credit-only dialog (never NicePay / single purchase).
-    { key: 'pay', label: '결제하기', cls: 'mt-pay', run: function () { if (window.manytoolShowPaymentChoices) window.manytoolShowPaymentChoices(); } }
+    // Credits only: 사용하기 shows this page's AI credit cost; 충전하기 opens the credit top-up dialog (never NicePay / single purchase).
+    { key: 'pay', label: '사용하기', cls: 'mt-pay', run: function () { if (window.manytoolShowPaymentChoices) window.manytoolShowPaymentChoices({ mode: 'use' }); } },
+    { key: 'charge', label: '충전하기', cls: 'mt-charge', run: function () { if (window.manytoolShowPaymentChoices) window.manytoolShowPaymentChoices({ mode: 'charge' }); } }
   ];
 
   var aiTools = [
@@ -96,7 +101,8 @@
 
     items.forEach(function (it) {
       var b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-label', it.label); if (it.cls) b.className = it.cls; b.setAttribute('data-key', it.key);
-      b.innerHTML = icons[it.key] + '<span>' + it.label + '</span>';
+      var cost = it.key === 'pay' && window.manytoolAiCredits ? window.manytoolAiCredits() : null;
+      b.innerHTML = icons[it.key] + '<span>' + it.label + '</span>' + (cost ? '<small>' + (cost.from ? cost.credits + '크레딧~' : cost.credits + '크레딧') + '</small>' : '');
       b.addEventListener('pointerdown', function () {
         clearTimeout(hideTimer);
         tip.textContent = it.label;
