@@ -56,7 +56,10 @@ def validate_url(value, platform):
         valid = host in ('www.tiktok.com','tiktok.com') and bool(re.fullmatch(r'/@[^/]+/video/\d+/?',path))
         if valid:
             value = urlunsplit(('https','www.tiktok.com',path.rstrip('/'),'',''))
-        valid |= host in ('vm.tiktok.com','vt.tiktok.com') and bool(re.fullmatch(r'/[A-Za-z0-9]+/?',path))
+        valid |= host in ('vm.tiktok.com','vt.tiktok.com') and bool(re.fullmatch(r'/[A-Za-z0-9_-]+/?',path))
+        # Mobile app share links: https://www.tiktok.com/t/ZS.../ and m.tiktok.com
+        valid |= host in ('www.tiktok.com','tiktok.com','m.tiktok.com') and bool(re.fullmatch(r'/t/[A-Za-z0-9_-]+/?',path))
+        valid |= host == 'm.tiktok.com' and bool(re.fullmatch(r'/v/\d+(?:\.html)?/?|/@[^/]+/video/\d+/?',path))
     elif platform in ('instagram','instagram-reels'):
         # Instagram can display the same reel under /p/ in the browser and /reel/ when shared.
         kind = '(?:p|reel|reels)'

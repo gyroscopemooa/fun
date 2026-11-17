@@ -29,6 +29,11 @@ class SafetyTests(unittest.TestCase):
         canonical='https://www.tiktok.com/@s2kitty_____/video/7705713556226002197'
         self.assertEqual(validate_url(canonical+'?is_from_webapp=1&sender_device=pc&web_id=7670216931320432144','tiktok'),canonical)
         self.assertEqual(validate_url(canonical,'tiktok'),canonical)
+    def test_tiktok_mobile_share_links(self):
+        for url in ('https://vt.tiktok.com/ZSabc123/','https://vt.tiktok.com/ZSabc123','https://vm.tiktok.com/ZMabc123/?_r=1','https://www.tiktok.com/t/ZTabc123/','https://m.tiktok.com/v/7705713556226002197.html'):
+            with self.subTest(url=url):self.assertEqual(validate_url(url,'tiktok'),url)
+        for url in ('https://vt.tiktok.com.evil.com/ZSabc123/','https://vt.tiktok.com/a/b/','https://www.tiktok.com/t/'):
+            with self.subTest(url=url),self.assertRaises(ValueError):validate_url(url,'tiktok')
     def test_invalid_payload_types(self):
         for platform in (None, [], {}, 1):
             with self.subTest(platform=platform), self.assertRaises(ValueError):

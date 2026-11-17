@@ -30,7 +30,7 @@ export default function VideoDownloader({ platform, placeholder }: {platform:Vid
   async function start(e:React.FormEvent) {
     e.preventDefault();setError('');setJob(null);setExpired(false);
     let parsed:URL;
-    try{parsed=new URL(url.trim());if(parsed.protocol!=='https:'||parsed.username||parsed.password)throw Error();}
+    try{const found=url.match(/https?:\/\/[^\s"'<>]+/i);parsed=new URL((found?found[0]:url).trim().replace(/[)\]}.,!?;:，。]+$/,''));if(parsed.protocol!=='https:'||parsed.username||parsed.password)throw Error();}
     catch{setError('HTTPS로 시작하는 영상 링크를 입력해주세요.');return;}
     controller.current?.abort();const abort=new AbortController();controller.current=abort;setBusy(true);
     const timeout=setTimeout(()=>abort.abort('timeout'),240000);
