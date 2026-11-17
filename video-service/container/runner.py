@@ -6,6 +6,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 import urllib.request
 from safety import MAX_BYTES, MAX_DURATION, install_network_guard, validate_url
+from watermark import apply_watermark
 
 # Resolution refers to the shorter edge: portrait 720x1280 is also 720p.
 FORMAT_SELECTOR = 'bv[height<=720][ext=mp4]+ba[ext=m4a]/bv[width<=720][ext=mp4]+ba[ext=m4a]/b[height<=720][ext=mp4]/b[width<=720][ext=mp4]/b[height<=720]/b[width<=720]/b[height<=?720]'
@@ -119,6 +120,7 @@ if __name__=='__main__':
         directory=Path(sys.argv[1]).resolve()
         install_network_guard()
         result=download_direct(url,directory) if payload['platform']=='direct' else download_platform(url,directory)
+        result=apply_watermark(directory,result)
         emit({'status':'ready',**result})
     except ValueError as error:
         emit({'status':'failed','message':str(error)})

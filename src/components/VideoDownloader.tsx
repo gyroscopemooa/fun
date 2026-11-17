@@ -33,7 +33,7 @@ export default function VideoDownloader({ platform, placeholder }: {platform:Vid
     try{const found=url.match(/https?:\/\/[^\s"'<>]+/i);parsed=new URL((found?found[0]:url).trim().replace(/[)\]}.,!?;:，。]+$/,''));if(parsed.protocol!=='https:'||parsed.username||parsed.password)throw Error();}
     catch{setError('HTTPS로 시작하는 영상 링크를 입력해주세요.');return;}
     controller.current?.abort();const abort=new AbortController();controller.current=abort;setBusy(true);
-    const timeout=setTimeout(()=>abort.abort('timeout'),240000);
+    const timeout=setTimeout(()=>abort.abort('timeout'),900000);
     try {
       const response=await fetch(`${api}/jobs`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:parsed.href,platform}),signal:abort.signal});
       const result=await response.json().catch(()=>({error:'다운로드 서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.'}));

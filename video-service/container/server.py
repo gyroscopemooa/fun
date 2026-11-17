@@ -19,7 +19,7 @@ ROOT.mkdir(parents=True,exist_ok=True)
 LOCK=threading.RLock()
 JOBS={}
 LIMIT=2
-TIMEOUT=180
+TIMEOUT=840
 TTL=600
 
 
@@ -57,7 +57,7 @@ def perform(token,payload):
             else: job.update(state='failed',message=result.get('message','영상 처리에 실패했습니다.'))
     except subprocess.TimeoutExpired:
         terminate(process);process.communicate()
-        with LOCK:job.update(state='failed',message='처리 제한 시간(3분)을 초과했습니다. 더 짧은 영상을 사용해주세요.')
+        with LOCK:job.update(state='failed',message='처리 제한 시간(14분)을 초과했습니다. 더 짧은 영상을 사용해주세요.')
     except Exception as error:
         print(json.dumps({'event':'download_job_error','type':type(error).__name__,'detail':str(error)}),flush=True)
         with LOCK:job.update(state='failed',message='영상 처리에 실패했습니다. 잠시 후 다시 시도해주세요.')
@@ -84,7 +84,7 @@ class Handler(BaseHTTPRequestHandler):
     protocol_version='HTTP/1.1'
     def log_message(self,*args):pass
     def reply(self,status,data):
-        data['serviceVersion']='video-20261109-x1'
+        data['serviceVersion']='video-20261117-wm1'
         body=json.dumps(data,ensure_ascii=False).encode('utf-8')
         self.send_response(status)
         self.send_header('Content-Type','application/json; charset=utf-8')
