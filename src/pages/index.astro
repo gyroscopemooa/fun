@@ -317,6 +317,15 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
           >
             <span aria-hidden="true">★</span>
             <span class="hidden sm:inline">{t.favoriteOnly}</span>
+        <div class="min-w-0 flex-1 lg:max-w-md">
+          <input
+            id="tool-search"
+            aria-label={t.searchPlaceholder}
+            class="w-full rounded-full border border-sky-100 bg-white px-3 py-2 text-sm outline-none focus:border-sky-400"
+            placeholder={t.searchPlaceholder}
+            type="text"
+          />
+        </div>
             <span id="favorite-filter-count" class="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-amber-700">0</span>
           </button>
           <details class="relative">
@@ -431,6 +440,8 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
           </p>
           <p class="mt-2 text-slate-700">
             {t.guideP2}
+      <details id="home-seo-fold" class="mx-4 mb-4 rounded-2xl border border-slate-200 bg-white lg:mx-0 lg:border-0 lg:bg-transparent">
+        <summary class="cursor-pointer list-none px-4 py-3 text-sm font-bold text-slate-700 lg:hidden">서비스 안내 · 자주 묻는 질문 · 운영 기준 <span aria-hidden="true">⌄</span></summary>
           </p>
           <div class:list={['mt-5 rounded-2xl bg-slate-50 p-4', !showDonate && 'hidden']}>
             <p class="text-sm text-slate-600">{t.guideDonateHint}</p>

@@ -6,6 +6,7 @@ import SiteProviders from '../components/providers/SiteProviders';
 import globalCssUrl from '../styles/global.css?url';
 import AiPriceNotice from '../components/AiPriceNotice.astro';
 import {publicAiCatalog} from '../../shared/ai-products.js';
+import AiQuickBar from '../components/AiQuickBar.astro';
 import { createTranslator, detectLocale, hasTranslation, localeCodes, seoLocaleCodes, stripLocale, withLocalePath } from '../lib/i18n';
 import { localizedHrefOrOriginal } from '../lib/locale-routes';
 
@@ -512,6 +513,8 @@ const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.r
         shellEl.classList.toggle('lg:pl-[288px]', isOpen);
         shellEl.classList.toggle('lg:pl-[28px]', !isOpen);
         toggleEl.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    <AiQuickBar />
+
         toggleEl.setAttribute('aria-label', isOpen ? donateText.close : donateText.open);
         toggleEl.textContent = isOpen ? '‹' : '›';
       };

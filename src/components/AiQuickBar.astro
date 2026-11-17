@@ -1,0 +1,81 @@
+---
+// 모바일/앱 하단 퀵바: AI 도구 버튼을 누르면 바 위로 목록이 펼쳐진다.
+const items = [
+  { href: '/ai-image-generator', label: 'AI 이미지 생성' },
+  { href: '/ai-photoshop', label: 'AI 포토샵' },
+  { href: '/ai-id-photo', label: 'AI 증명사진' },
+  { href: '/ai-passport-photo', label: 'AI 여권사진' },
+  { href: '/ai-headshot', label: 'AI 프로필 사진' },
+  { href: '/ai-model-cut', label: 'AI 모델컷' },
+  { href: '/ai-stylist', label: 'AI 스타일리스트' },
+  { href: '/ai-personal-color', label: 'AI 퍼스널컬러' },
+  { href: '/ai-pet-translator', label: 'AI 펫 번역기' },
+  { href: '/ai-calorie-calculator', label: 'AI 칼로리' },
+  { href: '/ai-manseryeok', label: 'AI 만세력' },
+  { href: '/ai-search', label: 'AI 검색' },
+];
+---
+
+<div id="ai-quickbar" class="aqb" data-open="false">
+  <button type="button" class="aqb-scrim" aria-label="닫기" tabindex="-1"></button>
+  <div class="aqb-sheet" id="aqb-sheet" role="menu" aria-label="AI 도구 목록" hidden>
+    {items.map((i) => <a role="menuitem" href={i.href}>{i.label}<span aria-hidden="true">›</span></a>)}
+  </div>
+  <nav class="aqb-bar" aria-label="빠른 메뉴">
+    <a href="/">홈</a>
+    <button type="button" id="aqb-toggle" aria-expanded="false" aria-controls="aqb-sheet" class="aqb-main">AI 도구 <b aria-hidden="true">⌃</b></button>
+    <a href="/tools">전체 도구</a>
+    <a href="/credits">크레딧</a>
+  </nav>
+</div>
+
+<style is:global>
+  .aqb { display: none; }
+  @media (max-width: 1023px) {
+    .aqb { display: block; }
+    body { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
+  }
+  .aqb-scrim { position: fixed; inset: 0; z-index: 60; border: 0; background: rgba(15,23,42,.28); opacity: 0; pointer-events: none; transition: opacity .2s; }
+  .aqb[data-open="true"] .aqb-scrim { opacity: 1; pointer-events: auto; }
+  .aqb-bar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 62;
+    display: grid; grid-template-columns: 1fr 1.5fr 1fr 1fr; gap: 4px; align-items: center;
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+    background: rgba(255,255,255,.88); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid rgba(15,23,42,.08);
+  }
+  .aqb-bar a, .aqb-bar button {
+    height: 44px; border: 0; border-radius: 14px; background: transparent; color: #475569;
+    font: 600 13px/1 inherit; display: flex; align-items: center; justify-content: center; gap: 4px; text-decoration: none;
+  }
+  .aqb-bar .aqb-main { background: #0f172a; color: #fff; }
+  .aqb-bar .aqb-main b { display: inline-block; transition: transform .2s; font-size: 12px; }
+  .aqb[data-open="true"] .aqb-main b { transform: rotate(180deg); }
+  .aqb-sheet {
+    position: fixed; left: 10px; right: 10px; bottom: calc(68px + env(safe-area-inset-bottom)); z-index: 61;
+    max-height: 60vh; overflow-y: auto; padding: 6px; border-radius: 20px;
+    background: #fff; box-shadow: 0 16px 40px rgba(15,23,42,.18); border: 1px solid rgba(15,23,42,.06);
+    transform-origin: bottom center; animation: aqb-up .18s ease-out;
+  }
+  .aqb-sheet[hidden] { display: none; }
+  .aqb-sheet a { display: flex; justify-content: space-between; align-items: center; padding: 13px 14px; border-radius: 12px; color: #0f172a; font-size: 14px; font-weight: 600; text-decoration: none; }
+  .aqb-sheet a:active { background: #f1f5f9; }
+  .aqb-sheet a span { color: #94a3b8; }
+  @keyframes aqb-up { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: none; } }
+  @media (prefers-color-scheme: dark) { .aqb-bar, .aqb-sheet { background: rgba(15,23,42,.92); } .aqb-bar a, .aqb-bar button { color: #cbd5e1; } .aqb-bar .aqb-main { background: #fff; color: #0f172a; } .aqb-sheet a { color: #f1f5f9; } }
+</style>
+
+<script>
+  const root = document.getElementById('ai-quickbar');
+  const toggle = document.getElementById('aqb-toggle');
+  const sheet = document.getElementById('aqb-sheet');
+  const set = (open: boolean) => {
+    if (!root || !toggle || !sheet) return;
+    root.dataset.open = String(open);
+    toggle.setAttribute('aria-expanded', String(open));
+    sheet.hidden = !open;
+  };
+  toggle?.addEventListener('click', () => set(root?.dataset.open !== 'true'));
+  root?.querySelector('.aqb-scrim')?.addEventListener('click', () => set(false));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') set(false); });
+</script>
