@@ -42,6 +42,14 @@ export function createAccountHandler({ verifyGoogle = async credential => (await
         await db.batch([db.prepare('DELETE FROM account_sessions WHERE sub=?').bind(user.sub),db.prepare('DELETE FROM account_users WHERE sub=?').bind(user.sub)]);
         headers.append('Set-Cookie',cookie(SESSION,'',0));headers.append('Set-Cookie',cookie(NONCE,'',0));return reply({ok:true});
       }
+      if(action==='credit-link') {
+        const secret=env.CREDIT_LINK_SECRET||'';if(secret.length<32)throw fail('계정 연결 설정을 준비하고 있습니다.',503);
+        const user=await current();
+        const payload=btoa(unescape(encodeURIComponent(JSON.stringify({email:user.email,aud:'credit-link',exp:now+120})))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+        const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(secret),{name:'HMAC',hash:'SHA-256'},false,['sign']);
+        const sig=new Uint8Array(await crypto.subtle.sign('HMAC',key,new TextEncoder().encode(`manytool-credit-link:${payload}`)));
+        return reply({token:`${payload}.${btoa(String.fromCharCode(...sig)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}`});
+      }
       if(!['challenge','session'].includes(action))throw fail('지원하지 않는 요청입니다.',404);
       const rateKey=await hash(`${request.headers.get('CF-Connecting-IP')||'unknown'}:${Math.floor(now/600)}`);
       const rate=await db.prepare('INSERT INTO account_limits(hash,count,expires) VALUES(?,1,?) ON CONFLICT(hash) DO UPDATE SET count=count+1 RETURNING count').bind(rateKey,now+600).first();

@@ -1,4 +1,5 @@
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash, createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
+import { installGoogleCreditRoutes } from './google.js';
 import { PACKS, readPricing, productKey } from './pricing.js';
 import { REFUND_POLICY_VERSION } from './refunds.js';
 
@@ -29,7 +30,25 @@ export function installCreditRoutes(app, { store, orders, verifyWebhook, env = p
     return response.json();
   };
 
-  app.get('/credits/config', (_req, res) => res.json({ enabled, walletAvailable: true, refundPolicyVersion: REFUND_POLICY_VERSION, valueKrw: 1000,
+  installGoogleCreditRoutes(app, { store, env, origin, cookie });
+  // Web account -> wallet handoff: the Pages function signs {email,exp}; only a Google-authoritative address may link.
+  app.post('/credits/link', wrap((req, res) => {
+    requireOrigin(req);
+    const secret = env.CREDIT_LINK_SECRET || '';
+    if (secret.length < 32) throw Object.assign(new Error('계정 연결 설정을 준비하고 있습니다.'), { status: 503 });
+    store.rateLimit(`link:${req.ip}`, 60, 600000);
+    const [body, sig] = String(req.body?.token ?? '').split('.');
+    const want = createHmac('sha256', secret).update(`manytool-credit-link:${body}`).digest();
+    const got = Buffer.from(sig ?? '', 'base64url');
+    if (!body || got.length !== want.length || !timingSafeEqual(got, want)) throw Object.assign(new Error('계정을 확인하지 못했습니다.'), { status: 401 });
+    let claim; try { claim = JSON.parse(Buffer.from(body, 'base64url').toString()); } catch { claim = null; }
+    const address = String(claim?.email ?? '').toLowerCase();
+    if (!claim || claim.aud !== 'credit-link' || !Number.isFinite(claim.exp) || claim.exp < Date.now() / 1000 || claim.exp > Date.now() / 1000 + 600) throw Object.assign(new Error('연결이 만료되었습니다. 다시 시도해주세요.'), { status: 401 });
+    if (!/^[^\s@<>]+@gmail\.com$/.test(address) && !claim.hd) throw Object.assign(new Error('이 계정은 이메일 인증 링크로 로그인해주세요.'), { status: 403 });
+    res.setHeader('Set-Cookie', cookie(store.token(address, 'session', 30 * 86400000), 30 * 86400));
+    res.json({ ok: true });
+  }));
+  app.get('/credits/config', (_req, res) => res.json({ enabled, walletAvailable: true, googleClientId: env.GOOGLE_CREDIT_CLIENT_ID || null, refundPolicyVersion: REFUND_POLICY_VERSION, valueKrw: 1000,
     packs: packs.map(({ product, ...pack }) => ({ ...pack, available: enabled && Boolean(product && env.POLAR_ACCESS_TOKEN && env.POLAR_WEBHOOK_SECRET && env.RESEND_API_KEY && Object.keys(pricing).length) })),
     tools: pricing
   }));

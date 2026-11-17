@@ -22,6 +22,24 @@
 
 `PLAY_REFUND_RECONCILIATION_READY=true`는 구현을 대신하는 설정이 아닙니다. 실제 Google 환불·복구 흐름을 검증하기 전 켜지 마세요.
 
+## 앱 웹뷰 결제 정책 (2026-11-17)
+
+앱 UA(`ManytoolAndroidDev`)에서는 `public/payment-choices.js`(나이스페이 결제창)와 `public/credit-checkout.js`(개별구매 선택)가 개별결제·웹 PG·Polar 충전 링크를 노출하지 않고 크레딧 전용 안내만 보여준다. 실제 크레딧 사용·Play 충전은 위 "아직 안 된 것"(앱 로그인 인계 등) 완료 후 연결한다. 웹 사용자 흐름은 변경 없음.
+
+## 구현 추가 (2026-11-17)
+
+- 서버 `node-api/src/credits/play.js`: `GET /credits/play/catalog`, `POST /credits/play/verify`. 상품ID→크레딧은 서버 환경변수(`PLAY_PRODUCT_CREDITS_10/50/300`)로만 결정, 구매 토큰당 1회 적립, 계정 HMAC 바인딩·상품·수량 검증 후 consume. Voided Purchases 폴링(`PLAY_REFUND_RECONCILIATION_READY=true`일 때만)으로 환불 회수. 테스트 `play.test.js`는 Google API 대역 사용.
+- 앱 `AppAccount`: 네이티브 Google 로그인(Credential Manager) → 기존 `/credits/google/*` 서버 흐름. 세션은 메모리에만 보관.
+- `MainActivity`: 브리지 `openCredits`로 네이티브 크레딧 화면(`PlayCreditsPanel`)을 연다. 토큰·계정 정보는 JS로 전달하지 않는다. `CreditReadiness.PURCHASES_ENABLED=false`인 동안은 "준비 중" 안내만 나온다.
+- 검증: 서버 테스트 24개 통과, Java 정책 테스트 통과, `assembleDebug`·`lintDebug` 통과. 실기기·Play 구매는 미검증.
+
+### 켜기 전 사용자가 해야 할 일
+
+1. Play Console에 앱 등록과 소모성 상품 3개(10/50/300 크레딧) 생성 → 상품 ID를 `PLAY_PRODUCT_CREDITS_*`에 설정.
+2. Google Cloud: Android OAuth 클라이언트(패키지 `net.manytool.app` + 서명 SHA-1) 등록, 웹 클라이언트 ID는 `GOOGLE_CREDIT_CLIENT_ID`. Play Console API 접근에 서비스 계정을 연결하고 JSON을 `PLAY_SERVICE_ACCOUNT_JSON`에, 32자 이상 비밀값을 `PLAY_ACCOUNT_BINDING_SECRET`에 설정.
+3. 내부 테스트 트랙에서 구매·대기·취소·환불·재설치를 확인한 뒤 `PLAY_BILLING_ENABLED=true`, `CREDITS_ENABLED`/`CREDITS_TOOLS_READY=true`, 앱 `CreditReadiness.PURCHASES_ENABLED=true`로 전환.
+4. 앱에서 도구가 실제로 크레딧을 차감하려면 웹 도구의 `manytoolCreditCheckout`이 앱 세션 쿠키 없이도 동작하도록 하는 후속 작업이 필요(현재 웹뷰는 별도 쿠키 사용).
+
 ## 가격과 새 도구
 
 나이스페이 웹 PG 승인과 Google Play 결제 개발은 독립입니다. 그러나 Play 출시에는 위 작업이 추가로 필요하므로 **가격만 정하면 출시되는 상태는 아닙니다**.

@@ -33,10 +33,14 @@ public class MainActivity extends Activity {
     private int navigation = 0, uploadNavigation = -1;
     private AlertDialog bridgeDialog;
     private long lastBridgeRequest;
-    private boolean downloadBusy = false, homeVisible = true;
+    private boolean downloadBusy = false, loadFailed = false;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
+        if (android.os.Build.VERSION.SDK_INT >= 33) {
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::goBack);
+        }
         root = new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL);
         // Target 35: avoid drawing controls beneath status/navigation bars.
         if (android.os.Build.VERSION.SDK_INT >= 30) root.setOnApplyWindowInsetsListener((v, insets) -> {
@@ -53,35 +57,12 @@ public class MainActivity extends Activity {
         Button b = new Button(this); b.setText(text); b.setOnClickListener(v -> action.run()); return b;
     }
     private void showHome() {
-        disposeWeb(); root.removeAllViews(); homeVisible = true;
-        ScrollView scroll = new ScrollView(this); LinearLayout list = new LinearLayout(this);
-        list.setOrientation(LinearLayout.VERTICAL); list.setPadding(24,24,24,24); scroll.addView(list); root.addView(scroll);
-        TextView title = new TextView(this); title.setText("매니툴 · Android 개발판"); title.setTextSize(24); list.addView(title);
-        TextView info = new TextView(this);
-        info.setText("웹 도구를 재사용하는 앱 기본 틀입니다. 현재 검증할 무료 도구만 열립니다. 유료 기능·SNS 로그인 다운로드는 준비 중이며 활성화하지 않았습니다."); list.addView(info);
-        String[][] tools = {{"이미지 도구", "/image-tools/"}, {"이미지 압축", "/image-compressor/"},
-            {"이미지 변환", "/image-converter/"}, {"이미지 자르기", "/image-cropper/"},
-            {"이미지 크기 변경", "/image-resizer/"}, {"사진 글자 추출·문서", "/photo-to-document/"},
-            {"선택 글 도구", "/selection-workbench/"}, {"문서 비교", "/text-compare/"}, {"자막 편집", "/subtitle-editor/"}, {"이미지 제출·가리기", "/image-batch/"}, {"JSON 정리", "/json-formatter/"}, {"날짜 계산", "/date-calculator/"}};
-        for (String[] tool : tools) list.addView(button(tool[0], () -> openTool(tool[1])));
-        list.addView(button("크레딧 · 준비 상태", () -> message("크레딧", CreditReadiness.STATUS +
-            "\n기존 웹 결제창은 이 앱에서 차단합니다. 실제 충전·차감은 하지 않습니다.")));
-        list.addView(button("영상·SNS 로그인 · 준비 중", () -> message("아직 사용할 수 없습니다",
-            "로그인 세션·다운로드는 별도 검증이 필요합니다. 다른 앱의 로그인은 자동 공유되지 않습니다. 실제 계정 정보를 입력하거나 쿠키를 업로드하지 마세요.")));
-        list.addView(button("앱의 웹 데이터 지우기", () -> new AlertDialog.Builder(this).setTitle("웹 데이터 삭제")
-            .setMessage("이 앱에서 웹 도구가 보관한 데이터와 로그인 쿠키를 지웁니다. 저장한 파일은 지우지 않습니다.")
-            .setNegativeButton("취소", null).setPositiveButton("삭제", (d,w) -> {
-                WebStorage.getInstance().deleteAllData(); CookieManager.getInstance().removeAllCookies(done -> CookieManager.getInstance().flush());
-                Toast.makeText(this,"앱의 웹 데이터 삭제를 요청했습니다.",Toast.LENGTH_SHORT).show();
-            }).show()));
-        list.addView(button("개인정보처리방침", () -> openTool("/privacy/")));
+        if (web != null) { web.loadUrl(NavigationPolicy.ORIGIN + "/"); return; }
+        openTool("/");
     }
     private void openTool(String path) {
-        disposeWeb(); root.removeAllViews(); homeVisible = false;
-        LinearLayout bar = new LinearLayout(this);
-        bar.addView(button("홈", this::showHome)); bar.addView(button("뒤로", this::goBack));
-        bar.addView(button("새로고침", () -> { if(web != null) web.reload(); })); root.addView(bar);
-        status = new TextView(this); status.setPadding(16,8,16,8); root.addView(status);
+        disposeWeb(); root.removeAllViews();
+        status = new TextView(this); status.setPadding(16,8,16,8); status.setVisibility(android.view.View.GONE); root.addView(status);
         web = new WebView(this); root.addView(web, new LinearLayout.LayoutParams(-1,0,1));
         WebView.setWebContentsDebuggingEnabled(false);
         WebSettings s = web.getSettings(); s.setJavaScriptEnabled(true); s.setDomStorageEnabled(true);
@@ -93,7 +74,17 @@ public class MainActivity extends Activity {
         CookieManager.getInstance().setAcceptThirdPartyCookies(web, false);
         web.setWebChromeClient(new WebChromeClient() {
             @Override public boolean onCreateWindow(WebView v, boolean dialog, boolean gesture, android.os.Message result) {
-                message("새 창 차단", "이 개발판은 외부 로그인·결제 창을 열지 않습니다."); return false;
+                if (!gesture) return false;
+                WebView popup = new WebView(MainActivity.this);
+                popup.setWebViewClient(new WebViewClient() {
+                    @Override public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest r) {
+                        String url = r.getUrl().toString();
+                        if (NavigationPolicy.isAllowedPage(url) && web != null) web.loadUrl(url);
+                        else openExternal(url);
+                        v.destroy(); return true;
+                    }
+                });
+                ((WebView.WebViewTransport)result.obj).setWebView(popup); result.sendToTarget(); return true;
             }
             @Override public void onPermissionRequest(PermissionRequest request) { request.deny(); }
             @Override public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
@@ -101,8 +92,12 @@ public class MainActivity extends Activity {
             }
             @Override public boolean onShowFileChooser(WebView v, ValueCallback<Uri[]> callback, FileChooserParams params) {
                 if (!NavigationPolicy.isAllowedPage(v.getUrl())) { callback.onReceiveValue(null); return true; }
-                if (upload != null) upload.onReceiveValue(null); upload = callback; uploadNavigation = navigation;
+                if (upload != null) { callback.onReceiveValue(null); return true; }
+                upload = callback; uploadNavigation = navigation;
                 Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*");
+                String[] accepted = FileSelectionPolicy.mimeTypes(params.getAcceptTypes());
+                intent.setType(accepted.length == 1 ? accepted[0] : "*/*");
+                if (accepted.length > 1) intent.putExtra(Intent.EXTRA_MIME_TYPES, accepted);
                 intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, params.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE);
                 try { startActivityForResult(intent, CHOOSE_FILE); }
                 catch (RuntimeException e) { upload.onReceiveValue(null); upload=null; message("파일 선택", "파일 선택 앱을 열지 못했습니다."); }
@@ -113,8 +108,13 @@ public class MainActivity extends Activity {
             @Override public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest r) {
                 if (!r.isForMainFrame()) return !NavigationPolicy.isTrusted(r.getUrl().toString());
                 String url = r.getUrl().toString();
+                if (r.hasGesture() && (url.startsWith("blob:"+NavigationPolicy.ORIGIN+"/") || url.startsWith("data:"))) {
+                    requestDownload(url,null); return true;
+                }
                 if (NavigationPolicy.isAllowedPage(url)) return false;
-                message("준비 중인 연결", "이 개발판에서 아직 검증하지 않은 페이지 또는 외부 연결입니다. 앱에서 열지 않았습니다."); return true;
+                if (r.hasGesture() && NavigationPolicy.isExternalPage(url)) openExternal(url);
+                else message("연결 안내", NavigationPolicy.isPaymentRequest(url) ? "앱 결제는 준비 중입니다." : "이 연결은 앱에서 열 수 없습니다.");
+                return true;
             }
             @Override public WebResourceResponse shouldInterceptRequest(WebView v, WebResourceRequest r) {
                 String url=r.getUrl().toString();
@@ -122,16 +122,16 @@ public class MainActivity extends Activity {
                     return new WebResourceResponse("text/plain", "UTF-8", 403, "Blocked in development shell", java.util.Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
                 return null;
             }
-            @Override public void onPageStarted(WebView v,String url,Bitmap icon) { navigation++; status.setText("불러오는 중…"); }
-            @Override public void onPageFinished(WebView v,String url) { status.setText("무료 도구 개발판 · 외부 결제/로그인 차단"); }
+            @Override public void onPageStarted(WebView v,String url,Bitmap icon) { navigation++; downloadBusy=false; loadFailed=false; status.setVisibility(android.view.View.GONE); }
+            @Override public void onPageFinished(WebView v,String url) { if(!loadFailed)status.setVisibility(android.view.View.GONE); CookieManager.getInstance().flush(); }
             @Override public void onReceivedError(WebView v,WebResourceRequest r,WebResourceError error) {
-                if(r.isForMainFrame()) status.setText("페이지를 불러오지 못했습니다. 연결 상태를 확인하고 새로고침해 주세요.");
+                if(r.isForMainFrame()) { loadFailed=true; status.setVisibility(android.view.View.VISIBLE); status.setText("페이지를 불러오지 못했습니다. 연결 상태를 확인하고 새로고침해 주세요."); }
             }
             @Override public void onReceivedSslError(WebView v,SslErrorHandler handler,SslError error) {
-                handler.cancel(); status.setText("안전한 연결을 확인할 수 없어 중단했습니다.");
+                handler.cancel(); loadFailed=true; status.setVisibility(android.view.View.VISIBLE); status.setText("안전한 연결을 확인할 수 없어 중단했습니다.");
             }
             @Override public boolean onRenderProcessGone(WebView v,RenderProcessGoneDetail detail) {
-                showHome(); message("페이지 종료", "웹 화면이 종료되어 홈으로 돌아왔습니다."); return true;
+                disposeWeb(); showHome(); message("페이지 종료", "웹 화면이 종료되어 홈으로 돌아왔습니다."); return true;
             }
         });
         installHybridBridge(web);
@@ -158,8 +158,30 @@ public class MainActivity extends Activity {
                     if(!HybridBridgePolicy.validId(id) || !HybridBridgePolicy.allowedCommand(command)) {bridgeReply(reply,id,false,"unsupported");return;}
                     if("capabilities".equals(command)) {
                         reply.postMessage(new JSONObject().put("id",id).put("ok",true).put("capabilities",new JSONObject()
-                            .put("version",1).put("saveText",true).put("shareText",true).put("playCredits",false)
+                            .put("version",1).put("saveText",true).put("shareText",true).put("playCredits",CreditReadiness.canLaunchPurchase())
                             .put("notifications",false).put("authenticatedVideo",false)).toString()); return;
+                    }
+                    if("balance".equals(command) || "signIn".equals(command)) {
+                        // Account state only: signedIn + numeric balance. The session token never crosses the bridge.
+                        final String replyId=id; final int generation=navigation;
+                        Runnable respond=() -> account.runIo(() -> {
+                            long balance=account.fetchBalance();
+                            try {reply.postMessage(new JSONObject().put("id",replyId).put("ok",true).put("signedIn",account.signedIn()).put("balance",balance).toString());}
+                            catch(Exception ignored) { /* page changed */ }
+                        });
+                        if("balance".equals(command)) { respond.run(); return; }
+                        runOnUiThread(() -> {
+                            if(web!=view || navigation!=generation || isFinishing()) return;
+                            if(account.signedIn()) { respond.run(); return; }
+                            account.signIn(this,(ok,text)->{ if(ok) respond.run(); else bridgeReply(reply,replyId,false,text); });
+                        });
+                        return;
+                    }
+                    if("openCredits".equals(command)) {
+                        // Opens the native screen only; no account, token or purchase data crosses the bridge.
+                        final int generation=navigation;
+                        runOnUiThread(() -> { if(web==view && navigation==generation) openCredits(); });
+                        reply.postMessage(new JSONObject().put("id",id).put("ok",CreditReadiness.canLaunchPurchase()).put("message","opened").toString()); return;
                     }
                     long now=android.os.SystemClock.elapsedRealtime();
                     if(bridgeDialog!=null || pendingSave!=null || now-lastBridgeRequest<1000) {bridgeReply(reply,id,false,"busy");return;}
@@ -187,6 +209,16 @@ public class MainActivity extends Activity {
     private void requestDownload(String url,String mime) {
         if (web == null || !NavigationPolicy.isAllowedPage(web.getUrl()) || downloadBusy || pendingSave != null) return;
         int generation = navigation;
+        if (url.startsWith("data:")) {
+            try {
+                int split=url.indexOf(";base64,");
+                if(split<0 || url.length()>LIMIT*1.4) throw new IOException();
+                byte[] bytes=Base64.decode(url.substring(split+8),Base64.DEFAULT);
+                if(bytes.length>LIMIT)throw new IOException();
+                saveFile(bytes,url.substring(5,split));
+            } catch(Exception e) { message("저장 실패", "지원하지 않거나 너무 큰 파일입니다."); }
+            return;
+        }
         if (url.startsWith("blob:" + NavigationPolicy.ORIGIN + "/")) {
             downloadBusy = true;
             String script = "(async()=>{try{const b=await(await fetch("+JSONObject.quote(url)+")).blob();if(b.size>"+LIMIT+")return '';return await new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.onerror=()=>r('');f.readAsDataURL(b)})}catch(e){return ''}})()";
@@ -210,16 +242,16 @@ public class MainActivity extends Activity {
                 } finally { c.disconnect(); }
             } catch(Exception ignored) { /* Never log request URLs or credentials. */ }
             byte[] result=bytes; runOnUiThread(() -> {
-                downloadBusy=false; if(isFinishing() || generation!=navigation || web==null) return;
+                if(isFinishing() || generation!=navigation || web==null) return; downloadBusy=false;
                 if(result==null) message("저장 실패", "파일을 받지 못했습니다. 로그인 파일·리디렉션·8MB 초과 파일은 아직 지원하지 않습니다.");
                 else saveFile(result,mime);
             });
         });
     }
     private void pollBlob(String key,int generation,int attempt,String mime) {
-        if (web==null || generation!=navigation || isFinishing()) { downloadBusy=false; return; }
+        if (web==null || generation!=navigation || isFinishing()) return;
         web.evaluateJavascript("window["+JSONObject.quote(key)+"]", encoded -> {
-            if (web==null || generation!=navigation) { downloadBusy=false; return; }
+            if (web==null || generation!=navigation) return;
             if ("null".equals(encoded) && attempt<100) { web.postDelayed(() -> pollBlob(key,generation,attempt+1,mime),100); return; }
             web.evaluateJavascript("delete window["+JSONObject.quote(key)+"]",null); downloadBusy=false;
             try {
@@ -251,8 +283,20 @@ public class MainActivity extends Activity {
                     if(count<=20) { selected=new Uri[count]; for(int i=0;i<count;i++) selected[i]=data.getClipData().getItemAt(i).getUri(); }
                 } else if(data.getData()!=null) selected=new Uri[]{data.getData()};
             }
-            if(selected!=null) for(Uri uri:selected) if(!isSelectedDocumentSafe(uri)) { selected=null; break; }
-            upload.onReceiveValue(selected); upload=null; uploadNavigation=-1;
+            final Uri[] candidates=selected;
+            final ValueCallback<Uri[]> callback=upload;
+            final int generation=uploadNavigation;
+            upload=null; uploadNavigation=-1;
+            io.execute(() -> {
+                boolean valid=candidates!=null;
+                if(valid) for(Uri uri:candidates) if(!isSelectedDocumentSafe(uri)){valid=false;break;}
+                final boolean accepted=valid;
+                runOnUiThread(() -> {
+                    boolean current=!isFinishing() && web!=null && generation==navigation;
+                    callback.onReceiveValue(accepted && current ? candidates : null);
+                    if(current && candidates!=null && !accepted)message("파일 선택", "파일을 읽을 수 없거나 한 파일이 32MB를 초과했습니다. 기기에 내려받은 파일로 다시 선택해주세요.");
+                });
+            });
         }
         if(request==SAVE_FILE) {
             byte[] bytes=pendingSave; pendingSave=null;
@@ -268,12 +312,57 @@ public class MainActivity extends Activity {
         if(uri==null || !"content".equals(uri.getScheme()) || uri.getAuthority()==null
             || uri.getAuthority().equals(getPackageName()) || uri.getAuthority().startsWith(getPackageName()+".")) return false;
         try(android.os.ParcelFileDescriptor file=getContentResolver().openFileDescriptor(uri,"r")) {
-            return file!=null && file.getStatSize()>=0 && file.getStatSize()<=32L*1024*1024;
+            if (file == null) return false;
+            long size = file.getStatSize();
+            if (size >= 0) return size <= 32L*1024*1024;
+            // Cloud providers may not expose a descriptor size. Bound reads off the UI thread.
+            try(InputStream in=getContentResolver().openInputStream(uri)) {
+                if(in==null)return false;
+                byte[] buffer=new byte[8192];long total=0;int n;
+                while((n=in.read(buffer))!=-1){total+=n;if(total>32L*1024*1024)return false;}
+                return true;
+            }
         } catch(Exception ignored) { return false; }
     }
+    private void openExternal(String url) {
+        if(!NavigationPolicy.isExternalPage(url)) { message("연결 안내", "앱에서 지원하지 않는 연결입니다."); return; }
+        try {startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse(url)).addCategory(Intent.CATEGORY_BROWSABLE));}
+        catch(RuntimeException e){message("브라우저", "링크를 열 브라우저를 찾지 못했습니다.");}
+    }
     private void message(String title,String body) { if(!isFinishing()) new AlertDialog.Builder(this).setTitle(title).setMessage(body).setPositiveButton("확인",null).show(); }
-    private void goBack() { if(web!=null && web.canGoBack()) web.goBack(); else showHome(); }
-    @Override public void onBackPressed() { if(homeVisible) super.onBackPressed(); else goBack(); }
-    private void disposeWeb() { navigation++; if(bridgeDialog!=null){bridgeDialog.dismiss();bridgeDialog=null;} downloadBusy=false; if(upload!=null){upload.onReceiveValue(null);upload=null;} if(web!=null){web.stopLoading();web.destroy();web=null;} }
-    @Override protected void onDestroy() { disposeWeb(); pendingSave=null; io.shutdown(); super.onDestroy(); }
+    private final AppAccount account = new AppAccount();
+    private PlayCreditsPanel creditsPanel;
+    private android.view.View creditsView;
+    private void openCredits() {
+        if(isFinishing() || creditsView!=null) return;
+        if(!CreditReadiness.canLaunchPurchase()) { message("크레딧 충전", CreditReadiness.STATUS); return; }
+        if(account.signedIn()) { showCredits(); return; }
+        new AlertDialog.Builder(this).setTitle("크레딧 계정 로그인")
+            .setMessage("크레딧 충전과 사용을 위해 Google 계정으로 로그인합니다. 결제는 Google Play로만 진행됩니다.")
+            .setNegativeButton("취소",null)
+            .setPositiveButton("Google 로그인",(d,w)->account.signIn(this,(ok,text)->{ if(ok) showCredits(); else message("로그인",text); })).show();
+    }
+    private void showCredits() {
+        if(creditsView!=null || web==null) return;
+        creditsPanel=new PlayCreditsPanel(this,new PlayCreditHttpBackend(AppAccount.API,NavigationPolicy.ORIGIN,account));
+        LinearLayout box=new LinearLayout(this); box.setOrientation(LinearLayout.VERTICAL);
+        box.addView(creditsPanel);
+        box.addView(button("로그아웃",()->{account.signOut();closeCredits();}));
+        box.addView(button("닫기",this::closeCredits));
+        ScrollView scroll=new ScrollView(this); scroll.addView(box);
+        creditsView=scroll; web.setVisibility(android.view.View.GONE); root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
+    }
+    private void closeCredits() {
+        if(creditsPanel!=null){creditsPanel.close();creditsPanel=null;}
+        if(creditsView!=null){root.removeView(creditsView);creditsView=null;}
+        if(web!=null) web.setVisibility(android.view.View.VISIBLE);
+    }
+    @Override protected void onResume() { super.onResume(); if(creditsPanel!=null) creditsPanel.resume(); }
+    private void goBack() { if(creditsView!=null){closeCredits();return;} if(web!=null && web.canGoBack()) web.goBack(); else new AlertDialog.Builder(this).setMessage("ManyTool을 종료할까요?").setNegativeButton("취소",null).setPositiveButton("종료",(d,w)->finish()).show(); }
+    // API 33+ uses the OnBackInvokedDispatcher registered in onCreate.
+    // This legacy override serves API 26-32; API 36 uses the registered callback.
+    @android.annotation.SuppressLint("GestureBackNavigation")
+    @Override public void onBackPressed() { goBack(); }
+    private void disposeWeb() { navigation++; closeCredits(); if(bridgeDialog!=null){bridgeDialog.dismiss();bridgeDialog=null;} downloadBusy=false; if(upload!=null){upload.onReceiveValue(null);upload=null;} if(web!=null){web.stopLoading();web.destroy();web=null;} }
+    @Override protected void onDestroy() { disposeWeb(); account.close(); pendingSave=null; io.shutdown(); super.onDestroy(); }
 }

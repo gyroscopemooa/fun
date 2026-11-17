@@ -2,18 +2,11 @@ package net.manytool.app;
 
 import java.net.URI;
 import java.util.Locale;
-import java.util.Set;
-import java.util.HashSet;
 import java.util.Arrays;
 
 /** Pure policy: no cookies, tokens, credentials or dynamic purchase configuration. */
 public final class NavigationPolicy {
     public static final String ORIGIN = "https://manytool.net";
-    private static final Set<String> PAGES = new HashSet<>(Arrays.asList(
-        "/platform-tools", "/selection-workbench", "/text-compare", "/subtitle-editor", "/image-batch", "/image-tools", "/image-compressor", "/image-converter", "/image-cropper",
-        "/image-merger", "/image-resizer", "/image-blur", "/json-formatter",
-        "/date-calculator", "/photo-to-document", "/privacy", "/terms", "/contact"
-    ));
     public static boolean isTrusted(String value) {
         try {
             URI u = URI.create(value);
@@ -25,7 +18,7 @@ public final class NavigationPolicy {
         if (!isTrusted(value) || isPaymentRequest(value)) return false;
         try {
             String path = URI.create(value).getPath().replaceAll("/+$", "");
-            return PAGES.contains(path);
+            return !path.contains("\\") && !Arrays.asList(path.split("/")).contains("..") && !Arrays.asList(path.split("/")).contains(".");
         } catch (RuntimeException e) { return false; }
     }
     public static boolean isPaymentRequest(String value) {
@@ -35,11 +28,27 @@ public final class NavigationPolicy {
             String path = String.valueOf(u.getPath()).toLowerCase(Locale.ROOT);
             return host.equals("polar.sh") || host.endsWith(".polar.sh") || host.equals("buy.stripe.com")
                 || path.contains("checkout") || path.contains("/payment") || path.contains("/credits")
-                || path.contains("/billing");
+                || path.contains("/billing") || host.equals("nicepay.co.kr") || host.endsWith(".nicepay.co.kr")
+                || path.contains("/nicepay") || path.contains("/credit-review");
         } catch (RuntimeException e) { return true; }
     }
+    public static boolean isExternalPage(String value) {
+        try {
+            URI u = URI.create(value);
+            return "https".equalsIgnoreCase(u.getScheme()) && u.getHost()!=null && u.getUserInfo()==null
+                && (u.getPort()==-1 || u.getPort()==443) && !isTrusted(value) && !isPaymentRequest(value);
+        } catch (RuntimeException e) { return false; }
+    }
     public static boolean isPublicDownload(String value) {
-        return isTrusted(value) && !isPaymentRequest(value);
+        if (isPaymentRequest(value)) return false;
+        if (isTrusted(value)) return true;
+        try {
+            URI u=URI.create(value);
+            String path=u.getPath();
+            return "https".equalsIgnoreCase(u.getScheme()) && "api.manytool.net".equalsIgnoreCase(u.getHost())
+                && u.getRawUserInfo()==null && (u.getPort()==-1 || u.getPort()==443)
+                && path.startsWith("/files/") && !path.contains("\\") && !Arrays.asList(path.split("/")).contains("..");
+        } catch(RuntimeException e){return false;}
     }
     public static String safeFilename(String input) {
         String result = input == null ? "manytool-file" : input.replaceAll("[^\\p{L}\\p{N}._ -]", "_");

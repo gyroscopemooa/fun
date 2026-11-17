@@ -89,18 +89,57 @@
     refresh(login, credit);
   }
 
+  var API = 'https://api.manytool.net';
+  function show(login, credit, email, balance) {
+    window.manytoolCreditState = { signedIn: true, balance: balance, email: email || '' };
+    login.textContent = L.account;
+    credit.hidden = false;
+    credit.textContent = '★ ' + (balance === null ? L.credit : balance + ' ' + L.credit);
+    document.dispatchEvent(new CustomEvent('manytool:credit-state'));
+  }
+  function json(url, init) {
+    return fetch(url, Object.assign({ credentials: init && init.cors ? 'include' : 'same-origin', signal: AbortSignal.timeout(10000) }, init && init.opts))
+      .then(function (r) { if (!r.ok) throw new Error('status'); return r.json(); });
+  }
+  var post = function (body) { return { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }; };
+
+  /* Web: Google account session -> signed handoff -> wallet session -> balance. Any failure leaves the balance hidden. */
+  function refreshWeb(login, credit) {
+    json('/api/auth/me').then(function (me) {
+      if (!me || !me.email) return;
+      show(login, credit, me.email, null);
+      return json('/api/auth/credit-link', { opts: post({}) })
+        .then(function (link) { return json(API + '/credits/link', { cors: true, opts: post({ token: link.token }) }); })
+        .then(function () { return json(API + '/credits/me', { cors: true }); })
+        .then(function (wallet) { if (typeof wallet.balance === 'number') show(login, credit, me.email, wallet.balance); });
+    }).catch(function () { /* stays signed out or balance hidden */ });
+  }
+
+  /* App: native Google sign-in; the bridge returns only the balance, never a token. */
+  function ask(command) {
+    return new Promise(function (resolve) {
+      var native = window.ManytoolNative;
+      if (!native || !native.postMessage) return resolve(null);
+      var id = 'a' + Math.random().toString(36).slice(2, 12), timer = setTimeout(function () { native.removeEventListener('message', on); resolve(null); }, command === 'signIn' ? 120000 : 8000);
+      function on(event) { try { var d = JSON.parse(event.data); if (d.id !== id) return; clearTimeout(timer); native.removeEventListener('message', on); resolve(d); } catch (e) { /* ignore */ } }
+      native.addEventListener('message', on); native.postMessage(JSON.stringify({ id: id, command: command }));
+    });
+  }
+  function applyNative(login, credit, d) {
+    if (d && d.ok && d.signedIn) show(login, credit, '', typeof d.balance === 'number' ? d.balance : null);
+  }
   function refresh(login, credit) {
-    fetch('/api/auth/me', { credentials: 'same-origin', signal: AbortSignal.timeout(8000) })
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (me) {
-        if (!me || !me.email) return;
-        var balance = typeof me.credits === 'number' ? me.credits : null;
-        window.manytoolCreditState = { signedIn: true, balance: balance, email: me.email };
-        login.textContent = L.account;
-        credit.hidden = false;
-        credit.textContent = '★ ' + (balance === null ? L.credit : balance + ' ' + L.credit);
-        document.dispatchEvent(new CustomEvent('manytool:credit-state'));
-      }).catch(function () { /* stays signed out */ });
+    if (!inApp) return refreshWeb(login, credit);
+    ask('balance').then(function (d) { applyNative(login, credit, d); });
+    login.addEventListener('click', function (event) {
+      if (!window.ManytoolNative) return;
+      event.preventDefault();
+      login.textContent = '...';
+      ask('signIn').then(function (d) {
+        if (d && d.ok && d.signedIn) applyNative(login, credit, d);
+        else { login.textContent = L.login; if (d && d.message) alert(d.message); }
+      });
+    });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount();

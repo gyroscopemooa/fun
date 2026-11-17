@@ -1,20 +1,48 @@
 plugins { id 'com.android.application' }
 
+def uploadSigning = new Properties()
+def uploadSigningFile = rootProject.file('signing.properties')
+if (uploadSigningFile.exists()) uploadSigningFile.withInputStream { uploadSigning.load(it) }
+
 android {
     namespace 'net.manytool.app'
-    compileSdk 35
+    compileSdk 36
     defaultConfig {
         applicationId 'net.manytool.app'
         minSdk 26
-        targetSdk 35
+        targetSdk 36
         versionCode 1
-        versionName '0.1.0-dev'
+        versionName '0.1.0-internal.1'
     }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
-    buildTypes { release { minifyEnabled false } }
+    signingConfigs {
+        upload {
+            if (uploadSigningFile.exists()) {
+                storeFile rootProject.file(uploadSigning['storeFile'])
+                storePassword uploadSigning['storePassword']
+                keyAlias uploadSigning['keyAlias']
+                keyPassword uploadSigning['keyPassword']
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.upload
+        }
+    }
+}
+
+tasks.matching { it.name == 'validateSigningRelease' }.configureEach {
+    doFirst {
+        if (!uploadSigningFile.exists()) throw new GradleException('Missing local signing.properties for upload signing')
+    }
 }
 
 dependencies {
     implementation 'com.android.billingclient:billing:8.0.0'
     implementation 'androidx.webkit:webkit:1.12.1'
+    implementation 'androidx.credentials:credentials:1.3.0'
+    implementation 'androidx.credentials:credentials-play-services-auth:1.3.0'
+    implementation 'com.google.android.libraries.identity.googleid:googleid:1.1.1'
 }
