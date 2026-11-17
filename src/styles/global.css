@@ -55,3 +55,18 @@ input {
     border-color: hsl(var(--border));
   }
 }
+
+/* AI pages on mobile: no borders inside borders */
+@media (max-width: 767px) {
+  body[data-ai-page] main .border .border:not(input):not(textarea):not(select):not(button):not(label):not(.border-dashed):not(#status-box) { border-color: transparent; box-shadow: none; }
+  body[data-ai-page] main .shadow-sm, body[data-ai-page] main [class*="shadow-["] { box-shadow: none; }
+}
+
+/* Android app (body.mt-app): hide bug form and secondary footer links, keep it short */
+body.mt-app .footer-bug,
+body.mt-app .footer-links a[href*="live-sub"],
+body.mt-app .footer-links a[href*="community"],
+body.mt-app .footer-links a[href*="editorial"],
+body.mt-app .footer-links a[href*="disclaimer"] { display: none; }
+body.mt-app .site-footer { margin-top: 1.5rem; }
+body.mt-app .site-footer > div:not(.footer-bug) { padding-top: 1rem; padding-bottom: 1rem; gap: .5rem; }

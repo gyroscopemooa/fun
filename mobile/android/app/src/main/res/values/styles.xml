@@ -1,0 +1,8 @@
+<resources>
+    <!-- Splash for Android 8-11: soft background with the brand tile centered. -->
+    <style name="Theme.ManyTool" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@drawable/splash_background</item>
+        <item name="android:statusBarColor">@color/launcher_background</item>
+        <item name="android:navigationBarColor">@color/launcher_background</item>
+    </style>
+</resources>

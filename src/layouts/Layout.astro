@@ -57,6 +57,7 @@ const clarityId = 'vwq6krnuzx';
 const googleSiteVerification = import.meta.env.PUBLIC_GOOGLE_SITE_VERIFICATION;
 const naverSiteVerification = import.meta.env.PUBLIC_NAVER_SITE_VERIFICATION ?? 'ab286ec18ea2904617f2827146d5b7fb2b5389cc';
 const adsenseClient = 'ca-pub-4323462792235659';
+const isAiPage = /^\/(en\/|zh\/)?ai-/.test(Astro.url.pathname);
 const rawApiBase = (import.meta.env.PUBLIC_NODE_API_BASE ?? '').trim();
 const apiBase = rawApiBase.replace(/\/+$/, '');
 // Translated pages are kept for visitors but stay out of the index until each locale has real, reviewed copy.
@@ -379,7 +380,7 @@ const isDisabledSidebarLink = (href: string) => disabledSidebarPaths.has((href.r
       </>
     )}
   </head>
-  <body class="bg-slate-50 text-slate-900">
+  <body class="bg-slate-50 text-slate-900" data-ai-page={isAiPage ? "" : undefined}>
     {gtmId && (
       <noscript>
         <iframe
