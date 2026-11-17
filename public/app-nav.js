@@ -58,23 +58,37 @@
     pay: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg>',
     charge: '<svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><path d="M12 13v4"/><path d="M10 15h4"/></svg>'
   };
+  /* Language: Korean pages use Korean labels; every other language shows English (only ko/en are translated for now). */
+  var pathLang = (location.pathname.match(/^\/([a-z]{2})(?:-[A-Za-z]{2,4})?(?=\/|$)/) || [])[1];
+  var isKo = !pathLang || pathLang === 'ko';
+  var prefix = isKo ? '' : '/' + pathLang;
+  var T = isKo
+    ? { menu: '앱 메뉴', home: '홈', back: '뒤로', reload: '새로고침', tools: '도구', pay: '사용하기', charge: '충전하기', credit: '크레딧', aiTitle: 'AI 기능 바로가기', ai: 'AI' }
+    : { menu: 'App menu', home: 'Home', back: 'Back', reload: 'Reload', tools: 'Tools', pay: 'Use', charge: 'Top up', credit: ' credits', aiTitle: 'AI shortcuts', ai: 'AI' };
   var items = [
-    { key: 'home', label: '홈', run: function () { location.href = '/'; } },
-    { key: 'back', label: '뒤로', run: function () { if (history.length > 1) history.back(); } },
-    { key: 'reload', label: '새로고침', run: function () { location.reload(); } },
-    { key: 'tools', label: '도구', run: function () { location.href = '/tools/'; } },
+    { key: 'home', label: T.home, run: function () { location.href = prefix ? prefix + '/' : '/'; } },
+    { key: 'back', label: T.back, run: function () { if (history.length > 1) history.back(); } },
+    { key: 'reload', label: T.reload, run: function () { location.reload(); } },
+    { key: 'tools', label: T.tools, run: function () { location.href = '/tools/'; /* no translated tools index yet: open the shared one (never a 404) */ } },
     // Credits only: 사용하기 shows this page's AI credit cost; 충전하기 opens the credit top-up dialog (never NicePay / single purchase).
-    { key: 'pay', label: '사용하기', cls: 'mt-pay', run: function () { if (window.manytoolShowPaymentChoices) window.manytoolShowPaymentChoices({ mode: 'use' }); } },
-    { key: 'charge', label: '충전하기', cls: 'mt-charge', run: function () { if (window.manytoolShowPaymentChoices) window.manytoolShowPaymentChoices({ mode: 'charge' }); } }
+    { key: 'pay', label: T.pay, cls: 'mt-pay', run: function () { if (window.manytoolShowPaymentChoices) window.manytoolShowPaymentChoices({ mode: 'use' }); } },
+    { key: 'charge', label: T.charge, cls: 'mt-charge', run: function () { if (window.manytoolShowPaymentChoices) window.manytoolShowPaymentChoices({ mode: 'charge' }); } }
   ];
 
-  var aiTools = [
+  var aiToolsKo = [
     ['AI 이미지 생성', '/ai-image-generator/'], ['AI 증명사진', '/ai-id-photo/'], ['AI 여권사진', '/ai-passport-photo/'],
     ['AI 프로필 사진', '/ai-headshot/'], ['AI 코디', '/ai-stylist/'], ['AI 모델컷', '/ai-model-cut/'],
     ['AI 포토샵', '/ai-photoshop/'], ['AI 퍼스널컬러', '/ai-personal-color/'], ['AI 칼로리 분석', '/ai-calorie-calculator/'],
     ['AI 만세력', '/ai-manseryeok/'], ['AI 펫 번역기', '/ai-pet-translator/'], ['AI 이름 분석', '/name-premium/'],
     ['AI 상세페이지', '/tools/product-detail-studio/']
   ];
+  var aiToolsEn = ['AI Image Generator', 'AI ID Photo', 'AI Passport Photo', 'AI Profile Photo', 'AI Outfit', 'AI Model Cut', 'AI Photoshop', 'AI Personal Color', 'AI Calorie Analysis', 'AI Saju', 'AI Pet Translator', 'AI Name Analysis', 'AI Detail Page'];
+  // Pages that exist in every non-Korean locale; the rest fall back to the Korean original instead of a 404.
+  var localized = ['/ai-image-generator/', '/ai-id-photo/', '/ai-headshot/', '/ai-personal-color/', '/ai-calorie-calculator/', '/ai-manseryeok/', '/ai-pet-translator/'];
+  if (pathLang === 'en') localized.push('/ai-model-cut/');
+  var aiTools = aiToolsKo.map(function (t, i) {
+    return [isKo ? t[0] : aiToolsEn[i], !isKo && localized.indexOf(t[1]) >= 0 ? prefix + t[1] : t[1]];
+  });
   function closeAi() {
     var a = document.getElementById('mt-ai'), b = document.getElementById('mt-ai-back');
     if (a) a.remove(); if (b) b.remove();
@@ -83,8 +97,8 @@
   function toggleAi() {
     if (document.getElementById('mt-ai')) { closeAi(); return; }
     var back = document.createElement('div'); back.id = 'mt-ai-back'; back.addEventListener('click', closeAi);
-    var sheet = document.createElement('nav'); sheet.id = 'mt-ai'; sheet.setAttribute('aria-label', 'AI 기능 바로가기');
-    var h = document.createElement('h2'); h.textContent = 'AI 기능 바로가기'; sheet.appendChild(h);
+    var sheet = document.createElement('nav'); sheet.id = 'mt-ai'; sheet.setAttribute('aria-label', T.aiTitle);
+    var h = document.createElement('h2'); h.textContent = T.aiTitle; sheet.appendChild(h);
     aiTools.forEach(function (t) { var a = document.createElement('a'); a.href = t[1]; a.textContent = t[0]; sheet.appendChild(a); });
     document.body.appendChild(back); document.body.appendChild(sheet);
     var btn = document.querySelector('#mt-nav button[data-key="ai"]'); if (btn) btn.classList.add('mt-open');
@@ -92,7 +106,11 @@
 
   function mount() {
     document.body.classList.add('mt-app');
-    var nav = document.createElement('nav'); nav.id = 'mt-nav'; nav.setAttribute('aria-label', '앱 메뉴');
+    // No ads or ad placeholders inside the app (they are web-only).
+    var adCss = document.createElement('style');
+    adCss.textContent = 'section[aria-label$="광고"],section[aria-label$=" AD"],section[aria-label="AD"],section[aria-label$="広告"],section[aria-label$="广告"],.ezoic-ad-slot,.adsterra-banner,.adsterra-rail,[data-adsterra-placement],[data-adsterra-rail]{display:none!important}';
+    document.head.appendChild(adCss);
+    var nav = document.createElement('nav'); nav.id = 'mt-nav'; nav.setAttribute('aria-label', T.menu);
     var tip = document.createElement('div'); tip.id = 'mt-tip'; tip.setAttribute('aria-hidden', 'true');
     var x = 0, w = 60, sc = 1, op = 0, hideTimer = 0, shown = false;
     var paint = function () { tip.style.width = w + 'px'; tip.style.opacity = op; tip.style.transform = 'translateX(' + x + 'px) scale(' + sc + ')'; };
@@ -104,7 +122,7 @@
     items.forEach(function (it) {
       var b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-label', it.label); if (it.cls) b.className = it.cls; b.setAttribute('data-key', it.key);
       var cost = it.key === 'pay' && window.manytoolAiCredits ? window.manytoolAiCredits() : null;
-      b.innerHTML = icons[it.key] + '<span>' + it.label + '</span>' + (cost ? '<small>' + (cost.from ? cost.credits + '크레딧~' : cost.credits + '크레딧') + '</small>' : '');
+      b.innerHTML = icons[it.key] + '<span>' + it.label + '</span>' + (cost ? '<small>' + (cost.from ? cost.credits + T.credit + '~' : cost.credits + T.credit) + '</small>' : '');
       b.addEventListener('pointerdown', function () {
         clearTimeout(hideTimer);
         tip.textContent = it.label;

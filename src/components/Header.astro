@@ -22,6 +22,8 @@ const navItems = [
   { href: '/contact', label: t('header.contact') }
 ];
 
+// Which locales actually have this page, so auto language detection never sends someone to a 404.
+const localeHasPage = Object.fromEntries(rolloutLocales.map((lang) => [lang.code, hasLocalePage(lang.code as any, strippedPath.replace(/\/+$/, '') || '/')]));
 const langLinks = [
   ...rolloutLocales.map((lang) => ({
     code: lang.code,
@@ -68,7 +70,7 @@ const langLinks = [
 {!simple && <nav class="border-t border-slate-100 px-4 py-2 text-sm md:hidden" aria-label={locale === 'ko' ? '커뮤니티 바로가기' : 'Community shortcut'}><a href={localizedHrefOrOriginal(locale, '/community/')} class="font-bold text-cyan-800">{locale === 'ko' ? '커뮤니티 · 문제 해결 팁' : locale === 'zh' ? '社区 · 问题解决技巧' : locale === 'ja' ? 'コミュニティ · 問題解決のヒント' : 'Community · problem-solving tips'}</a></nav>}
 {!simple && <FamilyPromo />}
 
-<script is:inline define:vars={{ locale, strippedPath, supportedLocales: seoLocaleCodes, preserveCurrentRoute }}>
+<script is:inline define:vars={{ locale, strippedPath, supportedLocales: seoLocaleCodes, preserveCurrentRoute, localeHasPage }}>
   const languageStorageKey = 'manytool-locale';
   const localePrefixPattern = new RegExp(`^/(${supportedLocales.filter((code) => code !== 'ko').join('|')})(?:/|$)`);
   const localePath = (nextLocale) => {
@@ -95,13 +97,13 @@ const langLinks = [
       .map((value) => value.toLowerCase().split('-')[0])
       .find((value) => supportedLocales.includes(value));
     if (browserLocale && browserLocale !== 'ko') {
-      location.replace(localePath(browserLocale));
+      if (localeHasPage[browserLocale]) location.replace(localePath(browserLocale));
     } else {
       fetch('/api/locale', { headers: { Accept: 'application/json' } })
         .then((response) => response.ok ? response.json() : null)
         .then((data) => {
           const detectedLocale = data?.locale;
-          if (detectedLocale && supportedLocales.includes(detectedLocale) && detectedLocale !== 'ko') {
+          if (detectedLocale && supportedLocales.includes(detectedLocale) && detectedLocale !== 'ko' && localeHasPage[detectedLocale]) {
             location.replace(localePath(detectedLocale));
           }
         })

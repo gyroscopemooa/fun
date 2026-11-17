@@ -15,10 +15,13 @@ const staticLocalePaths = new Set(pageFiles.filter((file) => !file.includes('[')
 // Keep in sync with toolSlugs in src/pages/[locale]/[tool].astro.
 const toolRouteSlugs = new Set(['ai-personal-color', 'ai-calorie-calculator', 'ai-manseryeok', 'ai-id-photo', 'ai-headshot', 'ai-pet-translator', 'valorant-agent-picker', 'crosshair-generator', 'fps-aim-sensitivity', 'fps-aim-trainer', 'fps-sensitivity-converter', 'dpi-edpi-calculator', 'fov-calculator', 'name-compatibility', 'nickname-generator', 'name-meaning', 'random-picker', 'chat-random-picker', 'lol-champion-recommender', 'game-character-picker']);
 
+const enJaExcludedSharedPaths = new Set(['/ai-headshot', '/ai-id-photo', '/ai-pet-translator']);
+
 export const hasLocalePage = (locale: Locale, path: string) => {
   if (locale === 'ko' || path === '/') return true;
   if (staticLocalePaths.has(`/${locale}${path}`)) return true;
-  if (sharedLocalePaths.has(path)) return true;
+  // These [locale] pages are generated for other locales only (getStaticPaths excludes en/ja), so en/ja must not link to them.
+  if (sharedLocalePaths.has(path)) return !((locale === 'en' || locale === 'ja') && enJaExcludedSharedPaths.has(path));
   return locale !== 'en' && locale !== 'ja' && toolRouteSlugs.has(path.slice(1));
 };
 
