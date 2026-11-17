@@ -8,7 +8,7 @@ if (/^\/credits\/?$/.test(location.pathname)) {
   }
 }
 window.manytoolCreditCheckout = async function (url, init) {
-  const inApp = /ManytoolAndroid/i.test(navigator.userAgent);
+  const inApp = typeof navigator !== "undefined" && /ManytoolAndroid/i.test(navigator.userAgent);
   // Android app: no single-purchase fallback; credits only.
   const original = () => inApp ? Promise.reject(new Error('앱에서는 크레딧으로만 이용할 수 있습니다. 크레딧 기능은 준비 중입니다.')) : fetch(url, init);
   if (window.manytoolAiUnavailable) return original();

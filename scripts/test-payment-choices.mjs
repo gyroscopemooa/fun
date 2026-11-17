@@ -17,7 +17,7 @@ test('original blocked tool request opens payment choices without approval or ex
   let networkCalls = 0,opens=0;const diagnostics=[];
   const context = {document, location:{pathname:'/ai-image-generator/',origin:'https://manytool.net'}, DOMException,URLSearchParams,
     window:{goPay:()=>opens++,fetch:async(url,init)=>{networkCalls++;if(url==='/api/nicepay-review/window'){const params=new URLSearchParams(init.body);diagnostics.push(params);return {ok:true,json:async()=>({testOnly:true,method:params.get('method'),fields:{MID:'000000002m',Amt:'9900',ReturnURL:'https://manytool.net/api/nicepay-review/return',PayMethod:'CARD'}})};}return 'read-only';}}};
-  runInNewContext(readFileSync(new URL('../public/payment-choices.js', import.meta.url),'utf8'),context);
+  runInNewContext(readFileSync(new URL('../public/choices-dialog.js', import.meta.url),'utf8'),context);
   const layout=readFileSync(new URL('../src/layouts/Layout.astro',import.meta.url),'utf8');
   const gate=[...layout.matchAll(/<script is:inline>([\s\S]*?)<\/script>/g)].find(m=>m[1].includes('var AI_PAGE'))?.[1];
   assert.ok(gate); runInNewContext(gate,context);

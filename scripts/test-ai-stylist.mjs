@@ -36,7 +36,7 @@ test('stylist payment dialog picks current uploaded garment count rather than de
  const nodes=[];const make=tag=>{const node={tag,children:[],style:{},events:{},isConnected:true,setAttribute(k,v){this[k]=v;},append(...v){this.children.push(...v);},prepend(...v){this.children.unshift(...v);},addEventListener(k,v){this.events[k]=v;},showModal(){this.open=true;},focus(){}};nodes.push(node);return node;};
  const document={activeElement:null,createElement:make,getElementById:()=>null,querySelector:()=>null,body:make('body')};
  const window={manytoolAiCatalog:publicAiCatalog()};
- runInNewContext(readFileSync(new URL('../public/payment-choices.js',import.meta.url),'utf8'),{document,window,location:{pathname:'/ai-stylist/',origin},URLSearchParams});
+ runInNewContext(readFileSync(new URL('../public/choices-dialog.js',import.meta.url),'utf8'),{document,window,location:{pathname:'/ai-stylist/',origin},URLSearchParams});
  window.manytoolShowPaymentChoices({stylistCount:5});
  assert.ok(nodes.some(n=>n.textContent==='15,900원'));
  assert.ok(nodes.some(n=>n.tag==='input'&&n.name==='product'&&n.value==='stylist_5'));

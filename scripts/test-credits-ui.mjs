@@ -15,7 +15,7 @@ try {
   await page.route('**/*', async route => {
     const url = new URL(route.request().url());
     const json = body => route.fulfill({ json: body, headers: { 'Access-Control-Allow-Origin': base, 'Access-Control-Allow-Credentials': 'true' } });
-    if (url.pathname === '/credit-checkout.js') return route.fulfill({ contentType: 'application/javascript', body: readFileSync(new URL('../public/credit-checkout.js', import.meta.url), 'utf8') });
+    if (url.pathname === '/credit-flow.js') return route.fulfill({ contentType: 'application/javascript', body: readFileSync(new URL('../public/credit-flow.js', import.meta.url), 'utf8') });
     if (url.pathname === '/credits/config') return json({ enabled, valueKrw: 1000, packs: [10, 50, 300].map(n => ({ id: String(n), credits: n, amount: n * 1000, available: enabled })), tools: enabled ? { calorie: { label: '칼로리 분석', credits: 5, amountKrw: 5000 } } : {} });
     if (url.pathname === '/credits/me') return json({ email: 'test@example.com', balance, history: [{ delta: 10, kind: '충전', created: Date.now() }], pending: [] });
     if (url.pathname === '/credits/quote') return json({ label: '칼로리 분석', credits: 5, amountKrw: 5000, balance });

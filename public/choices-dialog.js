@@ -2,7 +2,7 @@
 window.manytoolShowPaymentChoices = function (options = {}) {
   if (document.getElementById('manytool-payment-choices')) return;
   // Android app: digital goods are credit-only (Google Play Billing). Never show web PG / single purchase.
-  if (/ManytoolAndroid/i.test(navigator.userAgent)) {
+  if (typeof navigator !== "undefined" && /ManytoolAndroid/i.test(navigator.userAgent)) {
     const box = document.createElement('dialog'); box.id = 'manytool-payment-choices';
     box.style.cssText = 'position:fixed;inset:0;margin:auto;box-sizing:border-box;border:1px solid #e2e8f0;border-radius:20px;padding:20px;max-width:380px;width:calc(100% - 32px);color:#0f172a;background:white;box-shadow:0 24px 80px #0005';
     const h = document.createElement('h2'); h.textContent = '크레딧으로 이용'; h.style.cssText = 'font-size:18px;font-weight:800;margin:0 0 10px';
