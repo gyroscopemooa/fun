@@ -3,7 +3,7 @@ import {aiProductForPath, AI_PRODUCTS} from '../../shared/ai-products.js';
 const product = aiProductForPath(Astro.url.pathname);
 const detail = product?.pageCount;
 ---
-{product && <aside class="mx-auto my-3 max-w-5xl px-4" aria-label="AI 상품 가격">
+{product && <aside data-web-only class="mx-auto my-3 max-w-5xl px-4" aria-label="AI 상품 가격">
   <div class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
     <p><strong class="text-slate-900">{product.name} · {product.amount.toLocaleString('ko-KR')}원</strong><span class="ml-2">{product.unit}</span></p>
     <div class="flex items-center gap-3"><span class="text-xs text-slate-500">출시 예정가 · 현재 실제 결제 없음</span><button type="button" onclick="window.manytoolShowPaymentChoices?.()" class="rounded-lg bg-slate-900 px-3 py-2 text-xs font-bold text-white">결제 방법</button></div>

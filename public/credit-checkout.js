@@ -8,7 +8,9 @@ if (/^\/credits\/?$/.test(location.pathname)) {
   }
 }
 window.manytoolCreditCheckout = async function (url, init) {
-  const original = () => fetch(url, init);
+  const inApp = /ManytoolAndroid/i.test(navigator.userAgent);
+  // Android app: no single-purchase fallback; credits only.
+  const original = () => inApp ? Promise.reject(new Error('앱에서는 크레딧으로만 이용할 수 있습니다. 크레딧 기능은 준비 중입니다.')) : fetch(url, init);
   if (window.manytoolAiUnavailable) return original();
   const base = String(url).replace(/\/checkout$/, '');
   let body;
@@ -35,9 +37,13 @@ window.manytoolCreditCheckout = async function (url, init) {
       button.style.cssText = `padding:12px;border:1px solid #cbd5e1;border-radius:12px;font-weight:700;${disabled ? 'opacity:.4' : 'cursor:pointer'}`;
       button.onclick = () => { dialog.close(); dialog.remove(); resolve(value); }; buttons.append(button);
     };
-    add('기존 가격으로 개별구매', 'single');
+    if (!inApp) add('기존 가격으로 개별구매', 'single');
     add(`${quote.credits} 크레딧 사용`, 'credits', quote.balance === null || quote.balance < quote.credits);
-    const link = document.createElement('a'); link.href = '/credits/'; link.target = '_blank'; link.rel = 'noopener'; link.textContent = '크레딧 로그인·충전 (새 창)'; link.style.cssText = 'text-align:center;padding:10px;color:#0e7490'; buttons.append(link);
+    if (!inApp) {
+      const link = document.createElement('a'); link.href = '/credits/'; link.target = '_blank'; link.rel = 'noopener'; link.textContent = '크레딧 로그인·충전 (새 창)'; link.style.cssText = 'text-align:center;padding:10px;color:#0e7490'; buttons.append(link);
+    } else {
+      const note = document.createElement('p'); note.textContent = '앱 크레딧 충전(Google Play)은 준비 중입니다.'; note.style.cssText = 'text-align:center;font-size:12px;color:#64748b'; buttons.append(note);
+    }
     add('취소', 'cancel');
     dialog.addEventListener('cancel', () => { dialog.remove(); resolve('cancel'); });
     dialog.append(title, info, buttons); document.body.append(dialog); dialog.showModal();

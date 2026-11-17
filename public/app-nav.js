@@ -26,6 +26,9 @@
   var css = document.createElement('style');
   css.textContent =
     'body.mt-app{padding-bottom:calc(60px + env(safe-area-inset-bottom))!important}' +
+    // Web-only NICE/single-purchase notices are never shown in the app (Google Play credits only).
+    '[data-web-only]{display:none!important}' +
+    '#mt-nav button.mt-pay{color:#0e7490;font-weight:800}' +
     '#mt-nav{position:fixed;left:0;right:0;bottom:0;z-index:2147483000;display:flex;height:calc(56px + env(safe-area-inset-bottom));' +
     'padding-bottom:env(safe-area-inset-bottom);background:rgba(255,255,255,.96);border-top:1px solid #e2e8f0;box-shadow:0 -4px 16px rgba(15,23,42,.08);' +
     '-webkit-tap-highlight-color:transparent;font-family:inherit}' +
@@ -39,12 +42,15 @@
   var icons = {
     home: '<svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>',
     back: '<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>',
-    reload: '<svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg>'
+    reload: '<svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg>',
+    pay: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/><path d="M7 15h3"/></svg>'
   };
   var items = [
     { key: 'home', label: '홈', run: function () { location.href = '/'; } },
     { key: 'back', label: '뒤로', run: function () { if (history.length > 1) history.back(); } },
-    { key: 'reload', label: '새로고침', run: function () { location.reload(); } }
+    { key: 'reload', label: '새로고침', run: function () { location.reload(); } },
+    // Credits only: opens the credit-only dialog (never NicePay / single purchase).
+    { key: 'pay', label: '결제하기', cls: 'mt-pay', run: function () { if (window.manytoolShowPaymentChoices) window.manytoolShowPaymentChoices(); } }
   ];
 
   function mount() {
@@ -59,7 +65,7 @@
     var so = new Spring(0, 420, 32, function (v) { op = Math.max(0, Math.min(1, v)); paint(); });
 
     items.forEach(function (it) {
-      var b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-label', it.label);
+      var b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-label', it.label); if (it.cls) b.className = it.cls;
       b.innerHTML = icons[it.key] + '<span>' + it.label + '</span>';
       b.addEventListener('pointerdown', function () {
         clearTimeout(hideTimer);
