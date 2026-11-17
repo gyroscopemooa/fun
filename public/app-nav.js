@@ -29,6 +29,12 @@
     // Web-only NICE/single-purchase notices are never shown in the app (Google Play credits only).
     '[data-web-only]{display:none!important}' +
     '#mt-nav button.mt-pay{color:#0e7490;font-weight:800}' +
+    '#mt-nav button.mt-open{color:#0ea5e9}' +
+    '#mt-ai-back{position:fixed;inset:0;z-index:2147482999;background:rgba(15,23,42,.35)}' +
+    '#mt-ai{position:fixed;left:8px;right:8px;bottom:calc(64px + env(safe-area-inset-bottom));z-index:2147483000;max-height:60vh;overflow-y:auto;background:#fff;border-radius:18px;padding:12px;box-shadow:0 12px 40px rgba(15,23,42,.28);display:grid;grid-template-columns:1fr 1fr;gap:8px;overscroll-behavior:contain}' +
+    '#mt-ai h2{grid-column:1/-1;margin:0 4px 2px;font-size:13px;font-weight:800;color:#64748b}' +
+    '#mt-ai a{display:flex;align-items:center;min-height:44px;padding:8px 12px;border:1px solid #e2e8f0;border-radius:12px;color:#0f172a;font-size:13px;font-weight:700;text-decoration:none;background:#f8fafc}' +
+    '#mt-ai a:active{background:#e0f2fe}' +
     '#mt-nav{position:fixed;left:0;right:0;bottom:0;z-index:2147483000;display:flex;height:calc(56px + env(safe-area-inset-bottom));' +
     'padding-bottom:env(safe-area-inset-bottom);background:rgba(255,255,255,.96);border-top:1px solid #e2e8f0;box-shadow:0 -4px 16px rgba(15,23,42,.08);' +
     '-webkit-tap-highlight-color:transparent;font-family:inherit}' +
@@ -43,15 +49,39 @@
     home: '<svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>',
     back: '<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>',
     reload: '<svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg>',
+    ai: '<svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8z"/></svg>',
     pay: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/><path d="M7 15h3"/></svg>'
   };
   var items = [
     { key: 'home', label: '홈', run: function () { location.href = '/'; } },
     { key: 'back', label: '뒤로', run: function () { if (history.length > 1) history.back(); } },
     { key: 'reload', label: '새로고침', run: function () { location.reload(); } },
+    { key: 'ai', label: 'AI', run: function () { toggleAi(); } },
     // Credits only: opens the credit-only dialog (never NicePay / single purchase).
     { key: 'pay', label: '결제하기', cls: 'mt-pay', run: function () { if (window.manytoolShowPaymentChoices) window.manytoolShowPaymentChoices(); } }
   ];
+
+  var aiTools = [
+    ['AI 이미지 생성', '/ai-image-generator/'], ['AI 증명사진', '/ai-id-photo/'], ['AI 여권사진', '/ai-passport-photo/'],
+    ['AI 프로필 사진', '/ai-headshot/'], ['AI 코디', '/ai-stylist/'], ['AI 모델컷', '/ai-model-cut/'],
+    ['AI 포토샵', '/ai-photoshop/'], ['AI 퍼스널컬러', '/ai-personal-color/'], ['AI 칼로리 분석', '/ai-calorie-calculator/'],
+    ['AI 만세력', '/ai-manseryeok/'], ['AI 펫 번역기', '/ai-pet-translator/'], ['AI 이름 분석', '/name-premium/'],
+    ['AI 상세페이지', '/tools/product-detail-studio/']
+  ];
+  function closeAi() {
+    var a = document.getElementById('mt-ai'), b = document.getElementById('mt-ai-back');
+    if (a) a.remove(); if (b) b.remove();
+    var btn = document.querySelector('#mt-nav button[data-key="ai"]'); if (btn) btn.classList.remove('mt-open');
+  }
+  function toggleAi() {
+    if (document.getElementById('mt-ai')) { closeAi(); return; }
+    var back = document.createElement('div'); back.id = 'mt-ai-back'; back.addEventListener('click', closeAi);
+    var sheet = document.createElement('nav'); sheet.id = 'mt-ai'; sheet.setAttribute('aria-label', 'AI 기능 바로가기');
+    var h = document.createElement('h2'); h.textContent = 'AI 기능 바로가기'; sheet.appendChild(h);
+    aiTools.forEach(function (t) { var a = document.createElement('a'); a.href = t[1]; a.textContent = t[0]; sheet.appendChild(a); });
+    document.body.appendChild(back); document.body.appendChild(sheet);
+    var btn = document.querySelector('#mt-nav button[data-key="ai"]'); if (btn) btn.classList.add('mt-open');
+  }
 
   function mount() {
     document.body.classList.add('mt-app');
@@ -65,7 +95,7 @@
     var so = new Spring(0, 420, 32, function (v) { op = Math.max(0, Math.min(1, v)); paint(); });
 
     items.forEach(function (it) {
-      var b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-label', it.label); if (it.cls) b.className = it.cls;
+      var b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-label', it.label); if (it.cls) b.className = it.cls; b.setAttribute('data-key', it.key);
       b.innerHTML = icons[it.key] + '<span>' + it.label + '</span>';
       b.addEventListener('pointerdown', function () {
         clearTimeout(hideTimer);
