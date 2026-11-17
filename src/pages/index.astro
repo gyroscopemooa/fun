@@ -295,12 +295,21 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
 >
   <main class="min-h-screen bg-slate-100">
     <div class="mx-auto max-w-6xl">
-      <header class="flex items-center justify-between gap-2 border-b border-sky-100 px-4 py-3 lg:px-10">
+      <header class="flex flex-wrap items-center gap-x-2 gap-y-2 border-b border-sky-100 px-4 py-3 lg:px-10">
         <a href={withLocale('/')} class="flex shrink-0 items-center gap-2">
           <img src="/favicon.svg" alt="ManyTool 로고" class="h-7 w-7 rounded-lg bg-sky-100 p-1 sm:h-8 sm:w-8" loading="eager" decoding="async" />
           <h2 class="truncate text-base font-bold tracking-tight text-slate-900 sm:text-xl">ManyTool</h2>
         </a>
-        <div class="flex shrink-0 items-center gap-1 sm:gap-2">
+        <div class="order-last w-full min-w-0 lg:order-none lg:w-auto lg:max-w-md lg:flex-1">
+          <input
+            id="tool-search"
+            aria-label={t.searchPlaceholder}
+            class="w-full rounded-full border border-sky-100 bg-white px-4 py-2 text-sm outline-none focus:border-sky-400"
+            placeholder={t.searchPlaceholder}
+            type="text"
+          />
+        </div>
+        <div class="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
           <button
             id="favorite-filter-button"
             type="button"
@@ -308,15 +317,6 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
           >
             <span aria-hidden="true">★</span>
             <span class="hidden sm:inline">{t.favoriteOnly}</span>
-        <div class="min-w-0 flex-1 lg:max-w-md">
-          <input
-            id="tool-search"
-            aria-label={t.searchPlaceholder}
-            class="w-full rounded-full border border-sky-100 bg-white px-3 py-2 text-sm outline-none focus:border-sky-400"
-            placeholder={t.searchPlaceholder}
-            type="text"
-          />
-        </div>
             <span id="favorite-filter-count" class="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-amber-700">0</span>
           </button>
           <details class="relative">
