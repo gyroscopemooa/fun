@@ -47,6 +47,31 @@
     if (inApp && typeof window.manytoolShowPaymentChoices === 'function') { event.preventDefault(); window.manytoolShowPaymentChoices({ mode: 'charge' }); }
   }
 
+  /* In the Android app the web login is not linked to the app; use the native Google sign-in bridge.
+     The bridge is trusted on the home page only, so other pages keep the normal link. */
+  function nativeSignIn(event, login, credit) {
+    var native = window.ManytoolNative;
+    if (!inApp || !native || !native.postMessage || location.pathname.replace(/^\/[a-z]{2}(?:-[A-Za-z]{2,4})?(?=\/)/, '') !== '/') return;
+    event.preventDefault();
+    if (login.dataset.busy) return; login.dataset.busy = '1';
+    var id = 'si' + Math.random().toString(36).slice(2, 12);
+    var timer;
+    var done = function () { delete login.dataset.busy; native.removeEventListener('message', on); clearTimeout(timer); };
+    var on = function (e) {
+      try {
+        var data = JSON.parse(e.data); if (data.id !== id) return; done();
+        if (data.ok) {
+          login.textContent = L.account; credit.hidden = false; credit.textContent = '★ ' + L.credit;
+          window.manytoolCreditState = { signedIn: true, balance: null };
+          document.dispatchEvent(new CustomEvent('manytool:credit-state'));
+        }
+      } catch (err) { /* ignore unrelated messages */ }
+    };
+    timer = setTimeout(done, 180000);
+    native.addEventListener('message', on);
+    native.postMessage(JSON.stringify({ id: id, command: 'signIn' }));
+  }
+
   function mount() {
     var anchor = document.querySelector('header details');
     if (!anchor || document.getElementById('mt-acct')) return;
@@ -54,6 +79,7 @@
     var login = document.createElement('a'); login.className = 'mt-login'; login.href = '/account/'; login.textContent = L.login;
     var credit = document.createElement('a'); credit.className = 'mt-credit'; credit.href = inApp ? '#' : '/credits/'; credit.hidden = true;
     credit.addEventListener('click', openCharge);
+    login.addEventListener('click', function (event) { nativeSignIn(event, login, credit); });
     var charge = document.createElement('a'); charge.className = 'mt-charge'; charge.href = inApp ? '#' : '/credits/'; charge.textContent = '+ ' + L.charge; charge.title = L.chargeTitle;
     charge.addEventListener('click', openCharge);
     box.append(login, credit, charge);
