@@ -55,6 +55,7 @@
     back: '<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>',
     reload: '<svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg>',
     tools: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>',
+    ai: '<svg viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="11" rx="3"/><path d="M12 4v4"/><circle cx="9" cy="13.5" r="1"/><circle cx="15" cy="13.5" r="1"/></svg>',
     pay: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg>',
     charge: '<svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><path d="M12 13v4"/><path d="M10 15h4"/></svg>'
   };
@@ -70,6 +71,7 @@
     { key: 'back', label: T.back, run: function () { if (history.length > 1) history.back(); } },
     { key: 'reload', label: T.reload, run: function () { location.reload(); } },
     { key: 'tools', label: T.tools, run: function () { location.href = '/tools/'; /* no translated tools index yet: open the shared one (never a 404) */ } },
+    { key: 'ai', label: T.ai, run: function () { toggleAi(); } },
     // Credits only: 사용하기 shows this page's AI credit cost; 충전하기 opens the credit top-up dialog (never NicePay / single purchase).
     { key: 'pay', label: T.pay, cls: 'mt-pay', run: function () { if (window.manytoolShowPaymentChoices) window.manytoolShowPaymentChoices({ mode: 'use' }); } },
     { key: 'charge', label: T.charge, cls: 'mt-charge', run: function () { if (window.manytoolShowPaymentChoices) window.manytoolShowPaymentChoices({ mode: 'charge' }); } }

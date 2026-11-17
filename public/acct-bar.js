@@ -82,7 +82,8 @@
     login.addEventListener('click', function (event) { nativeSignIn(event, login, credit); });
     var charge = document.createElement('a'); charge.className = 'mt-charge'; charge.href = inApp ? '#' : '/credits/'; charge.textContent = '+ ' + L.charge; charge.title = L.chargeTitle;
     charge.addEventListener('click', openCharge);
-    box.append(login, credit, charge);
+    // Credits are app-only; the web (desktop and mobile) pays through NicePay, so only the login button shows there.
+    if (inApp) box.append(login, credit, charge); else box.append(login);
     anchor.parentNode.insertBefore(box, anchor);
     // Header.astro already has its own plain login link; the widget replaces it.
     var legacy = document.querySelector('header a[href="/account/"]:not(.mt-login)'); if (legacy) legacy.hidden = true;
