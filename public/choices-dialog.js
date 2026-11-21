@@ -94,7 +94,7 @@ window.manytoolShowPaymentChoices = function (options = {}) {
         const body=new URLSearchParams({product:product[0],method,consentVersion:'2026-11-13-review',terms:'1',collection:'1',sharing:'1'});
         const response=await window.fetch('/api/nicepay-review/window',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/x-www-form-urlencoded',Accept:'application/json'},body:String(body)});
         if(!response.ok)throw Error('결제창 연결 정보를 확인하지 못했습니다.');const data=await response.json().catch(()=>null);
-        if(data?.testOnly!==true||data.method!==method||data.fields?.MID!=='000000001m'||data.fields?.Amt!==diagnosticAmount||data.fields?.ReturnURL!==location.origin+'/api/nicepay-review/return')throw Error('허용된 테스트 결제 정보가 아닙니다.');return [method,data];
+        if(data?.testOnly!==true||data.method!==method||data.fields?.MID!=='000000002m'||data.fields?.Amt!==diagnosticAmount||data.fields?.ReturnURL!==location.origin+'/api/nicepay-review/return')throw Error('허용된 테스트 결제 정보가 아닙니다.');return [method,data];
       }))]);
       if(run!==epoch||!dialog.isConnected||!checks.every(check=>check.checked))return;entries.forEach(([method,data])=>prepared.set(method,data));preparedAt=Date.now();consentMessage.textContent=readyMessage;
     }catch(error){if(run===epoch)consentMessage.textContent=error instanceof Error?error.message:'결제창 연결을 다시 시도해 주세요.';}finally{if(run===epoch){preparing=false;syncConsent();}}

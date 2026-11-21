@@ -24,7 +24,7 @@ test('NICE signer ignores forged amount and signs only one of five server-owned 
   for(let n=1;n<=5;n++)for(const method of ['CARD','NAVER','TOSS','KAKAO','SAMSUNG','APPLE','PAYCO']){
    const request=new Request(origin+'/api/nicepay-review/window',{method:'POST',headers:{Origin:origin,Accept:'application/json'},body:new URLSearchParams({product:`stylist_${n}`,method,Amt:'1',MID:'forged',ReturnURL:'https://evil.example/',consentVersion:'2026-11-13-review',terms:'1',collection:'1',sharing:'1'})});
    const response=await onRequest({request,env});assert.equal(response.status,200);const data=await response.json();
-   assert.equal(data.testOnly,true);assert.equal(data.fields.Amt,String(quoteAiStylist(n).amountKrw));assert.equal(data.fields.MID,'000000001m');assert.equal(data.fields.ReturnURL,origin+'/api/nicepay-review/return');
+   assert.equal(data.testOnly,true);assert.equal(data.fields.Amt,String(quoteAiStylist(n).amountKrw));assert.equal(data.fields.MID,'000000002m');assert.equal(data.fields.ReturnURL,origin+'/api/nicepay-review/return');
   }
   const request=new Request(origin+'/api/nicepay-review/window',{method:'POST',headers:{Origin:origin},body:'product=stylist_6'});
   assert.equal((await onRequest({request,env})).status,400);
