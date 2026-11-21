@@ -27,7 +27,9 @@ export async function onRequest({request,env}){
  if(typeof key!=='string'||! /^[A-Za-z0-9+/]{80,100}={0,2}$/.test(key))return html('<h1>심사 연결 설정 대기</h1>',503);
  const timestamp=new Date(Date.now()+9*3600000).toISOString().replace(/\D/g,'').slice(0,14);
  // Fixed diagnostic amount is not a catalog price. Client input never controls MID, amount or return URL.
- const mid='000000002m',amount=String(product?.reviewAmountKrw ?? 100000);
+ // The card contract is configured on this MID. Easy-pay methods remain disabled
+ // in the storefront until their separate contracts and MID settings are complete.
+ const mid='000000001m',amount=String(product?.reviewAmountKrw ?? 100000);
  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(timestamp+mid+amount+key));
  const signature=Array.from(new Uint8Array(digest),v=>v.toString(16).padStart(2,'0')).join('');
  const fields={MID:mid,Moid:'review_'+crypto.randomUUID().replaceAll('-',''),Amt:amount,GoodsName:product?product.name:'Manytool integration review',PayMethod:'CARD',EdiDate:timestamp,CharSet:'utf-8',ReturnURL:url.origin+'/api/nicepay-review/return',SignData:signature};

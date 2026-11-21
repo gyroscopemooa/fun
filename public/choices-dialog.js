@@ -74,11 +74,14 @@ window.manytoolShowPaymentChoices = function (options = {}) {
   }
   expand.onclick=()=>{details.hidden=!details.hidden;expand.setAttribute('aria-expanded',String(!details.hidden));expand.textContent=details.hidden?'보기':'접기';};agreements.append(line,details);
   const choices=[['CARD','카드결제','card.svg'],['NAVER','네이버페이','naverpay.svg'],['TOSS','토스페이','tosspay.svg'],['KAKAO','카카오페이','kakaopay.svg'],['SAMSUNG','삼성페이','samsungpay.png'],['APPLE','Apple Pay','applepay.svg'],['PAYCO','PAYCO','payco.png']];
+  // NICE has only completed card setup for the active MID. Do not call an
+  // unconfigured wallet and turn its provider error into a customer-facing flow.
+  const easyPays=new Set(['NAVER','TOSS','KAKAO','SAMSUNG','APPLE','PAYCO']);
   const paymentButtons=[];let busy=false,preparing=false,epoch=0,preparedAt=0,launching=false;const prepared=new Map(),unavailable=new Set();
   const retrySettings=document.createElement('button');retrySettings.type='button';retrySettings.textContent='설정 확인 후 다시 시도';retrySettings.style.cssText=style+';font-size:12px;display:none';retrySettings.hidden=true;
   const consentMessage=document.createElement('p');consentMessage.id='manytool-consent-message';consentMessage.setAttribute('role','status');consentMessage.style.cssText='font-size:12px;color:#b45309;margin:6px 0 0';
   agreements.append(consentMessage);
-  function syncConsent(){const count=checks.filter(c=>c.checked).length;all.checked=count===checks.length;all.indeterminate=count>0&&count<checks.length;all.disabled=busy;checks.forEach(check=>check.disabled=busy);if(count===checks.length)line.style.boxShadow='none';for(const {button,method,title}of paymentButtons){const blocked=unavailable.has(method);button.disabled=!product||busy||blocked||(count===checks.length&&preparing);button.title=blocked?'NICE I009: 해당 MID의 결제수단 설정 확인이 필요합니다.':title;button.setAttribute('aria-describedby','manytool-consent-message');button.style.opacity=button.disabled?'.55':'1';}retrySettings.hidden=!unavailable.size;retrySettings.style.display=unavailable.size?'flex':'none';retrySettings.disabled=busy||preparing;}
+  function syncConsent(){const count=checks.filter(c=>c.checked).length;all.checked=count===checks.length;all.indeterminate=count>0&&count<checks.length;all.disabled=busy;checks.forEach(check=>check.disabled=busy);if(count===checks.length)line.style.boxShadow='none';for(const {button,method,title}of paymentButtons){const preparingPay=easyPays.has(method),blocked=unavailable.has(method);button.disabled=!product||busy||preparingPay||blocked||(count===checks.length&&preparing);button.title=preparingPay?'간편결제 신청 및 NICE MID 설정 준비 중입니다.':blocked?'NICE I009: 해당 MID의 결제수단 설정 확인이 필요합니다.':title;button.setAttribute('aria-describedby','manytool-consent-message');button.style.opacity=button.disabled?'.55':'1';}retrySettings.hidden=!unavailable.size;retrySettings.style.display=unavailable.size?'flex':'none';retrySettings.disabled=busy||preparing;}
   function nudgeConsent(){consentMessage.textContent='위 필수 약관에 동의해 주세요.';line.style.boxShadow='0 0 0 2px #f59e0b';line.style.borderRadius='6px';all.focus();if(!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)line.animate?.([{transform:'translateX(0)'},{transform:'translateX(-5px)'},{transform:'translateX(5px)'},{transform:'translateX(-3px)'},{transform:'translateX(0)'}],{duration:320});}
   function consentChanged(){consentMessage.textContent='';if(checks.every(check=>check.checked))return warmup();epoch++;preparing=false;prepared.clear();syncConsent();}
   all.addEventListener('change',()=>{checks.forEach(check=>check.checked=all.checked);return consentChanged();});checks.forEach(check=>check.addEventListener('change',consentChanged));
@@ -87,11 +90,11 @@ window.manytoolShowPaymentChoices = function (options = {}) {
     if(!diagnosticAllowed){syncConsent();return;}
     const run=++epoch;preparing=true;prepared.clear();syncConsent();consentMessage.textContent='결제수단을 연결하고 있습니다.';
     try{
-      const [,entries]=await Promise.all([sdk(),Promise.all(choices.map(async([method])=>{
+      const [,entries]=await Promise.all([sdk(),Promise.all(choices.filter(([method])=>!easyPays.has(method)).map(async([method])=>{
         const body=new URLSearchParams({product:product[0],method,consentVersion:'2026-11-13-review',terms:'1',collection:'1',sharing:'1'});
         const response=await window.fetch('/api/nicepay-review/window',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/x-www-form-urlencoded',Accept:'application/json'},body:String(body)});
         if(!response.ok)throw Error('결제창 연결 정보를 확인하지 못했습니다.');const data=await response.json().catch(()=>null);
-        if(data?.testOnly!==true||data.method!==method||data.fields?.MID!=='000000002m'||data.fields?.Amt!==diagnosticAmount||data.fields?.ReturnURL!==location.origin+'/api/nicepay-review/return')throw Error('허용된 테스트 결제 정보가 아닙니다.');return [method,data];
+        if(data?.testOnly!==true||data.method!==method||data.fields?.MID!=='000000001m'||data.fields?.Amt!==diagnosticAmount||data.fields?.ReturnURL!==location.origin+'/api/nicepay-review/return')throw Error('허용된 테스트 결제 정보가 아닙니다.');return [method,data];
       }))]);
       if(run!==epoch||!dialog.isConnected||!checks.every(check=>check.checked))return;entries.forEach(([method,data])=>prepared.set(method,data));preparedAt=Date.now();consentMessage.textContent=readyMessage;
     }catch(error){if(run===epoch)consentMessage.textContent=error instanceof Error?error.message:'결제창 연결을 다시 시도해 주세요.';}finally{if(run===epoch){preparing=false;syncConsent();}}
@@ -126,6 +129,7 @@ window.manytoolShowPaymentChoices = function (options = {}) {
     form.addEventListener('submit',event=>{event.preventDefault();return openPayment(method);});
   }
   actions.append(secondary);
+  const easyPayNotice=document.createElement('p');easyPayNotice.textContent='간편결제는 신청 및 NICE MID 설정 준비 중입니다. 현재는 카드 결제창 연결만 이용할 수 있습니다.';easyPayNotice.style.cssText='font-size:12px;line-height:1.5;color:#64748b;margin:2px 0 0';actions.append(easyPayNotice);
   retrySettings.onclick=()=>{unavailable.clear();if(checks.every(check=>check.checked))return warmup('연결 정보를 갱신했습니다. 결제수단을 선택해 주세요.');syncConsent();};actions.append(retrySettings);
   const credit = document.createElement('button'); credit.type = 'button'; credit.disabled = true; credit.textContent = '보유 크레딧으로 결제'; credit.title = '크레딧 사용 연결 준비 중'; credit.style.cssText = style + ';margin-top:8px;opacity:.5'; actions.append(credit);
   const close = document.createElement('button'); close.type = 'button'; close.textContent = '닫기'; close.style.cssText = style + ';cursor:pointer'; close.onclick = () => dialog.close(); actions.append(close);
