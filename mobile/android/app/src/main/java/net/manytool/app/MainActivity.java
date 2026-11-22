@@ -460,7 +460,7 @@ public class MainActivity extends Activity {
     }
     private void showCredits() {
         if(creditsView!=null || web==null) return;
-        creditsPanel=new PlayCreditsPanel(this,new PlayCreditHttpBackend(AppAccount.API,NavigationPolicy.ORIGIN,account),this::closeCredits);
+        creditsPanel=new PlayCreditsPanel(this,new PlayCreditHttpBackend(AppAccount.API,NavigationPolicy.ORIGIN,account),this::closeCredits,appEnglish);
         ScrollView scroll=new ScrollView(this); scroll.setFillViewport(true); scroll.addView(creditsPanel,new ScrollView.LayoutParams(-1,-1));
         creditsView=scroll; web.setVisibility(android.view.View.GONE);
         root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
