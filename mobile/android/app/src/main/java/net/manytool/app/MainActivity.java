@@ -34,14 +34,17 @@ public class MainActivity extends Activity {
     private AlertDialog bridgeDialog;
     private long lastBridgeRequest;
     private boolean downloadBusy = false, loadFailed = false;
+    private AppAccount account;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
+        account = new AppAccount(this);
         if (android.os.Build.VERSION.SDK_INT >= 33) {
             getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
                 android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::goBack);
         }
         root = new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL);
+        root.setBackgroundColor(0xFFF1F5F9); // match the web page background behind the status bar inset
         // Target 35: avoid drawing controls beneath status/navigation bars.
         if (android.os.Build.VERSION.SDK_INT >= 30) root.setOnApplyWindowInsetsListener((v, insets) -> {
             android.graphics.Insets bars = insets.getInsets(android.view.WindowInsets.Type.systemBars());
@@ -51,13 +54,46 @@ public class MainActivity extends Activity {
             v.setPadding(insets.getSystemWindowInsetLeft(), insets.getSystemWindowInsetTop(),
                 insets.getSystemWindowInsetRight(), insets.getSystemWindowInsetBottom()); return insets;
         });
-        setContentView(root); root.requestApplyInsets(); showHome();
+        frame = new FrameLayout(this); frame.addView(root, new FrameLayout.LayoutParams(-1,-1));
+        setContentView(frame); root.requestApplyInsets(); showSplash(); showHome();
+    }
+    // In-app splash: "Weight wave" lettering rendered from bundled assets only (no network, no bridge).
+    private static final long SPLASH_MIN_MS = 1800, SPLASH_MAX_MS = 4500;
+    private FrameLayout frame;
+    private WebView splash;
+    private long splashShownAt;
+    private boolean splashClosing;
+    private void showSplash() {
+        splash = new WebView(this); splashShownAt = android.os.SystemClock.elapsedRealtime();
+        splash.setBackgroundColor(0xFFF5F5F8); splash.setClickable(true);
+        WebSettings s = splash.getSettings(); s.setJavaScriptEnabled(true);
+        s.setAllowFileAccess(false); s.setAllowContentAccess(false); s.setDomStorageEnabled(false);
+        final androidx.webkit.WebViewAssetLoader loader = new androidx.webkit.WebViewAssetLoader.Builder()
+            .addPathHandler("/assets/", new androidx.webkit.WebViewAssetLoader.AssetsPathHandler(this)).build();
+        splash.setWebViewClient(new WebViewClient() {
+            @Override public WebResourceResponse shouldInterceptRequest(WebView v, WebResourceRequest r) {
+                WebResourceResponse res = loader.shouldInterceptRequest(r.getUrl());
+                return res != null ? res : new WebResourceResponse("text/plain", "UTF-8", 403, "Blocked", java.util.Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
+            }
+            @Override public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest r) { return true; }
+        });
+        frame.addView(splash, new FrameLayout.LayoutParams(-1,-1));
+        splash.loadUrl("https://appassets.androidplatform.net/assets/splash/splash.html");
+        splash.postDelayed(this::hideSplash, SPLASH_MAX_MS);
+    }
+    private void hideSplash() {
+        if (splash == null || splashClosing) return; splashClosing = true;
+        final WebView target = splash;
+        long wait = Math.max(0, SPLASH_MIN_MS - (android.os.SystemClock.elapsedRealtime() - splashShownAt));
+        target.postDelayed(() -> target.animate().alpha(0f).setDuration(350).withEndAction(() -> {
+            frame.removeView(target); target.destroy(); if (splash == target) splash = null;
+        }).start(), wait);
     }
     private Button button(String text, Runnable action) {
         Button b = new Button(this); b.setText(text); b.setOnClickListener(v -> action.run()); return b;
     }
     private void showHome() {
-        if (web != null) { web.loadUrl(NavigationPolicy.ORIGIN + "/"); return; }
+        if (web != null) { web.loadUrl(NavigationPolicy.base() + "/"); return; }
         openTool("/");
     }
     private void openTool(String path) {
@@ -108,7 +144,7 @@ public class MainActivity extends Activity {
             @Override public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest r) {
                 if (!r.isForMainFrame()) return !NavigationPolicy.isTrusted(r.getUrl().toString());
                 String url = r.getUrl().toString();
-                if (r.hasGesture() && (url.startsWith("blob:"+NavigationPolicy.ORIGIN+"/") || url.startsWith("data:"))) {
+                if (r.hasGesture() && (url.startsWith("blob:"+NavigationPolicy.base()+"/") || url.startsWith("data:"))) {
                     requestDownload(url,null); return true;
                 }
                 if (NavigationPolicy.isAllowedPage(url)) return false;
@@ -123,9 +159,14 @@ public class MainActivity extends Activity {
                 return null;
             }
             @Override public void onPageStarted(WebView v,String url,Bitmap icon) { navigation++; downloadBusy=false; loadFailed=false; status.setVisibility(android.view.View.GONE); }
-            @Override public void onPageFinished(WebView v,String url) { if(!loadFailed)status.setVisibility(android.view.View.GONE); CookieManager.getInstance().flush(); }
+            @Override public void onPageFinished(WebView v,String url) {
+                if(!loadFailed)status.setVisibility(android.view.View.GONE);
+                installNativeAccountEntryPoints(v);
+                syncNativeAccountState(v);
+                CookieManager.getInstance().flush(); hideSplash();
+            }
             @Override public void onReceivedError(WebView v,WebResourceRequest r,WebResourceError error) {
-                if(r.isForMainFrame()) { loadFailed=true; status.setVisibility(android.view.View.VISIBLE); status.setText("페이지를 불러오지 못했습니다. 연결 상태를 확인하고 새로고침해 주세요."); }
+                if(r.isForMainFrame()) { loadFailed=true; hideSplash(); status.setVisibility(android.view.View.VISIBLE); status.setText("페이지를 불러오지 못했습니다. 연결 상태를 확인하고 새로고침해 주세요."); }
             }
             @Override public void onReceivedSslError(WebView v,SslErrorHandler handler,SslError error) {
                 handler.cancel(); loadFailed=true; status.setVisibility(android.view.View.VISIBLE); status.setText("안전한 연결을 확인할 수 없어 중단했습니다.");
@@ -136,7 +177,7 @@ public class MainActivity extends Activity {
         });
         installHybridBridge(web);
         web.setDownloadListener((url,ua,disposition,mime,length) -> requestDownload(url,mime));
-        web.loadUrl(NavigationPolicy.ORIGIN + path);
+        web.loadUrl(NavigationPolicy.base() + path);
     }
     private void bridgeReply(JavaScriptReplyProxy reply,String id,boolean ok,String message) {
         if (!WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) return;
@@ -145,7 +186,7 @@ public class MainActivity extends Activity {
     }
     private void installHybridBridge(WebView target) {
         if(!WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) return;
-        WebViewCompat.addWebMessageListener(target,"ManytoolNative",java.util.Collections.singleton(NavigationPolicy.ORIGIN),
+        WebViewCompat.addWebMessageListener(target,"ManytoolNative",java.util.Collections.singleton(NavigationPolicy.base()),
             (view,request,origin,mainFrame,reply) -> {
                 if(web!=view || !HybridBridgePolicy.trustedOrigin(origin.toString(),mainFrame) || !NavigationPolicy.isAllowedPage(view.getUrl())) return;
                 if(request.getType()!=androidx.webkit.WebMessageCompat.TYPE_STRING) return;
@@ -158,7 +199,7 @@ public class MainActivity extends Activity {
                     if(!HybridBridgePolicy.validId(id) || !HybridBridgePolicy.allowedCommand(command)) {bridgeReply(reply,id,false,"unsupported");return;}
                     if("capabilities".equals(command)) {
                         reply.postMessage(new JSONObject().put("id",id).put("ok",true).put("capabilities",new JSONObject()
-                            .put("version",1).put("saveText",true).put("shareText",true).put("playCredits",CreditReadiness.canLaunchPurchase())
+                            .put("version",1).put("saveText",true).put("shareText",true).put("creditLogin",true).put("playCredits",AppFeatures.PLAY_CREDITS_ENTRY_ENABLED).put("signedIn",account.signedIn())
                             .put("notifications",false).put("authenticatedVideo",false)).toString()); return;
                     }
                     if("balance".equals(command) || "signIn".equals(command)) {
@@ -172,9 +213,14 @@ public class MainActivity extends Activity {
                         if("balance".equals(command)) { respond.run(); return; }
                         runOnUiThread(() -> {
                             if(web!=view || navigation!=generation || isFinishing()) return;
-                            if(account.signedIn()) { respond.run(); return; }
-                            account.signIn(this,(ok,text)->{ if(ok) respond.run(); else bridgeReply(reply,replyId,false,text); });
+                            if(account.signedIn()) { syncNativeAccountState(web); respond.run(); return; }
+                            account.signIn(this,(ok,text)->{ if(ok) { syncNativeAccountState(web); respond.run(); } else bridgeReply(reply,replyId,false,text); });
                         });
+                        return;
+                    }
+                    if("signOut".equals(command)) {
+                        final String requestId=id;
+                        runOnUiThread(() -> { account.signOut(); syncNativeAccountState(web); bridgeReply(reply,requestId,true,"signed_out"); });
                         return;
                     }
                     if("openCredits".equals(command)) {
@@ -206,6 +252,40 @@ public class MainActivity extends Activity {
                 } catch(Exception ignored){bridgeReply(reply,id,false,"invalid_request");}
             });
     }
+    /**
+     * The public site still has web-only account and credit controls.  Embedded OAuth
+     * is deliberately unsupported in this WebView, so route those two entry points to
+     * the app-owned Google sign-in flow before page handlers can open a dead-end modal.
+     */
+    private void installNativeAccountEntryPoints(WebView target) {
+        if(target != web) return;
+        String script = "(function(){if(window.__manytoolNativeAccountEntrypoints)return;"
+            + "window.__manytoolNativeAccountEntrypoints=true;"
+            + "var appStyle=document.createElement('style');appStyle.id='manytool-native-shell-style';"
+            + "appStyle.textContent=\"nav[aria-label=\\\"Breadcrumb\\\"],.site-footer{display:none!important}\";document.head.appendChild(appStyle);"
+            + "var openNativeCredits=function(){if(window.ManytoolNative&&window.ManytoolNative.postMessage)window.ManytoolNative.postMessage(JSON.stringify({id:'native_credit_entry',command:'openCredits'}));};"
+            + "window.manytoolShowPaymentChoices=openNativeCredits;"
+            + "document.addEventListener('click',function(event){"
+            + "var node=event.target instanceof Element?event.target.closest('a,button'):null;if(!node)return;"
+            + "var label=(node.textContent||'').replace(/\\s+/g,' ').trim();var compact=label.replace(/\\s/g,'');"
+            + "var href=node.tagName==='A'?(node.getAttribute('href')||''):'';"
+            + "var logout=label==='로그아웃'||label==='Sign out'||node.dataset.manytoolNativeSignedIn==='true';"
+            + "var login=label==='로그인'||label==='Sign in'||label==='ログイン'||/^\\/account\\/?(?:[?#].*)?$/.test(href);"
+            + "var credits=compact==='충전'||compact==='+충전'||compact==='크레딧충전';"
+            + "if(!login&&!credits&&!logout)return;event.preventDefault();event.stopImmediatePropagation();"
+            + "if(logout&&window.ManytoolNative&&window.ManytoolNative.postMessage)window.ManytoolNative.postMessage(JSON.stringify({id:'native_sign_out',command:'signOut'}));else openNativeCredits();"
+            + "},true);})();";
+        target.evaluateJavascript(script, null);
+    }
+    /** Reflect the native-only session in the embedded site's header without exposing account data to JavaScript. */
+    private void syncNativeAccountState(WebView target) {
+        if(target == null || target != web) return;
+        String signed=account.signedIn()?"true":"false";
+        String script = "(function(){var link=document.querySelector(\"header a[href='/account/'],header a[data-manytool-native-signed-in]\");"
+            + "if(!link)return;var signed="+signed+";link.textContent=signed?'로그아웃':'로그인';link.setAttribute('aria-label',signed?'Google 계정 로그아웃':'Google 계정 로그인');"
+            + "link.dataset.manytoolNativeSignedIn=signed?'true':'';link.href=signed?'#native-logout':'/account/';})();";
+        target.evaluateJavascript(script, null);
+    }
     private void requestDownload(String url,String mime) {
         if (web == null || !NavigationPolicy.isAllowedPage(web.getUrl()) || downloadBusy || pendingSave != null) return;
         int generation = navigation;
@@ -219,7 +299,7 @@ public class MainActivity extends Activity {
             } catch(Exception e) { message("저장 실패", "지원하지 않거나 너무 큰 파일입니다."); }
             return;
         }
-        if (url.startsWith("blob:" + NavigationPolicy.ORIGIN + "/")) {
+        if (url.startsWith("blob:" + NavigationPolicy.base() + "/")) {
             downloadBusy = true;
             String script = "(async()=>{try{const b=await(await fetch("+JSONObject.quote(url)+")).blob();if(b.size>"+LIMIT+")return '';return await new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.onerror=()=>r('');f.readAsDataURL(b)})}catch(e){return ''}})()";
             // evaluateJavascript does not await a Promise: poll a single bounded in-page result.
@@ -330,26 +410,26 @@ public class MainActivity extends Activity {
         catch(RuntimeException e){message("브라우저", "링크를 열 브라우저를 찾지 못했습니다.");}
     }
     private void message(String title,String body) { if(!isFinishing()) new AlertDialog.Builder(this).setTitle(title).setMessage(body).setPositiveButton("확인",null).show(); }
-    private final AppAccount account = new AppAccount();
     private PlayCreditsPanel creditsPanel;
     private android.view.View creditsView;
     private void openCredits() {
         if(isFinishing() || creditsView!=null) return;
-        if(!CreditReadiness.canLaunchPurchase()) { message("크레딧 충전", CreditReadiness.STATUS); return; }
-        if(account.signedIn()) { showCredits(); return; }
-        new AlertDialog.Builder(this).setTitle("크레딧 계정 로그인")
-            .setMessage("크레딧 충전과 사용을 위해 Google 계정으로 로그인합니다. 결제는 Google Play로만 진행됩니다.")
-            .setNegativeButton("취소",null)
-            .setPositiveButton("Google 로그인",(d,w)->account.signIn(this,(ok,text)->{ if(ok) showCredits(); else message("로그인",text); })).show();
+        if(!account.signedIn()) {
+            account.signIn(this,(ok,text)->{
+                if(!ok) { message("로그인",text); return; }
+                syncNativeAccountState(web);
+                if(AppFeatures.PLAY_CREDITS_ENTRY_ENABLED) showCredits();
+                else message("로그인 완료", "Google 계정으로 로그인했습니다. " + CreditReadiness.STATUS);
+            });
+            return;
+        }
+        if(AppFeatures.PLAY_CREDITS_ENTRY_ENABLED) { showCredits(); return; }
+        message("크레딧 충전", CreditReadiness.STATUS);
     }
     private void showCredits() {
         if(creditsView!=null || web==null) return;
-        creditsPanel=new PlayCreditsPanel(this,new PlayCreditHttpBackend(AppAccount.API,NavigationPolicy.ORIGIN,account));
-        LinearLayout box=new LinearLayout(this); box.setOrientation(LinearLayout.VERTICAL);
-        box.addView(creditsPanel);
-        box.addView(button("로그아웃",()->{account.signOut();closeCredits();}));
-        box.addView(button("닫기",this::closeCredits));
-        ScrollView scroll=new ScrollView(this); scroll.addView(box);
+        creditsPanel=new PlayCreditsPanel(this,new PlayCreditHttpBackend(AppAccount.API,NavigationPolicy.ORIGIN,account),this::closeCredits);
+        ScrollView scroll=new ScrollView(this); scroll.addView(creditsPanel);
         creditsView=scroll; web.setVisibility(android.view.View.GONE); root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
     }
     private void closeCredits() {
@@ -364,5 +444,5 @@ public class MainActivity extends Activity {
     @android.annotation.SuppressLint("GestureBackNavigation")
     @Override public void onBackPressed() { goBack(); }
     private void disposeWeb() { navigation++; closeCredits(); if(bridgeDialog!=null){bridgeDialog.dismiss();bridgeDialog=null;} downloadBusy=false; if(upload!=null){upload.onReceiveValue(null);upload=null;} if(web!=null){web.stopLoading();web.destroy();web=null;} }
-    @Override protected void onDestroy() { disposeWeb(); account.close(); pendingSave=null; io.shutdown(); super.onDestroy(); }
+    @Override protected void onDestroy() { disposeWeb(); if(splash!=null){splash.destroy();splash=null;} account.close(); pendingSave=null; io.shutdown(); super.onDestroy(); }
 }

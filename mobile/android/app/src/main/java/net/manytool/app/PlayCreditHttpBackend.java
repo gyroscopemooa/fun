@@ -19,10 +19,15 @@ public final class PlayCreditHttpBackend implements PlayCreditBilling.Backend {
     }
     private static URI validatedOrigin(String raw) {
         URI uri=URI.create(raw);
-        if(!"https".equals(uri.getScheme()) || uri.getHost()==null || uri.getRawUserInfo()!=null ||
-            uri.getRawQuery()!=null || uri.getRawFragment()!=null || (uri.getPort()!=-1 && uri.getPort()!=443) ||
+        boolean https="https".equals(uri.getScheme()) && (uri.getPort()==-1 || uri.getPort()==443);
+        // The emulator reaches the locally running API through this fixed, loopback-only
+        // address. Production variants can never take this branch.
+        boolean localDebug=AppFeatures.ALLOW_LOCAL_CREDIT_API && "http".equals(uri.getScheme()) &&
+            "10.0.2.2".equals(uri.getHost()) && uri.getPort()==8787;
+        if((!https && !localDebug) || uri.getHost()==null || uri.getRawUserInfo()!=null ||
+            uri.getRawQuery()!=null || uri.getRawFragment()!=null ||
             !(uri.getRawPath().isEmpty() || uri.getRawPath().equals("/"))) throw new IllegalArgumentException("HTTPS origin required");
-        return URI.create("https://"+uri.getHost());
+        return URI.create(uri.getScheme()+"://"+uri.getHost()+(uri.getPort()==-1 ? "" : ":"+uri.getPort()));
     }
     private JSONObject request(String path, JSONObject body) throws Exception {
         String session=sessions.currentSessionToken();

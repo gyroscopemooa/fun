@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>ManyTool</title>
+<style>
+/* Inter (variable) for Latin, Pretendard (variable) for Hangul. Both bundled, no network. */
+@font-face{font-family:"SplashInter";src:url("inter-latin.woff2") format("woff2");font-weight:100 900;font-display:block}
+@font-face{font-family:"SplashPretendard";src:url("pretendard-subset.woff2") format("woff2");font-weight:100 900;font-display:block}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#F5F5F8;color:#17181a;overflow:hidden;-webkit-user-select:none;user-select:none;
+  font-family:"SplashInter","SplashPretendard","Pretendard Variable",sans-serif;-webkit-font-smoothing:antialiased}
+.stage{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+/* Weight Wave: letters gain weight as a swell rolls through the line. */
+.wave{position:relative;white-space:nowrap;font-size:min(52px,9.4vw);letter-spacing:-.035em;line-height:1.2;text-align:center}
+.wave .ch{display:inline-block;white-space:pre;font-weight:500}
+.brand{margin-top:20px;font-size:13px;font-weight:600;letter-spacing:.14em;color:rgba(23,24,26,.6);text-transform:uppercase}
+.brand b{font-weight:800;color:#17181a}
+.foot{position:fixed;left:0;right:0;bottom:calc(28px + env(safe-area-inset-bottom));text-align:center;
+  font-size:13px;font-weight:600;letter-spacing:.01em;color:rgba(23,24,26,.55)}
+</style>
+</head>
+<body>
+<div class="stage">
+  <p class="wave" id="wave"></p>
+  <p class="brand" id="brand"></p>
+</div>
+<p class="foot" id="foot"></p>
+<script>
+// Spring engine and Weight Wave, adapted from designbookmark.com/motion (shared/motion.js + weight-wave/wave.js).
+// Spring values are unchanged: letter weight 260/22, swell focus 150/22.
+(() => {
+  // English by default; Korean only when the device language is Korean.
+  const ko = /^ko\b/i.test(navigator.language || '');
+  const COPY = ko
+    ? { main: '나의 여섯 번째 손가락', brand: '<b>매니툴</b> · Sixth Finger', foot: 'AI라는 여섯 번째 손가락' }
+    : { main: 'My sixth finger', brand: '<b>ManyTool</b> · Sixth Finger', foot: 'AI, your sixth finger' };
+  document.documentElement.lang = ko ? 'ko' : 'en';
+  document.getElementById('brand').innerHTML = COPY.brand;
+  document.getElementById('foot').textContent = COPY.foot;
+
+  const S = (x, k = 400, c = 30) => ({ x, v: 0, t: x, k, c });
+  const step = (s, dt) => { const a = -s.k * (s.x - s.t) - s.c * s.v; s.v += a * dt; s.x += s.v * dt; };
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const wave = document.getElementById('wave');
+  wave.setAttribute('aria-label', COPY.main);
+  const LIGHT = 500, BOLD = 900, SPREAD = .15;
+
+  const letters = [...COPY.main].map(ch => {
+    const el = document.createElement('span');
+    el.className = 'ch'; el.textContent = ch; el.setAttribute('aria-hidden', 'true');
+    wave.appendChild(el);
+    const w = S(LIGHT, 260, 22); if (reduce) w.c = 2 * Math.sqrt(w.k);
+    return { el, w };
+  });
+  const focus = S(-.2, 150, 22); if (reduce) focus.c = 2 * Math.sqrt(focus.k);
+
+  let t = 4.6 * .12, last = performance.now();
+  function loop(now) {
+    const dt = Math.min((now - last) / 1000, 1 / 30); last = now;
+    t += dt;
+    focus.t = -.06 + 1.12 * (.5 - .5 * Math.cos(t * Math.PI * 2 / 4.6));
+    for (let k = 0; k < 4; k++) { step(focus, dt / 4); letters.forEach(l => step(l.w, dt / 4)); }
+    const total = wave.offsetWidth || 1;
+    const centres = letters.map(l => (l.el.offsetLeft + l.el.offsetWidth / 2) / total);
+    letters.forEach((l, k) => {
+      const d = (centres[k] - focus.x) / SPREAD, g = Math.exp(-d * d);
+      l.w.t = LIGHT + (BOLD - LIGHT) * g;
+      l.el.style.fontWeight = clamp(l.w.x, 100, 900).toFixed(1);
+      l.el.style.opacity = (.55 + .45 * clamp((l.w.x - LIGHT) / (BOLD - LIGHT), 0, 1)).toFixed(3);
+    });
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(now => { last = now; loop(now); });
+})();
+</script>
+</body>
+</html>

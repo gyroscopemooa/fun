@@ -8,6 +8,7 @@ public final class HybridBridgePolicy {
     private HybridBridgePolicy() {}
     public static boolean trustedOrigin(String origin, boolean mainFrame) {
         if(!mainFrame || origin==null) return false;
+        if(DevServer.isDevOrigin(origin)) { try { String p=URI.create(origin).getPath(); return p.isEmpty() || p.equals("/"); } catch(IllegalArgumentException e){return false;} }
         try {
             URI u=URI.create(origin);
             return "https".equals(u.getScheme()) && "manytool.net".equals(u.getHost()) &&
@@ -16,6 +17,6 @@ public final class HybridBridgePolicy {
         } catch(IllegalArgumentException e){return false;}
     }
     public static boolean validId(String id){return id!=null && id.matches("[a-zA-Z0-9_-]{1,64}");}
-    public static boolean allowedCommand(String command){return "capabilities".equals(command) || "openCredits".equals(command) || "signIn".equals(command) || "balance".equals(command) || "saveText".equals(command) || "shareText".equals(command);}
+    public static boolean allowedCommand(String command){return "capabilities".equals(command) || "openCredits".equals(command) || "signIn".equals(command) || "signOut".equals(command) || "balance".equals(command) || "saveText".equals(command) || "shareText".equals(command);}
     public static boolean validText(String text){return text!=null && !text.isEmpty() && text.length()<=MAX_TEXT;}
 }

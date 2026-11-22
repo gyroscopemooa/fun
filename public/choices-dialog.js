@@ -2,41 +2,14 @@
 window.manytoolShowPaymentChoices = function (options = {}) {
   if (document.getElementById('manytool-payment-choices')) return;
   // Android app: digital goods are credit-only (Google Play Billing). Never show web PG / single purchase.
-  if (typeof navigator !== "undefined" && /ManytoolAndroid/i.test(navigator.userAgent)) {
-    const box = document.createElement('dialog'); box.id = 'manytool-payment-choices';
-    box.style.cssText = 'position:fixed;inset:0;margin:auto;box-sizing:border-box;border:1px solid #e2e8f0;border-radius:20px;padding:20px;max-width:380px;width:calc(100% - 32px);color:#0f172a;background:white;box-shadow:0 24px 80px #0005';
-    const mode = options.mode === 'charge' ? 'charge' : 'use';
-    const cost = typeof window.manytoolAiCredits === 'function' ? window.manytoolAiCredits() : null;
-    const state = window.manytoolCreditState || {};
-    const h = document.createElement('h2'); h.textContent = mode === 'charge' ? '크레딧 충전' : '크레딧으로 사용'; h.style.cssText = 'font-size:18px;font-weight:800;margin:0 0 10px';
-    const info = document.createElement('div'); info.style.cssText = 'display:grid;gap:4px;margin:0 0 12px;padding:12px;border-radius:12px;background:#f1f5f9;font-size:13px;color:#0f172a';
-    const row = (k, v) => { const r = document.createElement('div'); r.style.cssText = 'display:flex;justify-content:space-between;gap:8px'; const a = document.createElement('span'); a.textContent = k; a.style.color = '#64748b'; const b = document.createElement('b'); b.textContent = v; r.append(a, b); info.append(r); };
-    if (mode === 'use') {
-      if (cost) { row('이 AI', cost.name); row('사용 크레딧', (cost.from ? cost.credits + '크레딧부터' : cost.credits + '크레딧') + (cost.unit ? ' · ' + cost.unit : '')); }
-      else row('사용 크레딧', 'AI 기능 화면에서 확인할 수 있어요');
-    }
-    row('보유 크레딧', state.signedIn ? (typeof state.balance === 'number' ? state.balance + '크레딧' : '확인 준비 중') : '로그인 필요');
-    const p = document.createElement('p'); p.textContent = '앱에서는 개별 결제 없이 Google Play 크레딧으로만 이용합니다. 크레딧 충전·사용은 현재 준비 중이며 실제 결제는 처리하지 않습니다.'; p.style.cssText = 'font-size:12px;color:#475569;margin:0 0 14px;line-height:1.5';
-    const c = document.createElement('button'); c.type = 'button'; c.textContent = '닫기'; c.style.cssText = 'width:100%;border:1px solid #cbd5e1;border-radius:10px;padding:11px;font-size:14px;font-weight:700;background:white;cursor:pointer';
-    c.onclick = () => box.close(); box.addEventListener('close', () => box.remove());
-    box.append(h, info, p);
-    // Native bridge only opens the Google Play credit screen; it carries no account or purchase data.
+  if (typeof navigator !== 'undefined' && /ManytoolAndroid/i.test(navigator.userAgent)) {
     const native = window.ManytoolNative;
     if (native?.postMessage) {
-      const ask = command => new Promise(resolve => {
-        const id = 'm' + Math.random().toString(36).slice(2, 12), timer = setTimeout(() => resolve(null), 3000);
-        const on = event => { try { const data = JSON.parse(event.data); if (data.id !== id) return; clearTimeout(timer); native.removeEventListener('message', on); resolve(data); } catch { /* ignore */ } };
-        native.addEventListener('message', on); native.postMessage(JSON.stringify({ id, command }));
-      });
-      ask('capabilities').then(info => {
-        if (!info?.capabilities?.playCredits || !box.isConnected) return;
-        p.textContent = '앱에서는 개별 결제 없이 Google Play 크레딧으로만 이용합니다. 크레딧을 충전한 뒤 이용해 주세요.';
-        const open = document.createElement('button'); open.type = 'button'; open.textContent = '크레딧 충전·확인';
-        open.style.cssText = 'width:100%;border:0;border-radius:10px;padding:11px;font-size:14px;font-weight:800;margin-bottom:8px;background:#0e7490;color:white;cursor:pointer';
-        open.onclick = () => { ask('openCredits'); box.close(); }; box.insertBefore(open, c);
-      });
+      // Native decides the route: signed out opens Google sign-in; signed in opens checkout.
+      native.postMessage(JSON.stringify({ id: 'native_credit_entry', command: 'openCredits' }));
+      return;
     }
-    box.append(c); document.body.append(box); box.showModal(); return;
+    return;
   }
   const path=location.pathname.replace(/^\/(?!ai(?:-|\/))[a-z]{2,3}(?:-[A-Za-z]{2,4})?(?=\/)/,'').replace(/\/$/,'');
   const catalog=Object.values(window.manytoolAiCatalog||{});

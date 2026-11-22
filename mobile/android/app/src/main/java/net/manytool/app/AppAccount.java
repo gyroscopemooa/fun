@@ -1,7 +1,12 @@
 package net.manytool.app;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.CancellationSignal;
+import android.security.keystore.KeyGenParameterSpec;
+import android.security.keystore.KeyProperties;
+import android.util.Base64;
 import androidx.credentials.*;
 import androidx.credentials.exceptions.GetCredentialException;
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
@@ -10,30 +15,67 @@ import org.json.JSONObject;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.KeyStore;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.GCMParameterSpec;
 
-/** Native Google sign-in for the credit wallet. The session token lives only in memory:
- * never written to storage/logs and never exposed to WebView JavaScript. */
+/** Native Google sign-in for the credit wallet. The session token is Keystore-encrypted,
+ * never logged and never exposed to WebView JavaScript. */
 public final class AppAccount implements PlayCreditHttpBackend.SessionProvider {
     public interface Callback { void done(boolean ok, String message); }
-    public static final String API = "https://api.manytool.net";
+    public static final String API = CreditServer.ORIGIN;
+    private static final String PREFS="native_account", SESSION="credit_session", KEY="manytool_credit_session_key";
     private final ExecutorService io = Executors.newSingleThreadExecutor();
+    private final SharedPreferences prefs;
     private volatile String session;
     private boolean busy;
+
+    public AppAccount(Context context) {
+        prefs=context.getSharedPreferences(PREFS,Context.MODE_PRIVATE);
+        session=restoreSession();
+    }
 
     @Override public String currentSessionToken() { return session; }
     public boolean signedIn() { return session != null; }
 
+    private SecretKey key() throws Exception {
+        KeyStore store=KeyStore.getInstance("AndroidKeyStore"); store.load(null);
+        if(store.containsAlias(KEY)) return ((KeyStore.SecretKeyEntry)store.getEntry(KEY,null)).getSecretKey();
+        KeyGenerator generator=KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES,"AndroidKeyStore");
+        generator.init(new KeyGenParameterSpec.Builder(KEY,KeyProperties.PURPOSE_ENCRYPT|KeyProperties.PURPOSE_DECRYPT)
+            .setBlockModes(KeyProperties.BLOCK_MODE_GCM).setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE).build());
+        return generator.generateKey();
+    }
+    private String restoreSession() {
+        String saved=prefs.getString(SESSION,null); if(saved==null) return null;
+        try { String[] parts=saved.split(":",2); if(parts.length!=2) throw new Exception("format");
+            Cipher cipher=Cipher.getInstance("AES/GCM/NoPadding"); byte[] iv=Base64.decode(parts[0],Base64.NO_WRAP);
+            cipher.init(Cipher.DECRYPT_MODE,key(),new GCMParameterSpec(128,iv));
+            String value=new String(cipher.doFinal(Base64.decode(parts[1],Base64.NO_WRAP)),StandardCharsets.UTF_8);
+            if(!value.matches("[a-f0-9]{32,256}")) throw new Exception("token"); return value;
+        } catch(Exception ignored) { prefs.edit().remove(SESSION).apply(); return null; }
+    }
+    private void saveSession(String value) {
+        try { byte[] iv=new byte[12]; new java.security.SecureRandom().nextBytes(iv); Cipher cipher=Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(Cipher.ENCRYPT_MODE,key(),new GCMParameterSpec(128,iv));
+            prefs.edit().putString(SESSION,Base64.encodeToString(iv,Base64.NO_WRAP)+":"+Base64.encodeToString(cipher.doFinal(value.getBytes(StandardCharsets.UTF_8)),Base64.NO_WRAP)).apply();
+        } catch(Exception ignored) { /* A session can still be used until this process closes. */ }
+    }
+
     private static String cookie(HttpURLConnection c, String name) {
-        List<String> headers = c.getHeaderFields().get("Set-Cookie");
-        if (headers == null) return null;
         Pattern p = Pattern.compile("(?:^|;\\s*)" + name + "=([a-f0-9]{32,256})");
-        for (String h : headers) { Matcher m = p.matcher(h); if (m.find()) return m.group(1); }
+        for (java.util.Map.Entry<String, List<String>> entry : c.getHeaderFields().entrySet()) {
+            if (entry.getKey() == null || !"Set-Cookie".equalsIgnoreCase(entry.getKey()) || entry.getValue() == null) continue;
+            for (String h : entry.getValue()) { Matcher m = p.matcher(h); if (m.find()) return m.group(1); }
+        }
         return null;
     }
     private JSONObject post(String path, JSONObject body, String cookieHeader, String[] cookieOut, String cookieName) throws Exception {
@@ -105,7 +147,7 @@ public final class AppAccount implements PlayCreditHttpBackend.SessionProvider {
                         String[] out = new String[1];
                         post("/credits/google/session", new JSONObject().put("credential", token), "manytool_google_nonce=" + nonce, out, "manytool_credit_session");
                         if (out[0] == null) throw new IOException("session");
-                        session = out[0];
+                        session = out[0]; saveSession(session);
                         finish(activity, callback, true, "로그인했습니다.");
                     } catch (Exception e) { finish(activity, callback, false, "로그인을 확인하지 못했습니다. 다시 시도해 주세요."); }
                 }
@@ -116,9 +158,9 @@ public final class AppAccount implements PlayCreditHttpBackend.SessionProvider {
         activity.runOnUiThread(() -> { busy = false; if (!activity.isFinishing()) callback.done(ok, message); });
     }
     public void signOut() {
-        String old = session; session = null;
+        String old = session; session = null; prefs.edit().remove(SESSION).apply();
         if (old == null) return;
         io.execute(() -> { try { post("/credits/logout", new JSONObject(), "manytool_credit_session=" + old, null, null); } catch (Exception ignored) { /* best effort */ } });
     }
-    public void close() { signOut(); io.shutdown(); }
+    public void close() { io.shutdown(); }
 }

@@ -7,7 +7,10 @@ import java.util.Arrays;
 /** Pure policy: no cookies, tokens, credentials or dynamic purchase configuration. */
 public final class NavigationPolicy {
     public static final String ORIGIN = "https://manytool.net";
+    /** Page origin the app loads: production, or the dev server in debug builds. */
+    public static String base() { return DevServer.ORIGIN != null ? DevServer.ORIGIN : ORIGIN; }
     public static boolean isTrusted(String value) {
+        if (DevServer.isDevUrl(value)) return true;
         try {
             URI u = URI.create(value);
             return "https".equalsIgnoreCase(u.getScheme()) && "manytool.net".equalsIgnoreCase(u.getHost())

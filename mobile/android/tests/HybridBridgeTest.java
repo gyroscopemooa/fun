@@ -12,7 +12,7 @@ public class HybridBridgeTest {
         ok(!HybridBridgePolicy.trustedOrigin("https://manytool.net:444",true));
         ok(!HybridBridgePolicy.trustedOrigin("https://manytool.net/x",true));
         ok(HybridBridgePolicy.allowedCommand("saveText")); ok(HybridBridgePolicy.allowedCommand("shareText"));
-        ok(HybridBridgePolicy.allowedCommand("capabilities")); ok(HybridBridgePolicy.allowedCommand("signIn")); ok(HybridBridgePolicy.allowedCommand("balance")); ok(!HybridBridgePolicy.allowedCommand("getToken")); ok(!HybridBridgePolicy.allowedCommand("getCookies"));
+        ok(HybridBridgePolicy.allowedCommand("capabilities")); ok(HybridBridgePolicy.allowedCommand("signIn")); ok(HybridBridgePolicy.allowedCommand("signOut")); ok(HybridBridgePolicy.allowedCommand("balance")); ok(!HybridBridgePolicy.allowedCommand("getToken")); ok(!HybridBridgePolicy.allowedCommand("getCookies"));
         ok(!HybridBridgePolicy.allowedCommand("openUrl")); ok(!HybridBridgePolicy.allowedCommand("buy"));
         ok(HybridBridgePolicy.validId("request_123")); ok(!HybridBridgePolicy.validId("<script>"));
         ok(!HybridBridgePolicy.validText("")); ok(!HybridBridgePolicy.validText("a".repeat(64001)));
