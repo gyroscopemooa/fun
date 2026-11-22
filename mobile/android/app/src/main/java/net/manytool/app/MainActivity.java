@@ -35,6 +35,7 @@ public class MainActivity extends Activity {
     private long lastBridgeRequest;
     private boolean downloadBusy = false, loadFailed = false;
     private AppAccount account;
+    private LinearLayout bottomBar;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -100,6 +101,7 @@ public class MainActivity extends Activity {
         disposeWeb(); root.removeAllViews();
         status = new TextView(this); status.setPadding(16,8,16,8); status.setVisibility(android.view.View.GONE); root.addView(status);
         web = new WebView(this); root.addView(web, new LinearLayout.LayoutParams(-1,0,1));
+        addBottomBar();
         WebView.setWebContentsDebuggingEnabled(false);
         WebSettings s = web.getSettings(); s.setJavaScriptEnabled(true); s.setDomStorageEnabled(true);
         s.setAllowFileAccess(false); s.setAllowContentAccess(false); s.setAllowFileAccessFromFileURLs(false);
@@ -179,6 +181,80 @@ public class MainActivity extends Activity {
         web.setDownloadListener((url,ua,disposition,mime,length) -> requestDownload(url,mime));
         web.loadUrl(NavigationPolicy.base() + path);
     }
+
+    /** App navigation stays native so it is always available, including on tool pages without a web menu. */
+    private void addBottomBar() {
+        bottomBar = new LinearLayout(this);
+        bottomBar.setOrientation(LinearLayout.HORIZONTAL);
+        bottomBar.setGravity(android.view.Gravity.CENTER);
+        bottomBar.setPadding(dp(4), dp(3), dp(4), dp(3));
+        bottomBar.setBackgroundColor(0xFFFFFFFF);
+        String[][] actions = {
+            {"⌂", "홈"}, {"‹", "뒤로"}, {"↻", "새로고침"},
+            {"▦", "AI 도구"}, {"□", "전체 도구"}, {"▣", "충전"}
+        };
+        for (String[] action : actions) {
+            TextView item = navItem(action[0], action[1]);
+            bottomBar.addView(item, new LinearLayout.LayoutParams(0, dp(54), 1));
+            switch (action[1]) {
+                case "홈": item.setOnClickListener(v -> showHome()); break;
+                case "뒤로": item.setOnClickListener(v -> goBack()); break;
+                case "새로고침": item.setOnClickListener(v -> { if (web != null) web.reload(); }); break;
+                case "AI 도구": item.setOnClickListener(v -> showAiTools()); break;
+                case "전체 도구": item.setOnClickListener(v -> openTool("/tools")); break;
+                case "충전": item.setOnClickListener(v -> openCredits()); break;
+            }
+        }
+        root.addView(bottomBar, new LinearLayout.LayoutParams(-1, dp(60)));
+    }
+
+    private TextView navItem(String icon, String label) {
+        TextView item = new TextView(this);
+        item.setGravity(android.view.Gravity.CENTER);
+        item.setText(icon + "\n" + label);
+        item.setTextColor(0xFF1E3A5F);
+        item.setTextSize(11);
+        item.setLineSpacing(0, 0.9f);
+        item.setClickable(true);
+        item.setBackgroundResource(android.R.drawable.list_selector_background);
+        return item;
+    }
+
+    private void showAiTools() {
+        final String[][] tools = {
+            {"AI 이미지 생성", "/ai-image-generator"}, {"AI 포토샵", "/ai-photoshop"},
+            {"AI 증명사진", "/ai-id-photo"}, {"AI 여권사진", "/ai-passport-photo"},
+            {"AI 프로필 사진", "/ai-headshot"}, {"AI 모델컷", "/ai-model-cut"},
+            {"AI 스타일리스트", "/ai-stylist"}, {"AI 퍼스널컬러", "/ai-personal-color"},
+            {"AI 펫 번역기", "/ai-pet-translator"}, {"AI 칼로리", "/ai-calorie-calculator"},
+            {"AI 만세력", "/ai-manseryeok"}, {"AI 검색", "/ai-search"}
+        };
+        LinearLayout list = new LinearLayout(this);
+        list.setOrientation(LinearLayout.VERTICAL);
+        list.setPadding(dp(8), 0, dp(8), 0);
+        for (String[] tool : tools) {
+            TextView row = new TextView(this);
+            row.setText(tool[0]); row.setTextSize(16); row.setTextColor(0xFF0F172A);
+            row.setGravity(android.view.Gravity.CENTER_VERTICAL); row.setPadding(dp(16), 0, dp(16), 0);
+            row.setBackgroundResource(android.R.drawable.list_selector_background);
+            list.addView(row, new LinearLayout.LayoutParams(-1, dp(52)));
+        }
+        ScrollView scroll = new ScrollView(this); scroll.addView(list);
+        AlertDialog dialog = new AlertDialog.Builder(this)
+            .setTitle("AI 도구 모음")
+            .setMessage("원하는 AI 도구를 선택하세요")
+            .setView(scroll)
+            .setNegativeButton("닫기", null)
+            .create();
+        for (int i = 0; i < list.getChildCount(); i++) {
+            final android.view.View child = list.getChildAt(i);
+            final String path = tools[i][1];
+            child.setOnClickListener(v -> { dialog.dismiss(); openTool(path); });
+        }
+        dialog.show();
+    }
+
+    private int dp(int value) { return (int)(value * getResources().getDisplayMetrics().density + .5f); }
     private void bridgeReply(JavaScriptReplyProxy reply,String id,boolean ok,String message) {
         if (!WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) return;
         try {reply.postMessage(new JSONObject().put("id",id).put("ok",ok).put("message",message).toString());}
@@ -429,13 +505,16 @@ public class MainActivity extends Activity {
     private void showCredits() {
         if(creditsView!=null || web==null) return;
         creditsPanel=new PlayCreditsPanel(this,new PlayCreditHttpBackend(AppAccount.API,NavigationPolicy.ORIGIN,account),this::closeCredits);
-        ScrollView scroll=new ScrollView(this); scroll.addView(creditsPanel);
-        creditsView=scroll; web.setVisibility(android.view.View.GONE); root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
+        ScrollView scroll=new ScrollView(this); scroll.setFillViewport(true); scroll.addView(creditsPanel,new ScrollView.LayoutParams(-1,-1));
+        creditsView=scroll; web.setVisibility(android.view.View.GONE);
+        if(bottomBar!=null) bottomBar.setVisibility(android.view.View.GONE);
+        root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
     }
     private void closeCredits() {
         if(creditsPanel!=null){creditsPanel.close();creditsPanel=null;}
         if(creditsView!=null){root.removeView(creditsView);creditsView=null;}
         if(web!=null) web.setVisibility(android.view.View.VISIBLE);
+        if(bottomBar!=null) bottomBar.setVisibility(android.view.View.VISIBLE);
     }
     @Override protected void onResume() { super.onResume(); if(creditsPanel!=null) creditsPanel.resume(); }
     private void goBack() { if(creditsView!=null){closeCredits();return;} if(web!=null && web.canGoBack()) web.goBack(); else new AlertDialog.Builder(this).setMessage("ManyTool을 종료할까요?").setNegativeButton("취소",null).setPositiveButton("종료",(d,w)->finish()).show(); }
