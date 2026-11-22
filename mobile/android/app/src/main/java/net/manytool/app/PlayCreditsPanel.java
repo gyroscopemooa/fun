@@ -58,7 +58,7 @@ public final class PlayCreditsPanel extends LinearLayout implements PlayCreditBi
     private void previewRows() {
         packs.removeAllViews(); selected=null;
         TextView notice=text("상품 등록 전 미리보기 · 실제 가격은 Google Play에서 표시됩니다",13,MUTED,false); notice.setPadding(dp(2),0,0,dp(10)); packs.addView(notice);
-        int[] credits={1,5,10,100}; String[] prices={"₩1,000","₩5,000","₩10,000","₩100,000"};
+        int[] credits={1,5,10,100}; String[] prices={"Google Play 가격","Google Play 가격","Google Play 가격","Google Play 가격"};
         for(int i=0;i<credits.length;i++) packs.addView(previewPack(credits[i],prices[i]),lp(-1,64,0,0,0,10));
         previewCredits=1; refreshPreview(); payButton.setEnabled(false); payButton.setAlpha(.45f); payButton.setText("상품 등록 후 결제할 수 있어요");
     }
