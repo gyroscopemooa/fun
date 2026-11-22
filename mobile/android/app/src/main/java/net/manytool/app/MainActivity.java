@@ -35,7 +35,6 @@ public class MainActivity extends Activity {
     private long lastBridgeRequest;
     private boolean downloadBusy = false, loadFailed = false;
     private AppAccount account;
-    private LinearLayout bottomBar;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -101,7 +100,6 @@ public class MainActivity extends Activity {
         disposeWeb(); root.removeAllViews();
         status = new TextView(this); status.setPadding(16,8,16,8); status.setVisibility(android.view.View.GONE); root.addView(status);
         web = new WebView(this); root.addView(web, new LinearLayout.LayoutParams(-1,0,1));
-        addBottomBar();
         WebView.setWebContentsDebuggingEnabled(false);
         WebSettings s = web.getSettings(); s.setJavaScriptEnabled(true); s.setDomStorageEnabled(true);
         s.setAllowFileAccess(false); s.setAllowContentAccess(false); s.setAllowFileAccessFromFileURLs(false);
@@ -163,6 +161,12 @@ public class MainActivity extends Activity {
             @Override public void onPageStarted(WebView v,String url,Bitmap icon) { navigation++; downloadBusy=false; loadFailed=false; status.setVisibility(android.view.View.GONE); }
             @Override public void onPageFinished(WebView v,String url) {
                 if(!loadFailed)status.setVisibility(android.view.View.GONE);
+                // The app is Korean-first. Prevent WebView device language from sending the
+                // Korean app shell to the incomplete English home-page copy.
+                if(url.startsWith(NavigationPolicy.base()+"/en")) {
+                    v.evaluateJavascript("localStorage.setItem('manytool-locale','ko');location.replace('/');",null);
+                    return;
+                }
                 installNativeAccountEntryPoints(v);
                 syncNativeAccountState(v);
                 CookieManager.getInstance().flush(); hideSplash();
@@ -182,79 +186,6 @@ public class MainActivity extends Activity {
         web.loadUrl(NavigationPolicy.base() + path);
     }
 
-    /** App navigation stays native so it is always available, including on tool pages without a web menu. */
-    private void addBottomBar() {
-        bottomBar = new LinearLayout(this);
-        bottomBar.setOrientation(LinearLayout.HORIZONTAL);
-        bottomBar.setGravity(android.view.Gravity.CENTER);
-        bottomBar.setPadding(dp(4), dp(3), dp(4), dp(3));
-        bottomBar.setBackgroundColor(0xFFFFFFFF);
-        String[][] actions = {
-            {"⌂", "홈"}, {"‹", "뒤로"}, {"↻", "새로고침"},
-            {"▦", "AI 도구"}, {"□", "전체 도구"}, {"▣", "충전"}
-        };
-        for (String[] action : actions) {
-            TextView item = navItem(action[0], action[1]);
-            bottomBar.addView(item, new LinearLayout.LayoutParams(0, dp(54), 1));
-            switch (action[1]) {
-                case "홈": item.setOnClickListener(v -> showHome()); break;
-                case "뒤로": item.setOnClickListener(v -> goBack()); break;
-                case "새로고침": item.setOnClickListener(v -> { if (web != null) web.reload(); }); break;
-                case "AI 도구": item.setOnClickListener(v -> showAiTools()); break;
-                case "전체 도구": item.setOnClickListener(v -> openTool("/tools")); break;
-                case "충전": item.setOnClickListener(v -> openCredits()); break;
-            }
-        }
-        root.addView(bottomBar, new LinearLayout.LayoutParams(-1, dp(60)));
-    }
-
-    private TextView navItem(String icon, String label) {
-        TextView item = new TextView(this);
-        item.setGravity(android.view.Gravity.CENTER);
-        item.setText(icon + "\n" + label);
-        item.setTextColor(0xFF1E3A5F);
-        item.setTextSize(11);
-        item.setLineSpacing(0, 0.9f);
-        item.setClickable(true);
-        item.setBackgroundResource(android.R.drawable.list_selector_background);
-        return item;
-    }
-
-    private void showAiTools() {
-        final String[][] tools = {
-            {"AI 이미지 생성", "/ai-image-generator"}, {"AI 포토샵", "/ai-photoshop"},
-            {"AI 증명사진", "/ai-id-photo"}, {"AI 여권사진", "/ai-passport-photo"},
-            {"AI 프로필 사진", "/ai-headshot"}, {"AI 모델컷", "/ai-model-cut"},
-            {"AI 스타일리스트", "/ai-stylist"}, {"AI 퍼스널컬러", "/ai-personal-color"},
-            {"AI 펫 번역기", "/ai-pet-translator"}, {"AI 칼로리", "/ai-calorie-calculator"},
-            {"AI 만세력", "/ai-manseryeok"}, {"AI 검색", "/ai-search"}
-        };
-        LinearLayout list = new LinearLayout(this);
-        list.setOrientation(LinearLayout.VERTICAL);
-        list.setPadding(dp(8), 0, dp(8), 0);
-        for (String[] tool : tools) {
-            TextView row = new TextView(this);
-            row.setText(tool[0]); row.setTextSize(16); row.setTextColor(0xFF0F172A);
-            row.setGravity(android.view.Gravity.CENTER_VERTICAL); row.setPadding(dp(16), 0, dp(16), 0);
-            row.setBackgroundResource(android.R.drawable.list_selector_background);
-            list.addView(row, new LinearLayout.LayoutParams(-1, dp(52)));
-        }
-        ScrollView scroll = new ScrollView(this); scroll.addView(list);
-        AlertDialog dialog = new AlertDialog.Builder(this)
-            .setTitle("AI 도구 모음")
-            .setMessage("원하는 AI 도구를 선택하세요")
-            .setView(scroll)
-            .setNegativeButton("닫기", null)
-            .create();
-        for (int i = 0; i < list.getChildCount(); i++) {
-            final android.view.View child = list.getChildAt(i);
-            final String path = tools[i][1];
-            child.setOnClickListener(v -> { dialog.dismiss(); openTool(path); });
-        }
-        dialog.show();
-    }
-
-    private int dp(int value) { return (int)(value * getResources().getDisplayMetrics().density + .5f); }
     private void bridgeReply(JavaScriptReplyProxy reply,String id,boolean ok,String message) {
         if (!WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) return;
         try {reply.postMessage(new JSONObject().put("id",id).put("ok",ok).put("message",message).toString());}
@@ -338,7 +269,10 @@ public class MainActivity extends Activity {
         String script = "(function(){if(window.__manytoolNativeAccountEntrypoints)return;"
             + "window.__manytoolNativeAccountEntrypoints=true;"
             + "var appStyle=document.createElement('style');appStyle.id='manytool-native-shell-style';"
-            + "appStyle.textContent=\"nav[aria-label=\\\"Breadcrumb\\\"],.site-footer{display:none!important}\";document.head.appendChild(appStyle);"
+            + "appStyle.textContent=\"nav[aria-label=\\\"Breadcrumb\\\"],.site-footer,#tool-search{display:none!important}\";document.head.appendChild(appStyle);"
+            + "var search=document.getElementById('tool-search');if(search&&search.parentElement)search.parentElement.remove();"
+            + "var addAiMenu=function(){if(document.querySelector('#mt-nav button[data-key=ai]'))return;var tools=document.querySelector('#mt-nav button[data-key=tools]');if(!tools)return setTimeout(addAiMenu,120);var label=tools.querySelector('span');if(label)label.textContent='AI 도구';tools.setAttribute('aria-label','AI 도구 모음');"
+            + "tools.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();var old=document.getElementById('manytool-native-ai');if(old){old.remove();return;}var sheet=document.createElement('nav');sheet.id='manytool-native-ai';sheet.setAttribute('aria-label','AI 도구 모음');sheet.style.cssText='position:fixed;left:12px;right:12px;bottom:72px;z-index:2147483646;max-height:60vh;overflow:auto;border-radius:20px;padding:12px;background:#fff;box-shadow:0 16px 42px rgba(15,23,42,.25);display:grid;grid-template-columns:1fr 1fr;gap:8px';var title=document.createElement('strong');title.textContent='AI 도구 모음';title.style.cssText='grid-column:1/-1;padding:6px 8px;color:#0f172a;font-size:16px';sheet.appendChild(title);[['AI 이미지 생성','/ai-image-generator/'],['AI 증명사진','/ai-id-photo/'],['AI 여권사진','/ai-passport-photo/'],['AI 프로필 사진','/ai-headshot/'],['AI 포토샵','/ai-photoshop/'],['AI 모델컷','/ai-model-cut/'],['AI 퍼스널컬러','/ai-personal-color/'],['AI 칼로리 분석','/ai-calorie-calculator/'],['AI 만세력','/ai-manseryeok/'],['AI 펫 번역기','/ai-pet-translator/']].forEach(function(item){var a=document.createElement('a');a.href=item[1];a.textContent=item[0];a.style.cssText='padding:13px 10px;border:1px solid #e2e8f0;border-radius:13px;background:#f8fafc;color:#0f172a;font-size:13px;font-weight:700;text-decoration:none';sheet.appendChild(a);});document.body.appendChild(sheet);},true);};addAiMenu();"
             + "var openNativeCredits=function(){if(window.ManytoolNative&&window.ManytoolNative.postMessage)window.ManytoolNative.postMessage(JSON.stringify({id:'native_credit_entry',command:'openCredits'}));};"
             + "window.manytoolShowPaymentChoices=openNativeCredits;"
             + "document.addEventListener('click',function(event){"
@@ -491,31 +425,54 @@ public class MainActivity extends Activity {
     private void openCredits() {
         if(isFinishing() || creditsView!=null) return;
         if(!account.signedIn()) {
-            account.signIn(this,(ok,text)->{
-                if(!ok) { message("로그인",text); return; }
-                syncNativeAccountState(web);
-                if(AppFeatures.PLAY_CREDITS_ENTRY_ENABLED) showCredits();
-                else message("로그인 완료", "Google 계정으로 로그인했습니다. " + CreditReadiness.STATUS);
-            });
+            showCreditLogin();
             return;
         }
         if(AppFeatures.PLAY_CREDITS_ENTRY_ENABLED) { showCredits(); return; }
         message("크레딧 충전", CreditReadiness.STATUS);
+    }
+    private void showCreditLogin() {
+        if(creditsView!=null || web==null) return;
+        LinearLayout page=new LinearLayout(this); page.setOrientation(LinearLayout.VERTICAL); page.setGravity(android.view.Gravity.CENTER_HORIZONTAL);
+        page.setPadding(dp(24),dp(28),dp(24),dp(28)); page.setBackgroundColor(0xFFF7F8FA);
+        LinearLayout header=new LinearLayout(this); header.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        TextView title=nativeText("크레딧 충전",26,0xFF191F2B,true); title.setGravity(android.view.Gravity.CENTER_VERTICAL); header.addView(title,new LinearLayout.LayoutParams(0,dp(56),1));
+        TextView close=nativeText("×",28,0xFF6C7789,false); close.setGravity(android.view.Gravity.CENTER); close.setBackground(roundNative(0xFFECF0F4,22)); close.setOnClickListener(v->closeCredits()); header.addView(close,new LinearLayout.LayoutParams(dp(44),dp(44)));
+        page.addView(header,new LinearLayout.LayoutParams(-1,dp(56)));
+        Space top=new Space(this); page.addView(top,new LinearLayout.LayoutParams(-1,0,1));
+        LinearLayout card=new LinearLayout(this); card.setOrientation(LinearLayout.VERTICAL); card.setPadding(dp(24),dp(26),dp(24),dp(24)); card.setBackground(roundNative(0xFFFFFFFF,20));
+        card.addView(nativeText("크레딧 충전을 위해",15,0xFF6C7789,false));
+        card.addView(nativeText("로그인해 주세요",24,0xFF191F2B,true),nativeLp(-1,-2,8,0,0,0));
+        TextView help=nativeText("Google 계정으로 로그인하면 충전 내역과 잔액을 안전하게 관리할 수 있어요.",14,0xFF6C7789,false); help.setLineSpacing(dp(4),1f); card.addView(help,nativeLp(-1,-2,16,0,0,0));
+        TextView continueButton=nativeText("Google로 계속하기",17,0xFFFFFFFF,true); continueButton.setGravity(android.view.Gravity.CENTER); continueButton.setBackground(roundNative(0xFF1289A0,12));
+        continueButton.setOnClickListener(v->{
+            continueButton.setEnabled(false); continueButton.setAlpha(.65f); continueButton.setText("Google 로그인 준비 중…");
+            account.signIn(this,(ok,text)->{
+                if(!ok) { continueButton.setEnabled(true); continueButton.setAlpha(1f); continueButton.setText("Google로 계속하기"); message("로그인",text); return; }
+                syncNativeAccountState(web); closeCredits();
+                if(AppFeatures.PLAY_CREDITS_ENTRY_ENABLED) showCredits(); else message("로그인 완료", "Google 계정으로 로그인했습니다. " + CreditReadiness.STATUS);
+            });
+        });
+        card.addView(continueButton,nativeLp(-1,60,24,0,0,0)); page.addView(card,new LinearLayout.LayoutParams(-1,-2));
+        Space bottom=new Space(this); page.addView(bottom,new LinearLayout.LayoutParams(-1,0,1));
+        creditsView=page; web.setVisibility(android.view.View.GONE); root.addView(page,new LinearLayout.LayoutParams(-1,0,1));
     }
     private void showCredits() {
         if(creditsView!=null || web==null) return;
         creditsPanel=new PlayCreditsPanel(this,new PlayCreditHttpBackend(AppAccount.API,NavigationPolicy.ORIGIN,account),this::closeCredits);
         ScrollView scroll=new ScrollView(this); scroll.setFillViewport(true); scroll.addView(creditsPanel,new ScrollView.LayoutParams(-1,-1));
         creditsView=scroll; web.setVisibility(android.view.View.GONE);
-        if(bottomBar!=null) bottomBar.setVisibility(android.view.View.GONE);
         root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
     }
     private void closeCredits() {
         if(creditsPanel!=null){creditsPanel.close();creditsPanel=null;}
         if(creditsView!=null){root.removeView(creditsView);creditsView=null;}
         if(web!=null) web.setVisibility(android.view.View.VISIBLE);
-        if(bottomBar!=null) bottomBar.setVisibility(android.view.View.VISIBLE);
     }
+    private TextView nativeText(String value,int size,int color,boolean bold) { TextView view=new TextView(this); view.setText(value); view.setTextSize(size); view.setTextColor(color); if(bold)view.setTypeface(android.graphics.Typeface.DEFAULT,android.graphics.Typeface.BOLD); return view; }
+    private LinearLayout.LayoutParams nativeLp(int width,int height,int top,int left,int right,int bottom) { LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(width,height); p.setMargins(dp(left),dp(top),dp(right),dp(bottom)); return p; }
+    private android.graphics.drawable.GradientDrawable roundNative(int color,int radius) { android.graphics.drawable.GradientDrawable shape=new android.graphics.drawable.GradientDrawable(); shape.setColor(color); shape.setCornerRadius(dp(radius)); return shape; }
+    private int dp(int value) { return (int)(value*getResources().getDisplayMetrics().density+.5f); }
     @Override protected void onResume() { super.onResume(); if(creditsPanel!=null) creditsPanel.resume(); }
     private void goBack() { if(creditsView!=null){closeCredits();return;} if(web!=null && web.canGoBack()) web.goBack(); else new AlertDialog.Builder(this).setMessage("ManyTool을 종료할까요?").setNegativeButton("취소",null).setPositiveButton("종료",(d,w)->finish()).show(); }
     // API 33+ uses the OnBackInvokedDispatcher registered in onCreate.

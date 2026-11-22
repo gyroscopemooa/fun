@@ -4,5 +4,6 @@ package net.manytool.app;
 public final class AppFeatures {
     public static final boolean PLAY_CREDITS_ENTRY_ENABLED = false;
     public static final boolean ALLOW_LOCAL_CREDIT_API = false;
+    public static final boolean SHOW_CREDIT_PREVIEW = false;
     private AppFeatures() {}
 }
