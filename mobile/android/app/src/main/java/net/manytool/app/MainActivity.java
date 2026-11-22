@@ -278,7 +278,8 @@ public class MainActivity extends Activity {
             + "var logout=label==='로그아웃'||label==='Sign out'||node.dataset.manytoolNativeSignedIn==='true';"
             + "var login=label==='로그인'||label==='Sign in'||label==='ログイン'||/^\\/account\\/?(?:[?#].*)?$/.test(href);"
             + "var credits=compact==='충전'||compact==='+충전'||compact==='크레딧충전';"
-            + "if(!login&&!credits&&!logout)return;event.preventDefault();event.stopImmediatePropagation();"
+            + "var paidAction=/((AI|ManyTool).*(생성|Generate)|사용하기|Use now)/i.test(label);"
+            + "if(!login&&!credits&&!logout&&!paidAction)return;event.preventDefault();event.stopImmediatePropagation();"
             + "if(logout&&window.ManytoolNative&&window.ManytoolNative.postMessage)window.ManytoolNative.postMessage(JSON.stringify({id:'native_sign_out',command:'signOut'}));else openNativeCredits();"
             + "},true);})();";
         target.evaluateJavascript(script, null);
@@ -287,9 +288,9 @@ public class MainActivity extends Activity {
     private void syncNativeAccountState(WebView target) {
         if(target == null || target != web) return;
         String signed=account.signedIn()?"true":"false";
-        String script = "(function(){var link=document.querySelector(\"header a[href='/account/'],header a[data-manytool-native-signed-in]\");"
-            + "if(!link)return;var signed="+signed+";var en=(document.documentElement.lang||'').toLowerCase().indexOf('en')===0;link.textContent=signed?(en?'Sign out':'로그아웃'):(en?'Sign in':'로그인');link.setAttribute('aria-label',signed?(en?'Sign out of Google account':'Google 계정 로그아웃'):(en?'Sign in with Google':'Google 계정 로그인'));"
-            + "link.dataset.manytoolNativeSignedIn=signed?'true':'';link.href=signed?'#native-logout':'/account/';})();";
+        String script = "(function(){var signed="+signed+";var en=(document.documentElement.lang||'').toLowerCase().indexOf('en')===0;document.documentElement.dataset.manytoolNativeSignedIn=signed?'true':'';var link=document.querySelector(\"header a[href='/account/'],header a[data-manytool-native-signed-in]\");"
+            + "if(link){link.textContent=signed?(en?'Sign out':'로그아웃'):(en?'Sign in':'로그인');link.setAttribute('aria-label',signed?(en?'Sign out of Google account':'Google 계정 로그아웃'):(en?'Sign in with Google':'Google 계정 로그인'));link.dataset.manytoolNativeSignedIn=signed?'true':'';link.href=signed?'#native-logout':'/account/';}"
+            + "var paidPage=/^\\/(?:[a-z-]+\\/)?ai-image-generator(?:\\/|$)/.test(location.pathname);document.querySelectorAll('#mt-nav button').forEach(function(button){var copy=(button.textContent||'').replace(/\\s+/g,' ').trim();if(copy.indexOf('사용하기')===0||copy.indexOf('Use')===0){button.querySelectorAll('*').forEach(function(part){var value=(part.textContent||'').replace(/\\s+/g,'').trim();if(value==='10크레딧'||value==='5크레딧'||value==='10credits'||value==='5credits')part.style.display=paidPage?'':'none';});var label=button.querySelector('span');if(label)label.textContent=paidPage?(en?'Use · 5 credits':'사용하기 · 5크레딧'):(en?'Use':'사용하기');button.setAttribute('aria-label',paidPage?(en?'Use AI tools · 5 credits':'AI 도구 사용하기 · 5크레딧'):(en?'Use AI tools':'AI 도구 사용하기'));}});})();";
         target.evaluateJavascript(script, null);
     }
     private void requestDownload(String url,String mime) {

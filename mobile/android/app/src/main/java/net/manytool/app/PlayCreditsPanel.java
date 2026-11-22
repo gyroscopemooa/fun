@@ -19,8 +19,10 @@ public final class PlayCreditsPanel extends LinearLayout implements PlayCreditBi
     private final boolean english;
     private PlayCreditBilling.Offer selected;
     private int previewCredits;
-    private final TextView pickerValue;
+    private int selectedQuantity=1, previewQuantity=1;
     private final List<PlayCreditBilling.Offer> availableOffers=new ArrayList<>();
+    private final Map<String,TextView> offerQuantityLabels=new HashMap<>();
+    private final Map<Integer,TextView> previewQuantityLabels=new HashMap<>();
     private static final int[] PREVIEW_CREDITS={1,5,10,100};
 
     public PlayCreditsPanel(Activity activity, PlayCreditBilling.Backend backend, Runnable close, boolean english) {
@@ -33,12 +35,7 @@ public final class PlayCreditsPanel extends LinearLayout implements PlayCreditBi
 
         LinearLayout wallet=card(); wallet.addView(text(t("보유 크레딧","Your credits"),13,MUTED,false));
         balance=text(t("잔액을 확인하고 있어요","Checking your balance"),20,INK,true); wallet.addView(balance,lp(-1,-2,8,0,0,0)); addView(wallet,lp(-1,-2,0,0,0,24));
-        addView(text(t("충전할 크레딧","Credits to top up"),19,INK,true),lp(-1,-2,0,0,0,12));
-        LinearLayout picker=new LinearLayout(activity); picker.setGravity(Gravity.CENTER_VERTICAL); picker.setPadding(dp(12),dp(8),dp(12),dp(8)); picker.setBackground(round(SURFACE,16));
-        TextView minus=text("−",25,INK,true); minus.setGravity(Gravity.CENTER); minus.setBackground(round(Color.rgb(240,244,247),12)); picker.addView(minus,square(44));
-        pickerValue=text("1",22,INK,true); pickerValue.setGravity(Gravity.CENTER); picker.addView(pickerValue,new LinearLayout.LayoutParams(0,dp(44),1));
-        TextView plus=text("+",24,INK,true); plus.setGravity(Gravity.CENTER); plus.setBackground(round(Color.rgb(230,247,249),12)); picker.addView(plus,square(44));
-        minus.setOnClickListener(v->changeAmount(-1)); plus.setOnClickListener(v->changeAmount(1)); addView(picker,lp(-1,60,0,0,0,12));
+        addView(text(t("충전 상품","Top-up products"),19,INK,true),lp(-1,-2,0,0,0,12));
         packs=new LinearLayout(activity); packs.setOrientation(VERTICAL); addView(packs);
         loadingRow();
         LinearLayout summary=card();
@@ -57,38 +54,45 @@ public final class PlayCreditsPanel extends LinearLayout implements PlayCreditBi
 
     private void loadingRow() { packs.removeAllViews(); TextView loading=text(t("Google Play 상품을 불러오는 중","Loading Google Play products"),15,MUTED,false); loading.setGravity(Gravity.CENTER_VERTICAL); loading.setPadding(dp(20),0,dp(20),0); loading.setBackground(round(SURFACE,18)); packs.addView(loading,lp(-1,64,0,0,0,0)); }
     private LinearLayout pack(PlayCreditBilling.Offer offer) {
-        LinearLayout row=new LinearLayout(getContext()); row.setGravity(Gravity.CENTER_VERTICAL); row.setPadding(dp(20),0,dp(20),0); row.setTag(offer); row.setClickable(true);
+        LinearLayout row=new LinearLayout(getContext()); row.setGravity(Gravity.CENTER_VERTICAL); row.setPadding(dp(20),0,dp(16),0); row.setTag(offer); row.setClickable(true);
         row.addView(text(offer.credits+t(" 크레딧"," credits"),16,INK,true),new LinearLayout.LayoutParams(0,-2,1));
-        row.addView(text(offer.formattedPrice,16,INK,true)); row.setOnClickListener(v->{selected=(PlayCreditBilling.Offer)v.getTag();refreshSelection();}); return row;
-    }
-    private LinearLayout previewPack(int credits, String price) {
-        LinearLayout row=new LinearLayout(getContext()); row.setGravity(Gravity.CENTER_VERTICAL); row.setPadding(dp(20),0,dp(20),0); row.setTag(credits); row.setClickable(true);
-        row.addView(text(credits+t(" 크레딧"," credits"),16,INK,true),new LinearLayout.LayoutParams(0,-2,1));
-        row.addView(text(price+t(" · 예시"," · Preview"),15,MUTED,true));
-        row.setOnClickListener(v->{previewCredits=(int)v.getTag();refreshPreview();}); return row;
+        LinearLayout counter=new LinearLayout(getContext()); counter.setGravity(Gravity.CENTER_VERTICAL);
+        TextView minus=text("−",19,INK,true); minus.setGravity(Gravity.CENTER); minus.setBackground(round(Color.rgb(240,244,247),10)); counter.addView(minus,square(34));
+        TextView quantity=text("1",15,INK,true); quantity.setGravity(Gravity.CENTER); counter.addView(quantity,new LinearLayout.LayoutParams(dp(34),dp(34))); offerQuantityLabels.put(offer.productId,quantity);
+        TextView plus=text("+",18,INK,true); plus.setGravity(Gravity.CENTER); plus.setBackground(round(SELECTED,10)); counter.addView(plus,square(34)); row.addView(counter);
+        row.addView(text(offer.formattedPrice,15,INK,true),lp(-2,-2,0,12,0,0));
+        View.OnClickListener choose=v->{selected=offer;selectedQuantity=1;refreshSelection();}; row.setOnClickListener(choose);
+        minus.setOnClickListener(v->{if(selected==offer)selectedQuantity=Math.max(1,selectedQuantity-1);else {selected=offer;selectedQuantity=1;}refreshSelection();});
+        plus.setOnClickListener(v->{if(selected==offer)selectedQuantity++;else {selected=offer;selectedQuantity=1;}refreshSelection();}); return row;
     }
     private void refreshSelection() {
         for(int i=0;i<packs.getChildCount();i++) { LinearLayout row=(LinearLayout)packs.getChildAt(i); boolean active=row.getTag()==selected; row.setBackground(stroke(active?SELECTED:SURFACE,active?PRIMARY:Color.rgb(229,233,238),12,active?2:1)); }
         payButton.setEnabled(selected!=null); payButton.setAlpha(selected==null ? .45f : 1f);
-        if(selected!=null) { pickerValue.setText(String.valueOf(selected.credits)); summaryCredits.setText(selected.credits+t(" 크레딧"," credits")); summaryPrice.setText(selected.formattedPrice); payButton.setText(selected.formattedPrice+t(" 결제하기"," · Pay")); }
-    }
-    private void changeAmount(int direction) {
-        if(selected!=null && !availableOffers.isEmpty()) {
-            int index=availableOffers.indexOf(selected); int next=Math.max(0,Math.min(availableOffers.size()-1,index+direction)); selected=availableOffers.get(next); refreshSelection(); return;
-        }
-        int index=0; for(int i=0;i<PREVIEW_CREDITS.length;i++) if(PREVIEW_CREDITS[i]==previewCredits) { index=i; break; }
-        previewCredits=PREVIEW_CREDITS[Math.max(0,Math.min(PREVIEW_CREDITS.length-1,index+direction))]; refreshPreview();
+        for(Map.Entry<String,TextView> entry:offerQuantityLabels.entrySet()) entry.getValue().setText(selected!=null&&entry.getKey().equals(selected.productId)?String.valueOf(selectedQuantity):"0");
+        if(selected!=null) { summaryCredits.setText((selected.credits*selectedQuantity)+t(" 크레딧"," credits")); summaryPrice.setText(selected.formattedPrice+" × "+selectedQuantity); payButton.setText(t("선택한 상품 결제","Pay selected product")); }
     }
     private void previewRows() {
         packs.removeAllViews(); selected=null;
         TextView notice=text(t("상품 등록 전 미리보기 · 실제 가격은 Google Play에서 표시됩니다","Preview only · Google Play shows the local price"),13,MUTED,false); notice.setPadding(dp(2),0,0,dp(10)); packs.addView(notice);
-        String[] prices={t("Google Play 가격","Google Play price"),t("Google Play 가격","Google Play price"),t("Google Play 가격","Google Play price"),t("Google Play 가격","Google Play price")};
-        for(int i=0;i<PREVIEW_CREDITS.length;i++) packs.addView(previewPack(PREVIEW_CREDITS[i],prices[i]),lp(-1,64,0,0,0,10));
-        previewCredits=1; refreshPreview(); payButton.setEnabled(false); payButton.setAlpha(.45f); payButton.setText(t("Google Play 상품 등록 후 결제","Register Play products to pay"));
+        for(int credits:PREVIEW_CREDITS) packs.addView(previewPack(credits),lp(-1,60,0,0,0,10));
+        previewCredits=1; previewQuantity=1; refreshPreview(); payButton.setEnabled(false); payButton.setAlpha(.45f); payButton.setText(t("Google Play 상품 등록 후 결제","Register Play products to pay"));
+    }
+    private LinearLayout previewPack(int credits) {
+        LinearLayout row=new LinearLayout(getContext()); row.setGravity(Gravity.CENTER_VERTICAL); row.setPadding(dp(20),0,dp(16),0); row.setTag(credits); row.setClickable(true);
+        row.addView(text(credits+t(" 크레딧"," credits"),16,INK,true),new LinearLayout.LayoutParams(0,-2,1));
+        LinearLayout counter=new LinearLayout(getContext()); counter.setGravity(Gravity.CENTER_VERTICAL);
+        TextView minus=text("−",19,INK,true); minus.setGravity(Gravity.CENTER); minus.setBackground(round(Color.rgb(240,244,247),10)); counter.addView(minus,square(34));
+        TextView quantity=text("1",15,INK,true); quantity.setGravity(Gravity.CENTER); counter.addView(quantity,new LinearLayout.LayoutParams(dp(34),dp(34))); previewQuantityLabels.put(credits,quantity);
+        TextView plus=text("+",18,INK,true); plus.setGravity(Gravity.CENTER); plus.setBackground(round(SELECTED,10)); counter.addView(plus,square(34)); row.addView(counter);
+        row.addView(text(t("Google Play 가격","Google Play price"),14,MUTED,true));
+        row.setOnClickListener(v->{previewCredits=credits;previewQuantity=1;refreshPreview();});
+        minus.setOnClickListener(v->{if(previewCredits==credits)previewQuantity=Math.max(1,previewQuantity-1);else {previewCredits=credits;previewQuantity=1;}refreshPreview();});
+        plus.setOnClickListener(v->{if(previewCredits==credits)previewQuantity++;else {previewCredits=credits;previewQuantity=1;}refreshPreview();}); return row;
     }
     private void refreshPreview() {
-        for(int i=1;i<packs.getChildCount();i++) { LinearLayout row=(LinearLayout)packs.getChildAt(i); boolean active=(int)row.getTag()==previewCredits; row.setBackground(stroke(active?SELECTED:SURFACE,active?PRIMARY:Color.rgb(229,233,238),12,active?2:1)); }
-        pickerValue.setText(String.valueOf(previewCredits)); summaryCredits.setText(previewCredits+t(" 크레딧"," credits")); summaryPrice.setText(t("Google Play 가격","Google Play price"));
+        summaryCredits.setText((previewCredits*previewQuantity)+t(" 크레딧"," credits")); summaryPrice.setText(t("Google Play 가격","Google Play price")+" × "+previewQuantity);
+        for(Map.Entry<Integer,TextView> entry:previewQuantityLabels.entrySet()) entry.getValue().setText(entry.getKey()==previewCredits?String.valueOf(previewQuantity):"0");
+        for(int i=0;i<packs.getChildCount();i++) { View row=packs.getChildAt(i); Object tag=row.getTag(); if(tag instanceof Integer) row.setBackground(stroke(((Integer)tag)==previewCredits?SELECTED:SURFACE,((Integer)tag)==previewCredits?PRIMARY:Color.rgb(229,233,238),12,((Integer)tag)==previewCredits?2:1)); }
     }
     private LinearLayout card() { LinearLayout view=new LinearLayout(getContext()); view.setOrientation(VERTICAL); view.setPadding(dp(20),dp(19),dp(20),dp(19)); view.setBackground(round(SURFACE,20)); return view; }
     private String t(String ko,String en) { return english ? en : ko; }
