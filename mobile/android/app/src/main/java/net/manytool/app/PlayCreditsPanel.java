@@ -13,7 +13,7 @@ import java.util.*;
 public final class PlayCreditsPanel extends LinearLayout implements PlayCreditBilling.Listener, AutoCloseable {
     private static final int INK=Color.rgb(25,31,43), MUTED=Color.rgb(108,119,137), SURFACE=Color.WHITE,
         CANVAS=Color.rgb(247,248,250), PRIMARY=Color.rgb(18,137,160), SELECTED=Color.rgb(230,247,249);
-    private final TextView balance, payButton, status;
+    private final TextView balance, payButton, status, summaryCredits, summaryPrice;
     private final LinearLayout packs;
     private final PlayCreditBilling controller;
     private PlayCreditBilling.Offer selected;
@@ -31,6 +31,12 @@ public final class PlayCreditsPanel extends LinearLayout implements PlayCreditBi
         addView(text("충전할 크레딧",19,INK,true),lp(-1,-2,0,0,0,12));
         packs=new LinearLayout(activity); packs.setOrientation(VERTICAL); addView(packs);
         loadingRow();
+        LinearLayout summary=card();
+        summary.addView(text("결제 예정",13,MUTED,false));
+        LinearLayout summaryLine=new LinearLayout(activity); summaryLine.setGravity(Gravity.CENTER_VERTICAL);
+        summaryCredits=text("상품을 선택해 주세요",18,INK,true); summaryLine.addView(summaryCredits,new LinearLayout.LayoutParams(0,-2,1));
+        summaryPrice=text("Google Play 가격",16,INK,true); summaryLine.addView(summaryPrice); summary.addView(summaryLine,lp(-1,-2,8,0,0,0));
+        addView(summary,lp(-1,-2,18,0,0,0));
         controller=new PlayCreditBilling(activity,backend,this);
 
         Space spacer=new Space(activity); addView(spacer,new LinearLayout.LayoutParams(-1,0,1));
@@ -53,17 +59,19 @@ public final class PlayCreditsPanel extends LinearLayout implements PlayCreditBi
     }
     private void refreshSelection() {
         for(int i=0;i<packs.getChildCount();i++) { LinearLayout row=(LinearLayout)packs.getChildAt(i); boolean active=row.getTag()==selected; row.setBackground(stroke(active?SELECTED:SURFACE,active?PRIMARY:Color.rgb(229,233,238),12,active?2:1)); }
-        payButton.setEnabled(selected!=null); payButton.setAlpha(selected==null ? .45f : 1f); if(selected!=null) payButton.setText(selected.formattedPrice+" 결제하기");
+        payButton.setEnabled(selected!=null); payButton.setAlpha(selected==null ? .45f : 1f);
+        if(selected!=null) { summaryCredits.setText(selected.credits+" 크레딧"); summaryPrice.setText(selected.formattedPrice); payButton.setText(selected.formattedPrice+" 결제하기"); }
     }
     private void previewRows() {
         packs.removeAllViews(); selected=null;
         TextView notice=text("상품 등록 전 미리보기 · 실제 가격은 Google Play에서 표시됩니다",13,MUTED,false); notice.setPadding(dp(2),0,0,dp(10)); packs.addView(notice);
         int[] credits={1,5,10,100}; String[] prices={"Google Play 가격","Google Play 가격","Google Play 가격","Google Play 가격"};
         for(int i=0;i<credits.length;i++) packs.addView(previewPack(credits[i],prices[i]),lp(-1,64,0,0,0,10));
-        previewCredits=1; refreshPreview(); payButton.setEnabled(false); payButton.setAlpha(.45f); payButton.setText("상품 등록 후 결제할 수 있어요");
+        previewCredits=1; refreshPreview(); payButton.setEnabled(false); payButton.setAlpha(.45f); payButton.setText("Google Play 상품 등록 후 결제");
     }
     private void refreshPreview() {
         for(int i=1;i<packs.getChildCount();i++) { LinearLayout row=(LinearLayout)packs.getChildAt(i); boolean active=(int)row.getTag()==previewCredits; row.setBackground(stroke(active?SELECTED:SURFACE,active?PRIMARY:Color.rgb(229,233,238),12,active?2:1)); }
+        summaryCredits.setText(previewCredits+" 크레딧"); summaryPrice.setText("Google Play 가격");
     }
     private LinearLayout card() { LinearLayout view=new LinearLayout(getContext()); view.setOrientation(VERTICAL); view.setPadding(dp(20),dp(19),dp(20),dp(19)); view.setBackground(round(SURFACE,20)); return view; }
     private TextView text(String value,int size,int color,boolean bold) { TextView view=new TextView(getContext()); view.setText(value); view.setTextSize(size); view.setTextColor(color); if(bold)view.setTypeface(Typeface.DEFAULT,Typeface.BOLD); return view; }
