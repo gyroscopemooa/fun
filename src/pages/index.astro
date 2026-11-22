@@ -422,7 +422,7 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
       </div>
 
       <details id="home-seo-fold" class="mx-4 mb-4 rounded-2xl border border-slate-200 bg-white lg:mx-0 lg:border-0 lg:bg-transparent">
-        <summary class="cursor-pointer list-none px-4 py-3 text-sm font-bold text-slate-700 lg:hidden">서비스 안내 · 자주 묻는 질문 · 운영 기준 <span aria-hidden="true">⌄</span></summary>
+        <summary class="cursor-pointer list-none px-4 py-3 text-sm font-bold text-slate-700 lg:hidden">{locale === 'ko' ? '서비스 안내 · 자주 묻는 질문 · 운영 기준' : locale === 'ja' ? 'サービス案内・よくある質問・運営方針' : 'Service guide · FAQ · Operating principles'} <span aria-hidden="true">⌄</span></summary>
       <section class="px-4 pb-2 lg:px-10">
         <article class="rounded-xl border border-slate-200 bg-white p-5">
           <h2 class="text-xl font-semibold">{t.guideTitle}</h2>
@@ -432,7 +432,7 @@ const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
           <p class="mt-2 text-slate-700">
             {t.guideP2}
       <details id="home-seo-fold" class="mx-4 mb-4 rounded-2xl border border-slate-200 bg-white lg:mx-0 lg:border-0 lg:bg-transparent">
-        <summary class="cursor-pointer list-none px-4 py-3 text-sm font-bold text-slate-700 lg:hidden">서비스 안내 · 자주 묻는 질문 · 운영 기준 <span aria-hidden="true">⌄</span></summary>
+        <summary class="cursor-pointer list-none px-4 py-3 text-sm font-bold text-slate-700 lg:hidden">{locale === 'ko' ? '서비스 안내 · 자주 묻는 질문 · 운영 기준' : locale === 'ja' ? 'サービス案内・よくある質問・運営方針' : 'Service guide · FAQ · Operating principles'} <span aria-hidden="true">⌄</span></summary>
           </p>
           <div class:list={['mt-5 rounded-2xl bg-slate-50 p-4', !showDonate && 'hidden']}>
             <p class="text-sm text-slate-600">{t.guideDonateHint}</p>
