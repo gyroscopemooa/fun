@@ -35,6 +35,7 @@ public class MainActivity extends Activity {
     private long lastBridgeRequest;
     private boolean downloadBusy = false, loadFailed = false;
     private AppAccount account;
+    private boolean appEnglish;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -161,13 +162,8 @@ public class MainActivity extends Activity {
             @Override public void onPageStarted(WebView v,String url,Bitmap icon) { navigation++; downloadBusy=false; loadFailed=false; status.setVisibility(android.view.View.GONE); }
             @Override public void onPageFinished(WebView v,String url) {
                 if(!loadFailed)status.setVisibility(android.view.View.GONE);
-                // The app is Korean-first. Prevent WebView device language from sending the
-                // Korean app shell to the incomplete English home-page copy.
-                if(url.startsWith(NavigationPolicy.base()+"/en")) {
-                    v.evaluateJavascript("localStorage.setItem('manytool-locale','ko');location.replace('/');",null);
-                    return;
-                }
                 installNativeAccountEntryPoints(v);
+                v.evaluateJavascript("document.documentElement.lang", value -> appEnglish=value!=null && value.toLowerCase(java.util.Locale.ROOT).contains("en"));
                 syncNativeAccountState(v);
                 CookieManager.getInstance().flush(); hideSplash();
             }
@@ -436,19 +432,24 @@ public class MainActivity extends Activity {
         LinearLayout page=new LinearLayout(this); page.setOrientation(LinearLayout.VERTICAL); page.setGravity(android.view.Gravity.CENTER_HORIZONTAL);
         page.setPadding(dp(24),dp(28),dp(24),dp(28)); page.setBackgroundColor(0xFFF7F8FA);
         LinearLayout header=new LinearLayout(this); header.setGravity(android.view.Gravity.CENTER_VERTICAL);
-        TextView title=nativeText("크레딧 충전",26,0xFF191F2B,true); title.setGravity(android.view.Gravity.CENTER_VERTICAL); header.addView(title,new LinearLayout.LayoutParams(0,dp(56),1));
+        String titleCopy=appEnglish ? "Credit top up" : "크레딧 충전";
+        String eyebrow=appEnglish ? "To top up credits" : "크레딧 충전을 위해";
+        String heading=appEnglish ? "Sign in to continue" : "로그인해 주세요";
+        String description=appEnglish ? "Sign in with Google to manage your balance and top-up history securely." : "Google 계정으로 로그인하면 충전 내역과 잔액을 안전하게 관리할 수 있어요.";
+        String continueCopy=appEnglish ? "Continue with Google" : "Google로 계속하기";
+        TextView title=nativeText(titleCopy,26,0xFF191F2B,true); title.setGravity(android.view.Gravity.CENTER_VERTICAL); header.addView(title,new LinearLayout.LayoutParams(0,dp(56),1));
         TextView close=nativeText("×",28,0xFF6C7789,false); close.setGravity(android.view.Gravity.CENTER); close.setBackground(roundNative(0xFFECF0F4,22)); close.setOnClickListener(v->closeCredits()); header.addView(close,new LinearLayout.LayoutParams(dp(44),dp(44)));
         page.addView(header,new LinearLayout.LayoutParams(-1,dp(56)));
         Space top=new Space(this); page.addView(top,new LinearLayout.LayoutParams(-1,0,1));
         LinearLayout card=new LinearLayout(this); card.setOrientation(LinearLayout.VERTICAL); card.setPadding(dp(24),dp(26),dp(24),dp(24)); card.setBackground(roundNative(0xFFFFFFFF,20));
-        card.addView(nativeText("크레딧 충전을 위해",15,0xFF6C7789,false));
-        card.addView(nativeText("로그인해 주세요",24,0xFF191F2B,true),nativeLp(-1,-2,8,0,0,0));
-        TextView help=nativeText("Google 계정으로 로그인하면 충전 내역과 잔액을 안전하게 관리할 수 있어요.",14,0xFF6C7789,false); help.setLineSpacing(dp(4),1f); card.addView(help,nativeLp(-1,-2,16,0,0,0));
-        TextView continueButton=nativeText("Google로 계속하기",17,0xFFFFFFFF,true); continueButton.setGravity(android.view.Gravity.CENTER); continueButton.setBackground(roundNative(0xFF1289A0,12));
+        card.addView(nativeText(eyebrow,15,0xFF6C7789,false));
+        card.addView(nativeText(heading,24,0xFF191F2B,true),nativeLp(-1,-2,8,0,0,0));
+        TextView help=nativeText(description,14,0xFF6C7789,false); help.setLineSpacing(dp(4),1f); card.addView(help,nativeLp(-1,-2,16,0,0,0));
+        TextView continueButton=nativeText(continueCopy,17,0xFFFFFFFF,true); continueButton.setGravity(android.view.Gravity.CENTER); continueButton.setBackground(roundNative(0xFF1289A0,12));
         continueButton.setOnClickListener(v->{
             continueButton.setEnabled(false); continueButton.setAlpha(.65f); continueButton.setText("Google 로그인 준비 중…");
             account.signIn(this,(ok,text)->{
-                if(!ok) { continueButton.setEnabled(true); continueButton.setAlpha(1f); continueButton.setText("Google로 계속하기"); message("로그인",text); return; }
+                if(!ok) { continueButton.setEnabled(true); continueButton.setAlpha(1f); continueButton.setText(continueCopy); message(appEnglish ? "Sign in" : "로그인",text); return; }
                 syncNativeAccountState(web); closeCredits();
                 if(AppFeatures.PLAY_CREDITS_ENTRY_ENABLED) showCredits(); else message("로그인 완료", "Google 계정으로 로그인했습니다. " + CreditReadiness.STATUS);
             });
@@ -470,7 +471,7 @@ public class MainActivity extends Activity {
         if(web!=null) web.setVisibility(android.view.View.VISIBLE);
     }
     private TextView nativeText(String value,int size,int color,boolean bold) { TextView view=new TextView(this); view.setText(value); view.setTextSize(size); view.setTextColor(color); if(bold)view.setTypeface(android.graphics.Typeface.DEFAULT,android.graphics.Typeface.BOLD); return view; }
-    private LinearLayout.LayoutParams nativeLp(int width,int height,int top,int left,int right,int bottom) { LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(width,height); p.setMargins(dp(left),dp(top),dp(right),dp(bottom)); return p; }
+    private LinearLayout.LayoutParams nativeLp(int width,int height,int top,int left,int right,int bottom) { LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(width,height>0?dp(height):height); p.setMargins(dp(left),dp(top),dp(right),dp(bottom)); return p; }
     private android.graphics.drawable.GradientDrawable roundNative(int color,int radius) { android.graphics.drawable.GradientDrawable shape=new android.graphics.drawable.GradientDrawable(); shape.setColor(color); shape.setCornerRadius(dp(radius)); return shape; }
     private int dp(int value) { return (int)(value*getResources().getDisplayMetrics().density+.5f); }
     @Override protected void onResume() { super.onResume(); if(creditsPanel!=null) creditsPanel.resume(); }
