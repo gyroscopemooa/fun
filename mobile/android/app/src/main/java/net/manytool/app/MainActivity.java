@@ -288,7 +288,7 @@ public class MainActivity extends Activity {
         if(target == null || target != web) return;
         String signed=account.signedIn()?"true":"false";
         String script = "(function(){var link=document.querySelector(\"header a[href='/account/'],header a[data-manytool-native-signed-in]\");"
-            + "if(!link)return;var signed="+signed+";link.textContent=signed?'로그아웃':'로그인';link.setAttribute('aria-label',signed?'Google 계정 로그아웃':'Google 계정 로그인');"
+            + "if(!link)return;var signed="+signed+";var en=(document.documentElement.lang||'').toLowerCase().indexOf('en')===0;link.textContent=signed?(en?'Sign out':'로그아웃'):(en?'Sign in':'로그인');link.setAttribute('aria-label',signed?(en?'Sign out of Google account':'Google 계정 로그아웃'):(en?'Sign in with Google':'Google 계정 로그인'));"
             + "link.dataset.manytoolNativeSignedIn=signed?'true':'';link.href=signed?'#native-logout':'/account/';})();";
         target.evaluateJavascript(script, null);
     }
@@ -447,11 +447,11 @@ public class MainActivity extends Activity {
         TextView help=nativeText(description,14,0xFF6C7789,false); help.setLineSpacing(dp(4),1f); card.addView(help,nativeLp(-1,-2,16,0,0,0));
         TextView continueButton=nativeText(continueCopy,17,0xFFFFFFFF,true); continueButton.setGravity(android.view.Gravity.CENTER); continueButton.setBackground(roundNative(0xFF1289A0,12));
         continueButton.setOnClickListener(v->{
-            continueButton.setEnabled(false); continueButton.setAlpha(.65f); continueButton.setText("Google 로그인 준비 중…");
+            continueButton.setEnabled(false); continueButton.setAlpha(.65f); continueButton.setText(appEnglish ? "Opening Google…" : "Google 로그인 준비 중…");
             account.signIn(this,(ok,text)->{
                 if(!ok) { continueButton.setEnabled(true); continueButton.setAlpha(1f); continueButton.setText(continueCopy); message(appEnglish ? "Sign in" : "로그인",text); return; }
                 syncNativeAccountState(web); closeCredits();
-                if(AppFeatures.PLAY_CREDITS_ENTRY_ENABLED) showCredits(); else message("로그인 완료", "Google 계정으로 로그인했습니다. " + CreditReadiness.STATUS);
+                if(AppFeatures.PLAY_CREDITS_ENTRY_ENABLED) showCredits(); else message(appEnglish ? "Signed in" : "로그인 완료", (appEnglish ? "You are signed in with Google. " : "Google 계정으로 로그인했습니다. ") + CreditReadiness.STATUS);
             });
         });
         card.addView(continueButton,nativeLp(-1,60,24,0,0,0)); page.addView(card,new LinearLayout.LayoutParams(-1,-2));
